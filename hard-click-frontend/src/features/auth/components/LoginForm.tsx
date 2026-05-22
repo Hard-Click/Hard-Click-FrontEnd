@@ -2,21 +2,60 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import PasswordInput from './PasswordInput';
+import LoginErrorMessage from './LoginErrorMessage';
 
 export default function LoginForm() {
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState({
+    loginId: '',
+    password: '',
+  });
+  const idInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+  const [loginFailCount, setLoginFailCount] = useState(0);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    console.log({
-      loginId,
-      password,
-    });
+    const newErrors = {
+      loginId: '',
+      password: '',
+    };
+
+    // 아이디 없음
+    if (!loginId.trim()) {
+      newErrors.loginId = '아이디를 입력해주세요';
+    }
+    // 비밀번호 없음
+    if (!password.trim()) {
+      newErrors.password = '비밀번호를 입력해주세요';
+    }
+    setErrors(newErrors);
+    // focus 처리
+    if (newErrors.loginId) {
+      idInputRef.current?.focus();
+      return;
+    }
+    if (newErrors.password) {
+      passwordInputRef.current?.focus();
+      return;
+    }
+    const isLoginSuccess = loginId === 'admin' && password === '1234';
+
+    if (!isLoginSuccess) {
+      const nextCount = loginFailCount + 1;
+      setLoginFailCount(nextCount);
+      setErrors({
+        loginId: '',
+        password: `비밀번호가 일치하지 않습니다 (${nextCount} / 5)`,
+      });
+      passwordInputRef.current?.focus();
+      return;
+    }
   };
 
   return (
@@ -123,7 +162,9 @@ export default function LoginForm() {
                 아이디
               </label>
 
-              <div className="flex h-16 items-center rounded-2xl border border-[#E2E8F0] px-5">
+              <div
+                className={`flex h-16 items-center rounded-2xl border px-5 transition-colors border-[#E2E8F0]`}
+              >
                 <Image
                   src="/icons/mailIcon.svg"
                   alt="mail"
@@ -132,18 +173,37 @@ export default function LoginForm() {
                 />
 
                 <input
+                  ref={idInputRef}
                   type="text"
                   placeholder="아이디를 입력하세요"
                   value={loginId}
-                  onChange={(e) => setLoginId(e.target.value)}
+                  onChange={(e) => {
+                    setLoginId(e.target.value);
+                    setErrors((prev) => ({
+                      ...prev,
+                      loginId: '',
+                    }));
+                  }}
                   className="ml-4 w-full bg-transparent text-lg outline-none placeholder:text-[#9CA3AF]"
                 />
               </div>
+              <LoginErrorMessage message={errors.loginId} />
             </div>
 
             {/* PASSWORD */}
             <div className="mb-4">
-              <PasswordInput value={password} onChange={setPassword} />
+              <PasswordInput
+                ref={passwordInputRef}
+                value={password}
+                onChange={(value) => {
+                  setPassword(value);
+                  setErrors((prev) => ({
+                    ...prev,
+                    password: '',
+                  }));
+                }}
+                error={errors.password}
+              />
             </div>
 
             {/* forgot */}
