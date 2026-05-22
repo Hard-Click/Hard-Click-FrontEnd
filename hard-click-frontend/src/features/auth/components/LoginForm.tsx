@@ -162,9 +162,7 @@ export default function LoginForm() {
                 아이디
               </label>
 
-              <div
-                className={`flex h-16 items-center rounded-2xl border px-5 transition-colors border-[#E2E8F0]`}
-              >
+              <div className="flex h-16 items-center rounded-2xl border border-[#E2E8F0] px-5 transition-colors focus-within:border-[#B91C1C]">
                 <Image
                   src="/icons/mailIcon.svg"
                   alt="mail"
