@@ -10,52 +10,103 @@ import LoginErrorMessage from './LoginErrorMessage';
 export default function LoginForm() {
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
+
   const [errors, setErrors] = useState({
     loginId: '',
     password: '',
   });
+
+  const [errorBorder, setErrorBorder] = useState({
+    loginId: false,
+    password: false,
+  });
+
+  const [loginFailCount, setLoginFailCount] = useState(0);
+
   const idInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
-  const [loginFailCount, setLoginFailCount] = useState(0);
+
+  const isFormValid = loginId.trim() && password.trim();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const newErrors = {
-      loginId: '',
-      password: '',
-    };
+    // 둘 다 비어있음
+    if (!loginId.trim() && !password.trim()) {
+      setErrors({
+        loginId: '아이디를 입력해주세요',
+        password: '비밀번호를 입력해주세요',
+      });
 
-    // 아이디 없음
-    if (!loginId.trim()) {
-      newErrors.loginId = '아이디를 입력해주세요';
-    }
-    // 비밀번호 없음
-    if (!password.trim()) {
-      newErrors.password = '비밀번호를 입력해주세요';
-    }
-    setErrors(newErrors);
-    // focus 처리
-    if (newErrors.loginId) {
+      setErrorBorder({
+        loginId: true,
+        password: false,
+      });
+
       idInputRef.current?.focus();
+
       return;
     }
-    if (newErrors.password) {
+
+    // 아이디만 비어있음
+    if (!loginId.trim()) {
+      setErrors({
+        loginId: '아이디를 입력해주세요',
+        password: '',
+      });
+
+      setErrorBorder({
+        loginId: true,
+        password: false,
+      });
+
+      idInputRef.current?.focus();
+
+      return;
+    }
+
+    // 비밀번호만 비어있음
+    if (!password.trim()) {
+      setErrors({
+        loginId: '',
+        password: '비밀번호를 입력해주세요',
+      });
+
+      setErrorBorder({
+        loginId: false,
+        password: true,
+      });
+
       passwordInputRef.current?.focus();
+
       return;
     }
+
+    // 로그인 실패 예시
     const isLoginSuccess = loginId === 'admin' && password === '1234';
 
     if (!isLoginSuccess) {
       const nextCount = loginFailCount + 1;
+
       setLoginFailCount(nextCount);
+
       setErrors({
         loginId: '',
         password: `비밀번호가 일치하지 않습니다 (${nextCount} / 5)`,
       });
+
+      setErrorBorder({
+        loginId: false,
+        password: true,
+      });
+
       passwordInputRef.current?.focus();
+
       return;
     }
+
+    // 로그인 성공
+    console.log('로그인 성공');
   };
 
   return (
@@ -67,6 +118,7 @@ export default function LoginForm() {
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10">
             <Image src="/logos/logo.svg" alt="logo" width={40} height={40} />
           </div>
+
           <Image src="/logos/sitename.svg" alt="logo" width={150} height={80} />
         </div>
 
@@ -162,7 +214,11 @@ export default function LoginForm() {
                 아이디
               </label>
 
-              <div className="flex h-16 items-center rounded-2xl border border-[#E2E8F0] px-5 transition-colors focus-within:border-[#B91C1C]">
+              <div
+                className={`flex h-16 items-center rounded-2xl border px-5 transition-colors ${
+                  errorBorder.loginId ? 'border-[#B91C1C]' : 'border-[#E2E8F0]'
+                }`}
+              >
                 <Image
                   src="/icons/mailIcon.svg"
                   alt="mail"
@@ -177,14 +233,21 @@ export default function LoginForm() {
                   value={loginId}
                   onChange={(e) => {
                     setLoginId(e.target.value);
+
                     setErrors((prev) => ({
                       ...prev,
                       loginId: '',
+                    }));
+
+                    setErrorBorder((prev) => ({
+                      ...prev,
+                      loginId: false,
                     }));
                   }}
                   className="ml-4 w-full bg-transparent text-lg outline-none placeholder:text-[#9CA3AF]"
                 />
               </div>
+
               <LoginErrorMessage message={errors.loginId} />
             </div>
 
@@ -193,14 +256,21 @@ export default function LoginForm() {
               <PasswordInput
                 ref={passwordInputRef}
                 value={password}
+                error={errors.password}
+                showErrorBorder={errorBorder.password}
                 onChange={(value) => {
                   setPassword(value);
+
                   setErrors((prev) => ({
                     ...prev,
                     password: '',
                   }));
+
+                  setErrorBorder((prev) => ({
+                    ...prev,
+                    password: false,
+                  }));
                 }}
-                error={errors.password}
               />
             </div>
 
@@ -217,7 +287,11 @@ export default function LoginForm() {
             {/* submit */}
             <button
               type="submit"
-              className="h-16 w-full rounded-2xl bg-[#2F5DAA] text-lg font-semibold text-white transition "
+              className={`h-16 w-full rounded-2xl text-lg font-semibold text-white transition ${
+                isFormValid
+                  ? 'bg-[#2F5DAA] opacity-100'
+                  : 'bg-[#2F5DAA] opacity-50'
+              }`}
             >
               로그인
             </button>

@@ -9,10 +9,11 @@ interface PasswordInputProps {
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  showErrorBorder?: boolean;
 }
 
 const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
-  ({ value, onChange, error }, ref) => {
+  ({ value, onChange, error, showErrorBorder }, ref) => {
     const [showPassword, setShowPassword] = useState(false);
 
     return (
@@ -22,7 +23,9 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
         </label>
 
         <div
-          className={`flex h-16 items-center rounded-2xl border px-5 border-[#E2E8F0] focus-within:border-[#B91C1C] focus-within:border-[#B91C1C] `}
+          className={`flex h-16 items-center rounded-2xl border px-5 transition-colors ${
+            showErrorBorder ? 'border-[#B91C1C]' : 'border-[#E2E8F0]'
+          }`}
         >
           <Image
             src="/icons/passwordIcon.svg"
