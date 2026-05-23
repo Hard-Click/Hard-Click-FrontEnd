@@ -6,6 +6,7 @@ import { useRef, useState } from 'react';
 
 import PasswordInput from './PasswordInput';
 import LoginErrorMessage from './LoginErrorMessage';
+import ConfirmModal from '@/components/ui/confirmModal';
 
 export default function LoginForm() {
   const [loginId, setLoginId] = useState('');
@@ -27,6 +28,8 @@ export default function LoginForm() {
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
   const isFormValid = loginId.trim() && password.trim();
+
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -87,21 +90,20 @@ export default function LoginForm() {
 
     if (!isLoginSuccess) {
       const nextCount = loginFailCount + 1;
-
       setLoginFailCount(nextCount);
-
       setErrors({
         loginId: '',
         password: `비밀번호가 일치하지 않습니다 (${nextCount} / 5)`,
       });
-
       setErrorBorder({
         loginId: false,
         password: true,
       });
 
+      if (nextCount >= 5) {
+        setIsConfirmModalOpen(true);
+      }
       passwordInputRef.current?.focus();
-
       return;
     }
 
@@ -318,6 +320,21 @@ export default function LoginForm() {
           </div>
         </div>
       </section>
+
+      {isConfirmModalOpen && (
+        <ConfirmModal
+          icon="/icons/security.svg"
+          title="계정 보호 인증"
+          description={`비밀번호 입력 오류가 5회 발생하여 계정 보호 인증이 필요합니다.`}
+          subDescription="확인을 누르면 계정 보호 인증 페이지로 이동합니다."
+          cancelText="취소"
+          confirmText="확인"
+          onCancel={() => setIsConfirmModalOpen(false)}
+          onConfirm={() => {
+            setIsConfirmModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
