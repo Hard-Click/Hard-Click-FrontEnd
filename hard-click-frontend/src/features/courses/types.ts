@@ -30,3 +30,70 @@ export interface CourseListQuery {
   sort?: CourseSortType;
 }
 
+/* ── Course Detail ── */
+
+export interface CourseNotice {
+  noticeId: number;
+  title: string;
+  createdAt: string;
+}
+
+export interface InstructorProfile {
+  instructorId: number;
+  name: string;
+  bio: string;
+  career: string[];
+  tags: string[];
+}
+
+export interface CurriculumLesson {
+  lessonId: number;
+  title: string;
+  duration: string; // "MM:SS"
+  isPreview: boolean;
+}
+
+export interface CurriculumSection {
+  sectionId: number;
+  title: string;
+  lessons: CurriculumLesson[];
+}
+
+export interface Review {
+  reviewId: number;
+  studentName: string;
+  rating: number; // 1–5 (whole numbers)
+  content: string;
+  createdAt: string;
+  isMine: boolean;
+}
+
+export interface CourseDetail {
+  courseId: number;
+  title: string;
+  description: string;
+  subjectName: string;
+  instructorName: string;
+  price: number;
+  isFree: boolean;
+  thumbnailUrl?: string;
+  averageRating: number;
+  reviewCount: number;
+  studentCount: number;
+  status: CourseStatus;
+  isEnrolled: boolean;
+  isWishlisted: boolean;
+  isInCart: boolean;
+  learningGoals: string[];
+  targetAudience: string[];
+  techTags: string[];
+  materialsProvided: string[];
+  totalLessons: number;
+  totalDuration: string;
+  notices: CourseNotice[];
+  instructor: InstructorProfile;
+  curriculum: CurriculumSection[];
+  reviews: Review[];
+  ratingDistribution: { stars: number; count: number }[];
+}
+
