@@ -51,129 +51,8 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
   );
 }
 
-/* ── 리뷰 신고 모달 ── */
-const REPORT_REASONS = [
-  '부적절한 언어 사용',
-  '명예훼손',
-  '음란',
-  '스팸/광고',
-  '개인정보 노출',
-  '욕설 및 비하',
-  '기타',
-];
-
-function ReviewReportModal({
-  onClose,
-  onSubmit,
-}: {
-  onClose: () => void;
-  onSubmit: (reasons: string[], detail: string) => void;
-}) {
-  const [selected, setSelected] = useState<string[]>([]);
-  const [detail, setDetail] = useState('');
-  const [showConfirm, setShowConfirm] = useState(false);
-
-  const toggle = (reason: string) => {
-    setSelected(prev =>
-      prev.includes(reason) ? prev.filter(r => r !== reason) : [...prev, reason]
-    );
-  };
-
-  if (showConfirm) {
-    return (
-      <ConfirmModal
-        icon="/icons/warningIcon.svg"
-        iconBgColor="#FEF3C7"
-        title="신고하기"
-        description="해당 리뷰를 신고하시겠습니까?"
-        cancelText="취소"
-        confirmText="확인"
-        onCancel={() => setShowConfirm(false)}
-        onConfirm={() => onSubmit(selected, detail)}
-      />
-    );
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl w-[400px] shadow-xl overflow-hidden">
-        <div className="px-6 pt-6 pb-4">
-          <h3 className="text-[#1A1F2E] font-bold text-lg">리뷰 신고</h3>
-          <p className="text-[#6B7280] text-xs mt-1">신고 사유를 선택해주세요. (복수 선택 가능)</p>
-        </div>
-
-        <div className="px-6 flex flex-col gap-2 max-h-[320px] overflow-y-auto pb-2">
-          {REPORT_REASONS.map(reason => {
-            const isSelected = selected.includes(reason);
-            return (
-              <button
-                key={reason}
-                onClick={() => toggle(reason)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left text-sm transition-colors ${
-                  isSelected
-                    ? 'border-[#EF4444] text-[#EF4444]'
-                    : 'border-[#E2E8F0] text-[#374151] hover:bg-gray-50'
-                }`}
-              >
-                <div
-                  className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
-                    isSelected ? 'bg-[#EF4444] border-[#EF4444]' : 'border-[#D1D5DB]'
-                  }`}
-                >
-                  {isSelected && (
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path
-                        d="M2 6L5 9L10 3.5"
-                        stroke="white"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  )}
-                </div>
-                {reason}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="px-6 pt-3 pb-5">
-          <p className="text-[#374151] text-sm font-medium mb-2">
-            추가 설명 <span className="text-[#9CA3AF] font-normal">(선택)</span>
-          </p>
-          <textarea
-            value={detail}
-            onChange={e => setDetail(e.target.value)}
-            rows={3}
-            placeholder="추가로 전달하실 내용이 있다면 작성해주세요."
-            className="w-full px-3 py-2.5 border border-[#E2E8F0] rounded-xl text-sm text-[#1A1F2E] placeholder-[rgba(26,31,46,0.3)] resize-none focus:outline-none focus:border-[#2F5DAA] transition-colors"
-          />
-
-          <div className="flex gap-3 mt-4">
-            <button
-              onClick={onClose}
-              className="flex-1 h-11 rounded-xl border border-[#D1D5DB] text-[#4B5563] font-medium text-sm hover:bg-gray-50 transition-colors"
-            >
-              취소
-            </button>
-            <button
-              onClick={() => setShowConfirm(true)}
-              disabled={selected.length === 0}
-              className={`flex-1 h-11 rounded-xl font-medium text-sm transition-colors ${
-                selected.length > 0
-                  ? 'bg-[#EF4444] text-white hover:bg-[#DC2626]'
-                  : 'bg-[#F3F4F6] text-[#9CA3AF] cursor-not-allowed'
-              }`}
-            >
-              신고하기
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+// TODO: 리뷰 신고 모달 — 팀원 컴포넌트 완성 후 아래 import 연결
+// import ReviewReportModal from '@/components/ui/reviewReportModal';
 
 /* ── 리뷰 수정 모달 ── */
 function ReviewEditModal({
@@ -401,12 +280,12 @@ export default function CourseDetailPage() {
   // 모달 상태
   const [showEnrollConfirm, setShowEnrollConfirm] = useState(false);
   const [editingReview, setEditingReview] = useState<Review | null>(null);
-  const [reportingReview, setReportingReview] = useState<Review | null>(null);
 
   // 리뷰 & 공지
   const [reviews, setReviews] = useState<Review[]>([]);
   const [showAllNotices, setShowAllNotices] = useState(false);
   const [showAllReviews, setShowAllReviews] = useState(false);
+  // TODO: reportingReview — 리뷰 신고 모달 팀원 컴포넌트 완성 후 활성화
 
   // 토스트
   const [toast, setToast] = useState('');
@@ -456,10 +335,7 @@ export default function CourseDetailPage() {
     setToast('리뷰가 수정되었습니다');
   };
 
-  const handleReportSubmit = () => {
-    setReportingReview(null);
-    setToast('신고가 접수되었습니다.');
-  };
+  // TODO: handleReportSubmit — 리뷰 신고 모달 팀원 컴포넌트 완성 후 구현
 
   // 로딩
   if (isLoading) {
@@ -928,9 +804,8 @@ export default function CourseDetailPage() {
                                 </svg>
                               </button>
                             )}
-                            {/* 신고 버튼 (내 리뷰 포함 모두 표시) */}
+                            {/* 신고 버튼 — TODO: onClick에 ReviewReportModal 연결 (팀원 컴포넌트 완성 후) */}
                             <button
-                              onClick={() => !review.isMine && setReportingReview(review)}
                               className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
                                 review.isMine
                                   ? 'opacity-0 pointer-events-none'
@@ -1029,13 +904,7 @@ export default function CourseDetailPage() {
         />
       )}
 
-      {/* 리뷰 신고 모달 */}
-      {reportingReview && (
-        <ReviewReportModal
-          onClose={() => setReportingReview(null)}
-          onSubmit={handleReportSubmit}
-        />
-      )}
+      {/* TODO: 리뷰 신고 모달 — 팀원 ReviewReportModal 완성 후 여기에 렌더링 */}
     </div>
   );
 }
