@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import PasswordInput from './PasswordInput';
 import LoginErrorMessage from './LoginErrorMessage';
@@ -30,6 +31,7 @@ export default function LoginForm() {
   const isFormValid = loginId.trim() && password.trim();
 
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -333,6 +335,7 @@ export default function LoginForm() {
           onCancel={() => setIsConfirmModalOpen(false)}
           onConfirm={() => {
             setIsConfirmModalOpen(false);
+            router.push('/auth/account-protection');
           }}
         />
       )}
