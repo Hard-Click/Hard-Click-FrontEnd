@@ -1,23 +1,11 @@
 import Image from 'next/image';
-
+import AuthHeader from '@/components/common/AuthHeader';
 import EmailVerificationBox from '@/features/auth/components/EmailVerificationBox';
 
 export default function AccountProtectionPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#F5F7FB]">
-      {/* logo */}
-      <div className="mb-14 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#2F5DAA] pl-1">
-          <Image src="/logos/logo.svg" alt="logo" width={28} height={28} />
-        </div>
-
-        <Image
-          src="/logos/sitenameBlack.svg"
-          alt="sitename"
-          width={120}
-          height={40}
-        />
-      </div>
+      <AuthHeader />
 
       <EmailVerificationBox
         icon="/icons/security.svg"
