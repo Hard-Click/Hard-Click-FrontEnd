@@ -48,7 +48,7 @@ function SelectDropdown({
         onClick={() => setIsOpen(v => !v)}
         className="relative h-10 pl-4 pr-3 border border-[#E2E8F0] rounded-2xl text-base bg-white flex items-center gap-1.5 whitespace-nowrap transition-colors hover:border-[#CBD5E1]"
       >
-        {/* 가장 긴 옵션 텍스트로 너비 확보 */}
+        {/* 가장 긴 옵션 텍스트로 너비 확보 (invisible이지만 레이아웃 공간 점유) */}
         <span className="invisible select-none" aria-hidden>{longestLabel}</span>
         {/* 실제 표시 텍스트 */}
         <span className="absolute left-4 text-[rgba(26,31,46,0.5)] whitespace-nowrap">{displayText}</span>
@@ -94,16 +94,18 @@ function SelectDropdown({
   );
 }
 
-/* ── CourseFilterBar ── */
+/* ── InstructorCourseFilterBar ── */
 interface Props {
   subjects: Subject[];
   instructors: string[];
   selectedSubjectId: number | undefined;
   selectedInstructor: string;
   sort: CourseSortType;
+  myCoursesOnly: boolean;
   onSubjectChange: (id: number | undefined) => void;
   onInstructorChange: (name: string) => void;
   onSortChange: (sort: CourseSortType) => void;
+  onMyCoursesToggle: () => void;
   onReset: () => void;
 }
 
@@ -113,15 +115,17 @@ const SORT_OPTIONS: { label: string; value: CourseSortType }[] = [
   { label: '별점순', value: 'rating' },
 ];
 
-export default function CourseFilterBar({
+export default function InstructorCourseFilterBar({
   subjects,
   instructors,
   selectedSubjectId,
   selectedInstructor,
   sort,
+  myCoursesOnly,
   onSubjectChange,
   onInstructorChange,
   onSortChange,
+  onMyCoursesToggle,
   onReset,
 }: Props) {
   const subjectOptions: SelectOption[] = [
@@ -136,7 +140,7 @@ export default function CourseFilterBar({
 
   return (
     <div className="flex items-center justify-between">
-      {/* 드롭다운 */}
+      {/* 왼쪽: 과목 + 강사 드롭다운 */}
       <div className="flex items-center gap-3">
         <SelectDropdown
           placeholder="과목"
@@ -152,7 +156,7 @@ export default function CourseFilterBar({
         />
       </div>
 
-      {/* 정렬 + 초기화 */}
+      {/* 오른쪽: 정렬 + 내 강의 + 초기화 */}
       <div className="flex items-center gap-[22px]">
         {SORT_OPTIONS.map(opt => (
           <button
@@ -167,6 +171,18 @@ export default function CourseFilterBar({
             {opt.label}
           </button>
         ))}
+
+        <button
+          onClick={onMyCoursesToggle}
+          className={`h-10 px-4 font-semibold text-base rounded-2xl transition-colors border ${
+            myCoursesOnly
+              ? 'bg-[#2F5DAA] text-white border-[#2F5DAA]'
+              : 'bg-white text-[#2F5DAA] border-[rgba(47,93,170,0.8)]'
+          }`}
+        >
+          내 강의
+        </button>
+
         <button
           onClick={onReset}
           className="h-10 px-4 font-semibold text-base text-[#4B5563] border border-[#E2E8F0] rounded-2xl hover:bg-gray-50 transition-colors"
