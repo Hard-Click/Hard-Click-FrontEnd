@@ -1,4 +1,9 @@
-import type { CourseListItem, Subject, CourseListQuery } from './types';
+import type {
+  CourseListItem,
+  Subject,
+  CourseListQuery,
+  CourseDetail,
+} from './types';
 
 export const MOCK_SUBJECTS: Subject[] = [
   { subjectId: 1, name: '국어' },
@@ -132,6 +137,137 @@ export const MOCK_COURSES: CourseListItem[] = [
     thumbnailUrl: '/image/lecture7.svg',
   },
 ];
+
+/* ── Mock Course Detail ── */
+const MOCK_COURSE_DETAIL: CourseDetail = {
+  courseId: 1,
+  title: '2027 수능 수학Ⅱ 미적분 실전 킬러 특강',
+  description:
+    '수능 수학Ⅱ 미적분 단원의 킬러 문제를 완전 정복하는 실전 특강입니다. 함수의 극한부터 미분·적분 심화 문제까지, 실제 수능 출제 패턴을 분석하여 체계적으로 학습합니다.',
+  subjectName: '수학Ⅱ',
+  instructorName: '박지훈',
+  price: 89000,
+  isFree: false,
+  thumbnailUrl: '/image/lecture1.svg',
+  averageRating: 4.8,
+  reviewCount: 1234,
+  studentCount: 12543,
+  status: 'PUBLISHED',
+  isEnrolled: false,
+  isWishlisted: false,
+  isInCart: false,
+  learningGoals: [
+    '미분·적분 킬러 문제 유형을 완전히 파악하고 풀이할 수 있다',
+    '함수의 극한과 연속 개념을 실전에 적용할 수 있다',
+    '수능 수학Ⅱ 1등급을 위한 실전 감각을 기를 수 있다',
+    '빠른 계산과 정확한 풀이 전략을 습득한다',
+  ],
+  targetAudience: [
+    '수능 수학Ⅱ에서 3~4등급이며 1등급을 목표로 하는 수험생',
+    '미적분 킬러 문제에서 자꾸 막히는 학생',
+    '수학Ⅱ 전 범위를 빠르게 완성하고 싶은 학생',
+  ],
+  techTags: ['PDF 학습자료', '모의고사 5회분', '오답노트 양식', '질문 게시판'],
+  materialsProvided: ['강의 PDF', '연습 문제집', '기출 분석 자료'],
+  totalLessons: 42,
+  totalDuration: '38시간 20분',
+  notices: [
+    { noticeId: 1, title: '6월 모의고사 대비 특별 추가 강의 업로드 안내', createdAt: '2026-05-20' },
+    { noticeId: 2, title: '5월 오답풀이 라이브 일정 변경 안내', createdAt: '2026-05-10' },
+    { noticeId: 3, title: '강의 자료 v2.1 업데이트 완료', createdAt: '2026-04-28' },
+  ],
+  instructor: {
+    instructorId: 1,
+    name: '박지훈',
+    bio: '현 FLOWN 수학Ⅱ 전임 강사. 수능 수학 1등급 배출 전문 강사로, 10년 이상의 강의 경력을 보유하고 있습니다. 어려운 수학 개념도 직관적으로 이해할 수 있도록 돕는 것이 강의 철학입니다.',
+    career: [
+      '現 FLOWN 수학Ⅱ 전임 강사',
+      '前 대치동 대형 학원 수학 강사 (8년)',
+      '연세대학교 수학과 졸업',
+      '수능 수학 만점자 배출 다수',
+    ],
+    tags: ['수학Ⅱ', '수학Ⅰ', '미적분', '확률과 통계'],
+  },
+  curriculum: [
+    {
+      sectionId: 1,
+      title: '1단원. 함수의 극한과 연속',
+      lessons: [
+        { lessonId: 1, title: '함수의 극한 개념 총정리', duration: '42:15', isPreview: true },
+        { lessonId: 2, title: '좌극한·우극한과 극한 불존재 경우', duration: '38:40', isPreview: false },
+        { lessonId: 3, title: '연속함수 판단과 최대·최소 정리', duration: '35:20', isPreview: false },
+        { lessonId: 4, title: '킬러 유형 ① — 구간별 정의 함수', duration: '51:10', isPreview: false },
+      ],
+    },
+    {
+      sectionId: 2,
+      title: '2단원. 미분법',
+      lessons: [
+        { lessonId: 5, title: '미분계수와 도함수 기초', duration: '40:00', isPreview: false },
+        { lessonId: 6, title: '합성함수·역함수 미분', duration: '44:30', isPreview: false },
+        { lessonId: 7, title: '이계도함수와 오목·볼록', duration: '33:15', isPreview: false },
+        { lessonId: 8, title: '킬러 유형 ② — 최고차항 계수 조건 문제', duration: '58:20', isPreview: false },
+        { lessonId: 9, title: '킬러 유형 ③ — 미분가능성과 조건', duration: '55:45', isPreview: false },
+      ],
+    },
+    {
+      sectionId: 3,
+      title: '3단원. 적분법',
+      lessons: [
+        { lessonId: 10, title: '부정적분과 정적분 완전 정복', duration: '45:00', isPreview: false },
+        { lessonId: 11, title: '정적분의 성질과 활용', duration: '39:50', isPreview: false },
+        { lessonId: 12, title: '킬러 유형 ④ — 넓이·부피 계산', duration: '62:10', isPreview: false },
+        { lessonId: 13, title: '[최종] 실전 모의고사 해설 특강', duration: '90:00', isPreview: false },
+      ],
+    },
+  ],
+  reviews: [
+    {
+      reviewId: 1,
+      studentName: '김*현',
+      rating: 5,
+      content:
+        '정말 최고의 강의입니다. 킬러 문제 접근법이 너무 명쾌해서 드디어 제대로 이해했어요. 모의고사 성적이 3등급에서 1등급으로 올랐습니다!',
+      createdAt: '2026-05-15',
+      isMine: false,
+    },
+    {
+      reviewId: 2,
+      studentName: '이*준',
+      rating: 5,
+      content:
+        '박지훈 강사님 수업 방식이 정말 체계적입니다. PDF 자료도 잘 정리되어 있고 문제 풀이 과정 설명이 굉장히 친절해요.',
+      createdAt: '2026-05-10',
+      isMine: false,
+    },
+    {
+      reviewId: 3,
+      studentName: '박*서',
+      rating: 4,
+      content:
+        '전반적으로 좋은 강의입니다. 특히 2단원 미분법 킬러 파트가 인상적이었어요. 다음에도 수강할 것 같습니다.',
+      createdAt: '2026-05-01',
+      isMine: true,
+    },
+  ],
+  ratingDistribution: [
+    { stars: 5, count: 890 },
+    { stars: 4, count: 245 },
+    { stars: 3, count: 68 },
+    { stars: 2, count: 20 },
+    { stars: 1, count: 11 },
+  ],
+};
+
+export async function getCourseDetail(courseId: number): Promise<CourseDetail | null> {
+  // TODO: Replace with real API — GET /api/courses/:courseId
+  await new Promise(resolve => setTimeout(resolve, 200));
+  if (courseId === 1) return MOCK_COURSE_DETAIL;
+  // For other IDs, derive from the list as a minimal fallback
+  const item = MOCK_COURSES.find(c => c.courseId === courseId);
+  if (!item) return null;
+  return { ...MOCK_COURSE_DETAIL, ...item, description: MOCK_COURSE_DETAIL.description };
+}
 
 export async function getCourses(query?: CourseListQuery): Promise<CourseListItem[]> {
   // TODO: Replace with real API — GET /api/courses
