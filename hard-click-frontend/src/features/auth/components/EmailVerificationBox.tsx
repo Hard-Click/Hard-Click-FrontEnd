@@ -20,10 +20,32 @@ export default function EmailVerificationBox({
   buttonText,
 }: EmailVerificationBoxProps) {
   const [email, setEmail] = useState('');
-  const isFormValid = email.trim();
+  const [emailError, setEmailError] = useState('');
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const isFormValid = email.trim().length > 0 && emailRegex.test(email);
+  const handleSendCode = () => {
+    if (!email.trim()) {
+      setEmailError('이메일을 입력해주세요.');
+      return;
+    }
+
+    if (!emailRegex.test(email)) {
+      setEmailError('올바른 이메일 형식이 아닙니다.');
+      return;
+    }
+
+    if (email !== 'test@test.com') {
+      setEmailError('가입되지 않은 이메일입니다.');
+      return;
+    }
+
+    setEmailError('');
+  };
 
   return (
-    <div className="w-full max-w-[420px] rounded-[28px] bg-white px-8 py-10 shadow-sm">
+    <div className="w-full max-w-[420px] rounded-[16px] bg-white px-8 py-10 shadow-sm">
       {/* icon */}
       <div className="mb-6 flex justify-center">
         <div
@@ -50,21 +72,38 @@ export default function EmailVerificationBox({
       </label>
 
       {/* input */}
-      <div className="mb-6 flex h-14 items-center rounded-2xl border border-[#E5E7EB] px-4">
+      <div
+        className={`mb-2 flex h-14 items-center rounded-2xl border px-4 ${
+          emailError ? 'border-[#B91C1C]' : 'border-[#E5E7EB]'
+        }`}
+      >
         <Image src="/icons/mailIcon.svg" alt="mail" width={18} height={18} />
 
         <input
           type="email"
           placeholder="가입한 이메일을 입력하세요"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setEmailError('');
+          }}
           className="ml-3 w-full bg-transparent text-sm outline-none placeholder:text-[#9CA3AF]"
         />
+      </div>
+      <div className="mb-2 flex h-5 items-center gap-1">
+        {emailError && (
+          <>
+            <Image src="/icons/error.svg" alt="error" width={16} height={16} />
+
+            <p className="text-sm text-[#B91C1C]">{emailError}</p>
+          </>
+        )}
       </div>
 
       {/* button */}
       <button
         type="button"
+        onClick={handleSendCode}
         className={`h-12 w-full rounded-xl text-base font-semibold text-white transition ${
           isFormValid ? 'bg-[#2F5DAA] opacity-100' : 'bg-[#2F5DAA] opacity-50'
         }`}
