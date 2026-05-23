@@ -10,6 +10,7 @@ interface EmailVerificationBoxProps {
   title: string;
   description: string;
   buttonText: string;
+  onSuccess: () => void;
 }
 
 export default function EmailVerificationBox({
@@ -18,6 +19,7 @@ export default function EmailVerificationBox({
   title,
   description,
   buttonText,
+  onSuccess,
 }: EmailVerificationBoxProps) {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -42,6 +44,7 @@ export default function EmailVerificationBox({
     }
 
     setEmailError('');
+    onSuccess();
   };
 
   return (
