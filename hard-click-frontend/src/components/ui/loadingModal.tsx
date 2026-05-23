@@ -20,12 +20,12 @@ export default function LoadingModal({
         </div>
 
         {/* title */}
-        <h2 className="mb-4 text-center text-[40px] font-bold text-[#1F2937]">
+        <h2 className="mb-4 text-center text-[28px] font-bold text-[#1F2937]">
           {title}
         </h2>
 
         {/* description */}
-        <p className="text-center text-[32px] text-[#6B7280]">{description}</p>
+        <p className="text-center text-base text-[#6B7280]">{description}</p>
       </div>
     </div>
   );
