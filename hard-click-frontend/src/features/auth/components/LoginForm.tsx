@@ -324,8 +324,9 @@ export default function LoginForm() {
       {isConfirmModalOpen && (
         <ConfirmModal
           icon="/icons/security.svg"
+          iconBgColor="rgba(185, 28, 28, 0.1)"
           title="계정 보호 인증"
-          description={`비밀번호 입력 오류가 5회 발생하여 계정 보호 인증이 필요합니다.`}
+          description={`비밀번호 입력 오류가 5회 발생하여 \n 계정 보호 인증이 필요합니다.`}
           subDescription="확인을 누르면 계정 보호 인증 페이지로 이동합니다."
           cancelText="취소"
           confirmText="확인"
