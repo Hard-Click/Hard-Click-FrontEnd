@@ -1,10 +1,16 @@
 'use client';
 
+interface VerificationCodeBoxProps {
+  onSuccess: () => void;
+}
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 
-export default function VerificationCodeBox() {
+export default function VerificationCodeBox({
+  onSuccess,
+}: VerificationCodeBoxProps) {
   const [code, setCode] = useState('');
   const [codeError, setCodeError] = useState('');
 
@@ -21,7 +27,13 @@ export default function VerificationCodeBox() {
       return;
     }
 
+    if (code !== '123456') {
+      setCodeError('유효하지 않은 인증코드입니다.');
+      return;
+    }
+
     setCodeError('');
+    onSuccess();
   };
 
   return (
