@@ -40,7 +40,7 @@ export default function PasswordInputField({
 
       <button type="button" onClick={onToggleVisibility}>
         <Image
-          src={showPassword ? '/icons/closeEye.svg' : '/icons/openEye.svg'}
+          src={showPassword ? '/icons/openEye.svg' : '/icons/closeEye.svg'}
           alt="eye"
           width={20}
           height={20}
