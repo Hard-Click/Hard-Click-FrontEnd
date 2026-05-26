@@ -167,18 +167,22 @@ const MOCK_COURSE_DETAIL: CourseDetail = {
     '미적분 킬러 문제에서 자꾸 막히는 학생',
     '수학Ⅱ 전 범위를 빠르게 완성하고 싶은 학생',
   ],
-  techTags: ['PDF 학습자료', '모의고사 5회분', '오답노트 양식', '질문 게시판'],
-  materialsProvided: ['강의 PDF', '연습 문제집', '기출 분석 자료'],
+  techTags: ['함수의 극한', '연속함수', '미분법', '적분법', '급수'],
+  materialsProvided: ['강의 PDF', '연습 문제집', '기출 분석 자료', '실전 모의고사 5회'],
+  level: '중급~고급',
   totalLessons: 42,
   totalDuration: '38시간 20분',
   notices: [
-    { noticeId: 1, title: '6월 모의고사 대비 특별 추가 강의 업로드 안내', createdAt: '2026-05-20' },
-    { noticeId: 2, title: '5월 오답풀이 라이브 일정 변경 안내', createdAt: '2026-05-10' },
-    { noticeId: 3, title: '강의 자료 v2.1 업데이트 완료', createdAt: '2026-04-28' },
+    { noticeId: 1, title: '6월 모의고사 대비 특별 추가 강의 업로드 안내', content: '6월 모의고사 대비 특별 추가 강의가 업로드되었습니다. 수강생 여러분께서는 강의 목록에서 확인하세요.', createdAt: '2026-05-20', isPinned: true },
+    { noticeId: 2, title: '5월 오답풀이 라이브 일정 변경 안내', content: '5월 오답풀이 라이브 강의 일정이 5월 28일로 변경되었습니다. 참고 부탁드립니다.', createdAt: '2026-05-10' },
+    { noticeId: 4, title: '5월 특별 할인 이벤트 안내', content: '5월 한 달 동안 모든 강의 30% 할인 진행 중입니다!', createdAt: '2026-05-01' },
+    { noticeId: 3, title: '강의 자료 v2.1 업데이트 완료', content: '강의 자료 PDF가 v2.1로 업데이트되었습니다. 마이페이지 자료실에서 다시 다운로드해 주세요.', createdAt: '2026-04-28' },
+    { noticeId: 5, title: 'Q&A 게시판 운영 안내', content: '궁금한 점은 Q&A 게시판에 남겨주시면 24시간 내 답변드립니다.', createdAt: '2026-04-20' },
   ],
   instructor: {
     instructorId: 1,
     name: '박지훈',
+    subtitle: '수능 수학 전문 강사',
     bio: '현 FLOWN 수학Ⅱ 전임 강사. 수능 수학 1등급 배출 전문 강사로, 10년 이상의 강의 경력을 보유하고 있습니다. 어려운 수학 개념도 직관적으로 이해할 수 있도록 돕는 것이 강의 철학입니다.',
     career: [
       '現 FLOWN 수학Ⅱ 전임 강사',
@@ -187,37 +191,36 @@ const MOCK_COURSE_DETAIL: CourseDetail = {
       '수능 수학 만점자 배출 다수',
     ],
     tags: ['수학Ⅱ', '수학Ⅰ', '미적분', '확률과 통계'],
+    instructorStudentCount: 42800,
+    instructorCourseCount: 7,
+    instructorRating: 4.9,
   },
   curriculum: [
     {
       sectionId: 1,
-      title: '1단원. 함수의 극한과 연속',
+      title: '섹션 1: 함수의 극한',
       lessons: [
-        { lessonId: 1, title: '함수의 극한 개념 총정리', duration: '42:15', isPreview: true },
-        { lessonId: 2, title: '좌극한·우극한과 극한 불존재 경우', duration: '38:40', isPreview: false },
-        { lessonId: 3, title: '연속함수 판단과 최대·최소 정리', duration: '35:20', isPreview: false },
-        { lessonId: 4, title: '킬러 유형 ① — 구간별 정의 함수', duration: '51:10', isPreview: false },
+        { lessonId: 1, title: 'OT 및 학습 방향', duration: '05:23', isPreview: true },
+        { lessonId: 2, title: '함수의 극한 개념 정리', duration: '12:45', isPreview: true },
+        { lessonId: 3, title: '극한값 계산 문제풀이', duration: '18:30', isPreview: false },
       ],
     },
     {
       sectionId: 2,
-      title: '2단원. 미분법',
+      title: '섹션 2: 미분법',
       lessons: [
-        { lessonId: 5, title: '미분계수와 도함수 기초', duration: '40:00', isPreview: false },
-        { lessonId: 6, title: '합성함수·역함수 미분', duration: '44:30', isPreview: false },
-        { lessonId: 7, title: '이계도함수와 오목·볼록', duration: '33:15', isPreview: false },
-        { lessonId: 8, title: '킬러 유형 ② — 최고차항 계수 조건 문제', duration: '58:20', isPreview: false },
-        { lessonId: 9, title: '킬러 유형 ③ — 미분가능성과 조건', duration: '55:45', isPreview: false },
+        { lessonId: 4, title: '미분계수와 도함수 기초', duration: '40:00', isPreview: false },
+        { lessonId: 5, title: '합성함수·역함수 미분', duration: '44:30', isPreview: false },
+        { lessonId: 6, title: '이계도함수와 오목·볼록', duration: '33:15', isPreview: false },
       ],
     },
     {
       sectionId: 3,
-      title: '3단원. 적분법',
+      title: '섹션 3: 적분법',
       lessons: [
-        { lessonId: 10, title: '부정적분과 정적분 완전 정복', duration: '45:00', isPreview: false },
-        { lessonId: 11, title: '정적분의 성질과 활용', duration: '39:50', isPreview: false },
-        { lessonId: 12, title: '킬러 유형 ④ — 넓이·부피 계산', duration: '62:10', isPreview: false },
-        { lessonId: 13, title: '[최종] 실전 모의고사 해설 특강', duration: '90:00', isPreview: false },
+        { lessonId: 7, title: '부정적분과 정적분 완전 정복', duration: '45:00', isPreview: false },
+        { lessonId: 8, title: '정적분의 성질과 활용', duration: '39:50', isPreview: false },
+        { lessonId: 9, title: '실전 모의고사 해설 특강', duration: '90:00', isPreview: false },
       ],
     },
   ],
@@ -249,6 +252,96 @@ const MOCK_COURSE_DETAIL: CourseDetail = {
       createdAt: '2026-05-01',
       isMine: true,
     },
+    {
+      reviewId: 4,
+      studentName: '최*은',
+      rating: 5,
+      content:
+        '수능 전 마지막으로 수강했는데 정말 잘한 선택이었어요. 킬러 문항 유형별 접근법이 완벽하게 정리돼 있어서 실전에서 바로 써먹을 수 있었습니다.',
+      createdAt: '2026-04-28',
+      isMine: false,
+    },
+    {
+      reviewId: 5,
+      studentName: '정*우',
+      rating: 4,
+      content:
+        '설명이 정말 친절하고 PDF 자료 퀄리티가 높아요. 강의 속도가 살짝 빠른 편이라 일시정지하면서 따라가야 했지만 내용 자체는 최상입니다.',
+      createdAt: '2026-04-20',
+      isMine: false,
+    },
+    {
+      reviewId: 6,
+      studentName: '한*아',
+      rating: 5,
+      content:
+        '미적분 개념부터 킬러까지 완벽하게 커버해줘서 좋았어요. 기출 분석 자료가 특히 유용했고 질문 게시판 답변도 빠릅니다.',
+      createdAt: '2026-04-15',
+      isMine: false,
+    },
+    {
+      reviewId: 7,
+      studentName: '오*진',
+      rating: 3,
+      content:
+        '킬러 문항 접근법이 체계적이에요. 다만 난이도가 높아서 기초가 부족하면 어려울 수 있어요. 개념 강의를 먼저 듣고 오는 것을 추천합니다.',
+      createdAt: '2026-04-10',
+      isMine: false,
+    },
+    {
+      reviewId: 8,
+      studentName: '강*민',
+      rating: 5,
+      content:
+        '3년째 박지훈 강사님 강의 듣고 있는데 이번 강의가 역대급입니다. 특히 수열 극한 파트 풀이가 정말 깔끔하고 효율적이에요.',
+      createdAt: '2026-04-05',
+      isMine: false,
+    },
+    {
+      reviewId: 9,
+      studentName: '윤*희',
+      rating: 5,
+      content:
+        '모의고사 5회분 포함이라 가성비가 정말 좋아요. 강의 내용도 충실하고 복습하기 좋게 구성돼 있어서 반복 수강 중입니다.',
+      createdAt: '2026-03-28',
+      isMine: false,
+    },
+    {
+      reviewId: 10,
+      studentName: '임*호',
+      rating: 4,
+      content:
+        '강의 구성이 매우 논리적이에요. 개념 → 예제 → 킬러 순서로 진행되는 흐름이 이해하기 좋습니다. 강의 시간 대비 학습 효율이 높아요.',
+      createdAt: '2026-03-20',
+      isMine: false,
+    },
+    {
+      reviewId: 11,
+      studentName: '서*연',
+      rating: 5,
+      content:
+        '드디어 미적분 킬러 풀 수 있게 됐어요! 강사님이 핵심만 짚어주셔서 시간 낭비 없이 공부할 수 있었습니다. 강추합니다.',
+      createdAt: '2026-03-15',
+      isMine: false,
+    },
+    {
+      reviewId: 12,
+      studentName: '남*찬',
+      rating: 4,
+      content:
+        '강의 퀄리티는 정말 좋은데 자막이 없어서 조금 아쉬웠어요. 그래도 설명이 명확해서 따라가는 데 무리는 없었습니다.',
+      createdAt: '2026-03-08',
+      isMine: false,
+    },
+    {
+      reviewId: 13,
+      studentName: '전*영',
+      rating: 5,
+      content:
+        '작년에 이 강의 듣고 수능 수학 1등급 받았습니다. 올해 동생한테도 추천해줬어요. 박지훈 선생님 강의는 믿고 듣습니다.',
+      createdAt: '2026-03-01',
+      isMine: false,
+    },
   ],
   ratingDistribution: [
     { stars: 5, count: 890 },
@@ -263,6 +356,12 @@ export async function getCourseDetail(courseId: number): Promise<CourseDetail | 
   // TODO: Replace with real API — GET /api/courses/:courseId
   await new Promise(resolve => setTimeout(resolve, 200));
   if (courseId === 1) return MOCK_COURSE_DETAIL;
+  // mock: 삭제된 강의 (courseId=4)
+  if (courseId === 4) return { ...MOCK_COURSE_DETAIL, courseId: 4, status: 'DELETED' };
+  // mock: 접근 불가 강의 (courseId=5)
+  if (courseId === 5) return { ...MOCK_COURSE_DETAIL, courseId: 5, status: 'HIDDEN' };
+  // mock: 수강평 없는 강의 (courseId=6)
+  if (courseId === 6) return { ...MOCK_COURSE_DETAIL, courseId: 6, reviews: [], reviewCount: 0, ratingDistribution: [] };
   // For other IDs, derive from the list as a minimal fallback
   const item = MOCK_COURSES.find(c => c.courseId === courseId);
   if (!item) return null;
