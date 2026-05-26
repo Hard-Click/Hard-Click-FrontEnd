@@ -60,7 +60,7 @@ export default function ForgotPasswordForm() {
 
         {/* title */}
         <h2 className="mb-3 text-center text-[28px] font-bold text-[#1F2937]">
-          임시 비밀번호 발급
+          이메일 인증
         </h2>
 
         {/* description */}
