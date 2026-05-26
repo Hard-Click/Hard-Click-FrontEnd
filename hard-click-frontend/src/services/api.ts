@@ -20,6 +20,25 @@ const axiosInstance = axios.create({
   },
 });
 
+/**
+ * 요청마다 localStorage의 accessToken을 Authorization 헤더에 자동 첨부
+ * memberId가 있으면 X-Member-Id 헤더도 같이 첨부 (백엔드 도메인 격리용)
+ * 비로그인 API는 헤더가 없어도 무시되므로 안전
+ */
+axiosInstance.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    const memberId = localStorage.getItem('memberId');
+    if (memberId) {
+      config.headers['X-Member-Id'] = memberId;
+    }
+  }
+  return config;
+});
+
 function withSuccess<T>(body: Omit<ApiResponse<T>, 'success'>): ApiResponse<T> {
   return {
     ...body,

@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import { sendPasswordResetEmailAction } from '../actions';
 
 interface EmailVerificationBoxProps {
   icon: string;
@@ -10,7 +11,7 @@ interface EmailVerificationBoxProps {
   title: string;
   description: string;
   buttonText: string;
-  onSuccess: () => void;
+  onSuccess: (email: string) => void;
 }
 
 export default function EmailVerificationBox({
@@ -23,11 +24,12 @@ export default function EmailVerificationBox({
 }: EmailVerificationBoxProps) {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   const isFormValid = email.trim().length > 0 && emailRegex.test(email);
-  const handleSendCode = () => {
+  const handleSendCode = async () => {
     if (!email.trim()) {
       setEmailError('이메일을 입력해주세요.');
       return;
@@ -38,13 +40,19 @@ export default function EmailVerificationBox({
       return;
     }
 
-    if (email !== 'test@test.com') {
-      setEmailError('가입되지 않은 이메일입니다.');
+    setEmailError('');
+    setIsLoading(true);
+
+    const result = await sendPasswordResetEmailAction(email);
+
+    setIsLoading(false);
+
+    if (!result.success) {
+      setEmailError(result.message ?? '가입되지 않은 이메일입니다.');
       return;
     }
 
-    setEmailError('');
-    onSuccess();
+    onSuccess(email);
   };
 
   return (
@@ -107,11 +115,12 @@ export default function EmailVerificationBox({
       <button
         type="button"
         onClick={handleSendCode}
+        disabled={isLoading}
         className={`h-12 w-full rounded-xl text-base font-semibold text-white transition ${
-          isFormValid ? 'bg-[#2F5DAA] opacity-100' : 'bg-[#2F5DAA] opacity-50'
+          isFormValid && !isLoading ? 'bg-[#2F5DAA] opacity-100' : 'bg-[#2F5DAA] opacity-50'
         }`}
       >
-        {buttonText}
+        {isLoading ? '발송 중...' : buttonText}
       </button>
 
       {/* divider */}

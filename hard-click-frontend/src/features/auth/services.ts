@@ -157,3 +157,92 @@ export async function login(payload: LoginRequest): Promise<LoginResult> {
     };
   }
 }
+
+/* ─────────────────────────── 비밀번호 찾기 흐름 ─────────────────────────── */
+
+/** 비밀번호 찾기 인증번호 발송 (POST /api/auth/password-reset/email) */
+export async function sendPasswordResetEmail(email: string) {
+  if (USE_MOCK) {
+    console.log('[MOCK] 비번 재설정 인증번호 발송:', email);
+    return { success: true, httpStatus: 200, data: {}, message: '인증번호 발송되었습니다' };
+  }
+  return api.post<Record<string, never>>('/api/auth/password-reset/email', { email });
+}
+
+/** 비밀번호 찾기 인증번호 검증 (POST /api/auth/password-reset/verify) */
+export async function verifyPasswordResetCode(email: string, code: string) {
+  if (USE_MOCK) {
+    console.log('[MOCK] 비번 재설정 인증번호 검증:', email, code);
+    return {
+      success: true,
+      httpStatus: 200,
+      data: { passwordChangeToken: 'MOCK_PASSWORD_CHANGE_TOKEN' },
+      message: '인증번호 검증 완료',
+    };
+  }
+  return api.post<{ passwordChangeToken: string }>(
+    '/api/auth/password-reset/verify',
+    { email, code },
+  );
+}
+
+/** 비밀번호 재설정 (PATCH /api/auth/password-reset) */
+export async function resetPassword(payload: {
+  email: string;
+  passwordChangeToken: string;
+  newPassword: string;
+  newPasswordConfirm: string;
+}) {
+  if (USE_MOCK) {
+    console.log('[MOCK] 비번 재설정:', payload);
+    return { success: true, httpStatus: 200, data: {}, message: '비밀번호 재설정 완료' };
+  }
+  return api.patch<Record<string, never>>('/api/auth/password-reset', payload);
+}
+
+/* ─────────────────────────── 잠긴 계정 흐름 ─────────────────────────── */
+
+/** 잠긴 계정 인증번호 검증 (POST /api/auth/account-locks/verify) */
+export async function verifyAccountLockCode(email: string, code: string) {
+  if (USE_MOCK) {
+    console.log('[MOCK] 잠긴 계정 인증번호 검증:', email, code);
+    return {
+      success: true,
+      httpStatus: 200,
+      data: { passwordChangeToken: 'MOCK_LOCK_PASSWORD_CHANGE_TOKEN' },
+      message: '계정 보호 인증 완료',
+    };
+  }
+  return api.post<{ passwordChangeToken: string }>(
+    '/api/auth/account-locks/verify',
+    { email, code },
+  );
+}
+
+/** 잠긴 계정 비밀번호 변경 (PATCH /api/auth/account-locks/password) */
+export async function changeLockedAccountPassword(payload: {
+  passwordChangeToken: string;
+  newPassword: string;
+  newPasswordConfirm: string;
+}) {
+  if (USE_MOCK) {
+    console.log('[MOCK] 잠긴 계정 비번 변경:', payload);
+    return { success: true, httpStatus: 200, data: {}, message: '비번 변경 및 잠금 해제 완료' };
+  }
+  return api.patch<Record<string, never>>('/api/auth/account-locks/password', payload);
+}
+
+/* ─────────────────────────── 비밀번호 변경 (로그인 상태) ─────────────────────────── */
+
+/** 비밀번호 변경 (PATCH /api/members/me/password) — Authorization 필요 */
+export async function changePassword(payload: {
+  currentPassword: string;
+  newPassword: string;
+  newPasswordConfirm: string;
+}) {
+  if (USE_MOCK) {
+    console.log('[MOCK] 비밀번호 변경:', payload);
+    return { success: true, httpStatus: 200, data: {}, message: '비밀번호 변경 완료' };
+  }
+  return api.patch<Record<string, never>>('/api/members/me/password', payload);
+}

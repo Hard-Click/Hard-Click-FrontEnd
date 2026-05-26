@@ -1,22 +1,26 @@
 'use client';
 
 interface VerificationCodeBoxProps {
-  onSuccess: () => void;
+  email: string;
+  onSuccess: (passwordChangeToken: string) => void;
 }
 
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import { verifyAccountLockCodeAction } from '../actions';
 
 export default function VerificationCodeBox({
+  email,
   onSuccess,
 }: VerificationCodeBoxProps) {
   const [code, setCode] = useState('');
   const [codeError, setCodeError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const isFormValid = code.trim().length === 6;
 
-  const handleVerifyCode = () => {
+  const handleVerifyCode = async () => {
     if (!code.trim()) {
       setCodeError('인증코드를 입력해주세요.');
       return;
@@ -27,13 +31,19 @@ export default function VerificationCodeBox({
       return;
     }
 
-    if (code !== '123456') {
-      setCodeError('유효하지 않은 인증코드입니다.');
+    setCodeError('');
+    setIsLoading(true);
+
+    const result = await verifyAccountLockCodeAction(email, code);
+
+    setIsLoading(false);
+
+    if (!result.success || !result.data?.passwordChangeToken) {
+      setCodeError(result.message ?? '유효하지 않은 인증코드입니다.');
       return;
     }
 
-    setCodeError('');
-    onSuccess();
+    onSuccess(result.data.passwordChangeToken);
   };
 
   return (
