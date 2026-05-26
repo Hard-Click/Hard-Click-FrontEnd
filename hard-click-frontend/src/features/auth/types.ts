@@ -60,14 +60,16 @@ export interface EmailVerificationResponse {
 
 /** 백엔드 LoginRequest 매칭 */
 export interface LoginRequest {
-  username: string;
+  username: string;  // 아이디 또는 이메일
   password: string;
 }
 
-/** 백엔드 AuthToken 응답 (ApiResponse 래핑 없이 raw로 반환됨) */
+/** 백엔드 로그인 응답 data 부분 */
 export interface AuthToken {
   accessToken: string;
   refreshToken: string;
+  memberId: number;
+  role: string;       // "STUDENT" | "INSTRUCTOR" | "ADMIN"
 }
 
 /** 로그인 결과 — 컴포넌트 호환용 success 필드 포함 */
@@ -76,4 +78,6 @@ export interface LoginResult {
   message: string;
   data?: AuthToken;
   errorCode?: string;
+  /** 로그인 5회 실패로 계정 잠금된 경우 (HTTP 423) */
+  isLocked?: boolean;
 }

@@ -88,9 +88,8 @@ export async function register(payload: RegisterRequest) {
 }
 
 /**
- * 로그인
- * 백엔드 응답이 ApiResponse 래핑 없이 AuthToken({ accessToken, refreshToken })을 raw로 반환하므로
- * 공용 api 클라이언트 대신 axios를 직접 사용
+ * 로그인 (노션 API 명세 매칭)
+ * 응답: { httpStatus, message, data: { accessToken, refreshToken, memberId, role } }
  */
 export async function login(payload: LoginRequest): Promise<LoginResult> {
   if (USE_MOCK) {
@@ -112,25 +111,41 @@ export async function login(payload: LoginRequest): Promise<LoginResult> {
       data: {
         accessToken: 'MOCK_ACCESS_TOKEN',
         refreshToken: 'MOCK_REFRESH_TOKEN',
+        memberId: 1,
+        role: 'STUDENT',
       },
     };
   }
 
   try {
-    const response = await axios.post<AuthToken>(
-      `${BASE_URL}/api/auth/login`,
-      payload,
-      { headers: { 'Content-Type': 'application/json' } },
-    );
+    const response = await axios.post<{
+      httpStatus: number;
+      message: string;
+      data: AuthToken;
+    }>(`${BASE_URL}/api/auth/login`, payload, {
+      headers: { 'Content-Type': 'application/json' },
+    });
 
     return {
       success: true,
-      message: '로그인되었습니다',
-      data: response.data,
+      message: response.data.message ?? '로그인되었습니다',
+      data: response.data.data,
     };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
+      const status = error.response.status;
       const body = error.response.data as { message?: string; errorCode?: string };
+
+      // 423 Locked → 5회 실패로 계정 잠금
+      if (status === 423) {
+        return {
+          success: false,
+          message: body?.message ?? '로그인 5회 실패로 계정이 잠겼습니다. 이메일 인증을 진행해주세요.',
+          errorCode: body?.errorCode,
+          isLocked: true,
+        };
+      }
+
       return {
         success: false,
         message: body?.message ?? '아이디 또는 비밀번호가 올바르지 않습니다',
