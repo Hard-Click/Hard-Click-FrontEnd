@@ -135,14 +135,14 @@ export default function LoginForm() {
       return;
     }
 
-    // 로그인 성공 → 토큰 + memberId + role 저장 후 홈으로 이동
+    // 로그인 성공 → 토큰 + memberId + role 저장 후 강의 전체 조회 페이지로 이동
     authStore.setAuth({
       accessToken: result.data.accessToken,
       refreshToken: result.data.refreshToken,
       memberId: result.data.memberId,
       role: result.data.role,
     });
-    router.push('/');
+    router.push('/courses');
   };
 
   return (
