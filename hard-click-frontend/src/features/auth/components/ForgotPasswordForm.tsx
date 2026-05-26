@@ -8,21 +8,39 @@ import { useState } from 'react';
 import LoadingModal from '@/components/ui/loadingModal';
 import SingleButtonModal from '@/components/ui/singleButtonModal';
 
+const MAX_SEND_COUNT = 3;
+const LIMIT_KEY = 'forgotPasswordSendDate';
+const COUNT_KEY = 'forgotPasswordSendCount';
+
+function getTodayCount(): number {
+  if (typeof window === 'undefined') return 0;
+  const savedDate = localStorage.getItem(LIMIT_KEY);
+  const today = new Date().toDateString();
+  if (savedDate !== today) {
+    localStorage.setItem(LIMIT_KEY, today);
+    localStorage.setItem(COUNT_KEY, '0');
+    return 0;
+  }
+  return parseInt(localStorage.getItem(COUNT_KEY) ?? '0', 10);
+}
+
+function incrementCount() {
+  const current = getTodayCount();
+  localStorage.setItem(COUNT_KEY, String(current + 1));
+}
+
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
-
   const [isLoading, setIsLoading] = useState(false);
-
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   const router = useRouter();
-
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
   const isFormValid = email.trim().length > 0 && emailRegex.test(email);
 
-  const handleSendTempPassword = () => {
+  const handleSendTempPassword = async () => {
     if (!email.trim()) {
       setEmailError('이메일을 입력해주세요.');
       return;
@@ -33,16 +51,18 @@ export default function ForgotPasswordForm() {
       return;
     }
 
-    if (email !== 'test@test.com') {
-      setEmailError('가입되지 않은 이메일입니다. 다시 입력해주세요.');
+    // 하루 3회 제한 체크
+    if (getTodayCount() >= MAX_SEND_COUNT) {
+      setShowLimitModal(true);
       return;
     }
 
     setEmailError('');
-
     setIsLoading(true);
 
+    // TODO: 백엔드 연동 시 sendPasswordResetEmail(email) 호출
     setTimeout(() => {
+      incrementCount();
       setIsLoading(false);
       setIsSuccessModalOpen(true);
     }, 2000);
@@ -80,13 +100,7 @@ export default function ForgotPasswordForm() {
               emailError ? 'border-[#B91C1C]' : 'border-[#E5E7EB]'
             }`}
           >
-            <Image
-              src="/icons/mailIcon.svg"
-              alt="mail"
-              width={18}
-              height={18}
-            />
-
+            <Image src="/icons/mailIcon.svg" alt="mail" width={18} height={18} />
             <input
               type="email"
               placeholder="가입한 이메일을 입력하세요"
@@ -103,13 +117,7 @@ export default function ForgotPasswordForm() {
           <div className="mt-2 flex min-h-[20px] items-center gap-1">
             {emailError && (
               <>
-                <Image
-                  src="/icons/error.svg"
-                  alt="error"
-                  width={16}
-                  height={16}
-                />
-
+                <Image src="/icons/error.svg" alt="error" width={16} height={16} />
                 <p className="text-sm text-[#B91C1C]">{emailError}</p>
               </>
             )}
@@ -120,8 +128,9 @@ export default function ForgotPasswordForm() {
         <button
           type="button"
           onClick={handleSendTempPassword}
+          disabled={isLoading}
           className={`h-12 w-full rounded-xl text-base font-semibold text-white transition ${
-            isFormValid ? 'bg-[#2F5DAA] opacity-100' : 'bg-[#2F5DAA] opacity-50'
+            isFormValid && !isLoading ? 'bg-[#2F5DAA] opacity-100' : 'bg-[#2F5DAA] opacity-50'
           }`}
         >
           발급
@@ -132,10 +141,7 @@ export default function ForgotPasswordForm() {
 
         {/* back */}
         <div className="text-center">
-          <Link
-            href="/auth/login"
-            className="text-sm font-medium text-[#2F5DAA]"
-          >
+          <Link href="/auth/login" className="text-sm font-medium text-[#2F5DAA]">
             로그인으로 돌아가기
           </Link>
         </div>
@@ -149,7 +155,7 @@ export default function ForgotPasswordForm() {
         />
       )}
 
-      {/* success modal */}
+      {/* 발급 완료 모달 */}
       {isSuccessModalOpen && (
         <SingleButtonModal
           icon="/icons/mail.svg"
@@ -160,6 +166,29 @@ export default function ForgotPasswordForm() {
           buttonText="로그인 페이지로 이동"
           onClick={() => router.push('/auth/login')}
         />
+      )}
+
+      {/* 발급 횟수 초과 모달 */}
+      {showLimitModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-[320px] rounded-2xl bg-white px-6 py-7 shadow-xl">
+            <h3 className="mb-2 text-center text-base font-bold text-[#1F2937]">
+              비밀번호 재발급 제한
+            </h3>
+            <p className="mb-6 text-center text-sm leading-relaxed text-[#6B7280]">
+              비밀번호 재발급은 하루에 3번만 가능합니다.
+              <br />
+              내일 다시 시도해주세요.
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push('/auth/login')}
+              className="h-11 w-full rounded-xl bg-[#2F5DAA] text-sm font-semibold text-white"
+            >
+              확인
+            </button>
+          </div>
+        </div>
       )}
     </>
   );
