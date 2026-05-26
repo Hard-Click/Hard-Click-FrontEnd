@@ -264,13 +264,16 @@ export default function CourseDetailPage() {
   // UA-P0-121: 유료 → 결제 모달 → POST /api/payments → enrollments 자동 생성
   const handleEnrollClick = async () => {
     if (course?.isFree) {
-      const result = await enrollCourse(courseId);
+      const result = await enrollCourse(courseId, 'FREE');
       if (result.success) {
         setIsEnrolled(true);
+        setToast(result.message);
+      } else {
         setToast(result.message);
       }
     } else {
       // TODO: 유료 수강신청 — 팀원 결제 모달 확인 후 연결 (UA-P0-121)
+      // 모달에서 결제 완료 후 enrollCourse(courseId, 'PAID') 호출
     }
   };
 

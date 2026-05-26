@@ -1,17 +1,30 @@
+import { enroll } from '@/features/enrollments/services';
+import type { PaymentType } from '@/features/enrollments/types';
+
 // TODO: Replace stubs with real API calls when backend is ready
 
 /* ── 수강신청 ── */
 
-// POST /api/enrollments
-// 유료: 결제 완료 후 자동 수강권 생성 (결제 페이지 → POST /api/payments → enrollments 자동 처리)
-// 무료: 즉시 수강권(enrolled_via='FREE') 생성
-export async function enrollCourse(courseId: number): Promise<{
+/**
+ * 수강신청 (실제 API 연동됨)
+ * POST /api/enrollments — features/enrollments/services.ts 호출
+ * 무료: paymentType='FREE'로 즉시 수강권 생성
+ * 유료: paymentType='PAID', 결제 페이지에서 처리 권장
+ */
+export async function enrollCourse(
+  courseId: number,
+  paymentType: PaymentType = 'FREE',
+): Promise<{
   success: boolean;
   message: string;
   enrollmentId?: number;
 }> {
-  console.log('[stub] POST /api/enrollments', { courseId });
-  return { success: true, message: '수강신청이 완료되었습니다.', enrollmentId: 1 };
+  const result = await enroll({ courseId, paymentType });
+  return {
+    success: result.success,
+    message: result.message ?? (result.success ? '수강신청이 완료되었습니다.' : '수강신청에 실패했습니다.'),
+    enrollmentId: result.data?.enrollmentId,
+  };
 }
 
 /* ── 장바구니 ── */

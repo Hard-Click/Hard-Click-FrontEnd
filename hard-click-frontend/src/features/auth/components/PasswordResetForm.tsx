@@ -9,8 +9,14 @@ import PasswordRuleList from './PasswordRuleList';
 import PasswordValidationMessage from './PasswordValidationMessage';
 import LoadingModal from '@/components/ui/loadingModal';
 import SingleButtonModal from '@/components/ui/singleButtonModal';
+import { changeLockedAccountPasswordAction } from '../actions';
 
-export default function PasswordResetForm() {
+interface PasswordResetFormProps {
+  /** 잠긴 계정 인증번호 검증으로 받은 비밀번호 변경 토큰 */
+  passwordChangeToken: string;
+}
+
+export default function PasswordResetForm({ passwordChangeToken }: PasswordResetFormProps) {
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -42,7 +48,7 @@ export default function PasswordResetForm() {
 
   const isFormValid = isPasswordValid && isPasswordMatch;
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (!password.trim()) {
       setPasswordError('비밀번호 조건을 다시 확인해주세요.');
       passwordRef.current?.focus();
@@ -57,29 +63,35 @@ export default function PasswordResetForm() {
 
     if (!passwordConfirm.trim()) {
       setConfirmError('비밀번호를 다시 입력해주세요.');
-
       confirmPasswordRef.current?.focus();
-
       return;
     }
 
     if (password !== passwordConfirm) {
       setConfirmError('비밀번호가 일치하지 않습니다.');
-
       confirmPasswordRef.current?.focus();
-
       return;
     }
 
     setPasswordError('');
     setConfirmError('');
-
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsSuccessModalOpen(true);
-    }, 2000);
+    const result = await changeLockedAccountPasswordAction({
+      passwordChangeToken,
+      newPassword: password,
+      newPasswordConfirm: passwordConfirm,
+    });
+
+    setIsLoading(false);
+
+    if (!result.success) {
+      setPasswordError(result.message ?? '비밀번호 변경에 실패했습니다.');
+      passwordRef.current?.focus();
+      return;
+    }
+
+    setIsSuccessModalOpen(true);
   };
 
   return (

@@ -19,6 +19,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import LoadingModal from '@/components/ui/loadingModal';
+import { deleteCourse, updateCourse } from '../services';
 
 export default function MyCourseCard({
   id,
@@ -43,52 +44,52 @@ export default function MyCourseCard({
     setIsLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // DELETE /api/courses/{courseId}
+      const result = await deleteCourse(id);
 
-      const savedCourses = JSON.parse(
-        localStorage.getItem('myCourses') || '[]'
-      );
-
-      const updatedCourses = savedCourses.filter(
-        (course: any) => course.id !== id
-      );
-
-      localStorage.setItem('myCourses', JSON.stringify(updatedCourses));
+      if (!result.success) {
+        // 실패 시 localStorage 폴백
+        const savedCourses = JSON.parse(
+          localStorage.getItem('myCourses') || '[]',
+        );
+        const updatedCourses = savedCourses.filter(
+          (course: any) => course.id !== id,
+        );
+        localStorage.setItem('myCourses', JSON.stringify(updatedCourses));
+      }
 
       setIsLoading(false);
       setIsDeleted(true);
 
-      toast.success('강의 삭제가 완료되었습니다.', {
-        duration: 2000,
-      });
+      toast.success('강의 삭제가 완료되었습니다.', { duration: 2000 });
     } catch (error) {
       setIsLoading(false);
+      console.error(error);
     }
   };
 
-  const handleTogglePublic = () => {
+  const handleTogglePublic = async () => {
     const newPublicState = !publicState;
 
-    const savedCourses = JSON.parse(localStorage.getItem('myCourses') || '[]');
+    // PATCH /api/courses/{courseId} (status 변경)
+    const result = await updateCourse(id, {
+      status: newPublicState ? 'PUBLISHED' : 'DRAFT',
+    });
 
-    const updatedCourses = savedCourses.map((course: any) =>
-      course.id === id
-        ? {
-            ...course,
-            isPublic: newPublicState,
-          }
-        : course
-    );
-
-    localStorage.setItem('myCourses', JSON.stringify(updatedCourses));
+    if (!result.success) {
+      // 실패 시 localStorage 폴백
+      const savedCourses = JSON.parse(localStorage.getItem('myCourses') || '[]');
+      const updatedCourses = savedCourses.map((course: any) =>
+        course.id === id ? { ...course, isPublic: newPublicState } : course,
+      );
+      localStorage.setItem('myCourses', JSON.stringify(updatedCourses));
+    }
 
     setPublicState(newPublicState);
 
     toast.success(
       newPublicState ? '강의가 공개되었습니다.' : '강의가 비공개되었습니다.',
-      {
-        duration: 2000,
-      }
+      { duration: 2000 },
     );
   };
   if (isDeleted) return null;

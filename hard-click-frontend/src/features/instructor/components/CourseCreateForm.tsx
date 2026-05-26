@@ -5,6 +5,8 @@ import { useRef, useState } from 'react';
 import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import { useRouter } from 'next/navigation';
 import LoadingModal from '@/components/ui/loadingModal';
+import { createCourse, updateCourse } from '../services';
+import { MOCK_SUBJECTS } from '@/features/courses/services';
 
 const SUBJECT_OPTIONS = [
   '국어',
@@ -775,50 +777,89 @@ export default function CourseCreateForm({
             setIsLoading(true);
 
             try {
-              await new Promise((resolve) => setTimeout(resolve, 2000));
+              // 과목명 → subjectId 매핑
+              const subjectId =
+                MOCK_SUBJECTS.find((s) => s.name === subject)?.subjectId ?? 1;
 
-              const newCourse = {
-                id: Date.now(),
-                category: subject,
+              // 섹션의 강의들을 백엔드 curriculum 포맷({title, durationMinutes})으로 변환
+              const flatCurriculum = sections.flatMap((sec) =>
+                sec.lectures.map((lec) => ({
+                  title: lec.fileName || sec.title,
+                  durationMinutes: parseInt(lec.duration ?? '0', 10) || 0,
+                })),
+              );
+
+              // 첫 번째 영상 파일이 있으면 업로드 (API는 단일 파일만 받음)
+              const firstFile = sections
+                .flatMap((s) => s.lectures)
+                .find((l) => l.file)?.file;
+
+              const payload = {
                 title,
+                subjectId,
                 description,
-
-                thumbnailName: thumbnail
-                  ? thumbnail.name
-                  : initialData?.thumbnailName || '',
-
+                price: priceType === 'FREE' ? 0 : Number(price) || 0,
+                free: (priceType === 'FREE' ? '무료' : '유료') as '무료' | '유료',
+                status: 'PUBLISHED' as const,
                 thumbnailUrl: thumbnail
                   ? URL.createObjectURL(thumbnail)
                   : thumbnailPreview,
-
-                curriculum: sections,
-
-                isPublic: true,
-                students: 0,
-                rating: 0,
-                reviewCount: 0,
-                createdAt: '2025-08-05',
-
-                priceType,
-                price: priceType === 'FREE' ? '무료' : `${price}원`,
+                curriculum: flatCurriculum,
+                courseFile: firstFile,
               };
 
-              const savedCourses = JSON.parse(
-                localStorage.getItem('myCourses') || '[]'
-              );
+              const result =
+                mode === 'edit' && initialData
+                  ? await updateCourse(Number((initialData as any).id ?? 0), {
+                      title: payload.title,
+                      subjectId: payload.subjectId,
+                      description: payload.description,
+                      price: payload.price,
+                      free: payload.free,
+                      status: payload.status,
+                      thumbnailUrl: payload.thumbnailUrl,
+                      curriculum: payload.curriculum,
+                    })
+                  : await createCourse(payload);
 
-              localStorage.setItem(
-                'myCourses',
-                JSON.stringify([newCourse, ...savedCourses])
-              );
+              if (!result.success) {
+                console.error('강의 저장 실패:', result.message);
+                // 백엔드 실패 시 localStorage 폴백
+                const newCourse = {
+                  id: Date.now(),
+                  category: subject,
+                  title,
+                  description,
+                  thumbnailName: thumbnail
+                    ? thumbnail.name
+                    : initialData?.thumbnailName || '',
+                  thumbnailUrl: thumbnail
+                    ? URL.createObjectURL(thumbnail)
+                    : thumbnailPreview,
+                  curriculum: sections,
+                  isPublic: true,
+                  students: 0,
+                  rating: 0,
+                  reviewCount: 0,
+                  createdAt: new Date().toISOString().split('T')[0],
+                  priceType,
+                  price: priceType === 'FREE' ? '무료' : `${price}원`,
+                };
+                const savedCourses = JSON.parse(
+                  localStorage.getItem('myCourses') || '[]',
+                );
+                localStorage.setItem(
+                  'myCourses',
+                  JSON.stringify([newCourse, ...savedCourses]),
+                );
+              }
 
               sessionStorage.setItem(
                 'courseToastType',
-                mode === 'edit' ? 'edit' : 'create'
+                mode === 'edit' ? 'edit' : 'create',
               );
 
               setIsLoading(false);
-
               router.push('/instructor/myCourses');
             } catch (error) {
               setIsLoading(false);
