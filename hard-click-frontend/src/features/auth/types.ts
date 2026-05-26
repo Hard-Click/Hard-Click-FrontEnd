@@ -57,3 +57,23 @@ export interface DuplicateCheckResponse {
 export interface EmailVerificationResponse {
   emailVerificationToken: string;
 }
+
+/** 백엔드 LoginRequest 매칭 */
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+/** 백엔드 AuthToken 응답 (ApiResponse 래핑 없이 raw로 반환됨) */
+export interface AuthToken {
+  accessToken: string;
+  refreshToken: string;
+}
+
+/** 로그인 결과 — 컴포넌트 호환용 success 필드 포함 */
+export interface LoginResult {
+  success: boolean;
+  message: string;
+  data?: AuthToken;
+  errorCode?: string;
+}
