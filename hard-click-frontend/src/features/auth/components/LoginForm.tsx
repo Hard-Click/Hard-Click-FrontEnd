@@ -114,9 +114,14 @@ export default function LoginForm() {
 
       const nextCount = loginFailCount + 1;
       setLoginFailCount(nextCount);
+      // 성공 메시지가 새어들어오는 경우 방어 (백엔드가 200 + data null로 보낼 때)
+      const safeMessage =
+        result.message && !result.message.includes('로그인되었습니다')
+          ? result.message
+          : '아이디 또는 비밀번호가 올바르지 않습니다';
       setErrors({
         loginId: '',
-        password: `${result.message ?? '비밀번호가 일치하지 않습니다'} (${nextCount} / 5)`,
+        password: `${safeMessage} (${nextCount} / 5)`,
       });
       setErrorBorder({
         loginId: false,
