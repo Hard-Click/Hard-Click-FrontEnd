@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useRef, useState } from 'react';
-import ConfirmModal from '@/components/ui/confirmModal';
+import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import { useRouter } from 'next/navigation';
 import LoadingModal from '@/components/ui/loadingModal';
 
@@ -22,7 +22,8 @@ const SUBJECT_OPTIONS = [
 ];
 
 interface Lecture {
-  file: File;
+  file?: File;
+  fileName: string;
   duration: string;
 }
 
@@ -32,14 +33,47 @@ interface Section {
   lectures: Lecture[];
 }
 
-export default function CourseCreateForm() {
-  const [title, setTitle] = useState('');
-  const [subject, setSubject] = useState('');
-  const [description, setDescription] = useState('');
-  const [priceType, setPriceType] = useState<'FREE' | 'PAID'>('FREE');
-  const [price, setPrice] = useState('');
+interface CourseDetail {
+  title: string;
+  subject: string;
+  description: string;
+  priceType: 'FREE' | 'PAID';
+  price: string;
+  thumbnailUrl?: string;
+  thumbnailName?: string;
+  curriculum?: Section[];
+}
+
+interface CourseCreateFormProps {
+  mode?: 'create' | 'edit';
+  initialData?: CourseDetail;
+}
+
+export default function CourseCreateForm({
+  mode = 'create',
+
+  initialData,
+}: CourseCreateFormProps) {
+  const [title, setTitle] = useState(initialData?.title ?? '');
+  const [subject, setSubject] = useState(initialData?.subject ?? '');
+
+  const [description, setDescription] = useState(
+    initialData?.description ?? ''
+  );
+
+  const [priceType, setPriceType] = useState<'FREE' | 'PAID'>(
+    initialData?.priceType ?? 'FREE'
+  );
+
+  const [price, setPrice] = useState(initialData?.price ?? '');
+  const [thumbnailPreview, setThumbnailPreview] = useState(
+    initialData?.thumbnailUrl ?? ''
+  );
+
   const [thumbnail, setThumbnail] = useState<File | null>(null);
-  const [sections, setSections] = useState<Section[]>([]);
+  const [sections, setSections] = useState<Section[]>(
+    initialData?.curriculum ?? []
+  );
   const router = useRouter();
 
   const [errors, setErrors] = useState({
@@ -58,6 +92,7 @@ export default function CourseCreateForm() {
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCancelOpen, setIsCancelOpen] = useState(false);
 
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
 
@@ -67,7 +102,7 @@ export default function CourseCreateForm() {
     title.trim() &&
     subject &&
     description.trim() &&
-    thumbnail &&
+    (thumbnail || thumbnailPreview) &&
     (priceType === 'FREE' || price.trim());
 
   const formatDuration = (seconds: number) => {
@@ -123,7 +158,7 @@ export default function CourseCreateForm() {
       }
     }
 
-    if (!thumbnail) {
+    if (!thumbnail && !thumbnailPreview) {
       newErrors.thumbnail = '썸네일을 등록해주세요';
 
       if (!firstError) {
@@ -161,7 +196,9 @@ export default function CourseCreateForm() {
       {/* title */}
       <div className="mb-8">
         <div className="mb-3 flex items-center gap-3">
-          <h1 className="text-3xl font-bold text-[#1E293B]">강의 등록</h1>
+          <h1 className="text-3xl font-bold text-[#1E293B]">
+            {mode === 'edit' ? '강의 수정' : '강의 등록'}
+          </h1>
         </div>
 
         <p className="text-base text-[#64748B]">
@@ -383,15 +420,20 @@ export default function CourseCreateForm() {
               />
             </label>
 
-            {thumbnail && (
+            {(thumbnail || thumbnailPreview) && (
               <div className="flex h-12 items-center gap-3 rounded-full bg-[#F8FAFC] px-5">
                 <p className="max-w-[240px] truncate text-sm text-[#334155]">
-                  {thumbnail.name}
+                  {thumbnail
+                    ? thumbnail.name
+                    : initialData?.thumbnailName || '썸네일 이미지'}
                 </p>
 
                 <button
                   type="button"
-                  onClick={() => setThumbnail(null)}
+                  onClick={() => {
+                    setThumbnail(null);
+                    setThumbnailPreview('');
+                  }}
                   className="text-[#64748B] transition hover:text-[#1E293B]"
                 >
                   ✕
@@ -431,6 +473,7 @@ export default function CourseCreateForm() {
             <label className="flex cursor-pointer items-center gap-2">
               <input
                 type="radio"
+                disabled={mode === 'edit'}
                 checked={priceType === 'FREE'}
                 onChange={() => setPriceType('FREE')}
               />
@@ -443,6 +486,7 @@ export default function CourseCreateForm() {
             <label className="flex cursor-pointer items-center gap-2">
               <input
                 type="radio"
+                disabled={mode === 'edit'}
                 checked={priceType === 'PAID'}
                 onChange={() => setPriceType('PAID')}
               />
@@ -470,6 +514,7 @@ export default function CourseCreateForm() {
               >
                 <input
                   ref={priceRef}
+                  disabled={mode === 'edit'}
                   type="number"
                   value={price}
                   onChange={(e) => {
@@ -601,7 +646,7 @@ export default function CourseCreateForm() {
                           {/* 영상 제목 */}
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-[#334155]">
-                              {lecture.file.name}
+                              {lecture.file?.name || lecture.fileName}
                             </p>
                           </div>
 
@@ -669,6 +714,7 @@ export default function CourseCreateForm() {
                                         ...item.lectures,
                                         {
                                           file,
+                                          fileName: file.name,
                                           duration,
                                         },
                                       ],
@@ -694,6 +740,7 @@ export default function CourseCreateForm() {
       <div className="mt-8 flex items-center gap-5">
         <button
           type="button"
+          onClick={() => setIsCancelOpen(true)}
           className="h-14 flex-1 rounded-2xl border border-[#E2E8F0] bg-white text-base font-semibold text-[#475569] transition hover:bg-[#F8FAFC]"
         >
           취소
@@ -708,28 +755,69 @@ export default function CourseCreateForm() {
               : 'bg-[#2F5DAA] opacity-50'
           }`}
         >
-          강의 등록
+          {mode === 'edit' ? '강의 수정' : '강의 등록'}
         </button>
       </div>
 
       {isConfirmOpen && (
-        <ConfirmModal
-          icon="/icons/check.svg"
-          iconBgColor="rgba(22, 163, 74, 0.1)"
-          title="등록하기"
-          description="해당 강의를 등록하시겠습니까?"
-          cancelText="취소"
-          confirmText="확인"
-          onCancel={() => setIsConfirmOpen(false)}
-          onConfirm={async () => {
+        <DoubleBtnModal
+          title={mode === 'edit' ? '강의 수정' : '강의 등록'}
+          description={
+            mode === 'edit'
+              ? '정말 이 강의를 수정하시겠습니까?'
+              : '정말 이 강의를 등록하시겠습니까?'
+          }
+          leftText="취소"
+          rightText="확인"
+          onLeftClick={() => setIsConfirmOpen(false)}
+          onRightClick={async () => {
             setIsConfirmOpen(false);
             setIsLoading(true);
 
             try {
-              // 여기 API 요청 들어갈 예정
               await new Promise((resolve) => setTimeout(resolve, 2000));
+
+              const newCourse = {
+                id: Date.now(),
+                category: subject,
+                title,
+                description,
+
+                thumbnailName: thumbnail
+                  ? thumbnail.name
+                  : initialData?.thumbnailName || '',
+
+                thumbnailUrl: thumbnail
+                  ? URL.createObjectURL(thumbnail)
+                  : thumbnailPreview,
+
+                curriculum: sections,
+
+                isPublic: true,
+                students: 0,
+                rating: 0,
+                reviewCount: 0,
+                createdAt: '2025-08-05',
+
+                priceType,
+                price: priceType === 'FREE' ? '무료' : `${price}원`,
+              };
+
+              const savedCourses = JSON.parse(
+                localStorage.getItem('myCourses') || '[]'
+              );
+
+              localStorage.setItem(
+                'myCourses',
+                JSON.stringify([newCourse, ...savedCourses])
+              );
+
+              sessionStorage.setItem(
+                'courseToastType',
+                mode === 'edit' ? 'edit' : 'create'
+              );
+
               setIsLoading(false);
-              sessionStorage.setItem('courseCreated', 'true');
 
               router.push('/instructor/myCourses');
             } catch (error) {
@@ -741,8 +829,30 @@ export default function CourseCreateForm() {
       )}
       {isLoading && (
         <LoadingModal
-          title="강의를 등록하고 있습니다"
+          title={
+            mode === 'edit'
+              ? '강의를 수정하고 있습니다'
+              : '강의를 등록하고 있습니다'
+          }
           description="잠시만 기다려주세요."
+        />
+      )}
+
+      {isCancelOpen && (
+        <DoubleBtnModal
+          title={mode === 'edit' ? '강의 수정 취소' : '강의 등록 취소'}
+          description={
+            mode === 'edit'
+              ? '정말 강의 수정을 취소하시겠습니까?'
+              : '정말 강의 등록을 취소하시겠습니까?'
+          }
+          leftText="취소"
+          rightText="확인"
+          onLeftClick={() => setIsCancelOpen(false)}
+          onRightClick={() => {
+            setIsCancelOpen(false);
+            router.push('/instructor/myCourses');
+          }}
         />
       )}
     </div>
