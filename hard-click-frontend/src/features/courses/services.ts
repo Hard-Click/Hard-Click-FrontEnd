@@ -4,6 +4,83 @@ import type {
   CourseListQuery,
   CourseDetail,
 } from './types';
+import { api } from '@/services/api';
+
+const USE_MOCK = false;
+
+/** 백엔드 강의 상세 응답 (노션 명세) */
+interface CourseDetailApiResponse {
+  courseId: number;
+  title: string;
+  description: string;
+  instructorId: number;
+  instructorName: string;
+  subjectName: string;
+  price: number;
+  thumbnailUrl: string;
+  averageRating: number;
+  reviewCount: number;
+  curriculum: Array<{
+    order: number;
+    title: string;
+    durationMinutes: number;
+  }>;
+  createdAt: string;
+}
+
+/** 백엔드 응답을 UI에서 사용하는 CourseDetail 형태로 변환 */
+function toCourseDetail(api: CourseDetailApiResponse): CourseDetail {
+  return {
+    courseId: api.courseId,
+    title: api.title,
+    description: api.description,
+    subjectName: api.subjectName,
+    instructorName: api.instructorName,
+    price: api.price,
+    isFree: api.price === 0,
+    thumbnailUrl: api.thumbnailUrl,
+    averageRating: api.averageRating,
+    reviewCount: api.reviewCount,
+    studentCount: 0,                // 백엔드 미제공 — 별도 API 필요
+    status: 'PUBLISHED',            // 백엔드 미제공 — 응답 자체가 오면 publish 가정
+    isEnrolled: false,              // 백엔드 미제공 — 별도 권한 확인 API 필요
+    isWishlisted: false,            // 백엔드 미제공
+    isInCart: false,                // 백엔드 미제공
+    learningGoals: [],              // 백엔드 미제공
+    targetAudience: [],             // 백엔드 미제공
+    techTags: [],                   // 백엔드 미제공
+    materialsProvided: [],          // 백엔드 미제공
+    level: '',                      // 백엔드 미제공
+    totalLessons: api.curriculum.length,
+    totalDuration: `${api.curriculum.reduce((sum, c) => sum + c.durationMinutes, 0)}분`,
+    notices: [],                    // 별도 API: 공지사항 목록 조회
+    instructor: {
+      instructorId: api.instructorId,
+      name: api.instructorName,
+      subtitle: '',
+      bio: '',
+      career: [],
+      tags: [],
+      instructorStudentCount: 0,
+      instructorCourseCount: 0,
+      instructorRating: 0,
+    },
+    curriculum: [
+      {
+        sectionId: 1,
+        title: '커리큘럼',
+        lessons: api.curriculum.map((c, idx) => ({
+          lessonId: idx + 1,
+          title: c.title,
+          duration: `${String(Math.floor(c.durationMinutes)).padStart(2, '0')}:00`,
+          isPreview: false,
+        })),
+      },
+    ],
+    reviews: [],                    // 별도 API: 리뷰 목록 조회
+    ratingDistribution: [],         // 별도 API
+  };
+}
 
 export const MOCK_SUBJECTS: Subject[] = [
   { subjectId: 1, name: '국어' },
@@ -351,56 +428,134 @@ const MOCK_COURSE_DETAIL: CourseDetail = {
 };
 
 export async function getCourseDetail(courseId: number): Promise<CourseDetail | null> {
-  // TODO: Replace with real API — GET /api/courses/:courseId
-  await new Promise(resolve => setTimeout(resolve, 200));
-  if (courseId === 1) return MOCK_COURSE_DETAIL;
-  // mock: 삭제된 강의 (courseId=4)
-  if (courseId === 4) return { ...MOCK_COURSE_DETAIL, courseId: 4, status: 'DELETED' };
-  // mock: 접근 불가 강의 (courseId=5)
-  if (courseId === 5) return { ...MOCK_COURSE_DETAIL, courseId: 5, status: 'HIDDEN' };
-  // mock: 수강평 없는 강의 (courseId=6)
-  if (courseId === 6) return { ...MOCK_COURSE_DETAIL, courseId: 6, reviews: [], reviewCount: 0, ratingDistribution: [] };
-  // For other IDs, derive from the list as a minimal fallback
-  const item = MOCK_COURSES.find(c => c.courseId === courseId);
-  if (!item) return null;
-  return { ...MOCK_COURSE_DETAIL, ...item, description: MOCK_COURSE_DETAIL.description };
+  if (USE_MOCK) {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    if (courseId === 1) return MOCK_COURSE_DETAIL;
+    if (courseId === 4) return { ...MOCK_COURSE_DETAIL, courseId: 4, status: 'DELETED' };
+    if (courseId === 5) return { ...MOCK_COURSE_DETAIL, courseId: 5, status: 'HIDDEN' };
+    if (courseId === 6) return { ...MOCK_COURSE_DETAIL, courseId: 6, reviews: [], reviewCount: 0, ratingDistribution: [] };
+    const item = MOCK_COURSES.find(c => c.courseId === courseId);
+    if (!item) return null;
+    return { ...MOCK_COURSE_DETAIL, ...item, description: MOCK_COURSE_DETAIL.description };
+  }
+
+  // 실제 API 호출 (노션 명세: GET /api/courses/{courseId})
+  const response = await api.get<CourseDetailApiResponse>(`/api/courses/${courseId}`);
+
+  if (!response.success || !response.data) {
+    // 404 → 강의 없음
+    if (response.httpStatus === 404) return null;
+    return null;
+  }
+
+  return toCourseDetail(response.data);
+}
+
+/** 백엔드 강의 목록 응답 item (노션 명세) */
+interface CourseListApiItem {
+  courseId: number;
+  title: string;
+  instructorName: string;
+  subjectName: string;
+  price: number;
+  thumbnailUrl: string;
+  averageRating: number;
+  reviewCount: number;
+}
+
+interface CourseListApiResponse {
+  content: CourseListApiItem[];
+  totalPages: number;
+}
+
+function toCourseListItem(api: CourseListApiItem): CourseListItem {
+  return {
+    courseId: api.courseId,
+    title: api.title,
+    instructorName: api.instructorName,
+    subjectName: api.subjectName,
+    price: api.price,
+    thumbnailUrl: api.thumbnailUrl,
+    averageRating: api.averageRating,
+    reviewCount: api.reviewCount,
+    isFree: api.price === 0,
+    // 백엔드 미제공 필드 — 기본값
+    studentCount: 0,
+    status: 'PUBLISHED',
+    createdAt: '',
+    isEnrolled: false,
+    hasPreview: false,
+  };
 }
 
 export async function getCourses(query?: CourseListQuery): Promise<CourseListItem[]> {
-  // TODO: Replace with real API — GET /api/courses
-  await new Promise(resolve => setTimeout(resolve, 200));
+  if (USE_MOCK) {
+    await new Promise(resolve => setTimeout(resolve, 200));
 
-  let courses = MOCK_COURSES.filter(c => c.status === 'PUBLISHED');
+    let courses = MOCK_COURSES.filter(c => c.status === 'PUBLISHED');
 
+    if (query?.keyword) {
+      const kw = query.keyword.toLowerCase();
+      courses = courses.filter(c => c.title.toLowerCase().includes(kw));
+    }
+
+    if (query?.subjectId) {
+      const subject = MOCK_SUBJECTS.find(s => s.subjectId === query.subjectId);
+      if (subject) courses = courses.filter(c => c.subjectName === subject.name);
+    }
+
+    if (query?.instructor) {
+      courses = courses.filter(c => c.instructorName === query.instructor);
+    }
+
+    const sort = query?.sort ?? 'latest';
+    const sorted = [...courses];
+    if (sort === 'latest') {
+      sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } else if (sort === 'popular') {
+      sorted.sort((a, b) => b.studentCount - a.studentCount);
+    } else if (sort === 'rating') {
+      sorted.sort((a, b) => b.averageRating - a.averageRating);
+    }
+
+    return sorted;
+  }
+
+  // 실제 API 호출 (노션 명세: GET /api/courses?page=0&size=10)
+  // 명세에 검색/필터/정렬 파라미터 없어 클라이언트에서 처리
+  const response = await api.get<CourseListApiResponse>('/api/courses?page=0&size=100');
+
+  if (!response.success || !response.data) {
+    return [];
+  }
+
+  let courses = response.data.content.map(toCourseListItem);
+
+  // 클라이언트 측 필터링 (백엔드 미지원이라 임시 처리)
   if (query?.keyword) {
     const kw = query.keyword.toLowerCase();
     courses = courses.filter(c => c.title.toLowerCase().includes(kw));
   }
-
   if (query?.subjectId) {
     const subject = MOCK_SUBJECTS.find(s => s.subjectId === query.subjectId);
     if (subject) courses = courses.filter(c => c.subjectName === subject.name);
   }
-
   if (query?.instructor) {
     courses = courses.filter(c => c.instructorName === query.instructor);
   }
 
   const sort = query?.sort ?? 'latest';
   const sorted = [...courses];
-  if (sort === 'latest') {
-    sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  } else if (sort === 'popular') {
-    sorted.sort((a, b) => b.studentCount - a.studentCount);
-  } else if (sort === 'rating') {
+  if (sort === 'rating') {
     sorted.sort((a, b) => b.averageRating - a.averageRating);
   }
+  // latest/popular은 백엔드 데이터 부족으로 보류
 
   return sorted;
 }
 
 export async function getSubjects(): Promise<Subject[]> {
-  // TODO: Replace with real API — GET /api/subjects
+  // 노션 명세상 별도 API 없음 — 목 데이터로 유지
   return MOCK_SUBJECTS;
 }
 

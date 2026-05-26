@@ -7,7 +7,7 @@ import { useState } from 'react';
 
 import LoadingModal from '@/components/ui/loadingModal';
 import SingleButtonModal from '@/components/ui/singleButtonModal';
-import { sendPasswordResetEmail } from '../services';
+import { sendPasswordResetEmailAction } from '../actions';
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
@@ -37,11 +37,13 @@ export default function ForgotPasswordForm() {
     setEmailError('');
     setIsLoading(true);
 
-    const res = await sendPasswordResetEmail(email);
+    const result = await sendPasswordResetEmailAction(email);
+
     setIsLoading(false);
 
-    if (!res.success) {
-      setEmailError(res.message || '가입되지 않은 이메일입니다. 다시 입력해주세요.');
+    if (!result.success) {
+      // 404 → 가입되지 않은 이메일
+      setEmailError(result.message ?? '가입되지 않은 이메일입니다. 다시 입력해주세요.');
       return;
     }
 

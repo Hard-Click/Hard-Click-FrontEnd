@@ -5,6 +5,7 @@ import MyCourseCard from '../../../features/instructor/components/MyCourseCard';
 import MyCoursesFilterBar from '@/features/instructor/components/MyCoursesFilterBar';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { getInstructorCourses } from '@/features/instructor/services';
 
 interface Course {
   id: number;
@@ -25,9 +26,29 @@ export default function MyCoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
 
   useEffect(() => {
-    const savedCourses = JSON.parse(localStorage.getItem('myCourses') || '[]');
-
-    setCourses(savedCourses);
+    // 강사 내 강의 목록 API 호출 (GET /api/instructor/courses)
+    getInstructorCourses().then((res) => {
+      if (!res.success || !res.data) {
+        // 실패 시 localStorage 폴백
+        const savedCourses = JSON.parse(localStorage.getItem('myCourses') || '[]');
+        setCourses(savedCourses);
+        return;
+      }
+      // API 응답을 Course 형태로 변환
+      const mapped: Course[] = res.data.content.map((c) => ({
+        id: c.courseId,
+        category: c.subjectName,
+        title: c.title,
+        isPublic: c.status === 'PUBLISHED',
+        students: c.enrollmentCount,
+        rating: c.averageRating,
+        reviewCount: c.reviewCount,
+        createdAt: c.createdAt.split('T')[0] ?? c.createdAt,
+        price: c.price === 0 ? '무료' : `${c.price.toLocaleString()}원`,
+        thumbnailUrl: c.thumbnailUrl,
+      }));
+      setCourses(mapped);
+    });
   }, []);
 
   useEffect(() => {

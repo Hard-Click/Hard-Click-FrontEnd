@@ -9,9 +9,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { verifyAccountLockCode } from '../services';
+import { verifyAccountLockCodeAction } from '../actions';
 
-export default function VerificationCodeBox({ email, onSuccess }: VerificationCodeBoxProps) {
+export default function VerificationCodeBox({
+  email,
+  onSuccess,
+}: VerificationCodeBoxProps) {
   const [code, setCode] = useState('');
   const [codeError, setCodeError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -31,22 +34,25 @@ export default function VerificationCodeBox({ email, onSuccess }: VerificationCo
       setCodeError('인증코드를 입력해주세요.');
       return;
     }
+
     if (code.length !== 6) {
-      setCodeError('인증코드가 올바르지 않습니다.');
-      return;
-    }
-
-    setIsLoading(true);
-    const res = await verifyAccountLockCode(email, code);
-    setIsLoading(false);
-
-    if (!res.success || !res.data?.passwordChangeToken) {
-      setCodeError(res.message || '유효하지 않은 인증코드입니다.');
+      setCodeError('인증코드가 올바르지않습니다.');
       return;
     }
 
     setCodeError('');
-    onSuccess(res.data.passwordChangeToken);
+    setIsLoading(true);
+
+    const result = await verifyAccountLockCodeAction(email, code);
+
+    setIsLoading(false);
+
+    if (!result.success || !result.data?.passwordChangeToken) {
+      setCodeError(result.message ?? '유효하지 않은 인증코드입니다.');
+      return;
+    }
+
+    onSuccess(result.data.passwordChangeToken);
   };
 
   const handleResend = () => {

@@ -1,4 +1,51 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+/* toaster wrapper */
+[data-sonner-toaster] {
+  position: fixed !important;
+
+  top: 88px !important;
+
+  left: 50% !important;
+  right: auto !important;
+
+  transform: translateX(-50%) !important;
+
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+
+  width: auto !important;
+
+  z-index: 9999 !important;
+}
+
+/* toast */
+[data-sonner-toast] {
+  border-radius: 16px !important;
+
+  min-width: 320px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* content */
+[data-sonner-toast] [data-content] {
+  display: flex !important;
+  flex-direction: row !important;
+
+  align-items: center !important;
+  justify-content: center !important;
+
+  gap: 8px !important;
+}
+
+/* title */
+[data-sonner-toast] [data-title] {
+  text-align: center !important;
+}
 
 :root {
   --background: #ffffff;

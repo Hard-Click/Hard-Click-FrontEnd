@@ -7,7 +7,9 @@ import VerificationCodeBox from './VerificationCodeBox';
 import PasswordResetForm from './PasswordResetForm';
 
 export default function AccountProtectionFlow() {
-  const [step, setStep] = useState<'email' | 'verification' | 'resetPassword'>('email');
+  const [step, setStep] = useState<'email' | 'verification' | 'resetPassword'>(
+    'email'
+  );
   const [email, setEmail] = useState('');
   const [passwordChangeToken, setPasswordChangeToken] = useState('');
 

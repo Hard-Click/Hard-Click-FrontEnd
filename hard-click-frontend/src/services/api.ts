@@ -8,11 +8,35 @@ export interface ApiResponse<T = unknown> {
   success: boolean;
 }
 
+/**
+ * baseURL은 빈 값 ('') → Next.js rewrites 프록시 경유
+ * next.config.ts의 rewrites가 /api/* → BACKEND_URL/api/* 로 처리
+ * 이렇게 하면 dev에서 CORS 우회 가능
+ */
 const axiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080',
+  baseURL: '',
   headers: {
     'Content-Type': 'application/json',
   },
+});
+
+/**
+ * 요청마다 localStorage의 accessToken을 Authorization 헤더에 자동 첨부
+ * memberId가 있으면 X-Member-Id 헤더도 같이 첨부 (백엔드 도메인 격리용)
+ * 비로그인 API는 헤더가 없어도 무시되므로 안전
+ */
+axiosInstance.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    const memberId = localStorage.getItem('memberId');
+    if (memberId) {
+      config.headers['X-Member-Id'] = memberId;
+    }
+  }
+  return config;
 });
 
 function withSuccess<T>(body: Omit<ApiResponse<T>, 'success'>): ApiResponse<T> {
