@@ -2,10 +2,13 @@
 
 import Image from 'next/image';
 import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import PasswordInputField from './PasswordInputField';
 import PasswordRuleList from './PasswordRuleList';
 import PasswordValidationMessage from './PasswordValidationMessage';
+import LoadingModal from '@/components/ui/loadingModal';
+import SingleButtonModal from '@/components/ui/singleButtonModal';
 
 export default function PasswordResetForm() {
   const [password, setPassword] = useState('');
@@ -18,6 +21,10 @@ export default function PasswordResetForm() {
 
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+
   const passwordRef = useRef<HTMLInputElement>(null);
 
   const confirmPasswordRef = useRef<HTMLInputElement>(null);
@@ -25,6 +32,8 @@ export default function PasswordResetForm() {
   const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,16}$/;
 
   const isPasswordValid = passwordRegex.test(password);
+
+  const router = useRouter();
 
   const isPasswordMatch =
     password.length > 0 &&
@@ -65,7 +74,12 @@ export default function PasswordResetForm() {
     setPasswordError('');
     setConfirmError('');
 
-    console.log('비밀번호 변경 성공');
+    setIsLoading(true);
+
+    setTimeout(() => {
+      setIsLoading(false);
+      setIsSuccessModalOpen(true);
+    }, 2000);
   };
 
   return (
@@ -172,6 +186,23 @@ export default function PasswordResetForm() {
       >
         비밀번호 변경
       </button>
+
+      {isLoading && (
+        <LoadingModal
+          title="비밀번호 변경 중입니다"
+          description="잠시만 기다려주세요...."
+        />
+      )}
+
+      {isSuccessModalOpen && (
+        <SingleButtonModal
+          icon="/icons/check.svg"
+          title="비밀번호 변경 완료"
+          description="비밀번호가 변경되었습니다"
+          buttonText="로그인하러 가기"
+          onClick={() => router.push('/auth/login')}
+        />
+      )}
     </div>
   );
 }
