@@ -223,7 +223,6 @@ export default function CourseDetailPage() {
   // const [reportingReview, setReportingReview] = useState<Review | null>(null);
 
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [showAllNotices, setShowAllNotices] = useState(false);
   const [reviewPage, setReviewPage] = useState(1);
   const [toast, setToast] = useState('');
 
@@ -328,7 +327,7 @@ export default function CourseDetailPage() {
     if (!a.isPinned && b.isPinned) return 1;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
-  const displayedNotices = showAllNotices ? sortedNotices : sortedNotices.slice(0, 3);
+  const displayedNotices = sortedNotices.slice(0, 3);
 
   // UA-P0-140: 첫 번째 강의 lessonId (학습 시작 이동 대상)
   const firstLessonId = course.curriculum[0]?.lessons[0]?.lessonId;
@@ -504,12 +503,12 @@ export default function CourseDetailPage() {
                       <img src="/icons/bellBlueIcon.svg" width={20} height={20} alt="" />
                       <h2 className="text-xl font-bold text-[#1F2937]">강의 공지사항</h2>
                     </div>
-                    <button
-                      onClick={() => setShowAllNotices(v => !v)}
-                      className="w-20 h-10 border border-[#E2E8F0] rounded-2xl text-sm font-medium text-[#4B5563] hover:bg-[#F8FAFC] transition-colors"
+                    <Link
+                      href={`/courses/${courseId}/notices`}
+                      className="w-20 h-10 border border-[#E2E8F0] rounded-2xl text-sm font-medium text-[#4B5563] hover:bg-[#F8FAFC] transition-colors flex items-center justify-center"
                     >
-                      {showAllNotices ? '접기' : '전체보기'}
-                    </button>
+                      전체보기
+                    </Link>
                   </div>
 
                   {course.notices.length === 0 ? (
@@ -528,7 +527,9 @@ export default function CourseDetailPage() {
                           >
                             <div className="flex items-center gap-2 mb-2">
                               {notice.isPinned && (
-                                <span className="flex-shrink-0 px-2 py-0.5 bg-[#2F5DAA] text-white text-xs font-semibold rounded-[4px]">
+                                <span className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 bg-[#2F5DAA] text-white text-xs font-semibold rounded-[4px]">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src="/icons/pinIcon.svg" width={11} height={11} alt="" style={{ filter: 'brightness(0) invert(1)' }} />
                                   공지
                                 </span>
                               )}
