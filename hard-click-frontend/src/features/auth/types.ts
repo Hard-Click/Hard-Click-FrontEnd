@@ -23,18 +23,24 @@ export interface RegisterFormValues {
   agreeMarketing: boolean;
 
   verificationCode: string;
+  /** 이메일 인증 검증 성공 시 백엔드에서 받는 토큰 */
+  emailVerificationToken: string;
 }
 
+/** 백엔드 SignupRequest와 1:1 매칭 */
 export interface RegisterRequest {
   username: string;
   email: string;
   password: string;
+  passwordConfirm: string;
   name: string;
-  gender: 'MALE' | 'FEMALE' | 'NONE';
-  birthDate: string;
+  gender: 'MALE' | 'FEMALE';
+  birthDate: string;        // YYYY-MM-DD
   phoneNumber: string;
-  role: 'STUDENT';
-  marketingAgreed: boolean;
+  profileImageUrl?: string;
+  emailVerificationToken: string;
+  requiredTermsAgreed: boolean;
+  optionalTermsAgreed?: boolean;
 }
 
 export interface ApiResponse<T> {
@@ -49,5 +55,5 @@ export interface DuplicateCheckResponse {
 }
 
 export interface EmailVerificationResponse {
-  verified: boolean;
+  emailVerificationToken: string;
 }
