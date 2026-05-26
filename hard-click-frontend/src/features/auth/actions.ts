@@ -1,12 +1,13 @@
 import {
   checkEmail,
   checkUsername,
+  login,
   register,
   sendEmailVerification,
   verifyEmailCode,
 } from './services';
 import { getEmail } from './schemas';
-import type { RegisterFormValues, RegisterRequest } from './types';
+import type { LoginRequest, RegisterFormValues, RegisterRequest } from './types';
 
 export async function checkUsernameAction(username: string) {
   return checkUsername(username.trim());
@@ -62,4 +63,18 @@ export async function registerAction(values: RegisterFormValues) {
   };
 
   return register(payload);
+}
+
+export async function loginAction(payload: LoginRequest) {
+  if (!payload.username.trim() || !payload.password.trim()) {
+    return {
+      success: false,
+      message: '아이디와 비밀번호를 모두 입력해주세요',
+    };
+  }
+
+  return login({
+    username: payload.username.trim(),
+    password: payload.password,
+  });
 }

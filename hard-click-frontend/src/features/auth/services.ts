@@ -1,11 +1,17 @@
+import axios from 'axios';
 import type {
+  AuthToken,
   DuplicateCheckResponse,
   EmailVerificationResponse,
+  LoginRequest,
+  LoginResult,
   RegisterRequest,
 } from './types';
 import { api } from '@/services/api';
 
 const USE_MOCK = false;
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
 
 export async function checkUsername(username: string) {
   if (USE_MOCK) {
@@ -79,4 +85,50 @@ export async function register(payload: RegisterRequest) {
   }
 
   return api.post<{ memberId: number }>('/api/auth/signup', payload);
+}
+
+/**
+ * 로그인
+ * 백엔드 응답이 ApiResponse 래핑 없이 AuthToken({ accessToken, refreshToken })을 raw로 반환하므로
+ * 공용 api 클라이언트 대신 axios를 직접 사용
+ */
+export async function login(payload: LoginRequest): Promise<LoginResult> {
+  if (USE_MOCK) {
+    console.log('[MOCK] 로그인 요청:', payload);
+    return {
+      success: true,
+      message: '로그인되었습니다',
+      data: {
+        accessToken: 'MOCK_ACCESS_TOKEN',
+        refreshToken: 'MOCK_REFRESH_TOKEN',
+      },
+    };
+  }
+
+  try {
+    const response = await axios.post<AuthToken>(
+      `${BASE_URL}/api/auth/login`,
+      payload,
+      { headers: { 'Content-Type': 'application/json' } },
+    );
+
+    return {
+      success: true,
+      message: '로그인되었습니다',
+      data: response.data,
+    };
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      const body = error.response.data as { message?: string; errorCode?: string };
+      return {
+        success: false,
+        message: body?.message ?? '아이디 또는 비밀번호가 올바르지 않습니다',
+        errorCode: body?.errorCode,
+      };
+    }
+    return {
+      success: false,
+      message: '서버와 연결할 수 없습니다',
+    };
+  }
 }
