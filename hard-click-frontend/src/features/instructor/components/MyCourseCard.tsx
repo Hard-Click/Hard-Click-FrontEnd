@@ -15,6 +15,10 @@ interface MyCourseCardProps {
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import DoubleBtnModal from '@/components/ui/doubleButtonModal';
+import LoadingModal from '@/components/ui/loadingModal';
 
 export default function MyCourseCard({
   id,
@@ -28,7 +32,67 @@ export default function MyCourseCard({
   price,
   thumbnailUrl,
 }: MyCourseCardProps) {
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const [publicState, setPublicState] = useState(isPublic);
+  const [isDeleted, setIsDeleted] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleteOpen(false);
+    setIsLoading(true);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      const savedCourses = JSON.parse(
+        localStorage.getItem('myCourses') || '[]'
+      );
+
+      const updatedCourses = savedCourses.filter(
+        (course: any) => course.id !== id
+      );
+
+      localStorage.setItem('myCourses', JSON.stringify(updatedCourses));
+
+      setIsLoading(false);
+      setIsDeleted(true);
+
+      toast.success('강의 삭제가 완료되었습니다.', {
+        duration: 2000,
+      });
+    } catch (error) {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTogglePublic = () => {
+    const newPublicState = !publicState;
+
+    const savedCourses = JSON.parse(localStorage.getItem('myCourses') || '[]');
+
+    const updatedCourses = savedCourses.map((course: any) =>
+      course.id === id
+        ? {
+            ...course,
+            isPublic: newPublicState,
+          }
+        : course
+    );
+
+    localStorage.setItem('myCourses', JSON.stringify(updatedCourses));
+
+    setPublicState(newPublicState);
+
+    toast.success(
+      newPublicState ? '강의가 공개되었습니다.' : '강의가 비공개되었습니다.',
+      {
+        duration: 2000,
+      }
+    );
+  };
+  if (isDeleted) return null;
+
   return (
     <div className="flex items-start justify-between rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
       {/* left */}
@@ -52,12 +116,13 @@ export default function MyCourseCard({
 
             <span
               className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                isPublic
+                publicState
                   ? 'bg-[#EAF7EE] text-[#16A34A]'
                   : 'bg-[#FFF4E5] text-[#F97316]'
               }`}
+              onClick={handleTogglePublic}
             >
-              {isPublic ? '공개' : '비공개'}
+              {publicState ? '공개' : '비공개'}
             </span>
           </div>
 
@@ -95,16 +160,18 @@ export default function MyCourseCard({
 
             <button
               type="button"
+              onClick={handleTogglePublic}
               className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-                isPublic
+                publicState
                   ? 'border border-[#F97316] bg-[#FFF7ED] text-[#F97316]'
                   : 'border border-[#16A34A] bg-[#F0FDF4] text-[#16A34A]'
               }`}
             >
-              {isPublic ? '비공개' : '공개'}
+              {publicState ? '비공개' : '공개'}
             </button>
 
             <button
+              onClick={() => setIsDeleteOpen(true)}
               type="button"
               className="rounded-xl border border-[#DC2626] bg-white px-4 py-2 text-sm font-medium text-[#DC2626] transition hover:bg-[#FEF2F2]"
             >
@@ -118,6 +185,24 @@ export default function MyCourseCard({
       <div className="text-right">
         <p className="text-3xl font-bold text-[#2F5DAA]">{price}</p>
       </div>
+
+      {isDeleteOpen && (
+        <DoubleBtnModal
+          title="강의 삭제"
+          description="정말 강의를 삭제하시겠습니까?"
+          leftText="취소"
+          rightText="삭제"
+          onLeftClick={() => setIsDeleteOpen(false)}
+          onRightClick={handleDelete}
+        />
+      )}
+
+      {isLoading && (
+        <LoadingModal
+          title="강의를 삭제하고 있습니다"
+          description="잠시만 기다려주세요."
+        />
+      )}
     </div>
   );
 }
