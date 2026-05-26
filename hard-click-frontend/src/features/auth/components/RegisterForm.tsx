@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode, RefObject } from 'react';
+import { toast } from 'sonner';
 
 import {
   checkEmailAction,
@@ -52,6 +53,7 @@ const initialValues: RegisterFormValues = {
   agreePrivacy: false,
   agreeMarketing: false,
   verificationCode: '',
+  emailVerificationToken: '',
 };
 
 const steps = [
@@ -126,7 +128,6 @@ export default function RegisterForm() {
   const [values, setValues] = useState<RegisterFormValues>(initialValues);
 
   const [formMessage, setFormMessage] = useState<FieldStatus | null>(null);
-  const [toastMessage, setToastMessage] = useState('');
 
   const [usernameStatus, setUsernameStatus] = useState<FieldStatus | null>(
     null,
@@ -215,8 +216,8 @@ export default function RegisterForm() {
   }, [isEmailSent, isEmailVerified]);
 
   const showToast = (text: string) => {
-    setToastMessage(text);
-    window.setTimeout(() => setToastMessage(''), 2500);
+    // sonner 라이브러리 사용 (layout.tsx의 Toaster) — 에러 메시지용
+    toast.error(text);
   };
 
   const focusInput = (ref: RefObject<HTMLInputElement | null>) => {
@@ -423,7 +424,12 @@ export default function RegisterForm() {
     setIsEmailSent(true);
     setIsEmailVerified(false);
     setRemainingSeconds(300);
-    setValues((prev) => ({ ...prev, verificationCode: '' }));
+    // 재발송 시 이전 토큰/코드 초기화
+    setValues((prev) => ({
+      ...prev,
+      verificationCode: '',
+      emailVerificationToken: '',
+    }));
     setVerificationStatus({
       type: 'success',
       text: isResend
@@ -463,7 +469,7 @@ export default function RegisterForm() {
       verificationCode: values.verificationCode,
     });
 
-    if (!result.success || result.data?.verified === false) {
+    if (!result.success || !result.data?.emailVerificationToken) {
       setVerificationStatus({
         type: 'error',
         text: result.message ?? '인증번호가 올바르지 않습니다',
@@ -472,6 +478,11 @@ export default function RegisterForm() {
       return;
     }
 
+    // 인증 성공 → 토큰 저장 (회원가입 시 같이 보냄)
+    setValues((prev) => ({
+      ...prev,
+      emailVerificationToken: result.data!.emailVerificationToken,
+    }));
     setIsEmailVerified(true);
     setVerificationStatus({
       type: 'success',
@@ -645,8 +656,8 @@ export default function RegisterForm() {
   };
 
   return (
-    <main className="relative min-h-screen bg-[#F8FAFC] font-sans text-[#1F2937]">
-      {toastMessage && <ToastMessage text={toastMessage} />}
+    <main className="relative min-h-full bg-[#F8FAFC] font-sans text-[#1F2937]">
+      {/* 토스트는 sonner Toaster가 layout.tsx에서 처리 */}
       {step !== 4 && <BrandLogo />}
 
       {step !== 4 ? (
@@ -1524,6 +1535,9 @@ function DatePickerInput({
       ? today.getMonth() + 1
       : parsedValue.getMonth() + 1,
   );
+  // 입력 중 화면에 표시되는 문자열 (controlled input용, 빈 문자열 허용)
+  const [yearInput, setYearInput] = useState(String(viewYear));
+  const [monthInput, setMonthInput] = useState(String(viewMonth));
 
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
@@ -1537,6 +1551,15 @@ function DatePickerInput({
     setViewYear(nextDate.getFullYear());
     setViewMonth(nextDate.getMonth() + 1);
   }, [value]);
+
+  // viewYear/viewMonth 변경 시 input 문자열도 동기화 (prev/next 버튼 등 외부 변경 대응)
+  useEffect(() => {
+    setYearInput(String(viewYear));
+  }, [viewYear]);
+
+  useEffect(() => {
+    setMonthInput(String(viewMonth));
+  }, [viewMonth]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1620,35 +1643,51 @@ function DatePickerInput({
 
   const handleYearChange = (nextValue: string) => {
     const onlyNumber = nextValue.replace(/\D/g, '').slice(0, 4);
+    setYearInput(onlyNumber);
 
-    if (!onlyNumber) {
-      setViewYear(today.getFullYear());
-      return;
+    // 유효한 숫자일 때만 calendar 상태 업데이트
+    if (onlyNumber) {
+      setViewYear(Number(onlyNumber));
     }
-
-    setViewYear(Number(onlyNumber));
   };
 
   const handleMonthChange = (nextValue: string) => {
     const onlyNumber = nextValue.replace(/\D/g, '').slice(0, 2);
+    setMonthInput(onlyNumber);
+
+    if (!onlyNumber) return;
+
     const nextMonth = Number(onlyNumber);
 
-    if (!onlyNumber) {
-      setViewMonth(1);
-      return;
-    }
-
-    if (nextMonth < 1) {
-      setViewMonth(1);
-      return;
-    }
-
+    // 13 이상은 12로 클램프
     if (nextMonth > 12) {
+      setMonthInput('12');
       setViewMonth(12);
       return;
     }
 
-    setViewMonth(nextMonth);
+    // 1~12면 그대로 반영 (0은 input엔 표시되지만 calendar는 업데이트 안 함)
+    if (nextMonth >= 1) {
+      setViewMonth(nextMonth);
+    }
+  };
+
+  // blur 시 빈 값이거나 0이면 viewMonth/viewYear 값으로 복구
+  const handleYearBlur = () => {
+    if (!yearInput || Number(yearInput) < 1) {
+      setYearInput(String(viewYear));
+    }
+  };
+
+  const handleMonthBlur = () => {
+    if (!monthInput || Number(monthInput) < 1) {
+      setMonthInput(String(viewMonth));
+    }
+  };
+
+  // 포커스 시 input 전체 선택 → 클릭만 해도 새 숫자 타이핑으로 교체됨
+  const handleNumberInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.select();
   };
 
   return (
@@ -1686,8 +1725,10 @@ function DatePickerInput({
             <div className="flex items-center gap-[8px]">
               <div className="flex h-[36px] w-[90px] items-center rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] px-[10px]">
                 <input
-                  value={viewYear}
+                  value={yearInput}
                   onChange={(e) => handleYearChange(e.target.value)}
+                  onFocus={handleNumberInputFocus}
+                  onBlur={handleYearBlur}
                   inputMode="numeric"
                   className="h-full w-full bg-transparent text-center text-[15px] font-semibold leading-[20px] text-[#1F2937] outline-none"
                 />
@@ -1698,8 +1739,10 @@ function DatePickerInput({
 
               <div className="flex h-[36px] w-[70px] items-center rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] px-[10px]">
                 <input
-                  value={viewMonth}
+                  value={monthInput}
                   onChange={(e) => handleMonthChange(e.target.value)}
+                  onFocus={handleNumberInputFocus}
+                  onBlur={handleMonthBlur}
                   inputMode="numeric"
                   className="h-full w-full bg-transparent text-center text-[15px] font-semibold leading-[20px] text-[#1F2937] outline-none"
                 />
@@ -1936,14 +1979,6 @@ function FooterLogin() {
       <Link href="/auth/login" className="font-semibold text-[#2F5DAA]">
         로그인
       </Link>
-    </div>
-  );
-}
-
-function ToastMessage({ text }: { text: string }) {
-  return (
-    <div className="absolute left-1/2 top-[12px] z-50 flex h-[56px] -translate-x-1/2 items-center justify-center rounded-[20px] bg-[#B91C1C] px-[20px] text-[16px] font-semibold leading-[24px] text-white shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)]">
-      {text}
     </div>
   );
 }

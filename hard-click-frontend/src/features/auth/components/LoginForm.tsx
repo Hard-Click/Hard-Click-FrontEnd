@@ -8,6 +8,8 @@ import { useRouter } from 'next/navigation';
 import PasswordInput from './PasswordInput';
 import LoginErrorMessage from './LoginErrorMessage';
 import ConfirmModal from '@/components/ui/confirmModal';
+import { loginAction } from '../actions';
+import { authStore } from '@/store/auth.store';
 
 export default function LoginForm() {
   const [loginId, setLoginId] = useState('');
@@ -31,9 +33,10 @@ export default function LoginForm() {
   const isFormValid = loginId.trim() && password.trim();
 
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // 둘 다 비어있음
@@ -87,15 +90,38 @@ export default function LoginForm() {
       return;
     }
 
-    // 로그인 실패 예시
-    const isLoginSuccess = loginId === 'admin' && password === '1234';
+    setIsSubmitting(true);
 
-    if (!isLoginSuccess) {
+    const result = await loginAction({
+      username: loginId,
+      password,
+    });
+
+    setIsSubmitting(false);
+
+    if (!result.success || !result.data) {
+      // 423 Locked → 백엔드가 계정 잠금 처리 (5회 실패로 인증번호 발송됨)
+      if (result.isLocked) {
+        setErrors({
+          loginId: '',
+          password: result.message ?? '계정이 잠겼습니다',
+        });
+        setErrorBorder({ loginId: false, password: true });
+        setIsConfirmModalOpen(true);
+        passwordInputRef.current?.focus();
+        return;
+      }
+
       const nextCount = loginFailCount + 1;
       setLoginFailCount(nextCount);
+      // 성공 메시지가 새어들어오는 경우 방어 (백엔드가 200 + data null로 보낼 때)
+      const safeMessage =
+        result.message && !result.message.includes('로그인되었습니다')
+          ? result.message
+          : '아이디 또는 비밀번호가 올바르지 않습니다';
       setErrors({
         loginId: '',
-        password: `비밀번호가 일치하지 않습니다 (${nextCount} / 5)`,
+        password: `${safeMessage} (${nextCount} / 5)`,
       });
       setErrorBorder({
         loginId: false,
@@ -109,8 +135,14 @@ export default function LoginForm() {
       return;
     }
 
-    // 로그인 성공
-    console.log('로그인 성공');
+    // 로그인 성공 → 토큰 + memberId + role 저장 후 강의 전체 조회 페이지로 이동
+    authStore.setAuth({
+      accessToken: result.data.accessToken,
+      refreshToken: result.data.refreshToken,
+      memberId: result.data.memberId,
+      role: result.data.role,
+    });
+    router.push('/courses');
   };
 
   return (
@@ -291,13 +323,14 @@ export default function LoginForm() {
             {/* submit */}
             <button
               type="submit"
+              disabled={isSubmitting}
               className={`h-16 w-full rounded-2xl text-lg font-semibold text-white transition ${
-                isFormValid
+                isFormValid && !isSubmitting
                   ? 'bg-[#2F5DAA] opacity-100'
                   : 'bg-[#2F5DAA] opacity-50'
               }`}
             >
-              로그인
+              {isSubmitting ? '로그인 중...' : '로그인'}
             </button>
           </form>
 

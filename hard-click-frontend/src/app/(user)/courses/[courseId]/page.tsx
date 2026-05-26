@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import UserHeader from '@/components/layout/headers/UserHeader';
+import { toast } from 'sonner';
 // TODO: 수강신청 모달 — 팀원 결제 모달 확인 후 연결
 // TODO: 리뷰 삭제 확인 모달 — 팀원 모달 확인 후 연결
 import { getCourseDetail } from '@/features/courses/services';
@@ -40,22 +41,6 @@ function StarRow({ rating, size = 20 }: { rating: number; size?: number }) {
     </div>
   );
 }
-
-/* ── 토스트 ── */
-function Toast({ message, onDone }: { message: string; onDone: () => void }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, 2500);
-    return () => clearTimeout(t);
-  }, [onDone]);
-  return (
-    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-      <div className="bg-[#16A34A] text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-lg">
-        {message}
-      </div>
-    </div>
-  );
-}
-
 
 /* ── 커리큘럼 아코디언 ── */
 function CurriculumAccordion({
@@ -224,7 +209,6 @@ export default function CourseDetailPage() {
 
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewPage, setReviewPage] = useState(1);
-  const [toast, setToast] = useState('');
 
   useEffect(() => {
     getCourseDetail(courseId).then(data => {
@@ -264,13 +248,16 @@ export default function CourseDetailPage() {
   // UA-P0-121: 유료 → 결제 모달 → POST /api/payments → enrollments 자동 생성
   const handleEnrollClick = async () => {
     if (course?.isFree) {
-      const result = await enrollCourse(courseId);
+      const result = await enrollCourse(courseId, 'FREE');
       if (result.success) {
         setIsEnrolled(true);
-        setToast(result.message);
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
       }
     } else {
       // TODO: 유료 수강신청 — 팀원 결제 모달 확인 후 연결 (UA-P0-121)
+      // 모달에서 결제 완료 후 enrollCourse(courseId, 'PAID') 호출
     }
   };
 
@@ -281,14 +268,18 @@ export default function CourseDetailPage() {
       if (result.success) {
         setIsInCart(false);
         setCartItemId(null);
-        setToast(result.message);
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
       }
     } else {
       const result = await addToCart(courseId);
       if (result.success) {
         setIsInCart(true);
         if (result.cartItemId) setCartItemId(result.cartItemId);
-        setToast(result.message);
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
       }
     }
   };
@@ -336,7 +327,7 @@ export default function CourseDetailPage() {
     <div className="min-h-screen bg-[#F0F2F5]">
       <UserHeader />
 
-      {toast && <Toast message={toast} onDone={() => setToast('')} />}
+      {/* 토스트는 sonner Toaster가 layout.tsx에서 처리 */}
 
       {/* 외부 패딩 */}
       <div className="w-full max-w-[1440px] mx-auto px-[157.5px]">
@@ -468,7 +459,7 @@ export default function CourseDetailPage() {
                 <button
                   onClick={() => {
                     setIsWishlisted(v => !v);
-                    setToast(isWishlisted ? '찜이 해제되었습니다.' : '찜 목록에 추가되었습니다.');
+                    toast.success(isWishlisted ? '찜이 해제되었습니다.' : '찜 목록에 추가되었습니다.');
                   }}
                   className={`h-14 rounded-[10px] font-medium text-base transition-colors flex items-center justify-center gap-2 border-2 ${
                     isWishlisted
