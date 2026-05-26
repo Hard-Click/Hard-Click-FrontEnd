@@ -120,15 +120,35 @@ export async function login(payload: LoginRequest): Promise<LoginResult> {
     const response = await axios.post<{
       httpStatus: number;
       message: string;
-      data: AuthToken;
+      data: AuthToken | null;
     }>('/api/auth/login', payload, {
       headers: { 'Content-Type': 'application/json' },
     });
 
+    const httpStatus = response.data?.httpStatus ?? response.status;
+    const body = response.data;
+
+    // 백엔드가 HTTP 200이지만 httpStatus 필드는 에러 코드로 보낼 수 있음
+    // 또는 data(토큰)가 비어있으면 실패로 처리
+    if (httpStatus === 423) {
+      return {
+        success: false,
+        message: body?.message ?? '로그인 5회 실패로 계정이 잠겼습니다. 이메일 인증을 진행해주세요.',
+        isLocked: true,
+      };
+    }
+
+    if (httpStatus >= 400 || !body?.data?.accessToken) {
+      return {
+        success: false,
+        message: body?.message ?? '아이디 또는 비밀번호가 올바르지 않습니다',
+      };
+    }
+
     return {
       success: true,
-      message: response.data.message ?? '로그인되었습니다',
-      data: response.data.data,
+      message: body.message ?? '로그인되었습니다',
+      data: body.data,
     };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
