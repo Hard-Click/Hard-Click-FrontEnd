@@ -729,7 +729,9 @@ export default function CourseCreateForm() {
               // 여기 API 요청 들어갈 예정
               await new Promise((resolve) => setTimeout(resolve, 2000));
               setIsLoading(false);
-              router.push('/instructor/myCourses?created=true');
+              sessionStorage.setItem('courseCreated', 'true');
+
+              router.push('/instructor/myCourses');
             } catch (error) {
               setIsLoading(false);
               console.error(error);

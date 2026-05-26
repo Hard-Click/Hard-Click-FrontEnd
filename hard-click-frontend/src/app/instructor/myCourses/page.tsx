@@ -5,24 +5,24 @@ import MyCourseCard from '../../../features/instructor/components/MyCourseCard';
 import { MOCK_COURSES } from '@/features/courses/services';
 import MyCoursesFilterBar from '@/features/instructor/components/MyCoursesFilterBar';
 import { useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
 export default function MyCoursesPage() {
-  const searchParams = useSearchParams();
   const toastShown = useRef(false);
 
   useEffect(() => {
-    const created = searchParams.get('created');
+    const created = sessionStorage.getItem('courseCreated');
 
     if (created === 'true' && !toastShown.current) {
       toast.success('강의 등록이 완료되었습니다.', {
         duration: 2000,
-        className: '!flex !items-center !justify-center',
+        className: '!flex !items-center !justify-center !text-center',
       });
+
       toastShown.current = true;
+      sessionStorage.removeItem('courseCreated');
     }
-  }, [searchParams]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
