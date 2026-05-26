@@ -425,7 +425,11 @@ export default function RegisterForm() {
     setIsEmailVerified(false);
     setRemainingSeconds(300);
     // 재발송 시 이전 토큰/코드 초기화
-    setValues((prev) => ({ ...prev, verificationCode: '', emailVerificationToken: '' }));
+    setValues((prev) => ({
+      ...prev,
+      verificationCode: '',
+      emailVerificationToken: '',
+    }));
     setVerificationStatus({
       type: 'success',
       text: isResend
@@ -475,7 +479,10 @@ export default function RegisterForm() {
     }
 
     // 인증 성공 → 토큰 저장 (회원가입 시 같이 보냄)
-    setValues(prev => ({ ...prev, emailVerificationToken: result.data!.emailVerificationToken }));
+    setValues((prev) => ({
+      ...prev,
+      emailVerificationToken: result.data!.emailVerificationToken,
+    }));
     setIsEmailVerified(true);
     setVerificationStatus({
       type: 'success',
@@ -649,7 +656,7 @@ export default function RegisterForm() {
   };
 
   return (
-    <main className="relative min-h-screen bg-[#F8FAFC] font-sans text-[#1F2937]">
+    <main className="relative min-h-full bg-[#F8FAFC] font-sans text-[#1F2937]">
       {toastMessage && <ToastMessage text={toastMessage} />}
       {step !== 4 && <BrandLogo />}
 
