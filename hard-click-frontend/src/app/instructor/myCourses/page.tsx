@@ -5,7 +5,6 @@ import MyCourseCard from '../../../features/instructor/components/MyCourseCard';
 import { MOCK_COURSES } from '@/features/courses/services';
 import MyCoursesFilterBar from '@/features/instructor/components/MyCoursesFilterBar';
 import { useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
 export default function MyCoursesPage() {
