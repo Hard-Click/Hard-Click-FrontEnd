@@ -32,7 +32,18 @@ export async function registerAction(values: RegisterFormValues) {
   if (!values.gender) {
     return {
       success: false,
+      httpStatus: 400,
+      data: undefined,
       message: '성별을 선택해주세요',
+    };
+  }
+
+  if (!values.emailVerificationToken) {
+    return {
+      success: false,
+      httpStatus: 400,
+      data: undefined,
+      message: '이메일 인증이 필요합니다',
     };
   }
 
@@ -40,12 +51,14 @@ export async function registerAction(values: RegisterFormValues) {
     username: values.username.trim(),
     email: getEmail(values),
     password: values.password,
+    passwordConfirm: values.passwordConfirm,
     name: values.name.trim(),
     gender: values.gender,
     birthDate: values.birthDate,
     phoneNumber: values.phoneNumber.trim(),
-    role: 'STUDENT',
-    marketingAgreed: values.agreeMarketing,
+    emailVerificationToken: values.emailVerificationToken,
+    requiredTermsAgreed: values.agreeTerms && values.agreePrivacy,
+    optionalTermsAgreed: values.agreeMarketing,
   };
 
   return register(payload);
