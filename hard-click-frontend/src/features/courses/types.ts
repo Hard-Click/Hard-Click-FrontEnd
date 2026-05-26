@@ -35,15 +35,21 @@ export interface CourseListQuery {
 export interface CourseNotice {
   noticeId: number;
   title: string;
+  content: string;
   createdAt: string;
+  isPinned?: boolean;
 }
 
 export interface InstructorProfile {
   instructorId: number;
   name: string;
+  subtitle: string;
   bio: string;
   career: string[];
   tags: string[];
+  instructorStudentCount: number;
+  instructorCourseCount: number;
+  instructorRating: number;
 }
 
 export interface CurriculumLesson {
@@ -88,6 +94,7 @@ export interface CourseDetail {
   targetAudience: string[];
   techTags: string[];
   materialsProvided: string[];
+  level: string;
   totalLessons: number;
   totalDuration: string;
   notices: CourseNotice[];

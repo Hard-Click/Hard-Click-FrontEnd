@@ -5,31 +5,37 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import UserHeader from '@/components/layout/headers/UserHeader';
-import ConfirmModal from '@/components/ui/confirmModal';
+// TODO: 수강신청 모달 — 팀원 결제 모달 확인 후 연결
+// TODO: 리뷰 삭제 확인 모달 — 팀원 모달 확인 후 연결
 import { getCourseDetail } from '@/features/courses/services';
+import {
+  enrollCourse,
+  addToCart,
+  removeFromCart,
+  deleteReview as deleteReviewAPI,
+} from '@/features/courses/actions';
+// TODO: 리뷰 수정 모달 — 팀원 컴포넌트 완성 후 import 연결
+// import ReviewEditModal from '@/components/ui/reviewEditModal';
 import type { CourseDetail, Review } from '@/features/courses/types';
 
-/* ── 별점 아이콘 ── */
+// TODO: 리뷰 신고 모달 — 팀원 컴포넌트 완성 후 아래 import 연결
+// import ReviewReportModal from '@/components/ui/reviewReportModal';
+
+/* ── 별점 아이콘 (정수 1~5) ── */
 function StarIcon({ filled, size = 20 }: { filled: boolean; size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
-      <path
-        d="M10 2.5L12.473 7.513L18 8.326L14 12.22L14.945 17.726L10 15.127L5.055 17.726L6 12.22L2 8.326L7.527 7.513L10 2.5Z"
-        fill={filled ? '#FFB800' : '#D1D5DC'}
-        stroke={filled ? '#FFB800' : '#D1D5DC'}
-        strokeWidth="1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  /* eslint-disable-next-line @next/next/no-img-element */
+  return filled
+    ? <img src="/icons/starFilledIcon.svg" width={size} height={size} alt="" />
+    : <img src="/icons/starEmptyIcon.svg" width={size} height={size} alt="" />;
 }
 
+/* 정수 별점(1~5) StarRow */
 function StarRow({ rating, size = 20 }: { rating: number; size?: number }) {
+  const rounded = Math.floor(rating);
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map(i => (
-        <StarIcon key={i} filled={i <= rating} size={size} />
+        <StarIcon key={i} filled={i <= rounded} size={size} />
       ))}
     </div>
   );
@@ -41,7 +47,6 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
     const t = setTimeout(onDone, 2500);
     return () => clearTimeout(t);
   }, [onDone]);
-
   return (
     <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
       <div className="bg-[#16A34A] text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-lg">
@@ -51,109 +56,9 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
   );
 }
 
-// TODO: 리뷰 신고 모달 — 팀원 컴포넌트 완성 후 아래 import 연결
-// import ReviewReportModal from '@/components/ui/reviewReportModal';
-
-/* ── 리뷰 수정 모달 ── */
-function ReviewEditModal({
-  review,
-  onClose,
-  onSubmit,
-}: {
-  review: Review;
-  onClose: () => void;
-  onSubmit: (rating: number, content: string) => void;
-}) {
-  const [rating, setRating] = useState(review.rating);
-  const [hoverRating, setHoverRating] = useState(0);
-  const [content, setContent] = useState(review.content);
-  const [showConfirm, setShowConfirm] = useState(false);
-
-  if (showConfirm) {
-    return (
-      <ConfirmModal
-        icon="/icons/checkCircleIcon.svg"
-        iconBgColor="#EEF3FB"
-        title="리뷰 수정"
-        description="리뷰를 수정하시겠습니까?"
-        cancelText="취소"
-        confirmText="확인"
-        onCancel={() => setShowConfirm(false)}
-        onConfirm={() => onSubmit(rating, content)}
-      />
-    );
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl w-[480px] shadow-xl overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-[#E2E8F0]">
-          <h3 className="text-[#1A1F2E] font-bold text-lg">리뷰 수정</h3>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors"
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M4 4L14 14M14 4L4 14" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="px-6 py-6 flex flex-col gap-5">
-          <div>
-            <p className="text-[#374151] font-medium text-sm mb-3">별점</p>
-            <div className="flex items-center gap-1">
-              {[1, 2, 3, 4, 5].map(star => (
-                <button
-                  key={star}
-                  onMouseEnter={() => setHoverRating(star)}
-                  onMouseLeave={() => setHoverRating(0)}
-                  onClick={() => setRating(star)}
-                  className="transition-transform hover:scale-110"
-                >
-                  <StarIcon filled={star <= (hoverRating || rating)} size={32} />
-                </button>
-              ))}
-              <span className="ml-2 text-[#FFB800] font-semibold text-base">
-                {hoverRating || rating}.0
-              </span>
-            </div>
-          </div>
-
-          <div>
-            <p className="text-[#374151] font-medium text-sm mb-2">내용</p>
-            <textarea
-              value={content}
-              onChange={e => setContent(e.target.value)}
-              rows={4}
-              placeholder="강의에 대한 솔직한 후기를 남겨주세요."
-              className="w-full px-4 py-3 border border-[#E2E8F0] rounded-xl text-sm text-[#1A1F2E] placeholder-[rgba(26,31,46,0.3)] resize-none focus:outline-none focus:border-[#2F5DAA] transition-colors"
-            />
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              className="flex-1 h-11 rounded-xl border border-[#D1D5DB] text-[#4B5563] font-medium text-base hover:bg-gray-50 transition-colors"
-            >
-              취소
-            </button>
-            <button
-              onClick={() => setShowConfirm(true)}
-              disabled={!content.trim()}
-              className="flex-1 h-11 rounded-xl bg-[#2F5DAA] text-white font-medium text-base hover:bg-[#1D3E75] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              수정
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ── 커리큘럼 아코디언 ── */
-function CurriculumSection({
+function CurriculumAccordion({
   section,
   defaultOpen = false,
 }: {
@@ -168,52 +73,91 @@ function CurriculumSection({
   const totalStr = `${Math.floor(totalMinutes)}분`;
 
   return (
-    <div className="border-b border-[#E2E8F0] last:border-b-0">
+    <div className="border border-[#D5D8DD] rounded-2xl overflow-hidden">
       <button
         onClick={() => setIsOpen(v => !v)}
-        className="w-full flex items-center justify-between px-8 py-4 hover:bg-gray-50 transition-colors text-left"
+        className="w-full flex items-center gap-3 px-5 py-4 bg-white hover:bg-[#F8FAFC] transition-colors text-left"
       >
-        <div className="flex items-center gap-2">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            className={`flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
-          >
-            <path d="M6 4L10 8L6 12" stroke="#6B7280" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span className="text-[#1A1F2E] font-semibold text-base">{section.title}</span>
-          <span className="text-[#6B7280] text-sm">
-            {section.lessons.length}개 강의 · {totalStr}
-          </span>
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/icons/chevronDownIcon.svg"
+          width={20}
+          height={20}
+          alt=""
+          className={`flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-0' : '-rotate-90'}`}
+        />
+        <span className="flex-1 text-base font-medium text-[#1A1F2E] text-left">{section.title}</span>
+        <span className="text-sm text-[#4B5563] flex-shrink-0 w-[100px] text-right">
+          {section.lessons.length}강 · {totalStr}
+        </span>
       </button>
 
       {isOpen && (
-        <div className="bg-[#F8FAFC]">
-          {section.lessons.map(lesson => (
-            <div
-              key={lesson.lessonId}
-              className="flex items-center justify-between px-10 py-3 border-t border-[#E2E8F0]"
-            >
-              <div className="flex items-center gap-3">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                  <circle cx="8" cy="8" r="7" stroke="#D1D5DB" strokeWidth="1.2" />
-                  <path d="M6.5 5.5L10.5 8L6.5 10.5V5.5Z" fill="#9CA3AF" />
-                </svg>
-                <span className="text-[#374151] text-sm">{lesson.title}</span>
-                {lesson.isPreview && (
-                  <button className="px-2 py-0.5 bg-[#EEF3FB] text-[#2F5DAA] text-xs font-medium rounded-full hover:bg-[#D8E6F7] transition-colors">
-                    미리보기
-                  </button>
-                )}
+        <div>
+          {section.lessons.map(lesson => {
+            const rowClass = "flex items-center justify-between px-5 py-[14px] border-t border-[#D5D8DD] bg-white transition-colors";
+            const inner = (
+              <>
+                <div className="flex items-center gap-3 min-w-0">
+                  {lesson.isPreview
+                    ? /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src="/icons/playIcon.svg" width={16} height={16} alt="" className="flex-shrink-0" />
+                    : /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src="/icons/checkDarkIcon.svg" width={16} height={16} alt="" className="flex-shrink-0" />
+                  }
+                  <span className="text-sm text-[#374151] truncate">{lesson.title}</span>
+                  {lesson.isPreview && (
+                    <span className="flex-shrink-0 px-3 py-0.5 bg-[rgba(47,93,170,0.1)] text-[#2F5DAA] text-xs font-medium rounded-[14px]">
+                      미리보기
+                    </span>
+                  )}
+                </div>
+                <span className="text-sm text-[#4B5563] flex-shrink-0 ml-4">{lesson.duration}</span>
+              </>
+            );
+            return lesson.isPreview ? (
+              // TODO: /learning/preview/{lessonId} 미리보기 전용 라우트 완성 후 경로 교체
+              <Link
+                key={lesson.lessonId}
+                href={`/learning/videos/${lesson.lessonId}`}
+                className={`${rowClass} hover:bg-[#F0F4FB] cursor-pointer`}
+              >
+                {inner}
+              </Link>
+            ) : (
+              <div key={lesson.lessonId} className={rowClass}>
+                {inner}
               </div>
-              <span className="text-[#9CA3AF] text-sm flex-shrink-0 ml-4">{lesson.duration}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── 강의 에러 화면 공통 컴포넌트 ── */
+function CourseErrorScreen({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div className="min-h-screen bg-[#F0F2F5]">
+      <UserHeader />
+      <div className="w-full max-w-[1440px] mx-auto px-[157.5px] py-6">
+        <Link
+          href="/courses"
+          className="flex items-center gap-1.5 text-[#6B7280] text-sm hover:text-[#374151] transition-colors mb-8"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          목록으로 돌아가기
+        </Link>
+        <div className="bg-white border border-[#D5D8DD] rounded-2xl flex flex-col items-center justify-center py-32">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icons/emptyStateIcon.svg" width={80} height={80} alt="" />
+          <p className="text-[#1A1F2E] font-bold text-xl mt-[41px] mb-[26.5px]">{title}</p>
+          <p className="text-[#6B7280] text-sm">{subtitle}</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -227,40 +171,35 @@ const NAV_ITEMS = [
   { id: 'reviews', label: '수강평' },
 ];
 
-function StickyNav({ activeId }: { activeId: string }) {
+function SideNav({ activeId, onNav }: { activeId: string; onNav: (id: string) => void }) {
   const scrollTo = (id: string) => {
+    onNav(id);
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   return (
-    <nav className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
-      {NAV_ITEMS.map(item => (
-        <button
-          key={item.id}
-          onClick={() => scrollTo(item.id)}
-          className={`w-full px-5 py-3.5 text-left text-sm font-medium transition-colors border-b border-[#F1F5F9] last:border-b-0 ${
-            activeId === item.id
-              ? 'text-[#2F5DAA] bg-[#EEF3FB] font-semibold'
-              : 'text-[#6B7280] hover:bg-gray-50'
-          }`}
-        >
-          {item.label}
-        </button>
-      ))}
-    </nav>
-  );
-}
-
-/* ── 섹션 카드 ── */
-function SectionCard({ id, children }: { id: string; children: React.ReactNode }) {
-  return (
-    <section
-      id={id}
-      className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden scroll-mt-6"
+    <nav
+      className="bg-white border border-[#D9DDE3] rounded-[14px] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-4px_rgba(0,0,0,0.1)]"
+      style={{ width: 106, padding: '13px 13px 13px' }}
     >
-      {children}
-    </section>
+      {/* Figma: Navigation container — flex-col, gap: 8px, width 80px */}
+      <div className="flex flex-col gap-2">
+        {NAV_ITEMS.map(item => (
+          <button
+            key={item.id}
+            onClick={() => scrollTo(item.id)}
+            className={`w-20 h-10 flex items-center justify-center rounded-2xl text-sm font-medium transition-colors ${
+              activeId === item.id
+                ? 'bg-[#2F5DAA] text-white'
+                : 'text-[#5B6678] hover:bg-[#F0F2F5]'
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </nav>
   );
 }
 
@@ -273,21 +212,19 @@ export default function CourseDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('notices');
 
-  // 수강/찜/장바구니
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isInCart, setIsInCart] = useState(false);
+  const [cartItemId, setCartItemId] = useState<number | null>(null);
 
   // 모달 상태
-  const [showEnrollConfirm, setShowEnrollConfirm] = useState(false);
   const [editingReview, setEditingReview] = useState<Review | null>(null);
+  // TODO: reportingReview — 팀원 ReviewReportModal 완성 후 활성화
+  // const [reportingReview, setReportingReview] = useState<Review | null>(null);
 
-  // 리뷰 & 공지
   const [reviews, setReviews] = useState<Review[]>([]);
   const [showAllNotices, setShowAllNotices] = useState(false);
-  const [showAllReviews, setShowAllReviews] = useState(false);
-  // TODO: reportingReview — 리뷰 신고 모달 팀원 컴포넌트 완성 후 활성화
-
-  // 토스트
+  const [reviewPage, setReviewPage] = useState(1);
   const [toast, setToast] = useState('');
 
   useEffect(() => {
@@ -296,15 +233,19 @@ export default function CourseDetailPage() {
       if (data) {
         setIsEnrolled(data.isEnrolled);
         setIsWishlisted(data.isWishlisted);
-        setReviews(data.reviews);
+        setIsInCart(data.isInCart);
+        // UA-P1-192: 내 리뷰 최상단 표시
+        const sorted = [...data.reviews].sort((a, b) =>
+          a.isMine === b.isMine ? 0 : a.isMine ? -1 : 1
+        );
+        setReviews(sorted);
       }
       setIsLoading(false);
     });
   }, [courseId]);
 
-  // Scroll spy
   const handleScroll = useCallback(() => {
-    const offset = 100;
+    const offset = 120;
     for (const { id } of [...NAV_ITEMS].reverse()) {
       const el = document.getElementById(id);
       if (el && el.getBoundingClientRect().top <= offset) {
@@ -320,24 +261,41 @@ export default function CourseDetailPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  const handleEnrollConfirm = () => {
-    setShowEnrollConfirm(false);
-    setIsEnrolled(true);
-    setToast('수강 신청되었습니다.');
+  // UA-P0-120: 무료 → POST /api/enrollments 즉시 처리
+  // UA-P0-121: 유료 → 결제 모달 → POST /api/payments → enrollments 자동 생성
+  const handleEnrollClick = async () => {
+    if (course?.isFree) {
+      const result = await enrollCourse(courseId);
+      if (result.success) {
+        setIsEnrolled(true);
+        setToast(result.message);
+      }
+    } else {
+      // TODO: 유료 수강신청 — 팀원 결제 모달 확인 후 연결 (UA-P0-121)
+    }
   };
 
-  const handleEditSubmit = (rating: number, content: string) => {
-    if (!editingReview) return;
-    setReviews(prev =>
-      prev.map(r => (r.reviewId === editingReview.reviewId ? { ...r, rating, content } : r))
-    );
-    setEditingReview(null);
-    setToast('리뷰가 수정되었습니다');
+  // UA-P0-130: POST /api/cart / DELETE /api/cart/{cartItemId}
+  const handleCartClick = async () => {
+    if (isInCart && cartItemId) {
+      const result = await removeFromCart(cartItemId);
+      if (result.success) {
+        setIsInCart(false);
+        setCartItemId(null);
+        setToast(result.message);
+      }
+    } else {
+      const result = await addToCart(courseId);
+      if (result.success) {
+        setIsInCart(true);
+        if (result.cartItemId) setCartItemId(result.cartItemId);
+        setToast(result.message);
+      }
+    }
   };
 
-  // TODO: handleReportSubmit — 리뷰 신고 모달 팀원 컴포넌트 완성 후 구현
+  // TODO: 리뷰 삭제 — 팀원 삭제 확인 모달 확인 후 연결 (UA-P1-192)
 
-  // 로딩
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F0F2F5]">
@@ -349,36 +307,31 @@ export default function CourseDetailPage() {
     );
   }
 
-  // 강의 없음 (삭제 등)
+  // UA-P0-104: 강의 없음 / 삭제 / 접근불가 에러 처리
   if (!course) {
-    return (
-      <div className="min-h-screen bg-[#F0F2F5]">
-        <UserHeader />
-        <div className="w-full max-w-[1440px] mx-auto px-[157.5px] py-6">
-          <Link
-            href="/courses"
-            className="flex items-center gap-1.5 text-[#6B7280] text-sm hover:text-[#374151] transition-colors mb-8"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            목록으로 돌아가기
-          </Link>
-          <div className="bg-white rounded-2xl border border-[#E2E8F0] flex flex-col items-center justify-center py-24 gap-4">
-            <div className="w-14 h-14 rounded-full border-2 border-[#D1D5DB] flex items-center justify-center">
-              <span className="text-[#9CA3AF] font-bold text-2xl">!</span>
-            </div>
-            <p className="text-[#1A1F2E] font-semibold text-lg">삭제된 강의입니다.</p>
-            <p className="text-[#6B7280] text-sm">강의 목록에서 다른 강의를 확인해보세요.</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <CourseErrorScreen title="존재하지 않는 강의입니다." subtitle="강의 목록에서 다른 강의를 확인해보세요." />;
+  }
+  if (course.status === 'DELETED') {
+    return <CourseErrorScreen title="삭제된 강의입니다." subtitle="강의 목록에서 다른 강의를 확인해보세요." />;
+  }
+  if (course.status === 'HIDDEN') {
+    return <CourseErrorScreen title="현재 접근할 수 없는 강의입니다." subtitle="강의 정보를 다시 확인해주세요." />;
   }
 
+  const REVIEWS_PER_PAGE = 5;
   const maxRatingCount = Math.max(...course.ratingDistribution.map(d => d.count), 1);
-  const displayedReviews = showAllReviews ? reviews : reviews.slice(0, 3);
-  const displayedNotices = showAllNotices ? course.notices : course.notices.slice(0, 3);
+  const totalReviewPages = Math.ceil(reviews.length / REVIEWS_PER_PAGE);
+  const displayedReviews = reviews.slice((reviewPage - 1) * REVIEWS_PER_PAGE, reviewPage * REVIEWS_PER_PAGE);
+  // 공지 고정 맨 위, 나머지 최신순 정렬
+  const sortedNotices = [...course.notices].sort((a, b) => {
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+  const displayedNotices = showAllNotices ? sortedNotices : sortedNotices.slice(0, 3);
+
+  // UA-P0-140: 첫 번째 강의 lessonId (학습 시작 이동 대상)
+  const firstLessonId = course.curriculum[0]?.lessons[0]?.lessonId;
 
   return (
     <div className="min-h-screen bg-[#F0F2F5]">
@@ -386,525 +339,573 @@ export default function CourseDetailPage() {
 
       {toast && <Toast message={toast} onDone={() => setToast('')} />}
 
-      <div className="w-full max-w-[1440px] mx-auto px-[157.5px] py-8">
+      {/* 외부 패딩 */}
+      <div className="w-full max-w-[1440px] mx-auto px-[157.5px]">
+        {/* 내부 패딩 */}
+        <div className="pt-10 px-8 pb-0 flex flex-col gap-8">
 
-        {/* ── 히어로 카드 ── */}
-        <div className="bg-white border border-[#D5D8DD] rounded-2xl overflow-hidden mb-5">
-          <div className="flex gap-7 p-7">
-            {/* 썸네일 */}
-            <div className="flex-shrink-0 w-[240px] h-[165px] bg-[#1A1F2E] rounded-xl overflow-hidden relative">
-              {course.thumbnailUrl ? (
-                <Image src={course.thumbnailUrl} alt={course.title} fill className="object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                    <path d="M14 10L38 24L14 38V10Z" fill="rgba(255,255,255,0.4)" />
-                  </svg>
+          {/* ── 히어로 카드 ── */}
+          <div className="bg-white border border-[#D5D8DD]" style={{ padding: '33px 33px 1px' }}>
+            <div className="flex flex-col gap-6">
+
+              {/* Row 1: 썸네일 + 강의 정보 */}
+              <div className="flex gap-6">
+                {/* 썸네일 */}
+                <div className="flex-shrink-0 self-start w-[282px] h-[262px] bg-[#1A1F2E] rounded-2xl overflow-hidden relative">
+                  {course.thumbnailUrl ? (
+                    <Image src={course.thumbnailUrl} alt={course.title} fill className="object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+                        <path d="M16 12L44 28L16 44V12Z" fill="rgba(255,255,255,0.4)" />
+                      </svg>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            {/* 강의 정보 */}
-            <div className="flex-1 min-w-0 flex flex-col py-1">
-              <h1 className="text-[#1A1F2E] font-bold text-xl leading-snug mb-1.5">
-                {course.title}
-              </h1>
-              <p className="text-[#6B7280] text-sm leading-relaxed mb-3 line-clamp-2">
-                {course.description}
-              </p>
+                {/* 강의 정보 */}
+                <div className="w-[588px] flex flex-col gap-3">
+                  {/* 제목 */}
+                  <h1 className="text-[30px] font-semibold leading-9 text-[#1A1F2E]">
+                    {course.title}
+                  </h1>
 
-              {/* 강사 */}
-              <p className="text-[#4B5563] text-sm mb-3">
-                강사: <span className="font-medium">{course.instructorName}</span>
-              </p>
+                  {/* 설명 */}
+                  <p className="text-base font-normal text-[#1A1F2E] leading-[26px]">
+                    {course.description}
+                  </p>
 
-              {/* 별점 */}
-              <div className="flex items-center gap-1.5 mb-3">
-                <StarRow rating={Math.round(course.averageRating)} size={17} />
-                <span className="text-[#FFB800] font-bold text-sm">{course.averageRating}</span>
-                <span className="text-[#9CA3AF] text-sm">
-                  ({course.reviewCount.toLocaleString()}개 리뷰)
-                </span>
+                  {/* 강사 */}
+                  <p className="text-sm text-[#1A1F2E]">
+                    강사: <span className="text-base font-medium text-[#1A1F2E]">{course.instructorName}</span>
+                  </p>
+
+                  {/* 별점 */}
+                  <div className="flex items-center gap-2">
+                    <StarRow rating={course.averageRating} size={20} />
+                    <span className="text-lg font-semibold text-[#1A1F2E]">{course.averageRating}</span>
+                    <span className="text-base text-[#1A1F2E]">
+                      ({course.reviewCount.toLocaleString()}개 리뷰)
+                    </span>
+                  </div>
+
+                  {/* 통계 행: 수강생 수 · 총 강의시간 · 난이도 */}
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-1.5">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/icons/studentsIcon.svg" width={16} height={16} alt="" />
+                      <span className="text-sm text-[#1A1F2E]">{course.studentCount.toLocaleString()}명 수강</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/icons/clockGrayIcon.svg" width={16} height={16} alt="" />
+                      <span className="text-sm text-[#1A1F2E]">{course.totalDuration}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/icons/trendUpIcon.svg" width={16} height={16} alt="" />
+                      <span className="text-sm text-[#1A1F2E]">{course.level}</span>
+                    </div>
+                  </div>
+
+                  {/* 가격 */}
+                  <div>
+                    {course.isFree ? (
+                      <span className="text-[30px] font-bold text-[#16A34A]">무료</span>
+                    ) : (
+                      <span className="text-[30px] font-bold text-[#2F5DAA]">
+                        ₩{course.price.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              {/* 통계 */}
-              <div className="flex items-center gap-4 text-[#6B7280] text-sm mb-4">
-                <div className="flex items-center gap-1.5">
-                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                    <circle cx="7.5" cy="5" r="2.5" stroke="#9CA3AF" strokeWidth="1.1" />
-                    <path d="M2 13C2 10.79 4.46 9 7.5 9S13 10.79 13 13" stroke="#9CA3AF" strokeWidth="1.1" strokeLinecap="round" />
-                  </svg>
-                  <span>{course.studentCount.toLocaleString()}명 수강</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                    <circle cx="7.5" cy="7.5" r="6" stroke="#9CA3AF" strokeWidth="1.1" />
-                    <path d="M7.5 4.5V7.5L9.5 9.5" stroke="#9CA3AF" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <span>{course.totalDuration}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                    <path d="M2 11L5.5 7L8 9.5L11 5.5L13 8" stroke="#9CA3AF" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <span>중급~고급</span>
-                </div>
-              </div>
-
-              {/* 가격 */}
-              <div className="mt-auto">
-                {course.isFree ? (
-                  <span className="text-[#16A34A] font-bold text-2xl">무료</span>
+              {/* Row 2: 액션 버튼 (border-top, Figma: padding 24px 0 0, gap 12px) */}
+              <div className="border-t border-[#D5D8DD] pt-6 pb-8 flex items-center gap-3">
+                {isEnrolled ? (
+                  /* 수강 중 → 학습하기 (영상 페이지로 이동) */
+                  <Link href={firstLessonId ? `/learning/videos/${firstLessonId}` : '#'} className="flex-1">
+                    <button className="w-full h-14 rounded-[10px] bg-[#2F5DAA] text-white font-semibold text-base hover:bg-[#1D3E75] transition-colors">
+                      학습하기
+                    </button>
+                  </Link>
                 ) : (
-                  <span className="text-[#2F5DAA] font-bold text-2xl">
-                    ₩{course.price.toLocaleString()}
-                  </span>
+                  <>
+                    {/* UA-P0-120: 무료 → "수강하기" / UA-P0-121: 유료 → "수강신청" */}
+                    <button
+                      onClick={handleEnrollClick}
+                      className="flex-1 h-14 rounded-[10px] bg-[#2F5DAA] text-white font-semibold text-base hover:bg-[#1D3E75] transition-colors"
+                    >
+                      {course.isFree ? '수강하기' : '수강신청'}
+                    </button>
+                    {/* UA-P0-130: 무료 강의는 장바구니 버튼 표시 안 함 */}
+                    {!course.isFree && (
+                      isInCart ? (
+                        <Link
+                          href="/cart"
+                          className="h-14 rounded-[10px] font-semibold text-base transition-colors flex items-center justify-center gap-2 bg-[rgba(47,93,170,0.08)] text-[#2F5DAA] border-2 border-[#2F5DAA]"
+                          style={{ width: '166.98px' }}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src="/icons/cartIcon.svg" width={20} height={20} alt="" />
+                          장바구니로 가기
+                        </Link>
+                      ) : (
+                        <button
+                          onClick={handleCartClick}
+                          className="h-14 rounded-[10px] font-semibold text-base transition-colors flex items-center justify-center gap-2 bg-white text-[#4B5563] border-2 border-[#E2E8F0] hover:border-[#CBD5E1]"
+                          style={{ width: '166.98px' }}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src="/icons/cartIcon.svg" width={20} height={20} alt="" />
+                          장바구니 담기
+                        </button>
+                      )
+                    )}
+                  </>
                 )}
+                {/* TODO: 찜 API 엔드포인트 명세에 없음 — 백엔드 확인 후 연결 */}
+                <button
+                  onClick={() => {
+                    setIsWishlisted(v => !v);
+                    setToast(isWishlisted ? '찜이 해제되었습니다.' : '찜 목록에 추가되었습니다.');
+                  }}
+                  className={`h-14 rounded-[10px] font-medium text-base transition-colors flex items-center justify-center gap-2 border-2 ${
+                    isWishlisted
+                      ? 'bg-[#FEF2F2] text-[#EF4444] border-[#EF4444]'
+                      : 'bg-white text-[#4B5563] border-[#E2E8F0] hover:border-[#CBD5E1]'
+                  }`}
+                  style={{ width: '121.52px' }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={isWishlisted ? '/icons/heartFilledIcon.svg' : '/icons/heartOutlineIcon.svg'}
+                    width={20}
+                    height={20}
+                    alt=""
+                  />
+                  찜하기
+                </button>
               </div>
+
             </div>
           </div>
 
-          {/* 액션 버튼 */}
-          <div className="border-t border-[#E2E8F0] px-7 py-4 flex items-center gap-3">
-            {isEnrolled ? (
-              <button className="flex-1 h-11 rounded-xl bg-[#2F5DAA] text-white font-semibold text-base hover:bg-[#1D3E75] transition-colors">
-                학습하기
-              </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => setShowEnrollConfirm(true)}
-                  className="flex-1 h-11 rounded-xl bg-[#2F5DAA] text-white font-semibold text-base hover:bg-[#1D3E75] transition-colors"
-                >
-                  수강 신청
-                </button>
-                <button className="h-11 px-5 rounded-xl font-semibold text-sm border border-[#D1D5DB] text-[#374151] bg-white hover:bg-gray-50 transition-colors flex items-center gap-1.5">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M2 5.5a3 3 0 015-2.236A3 3 0 0114 5.5c0 4.5-6 8-6 8s-6-3.5-6-8z" stroke="#9CA3AF" strokeWidth="1.2" fill="none" />
-                  </svg>
-                  장바구니 담기
-                </button>
-              </>
-            )}
-            <button
-              onClick={() => setIsWishlisted(v => !v)}
-              className={`h-11 px-5 rounded-xl font-semibold text-sm border transition-colors flex items-center gap-1.5 ${
-                isWishlisted
-                  ? 'bg-[#FEF2F2] text-[#EF4444] border-[#EF4444]'
-                  : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-gray-50'
-              }`}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M8 13.5C8 13.5 2 10 2 5.5C2 3.567 3.567 2 5.5 2C6.48 2 7.364 2.405 8 3.063C8.636 2.405 9.52 2 10.5 2C12.433 2 14 3.567 14 5.5C14 10 8 13.5 8 13.5Z"
-                  fill={isWishlisted ? '#EF4444' : 'none'}
-                  stroke={isWishlisted ? '#EF4444' : '#9CA3AF'}
-                  strokeWidth="1.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              찜하기
-            </button>
-          </div>
-        </div>
+          {/* ── 메인 콘텐츠 (풀 너비) ── */}
+          <div className="flex flex-col gap-8">
 
-        {/* ── 2컬럼 ── */}
-        <div className="flex gap-5 items-start">
-          {/* 메인 콘텐츠 */}
-          <div className="flex-1 min-w-0 flex flex-col gap-5">
+              {/* ── 공지사항 ── */}
+              <section id="notices" className="scroll-mt-6">
+                <div className="bg-white border border-[#E2E8F0] shadow-[0_4px_10px_rgba(0,0,0,0.06)] rounded-2xl flex flex-col gap-6" style={{ padding: '33px' }}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/icons/bellBlueIcon.svg" width={20} height={20} alt="" />
+                      <h2 className="text-xl font-bold text-[#1F2937]">강의 공지사항</h2>
+                    </div>
+                    <button
+                      onClick={() => setShowAllNotices(v => !v)}
+                      className="w-20 h-10 border border-[#E2E8F0] rounded-2xl text-sm font-medium text-[#4B5563] hover:bg-[#F8FAFC] transition-colors"
+                    >
+                      {showAllNotices ? '접기' : '전체보기'}
+                    </button>
+                  </div>
 
-            {/* 강의 공지사항 */}
-            <SectionCard id="notices">
-              <div className="px-7 py-5 border-b border-[#E2E8F0] flex items-center justify-between">
-                <h2 className="text-[#1A1F2E] font-bold text-lg flex items-center gap-2">
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <path d="M3 5h12M3 9h8M3 13h5" stroke="#2F5DAA" strokeWidth="1.3" strokeLinecap="round" />
-                  </svg>
-                  강의 공지사항
-                </h2>
-                <button
-                  onClick={() => setShowAllNotices(v => !v)}
-                  className="text-[#2F5DAA] text-sm font-medium hover:underline"
-                >
-                  {showAllNotices ? '접기' : '전체보기'}
-                </button>
-              </div>
-
-              {course.notices.length === 0 ? (
-                <p className="px-7 py-6 text-[#9CA3AF] text-sm text-center">공지사항이 없습니다.</p>
-              ) : (
-                <div>
-                  {displayedNotices.map((notice, idx) => {
-                    const isFirst = idx === 0;
-                    return (
-                      <div
-                        key={notice.noticeId}
-                        className={`px-7 py-4 ${
-                          isFirst ? 'bg-[#EEF3FB]' : 'border-t border-[#F1F5F9]'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex items-start gap-2.5 min-w-0">
-                            {isFirst && (
-                              <span className="flex-shrink-0 mt-0.5 px-2 py-0.5 bg-[#2F5DAA] text-white text-[10px] font-semibold rounded">
-                                공지
-                              </span>
-                            )}
-                            <span
-                              className={`text-sm leading-snug ${
-                                isFirst
-                                  ? 'text-[#1A1F2E] font-semibold'
-                                  : 'text-[#374151]'
-                              }`}
-                            >
-                              {notice.title}
-                            </span>
+                  {course.notices.length === 0 ? (
+                    <p className="text-sm text-[#9CA3AF] text-center py-4">공지사항이 없습니다.</p>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      {displayedNotices.map((notice) => (
+                          <div
+                            key={notice.noticeId}
+                            className={`rounded-[20px] h-[89px] overflow-hidden flex flex-col ${
+                              notice.isPinned
+                                ? 'bg-[rgba(47,93,170,0.05)] border border-[#2F5DAA]'
+                                : 'bg-white border border-[#E2E8F0]'
+                            }`}
+                            style={{ padding: '17px 17px 1px' }}
+                          >
+                            <div className="flex items-center gap-2 mb-2">
+                              {notice.isPinned && (
+                                <span className="flex-shrink-0 px-2 py-0.5 bg-[#2F5DAA] text-white text-xs font-semibold rounded-[4px]">
+                                  공지
+                                </span>
+                              )}
+                              <p className="text-[18px] font-semibold text-[#1F2937] leading-[27px] line-clamp-1 flex-1">
+                                {notice.title}
+                              </p>
+                              <span className="text-xs text-[#9CA3AF] flex-shrink-0">{notice.createdAt}</span>
+                            </div>
+                            <p className="text-sm text-[#4B5563] line-clamp-1">{notice.content}</p>
                           </div>
-                          <span className="flex-shrink-0 text-[#9CA3AF] text-xs">
-                            {notice.createdAt}
-                          </span>
+                        )
+                      )}
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* ── 강사소개 ── */}
+              <section id="instructor" className="scroll-mt-6">
+                <div className="bg-white border border-[#D5D8DD]" style={{ padding: '33px 33px 1px' }}>
+                  <h2 className="text-2xl font-semibold text-[#1A1F2E] mb-6">강사소개</h2>
+
+                  <div className="flex items-start gap-6 pb-8">
+                    <div className="flex-shrink-0 w-28 h-28 rounded-full border-2 border-[#D5D8DD] overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/image/Image (박지훈).svg" width={112} height={112} alt="박지훈" className="w-full h-full object-cover" />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xl font-semibold text-[#1A1F2E] mb-0.5">{course.instructor.name}</p>
+                      <p className="text-base text-[#1A1F2E] mb-3">{course.instructor.subtitle}</p>
+
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="flex-1 flex items-center gap-1.5">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src="/icons/studentsBlueIcon.svg" width={16} height={16} alt="" />
+                          <span className="text-sm text-[#1A1F2E]">수강생 {course.instructor.instructorStudentCount.toLocaleString()}명</span>
+                        </div>
+                        <div className="flex-1 flex items-center gap-1.5">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src="/icons/bookIcon.svg" width={16} height={16} alt="" />
+                          <span className="text-sm text-[#1A1F2E]">강의 {course.instructor.instructorCourseCount}개</span>
+                        </div>
+                        <div className="flex-1 flex items-center gap-1.5">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src="/icons/starFilledIcon.svg" width={16} height={16} alt="" />
+                          <span className="text-sm text-[#1A1F2E]">평점 {course.instructor.instructorRating}</span>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </SectionCard>
 
-            {/* 강사소개 */}
-            <SectionCard id="instructor">
-              <div className="px-7 py-5 border-b border-[#E2E8F0]">
-                <h2 className="text-[#1A1F2E] font-bold text-lg">강사소개</h2>
-              </div>
-              <div className="px-7 py-6">
-                <div className="flex items-start gap-5">
-                  <div className="flex-shrink-0 w-14 h-14 rounded-full bg-[#2F5DAA] flex items-center justify-center text-white font-bold text-xl">
-                    {course.instructor.name[0]}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-[#1A1F2E] font-bold text-base mb-1.5">
-                      {course.instructor.name}
-                    </h3>
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {course.instructor.tags.map(tag => (
-                        <span
-                          key={tag}
-                          className="px-2.5 py-1 bg-[#F1F5F9] text-[#4B5563] text-xs font-medium rounded-full"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                    <p className="text-[#4B5563] text-sm leading-relaxed mb-4">
-                      {course.instructor.bio}
-                    </p>
-                    <div className="bg-[#F8FAFC] rounded-xl p-4">
-                      <p className="text-[#374151] font-semibold text-sm mb-2.5">주요 경력</p>
-                      <ul className="flex flex-col gap-2">
+                      <p className="text-sm leading-[23px] text-[#1A1F2E] mb-4">{course.instructor.bio}</p>
+
+                      {/* 경력 */}
+                      <p className="text-sm font-semibold text-[#1A1F2E] mb-2">경력</p>
+                      <div className="flex flex-col gap-1 mb-4">
                         {course.instructor.career.map((item, i) => (
-                          <li key={i} className="flex items-start gap-2 text-sm text-[#4B5563]">
-                            <span className="flex-shrink-0 mt-1.5 w-1.5 h-1.5 rounded-full bg-[#2F5DAA]" />
-                            {item}
+                          <div key={i} className="flex items-start gap-2">
+                            <span className="flex-shrink-0 text-sm leading-[20px] text-[#2F5DAA] select-none">•</span>
+                            <span className="text-sm leading-[20px] text-[#1A1F2E]">{item}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* 태그 — Figma: 하단 배치 */}
+                      <div className="flex flex-wrap gap-2">
+                        {course.instructor.tags.map(tag => (
+                          <span key={tag} className="px-3 py-1 bg-[rgba(47,93,170,0.1)] rounded-full text-xs font-medium text-[#2F5DAA]">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* ── 강의소개 ── */}
+              <section id="intro" className="scroll-mt-6">
+                <div className="bg-white border border-[#D5D8DD]" style={{ padding: '33px 33px 1px' }}>
+                  <h2 className="text-2xl font-semibold text-[#1A1F2E] mb-6">강의소개</h2>
+
+                  <div className="flex flex-col gap-8 pb-8">
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/icons/targetIcon.svg" width={20} height={20} alt="" />
+                        <h3 className="text-lg font-semibold text-[#1A1F2E]">학습목표</h3>
+                      </div>
+                      <ul className="flex flex-col gap-[10px]">
+                        {course.learningGoals.map((goal, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src="/icons/checkDarkIcon.svg" width={20} height={20} alt="" className="flex-shrink-0 mt-0.5" />
+                            <span className="text-sm leading-[23px] text-[#1A1F2E]">{goal}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
-                  </div>
-                </div>
-              </div>
-            </SectionCard>
 
-            {/* 강의소개 */}
-            <SectionCard id="intro">
-              <div className="px-7 py-5 border-b border-[#E2E8F0]">
-                <h2 className="text-[#1A1F2E] font-bold text-lg">강의소개</h2>
-              </div>
-              <div className="px-7 py-6 flex flex-col gap-6">
-                {/* 학습목표 */}
-                <div>
-                  <h3 className="text-[#1A1F2E] font-semibold text-sm mb-3 flex items-center gap-2">
-                    <span className="w-1 h-4 bg-[#2F5DAA] rounded-full" />
-                    학습목표
-                  </h3>
-                  <ul className="grid grid-cols-2 gap-x-6 gap-y-2.5">
-                    {course.learningGoals.map((goal, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <svg width="17" height="17" viewBox="0 0 17 17" fill="none" className="flex-shrink-0 mt-0.5">
-                          <circle cx="8.5" cy="8.5" r="7.5" fill="#EEF3FB" />
-                          <path d="M5 8.5L7 10.5L12 6" stroke="#2F5DAA" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <span className="text-[#374151] text-sm leading-snug">{goal}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/icons/studentsBlueIcon.svg" width={20} height={20} alt="" />
+                        <h3 className="text-lg font-semibold text-[#1A1F2E]">추천대상</h3>
+                      </div>
+                      <ul className="flex flex-col gap-[10px]">
+                        {course.targetAudience.map((t, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <span className="flex-shrink-0 text-sm leading-[20px] text-[#2F5DAA] select-none">•</span>
+                            <span className="text-sm leading-[23px] text-[#1A1F2E]">{t}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
 
-                <div className="border-t border-[#F1F5F9]" />
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/icons/bookIcon.svg" width={20} height={20} alt="" />
+                        <h3 className="text-lg font-semibold text-[#1A1F2E]">사용기술</h3>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {course.techTags.map((tag, i) => (
+                          <span key={i} className="h-9 px-4 flex items-center bg-[rgba(47,93,170,0.1)] rounded-2xl text-sm font-medium text-[#2F5DAA]">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
 
-                {/* 추천대상 */}
-                <div>
-                  <h3 className="text-[#1A1F2E] font-semibold text-sm mb-3 flex items-center gap-2">
-                    <span className="w-1 h-4 bg-[#2F5DAA] rounded-full" />
-                    추천대상
-                  </h3>
-                  <ul className="flex flex-col gap-2">
-                    {course.targetAudience.map((t, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span className="flex-shrink-0 mt-2 w-1.5 h-1.5 rounded-full bg-[#9CA3AF]" />
-                        <span className="text-[#374151] text-sm">{t}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="border-t border-[#F1F5F9]" />
-
-                {/* 통계 + 제공자료 */}
-                <div className="grid grid-cols-2 gap-5">
-                  <div className="bg-[#F8FAFC] rounded-xl p-4">
-                    <p className="text-[#374151] font-semibold text-sm mb-3">강의 통계</p>
-                    <div className="flex flex-col gap-2.5">
+                    <div className="flex items-start gap-6">
                       {[
-                        { label: '수강생', value: `${course.studentCount.toLocaleString()}명` },
-                        { label: '총 강의 수', value: `${course.totalLessons}강` },
-                        { label: '총 강의 시간', value: course.totalDuration },
-                        { label: '평균 별점', value: `⭐ ${course.averageRating}` },
+                        { icon: '/icons/clockBlueIcon.svg', label: '예상 학습 시간', value: course.totalDuration },
+                        { icon: '/icons/trendUpBlueIcon.svg', label: '난이도', value: course.level },
+                        { icon: '/icons/documentIcon.svg', label: '제공 자료', value: `${course.materialsProvided.length}개` },
                       ].map(stat => (
-                        <div key={stat.label} className="flex items-center justify-between">
-                          <span className="text-[#6B7280] text-sm">{stat.label}</span>
-                          <span className="text-[#1A1F2E] font-semibold text-sm">{stat.value}</span>
+                        <div key={stat.label} className="flex-1 flex items-start gap-3">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={stat.icon} width={20} height={20} alt="" className="flex-shrink-0 mt-0.5" />
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs text-[#1A1F2E]" style={{ lineHeight: '16px' }}>{stat.label}</span>
+                            <span className="text-base font-semibold text-[#1A1F2E]" style={{ lineHeight: '24px', letterSpacing: '-0.3125px' }}>{stat.value}</span>
+                          </div>
                         </div>
                       ))}
                     </div>
-                  </div>
-                  <div className="bg-[#F8FAFC] rounded-xl p-4">
-                    <p className="text-[#374151] font-semibold text-sm mb-3">제공자료</p>
-                    <div className="flex flex-col gap-2">
-                      {course.techTags.map((tag, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                            <rect width="14" height="14" rx="3" fill="#EEF3FB" />
-                            <path d="M3.5 7L5.5 9L10.5 4.5" stroke="#2F5DAA" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          <span className="text-[#374151] text-sm">{tag}</span>
-                        </div>
-                      ))}
+
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/icons/documentIcon.svg" width={20} height={20} alt="" />
+                        <h3 className="text-lg font-semibold text-[#1A1F2E]">제공자료</h3>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        {course.materialsProvided.map((item, i) => (
+                          <div key={i} className="bg-[#E8EAED] rounded-2xl flex items-center gap-3" style={{ padding: '12px 16px' }}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src="/icons/checkDarkIcon.svg" width={16} height={16} alt="" className="flex-shrink-0" />
+                            <span className="text-sm text-[#1A1F2E]">{item}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </SectionCard>
+              </section>
 
-            {/* 강의 커리큘럼 */}
-            <SectionCard id="curriculum">
-              <div className="px-7 py-5 border-b border-[#E2E8F0] flex items-center justify-between">
-                <h2 className="text-[#1A1F2E] font-bold text-lg">강의 커리큘럼</h2>
-                <span className="text-[#6B7280] text-sm">
-                  총 {course.totalLessons}강 · {course.totalDuration}
-                </span>
-              </div>
-              {course.curriculum.map((section, idx) => (
-                <CurriculumSection key={section.sectionId} section={section} defaultOpen={idx === 0} />
-              ))}
-            </SectionCard>
-
-            {/* 수강평 */}
-            <SectionCard id="reviews">
-              <div className="px-7 py-5 border-b border-[#E2E8F0]">
-                <h2 className="text-[#1A1F2E] font-bold text-lg">수강평</h2>
-              </div>
-
-              {reviews.length === 0 ? (
-                /* 빈 상태 */
-                <div className="flex flex-col items-center justify-center py-16 gap-3">
-                  <div className="w-14 h-14 rounded-full border-2 border-[#D1D5DB] flex items-center justify-center">
-                    <span className="text-[#9CA3AF] font-bold text-2xl">!</span>
+              {/* ── 커리큘럼 ── */}
+              <section id="curriculum" className="scroll-mt-6">
+                <div className="bg-white border border-[#D5D8DD]" style={{ padding: '33px 33px 1px' }}>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-semibold text-[#1A1F2E]">강의 커리큘럼</h2>
+                    <span className="text-sm text-[#4B5563]">
+                      총 {course.totalLessons}강 · {course.totalDuration}
+                    </span>
                   </div>
-                  <p className="text-[#1A1F2E] font-semibold text-base">아직 등록된 수강평이 없습니다.</p>
-                  <p className="text-[#9CA3AF] text-sm">강의를 수강하고 리뷰를 작성해보세요.</p>
-                </div>
-              ) : (
-                <>
-                  {/* 별점 요약 */}
-                  <div className="px-7 py-6 border-b border-[#E2E8F0]">
-                    <div className="flex items-center gap-10">
-                      <div className="flex flex-col items-center gap-1.5 w-28 flex-shrink-0 bg-[#F8FAFC] rounded-2xl py-5">
-                        <span className="text-[#1A1F2E] font-bold text-4xl leading-none">
-                          {course.averageRating}
-                        </span>
-                        <StarRow rating={Math.round(course.averageRating)} size={18} />
-                        <span className="text-[#9CA3AF] text-xs">
-                          총 {course.reviewCount.toLocaleString()}개 리뷰
-                        </span>
-                      </div>
-
-                      <div className="flex-1 flex flex-col gap-2">
-                        {[5, 4, 3, 2, 1].map(star => {
-                          const dist = course.ratingDistribution.find(d => d.stars === star);
-                          const count = dist?.count ?? 0;
-                          const pct = Math.round((count / maxRatingCount) * 100);
-                          return (
-                            <div key={star} className="flex items-center gap-2.5">
-                              <div className="flex items-center gap-1 w-8 justify-end">
-                                <span className="text-[#6B7280] text-xs">{star}</span>
-                                <StarIcon filled size={12} />
-                              </div>
-                              <div className="flex-1 h-2 bg-[#F1F5F9] rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-[#FFB800] rounded-full"
-                                  style={{ width: `${pct}%` }}
-                                />
-                              </div>
-                              <span className="w-6 text-[#9CA3AF] text-xs text-right">{count}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 리뷰 목록 */}
-                  <div>
-                    {displayedReviews.map((review, idx) => (
-                      <div
-                        key={review.reviewId}
-                        className={`px-7 py-5 ${
-                          idx < displayedReviews.length - 1 ? 'border-b border-[#F1F5F9]' : ''
-                        }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-[#E2E8F0] flex items-center justify-center text-[#4B5563] font-semibold text-sm flex-shrink-0">
-                              {review.studentName[0]}
-                            </div>
-                            <div>
-                              <p className="text-[#1A1F2E] font-semibold text-sm">
-                                {review.studentName}
-                              </p>
-                              <p className="text-[#9CA3AF] text-xs">{review.createdAt}</p>
-                            </div>
-                          </div>
-                          {/* 아이콘 버튼들 */}
-                          <div className="flex items-center gap-1.5">
-                            {review.isMine && (
-                              <button
-                                onClick={() => setEditingReview(review)}
-                                className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#EEF3FB] transition-colors"
-                                title="수정"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                  <path
-                                    d="M9.5 2.5L11.5 4.5L4.5 11.5H2.5V9.5L9.5 2.5Z"
-                                    stroke="#2F5DAA"
-                                    strokeWidth="1.2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                </svg>
-                              </button>
-                            )}
-                            {/* 신고 버튼 — TODO: onClick에 ReviewReportModal 연결 (팀원 컴포넌트 완성 후) */}
-                            <button
-                              className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
-                                review.isMine
-                                  ? 'opacity-0 pointer-events-none'
-                                  : 'hover:bg-red-50'
-                              }`}
-                              title="신고"
-                            >
-                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                <path
-                                  d="M2 2H8L7 5H12L9.5 8.5H4.5L3.5 12M2 2V12"
-                                  stroke="#EF4444"
-                                  strokeWidth="1.2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 mt-2.5">
-                          <StarRow rating={review.rating} size={15} />
-                          <span className="text-[#FFB800] font-semibold text-sm">{review.rating}.0</span>
-                        </div>
-                        <p className="mt-2 text-[#374151] text-sm leading-relaxed">{review.content}</p>
-                      </div>
+                  <div className="flex flex-col gap-3 pb-8">
+                    {course.curriculum.map((section, idx) => (
+                      <CurriculumAccordion key={section.sectionId} section={section} defaultOpen={idx === 0} />
                     ))}
-
-                    {reviews.length > 3 && (
-                      <div className="border-t border-[#F1F5F9] px-7 py-4 flex justify-center">
-                        <button
-                          onClick={() => setShowAllReviews(v => !v)}
-                          className="flex items-center gap-1.5 text-[#2F5DAA] text-sm font-medium hover:underline"
-                        >
-                          {showAllReviews ? '접기' : `전체 리뷰 보기 (${reviews.length}개)`}
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 14 14"
-                            fill="none"
-                            className={`transition-transform ${showAllReviews ? 'rotate-180' : ''}`}
-                          >
-                            <path d="M3 5L7 9L11 5" stroke="#2F5DAA" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </button>
-                      </div>
-                    )}
                   </div>
-                </>
-              )}
-            </SectionCard>
-          </div>
+                </div>
+              </section>
 
-          {/* 사이드 네비게이션 */}
-          <aside className="w-[140px] flex-shrink-0">
-            <div className="sticky top-6">
-              <StickyNav activeId={activeSection} />
-            </div>
-          </aside>
+              {/* ── 수강평 ── */}
+              <section id="reviews" className="scroll-mt-6 mb-10">
+                <div className="bg-white border border-[#D5D8DD]" style={{ padding: '33px 33px 1px' }}>
+                  <h2 className="text-2xl font-semibold text-[#1A1F2E] mb-6">수강평</h2>
+
+                  {reviews.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center pt-10 pb-12">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/icons/emptyStateIcon.svg" width={80} height={80} alt="" />
+                      <p className="text-base font-semibold text-[#1A1F2E] mt-[41px] mb-[26.5px]">아직 등록된 수강평이 없습니다.</p>
+                      <p className="text-sm text-[#9CA3AF]">강의를 수강하고 리뷰를 작성해보세요.</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* 별점 요약 */}
+                      <div className="flex items-center gap-6 pb-8 border-b border-[#D5D8DD] mb-8">
+                        <div
+                          className="flex flex-col items-center justify-center gap-2 bg-[#E8EAED] rounded-2xl flex-shrink-0"
+                          style={{ width: 431, height: 160 }}
+                        >
+                          <span className="text-[48px] font-bold text-[#1A1F2E] leading-none">{course.averageRating}</span>
+                          <StarRow rating={course.averageRating} size={24} />
+                          <span className="text-sm text-[#1A1F2E]">총 {course.reviewCount.toLocaleString()}개 리뷰</span>
+                        </div>
+
+                        <div className="flex-1 flex flex-col gap-3">
+                          {[5, 4, 3, 2, 1].map(star => {
+                            const dist = course.ratingDistribution.find(d => d.stars === star);
+                            const count = dist?.count ?? 0;
+                            const pct = Math.round((count / maxRatingCount) * 100);
+                            return (
+                              <div key={star} className="flex items-center gap-3">
+                                <div className="flex items-center gap-1 w-20 flex-shrink-0">
+                                  <StarIcon filled size={16} />
+                                  <span className="text-sm font-medium text-[#1A1F2E]">{star}</span>
+                                </div>
+                                <div className="flex-1 h-[10px] bg-[#E8EAED] rounded-full overflow-hidden">
+                                  <div className="h-full bg-[#FFB800] rounded-full" style={{ width: `${pct}%` }} />
+                                </div>
+                                <span className="text-sm text-[#1A1F2E] w-16 text-right flex-shrink-0">{count}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 리뷰 목록 */}
+                      <div className="flex flex-col gap-4">
+                        {displayedReviews.map(review => (
+                          <div
+                            key={review.reviewId}
+                            className="border border-[#D5D8DD] rounded-2xl"
+                            style={{ padding: '21px 21px 1px' }}
+                          >
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full bg-[rgba(47,93,170,0.1)] flex items-center justify-center flex-shrink-0">
+                                  <span className="text-lg font-semibold text-[#2F5DAA]">
+                                    {review.studentName[0]}
+                                  </span>
+                                </div>
+                                <div>
+                                  <p className="text-base font-medium text-[#1A1F2E]">{review.studentName}</p>
+                                  <p className="text-xs text-[#1A1F2E]">{review.createdAt}</p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-1">
+                                  <StarRow rating={review.rating} size={16} />
+                                  <span className="text-sm font-semibold text-[#FFB800]">{review.rating}</span>
+                                </div>
+                                {/* UA-P1-192: 내 리뷰 수정/삭제 버튼 */}
+                                {review.isMine && (
+                                  <>
+                                    <button
+                                      onClick={() => setEditingReview(review)}
+                                      className="w-7 h-7 flex items-center justify-center rounded-2xl hover:bg-[#EEF3FB] transition-colors"
+                                      title="수정"
+                                    >
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img src="/icons/editIcon.svg" width={14} height={14} alt="" />
+                                    </button>
+                                    {/* TODO: 삭제 버튼 onClick — 팀원 삭제 확인 모달 확인 후 연결 */}
+                                    <button
+                                      className="w-7 h-7 flex items-center justify-center rounded-2xl hover:bg-red-50 transition-colors"
+                                      title="삭제"
+                                    >
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img src="/icons/trashIcon.svg" width={14} height={14} alt="" />
+                                    </button>
+                                  </>
+                                )}
+                                {/* UA-P1-197: 타인 리뷰 신고 버튼 — TODO: onClick={() => setReportingReview(review)} 팀원 ReviewReportModal 완성 후 연결 */}
+                                {!review.isMine && (
+                                  <button
+                                    className="w-7 h-7 flex items-center justify-center rounded-2xl hover:bg-red-50 transition-colors"
+                                    title="신고"
+                                  >
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src="/icons/reportFlagIcon.svg" width={14} height={14} alt="" />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                            <p className="text-sm leading-[23px] text-[#1A1F2E] pb-5">{review.content}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* 페이지네이션 */}
+                      {totalReviewPages > 1 && (
+                        <div className="flex justify-center items-center gap-1 pt-4 pb-6">
+                          {/* 이전 버튼 */}
+                          <button
+                            onClick={() => setReviewPage(p => Math.max(1, p - 1))}
+                            disabled={reviewPage === 1}
+                            className="w-9 h-9 flex items-center justify-center rounded-xl text-sm text-[#9CA3AF] hover:bg-[#F0F2F5] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              <path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </button>
+
+                          {/* 페이지 번호 */}
+                          {Array.from({ length: totalReviewPages }, (_, i) => i + 1).map(page => (
+                            <button
+                              key={page}
+                              onClick={() => setReviewPage(page)}
+                              className={`w-9 h-9 flex items-center justify-center rounded-xl text-sm font-medium transition-colors ${
+                                reviewPage === page
+                                  ? 'bg-[#2F5DAA] text-white'
+                                  : 'text-[#4B5563] hover:bg-[#F0F2F5]'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          ))}
+
+                          {/* 다음 버튼 */}
+                          <button
+                            onClick={() => setReviewPage(p => Math.min(totalReviewPages, p + 1))}
+                            disabled={reviewPage === totalReviewPages}
+                            className="w-9 h-9 flex items-center justify-center rounded-xl text-sm text-[#9CA3AF] hover:bg-[#F0F2F5] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </section>
+
+          </div>
         </div>
       </div>
 
-      {/* 학습 시작 플로팅 버튼 */}
-      <div className="fixed bottom-8 right-8 z-40">
-        <button
-          className="flex items-center justify-center gap-2 bg-[#F97316] hover:bg-[#EA6A10] text-white font-bold text-base rounded-2xl shadow-lg transition-colors"
-          style={{ width: 167, height: 60 }}
-        >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <path d="M5 3.5L14.5 9L5 14.5V3.5Z" fill="white" />
-          </svg>
-          학습 시작
-        </button>
+      {/* ── 오른쪽 여백 고정 사이드 네비 ── */}
+      <div
+        className="fixed z-30"
+        style={{
+          right: 'max(26px, calc((100vw - 1440px) / 2 + 26px))',
+          top: '50%',
+          transform: 'translateY(-50%)',
+        }}
+      >
+        <SideNav activeId={activeSection} onNav={setActiveSection} />
       </div>
 
-      {/* 수강 신청 확인 모달 */}
-      {showEnrollConfirm && (
-        <ConfirmModal
-          icon="/icons/checkCircleIcon.svg"
-          iconBgColor="#EEF3FB"
-          title="수강 신청"
-          description={`결제가 필요한 강의입니다.\n결제 화면으로 이동하시겠습니까?`}
-          cancelText="취소"
-          confirmText="확인"
-          onCancel={() => setShowEnrollConfirm(false)}
-          onConfirm={handleEnrollConfirm}
-        />
+      {/* ── UA-P0-140/142: 학습 시작 플로팅 버튼 — 수강자만 표시 ── */}
+      {isEnrolled && firstLessonId && (
+        <div className="fixed bottom-8 right-8 z-40">
+          <Link href={`/learning/videos/${firstLessonId}`}>
+            <button
+              className="flex items-center justify-center gap-2 bg-[#F97316] hover:bg-[#EA6A10] text-white font-semibold text-lg rounded-[20px] transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]"
+              style={{ width: 167, height: 60 }}
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M6 4L16 10L6 16V4Z" fill="white" />
+              </svg>
+              학습 시작
+            </button>
+          </Link>
+        </div>
       )}
 
-      {/* 리뷰 수정 모달 */}
-      {editingReview && (
-        <ReviewEditModal
-          review={editingReview}
-          onClose={() => setEditingReview(null)}
-          onSubmit={handleEditSubmit}
-        />
-      )}
-
-      {/* TODO: 리뷰 신고 모달 — 팀원 ReviewReportModal 완성 후 여기에 렌더링 */}
+      {/* TODO: 수강신청 모달 — 팀원 결제 모달 확인 후 연결 */}
+      {/* TODO: 리뷰 수정 모달 — import ReviewEditModal from '@/components/ui/reviewEditModal' 팀원 확인 후 연결 */}
+      {/* TODO: 리뷰 삭제 확인 모달 — 팀원 모달 확인 후 연결 */}
+      {/* TODO: 리뷰 신고 모달 — import ReviewReportModal from '@/components/ui/reviewReportModal' 팀원 확인 후 연결 */}
     </div>
   );
 }
