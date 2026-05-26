@@ -7,7 +7,6 @@ import { useState } from 'react';
 
 import LoadingModal from '@/components/ui/loadingModal';
 import SingleButtonModal from '@/components/ui/singleButtonModal';
-import { sendPasswordResetEmailAction } from '../actions';
 
 const MAX_SEND_COUNT = 3;
 const LIMIT_KEY = 'forgotPasswordSendDate';
@@ -61,17 +60,12 @@ export default function ForgotPasswordForm() {
     setEmailError('');
     setIsLoading(true);
 
-    const result = await sendPasswordResetEmailAction(email);
-
-    setIsLoading(false);
-
-    if (!result.success) {
-      setEmailError(result.message ?? '가입되지 않은 이메일입니다. 다시 입력해주세요.');
-      return;
-    }
-
-    incrementCount();
-    setIsSuccessModalOpen(true);
+    // TODO: 백엔드 연동 시 sendPasswordResetEmail(email) 호출
+    setTimeout(() => {
+      incrementCount();
+      setIsLoading(false);
+      setIsSuccessModalOpen(true);
+    }, 2000);
   };
 
   return (
