@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 const SUBJECT_OPTIONS = [
   '국어',
@@ -32,6 +32,94 @@ export default function CourseCreateForm() {
     },
   ]);
 
+  const [errors, setErrors] = useState({
+    title: '',
+    subject: '',
+    description: '',
+    price: '',
+    thumbnail: '',
+  });
+  const [firstErrorField, setFirstErrorField] = useState('');
+
+  const titleRef = useRef<HTMLInputElement>(null);
+  const subjectRef = useRef<HTMLSelectElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const priceRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = () => {
+    const newErrors = {
+      title: '',
+      subject: '',
+      description: '',
+      price: '',
+      thumbnail: '',
+    };
+
+    let firstError = '';
+
+    if (!title.trim()) {
+      newErrors.title = '강의명을 입력해주세요';
+
+      if (!firstError) {
+        firstError = 'title';
+      }
+    }
+
+    if (!subject) {
+      newErrors.subject = '과목을 선택해주세요';
+
+      if (!firstError) {
+        firstError = 'subject';
+      }
+    }
+
+    if (!description.trim()) {
+      newErrors.description = '강의 설명을 입력해주세요';
+
+      if (!firstError) {
+        firstError = 'description';
+      }
+    }
+
+    if (priceType === 'PAID' && !price.trim()) {
+      newErrors.price = '가격을 입력해주세요';
+
+      if (!firstError) {
+        firstError = 'price';
+      }
+    }
+
+    if (!thumbnail) {
+      newErrors.thumbnail = '썸네일을 등록해주세요';
+
+      if (!firstError) {
+        firstError = 'thumbnail';
+      }
+    }
+
+    setErrors(newErrors);
+    setFirstErrorField(firstError);
+
+    if (firstError) {
+      const refMap = {
+        title: titleRef,
+        subject: subjectRef,
+        description: descriptionRef,
+        price: priceRef,
+      };
+
+      const targetRef = refMap[firstError as keyof typeof refMap];
+
+      targetRef?.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+
+      targetRef?.current?.focus();
+      return;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
       {/* title */}
@@ -57,12 +145,42 @@ export default function CourseCreateForm() {
           </label>
 
           <input
+            ref={titleRef}
             type="text"
             placeholder="강의명을 입력하세요"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="h-14 w-full rounded-2xl border border-[#E2E8F0] px-5 text-base outline-none transition focus:border-[#2F5DAA]"
+            onChange={(e) => {
+              const value = e.target.value;
+              setTitle(value);
+              setErrors((prev) => ({
+                ...prev,
+                title: value.trim() ? '' : '강의명을 입력해주세요',
+              }));
+
+              if (firstErrorField === 'title' && value.trim()) {
+                setFirstErrorField('');
+              }
+            }}
+            className={`h-14 w-full rounded-2xl border px-5 text-base outline-none transition ${
+              firstErrorField === 'title'
+                ? 'border-[#B91C1C]'
+                : 'border-[#E2E8F0] focus:border-[#2F5DAA]'
+            }`}
           />
+          <div className="mt-2 min-h-[20px]">
+            {errors.title && (
+              <div className="flex items-center gap-1">
+                <Image
+                  src="/icons/error.svg"
+                  alt="error"
+                  width={14}
+                  height={14}
+                />
+
+                <p className="text-sm text-[#B91C1C]">{errors.title}</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* 과목 */}
@@ -72,9 +190,25 @@ export default function CourseCreateForm() {
           </label>
 
           <select
+            ref={subjectRef}
             value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            className="h-14 w-full rounded-2xl border border-[#E2E8F0] px-5 text-base outline-none transition focus:border-[#2F5DAA]"
+            onChange={(e) => {
+              const value = e.target.value;
+              setSubject(value);
+              setErrors((prev) => ({
+                ...prev,
+                subject: value ? '' : '과목을 선택해주세요',
+              }));
+
+              if (firstErrorField === 'subject' && value) {
+                setFirstErrorField('');
+              }
+            }}
+            className={`h-14 w-full rounded-2xl border px-5 text-base outline-none transition ${
+              firstErrorField === 'subject'
+                ? 'border-[#B91C1C] '
+                : 'border-[#E2E8F0] focus:border-[#2F5DAA]'
+            }`}
           >
             <option value="">과목 선택</option>
 
@@ -84,6 +218,19 @@ export default function CourseCreateForm() {
               </option>
             ))}
           </select>
+          <div className="mt-2 min-h-[20px]">
+            {errors.subject && (
+              <div className="flex items-center gap-1">
+                <Image
+                  src="/icons/error.svg"
+                  alt="error"
+                  width={14}
+                  height={14}
+                />
+                <p className="text-sm text-[#B91C1C]">{errors.subject}</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* 설명 */}
@@ -93,11 +240,40 @@ export default function CourseCreateForm() {
           </label>
 
           <textarea
+            ref={descriptionRef}
             placeholder="강의 내용을 상세히 설명해주세요"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="min-h-[180px] w-full rounded-2xl border border-[#E2E8F0] p-5 text-base outline-none transition focus:border-[#2F5DAA]"
+            onChange={(e) => {
+              const value = e.target.value;
+              setDescription(value);
+              setErrors((prev) => ({
+                ...prev,
+                description: value.trim() ? '' : '강의 설명을 입력해주세요',
+              }));
+
+              if (firstErrorField === 'description' && value.trim()) {
+                setFirstErrorField('');
+              }
+            }}
+            className={`min-h-[180px] w-full rounded-2xl border p-5 text-base outline-none transition ${
+              firstErrorField === 'description'
+                ? 'border-[#B91C1C]'
+                : 'border-[#E2E8F0] focus:border-[#2F5DAA]'
+            }`}
           />
+          <div className="mt-2 min-h-[20px]">
+            {errors.description && (
+              <div className="flex items-center gap-1">
+                <Image
+                  src="/icons/error.svg"
+                  alt="error"
+                  width={14}
+                  height={14}
+                />
+                <p className="text-sm text-[#B91C1C]">{errors.description}</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* 썸네일 */}
@@ -129,6 +305,13 @@ export default function CourseCreateForm() {
 
                   if (file) {
                     setThumbnail(file);
+                    setErrors((prev) => ({
+                      ...prev,
+                      thumbnail: '',
+                    }));
+                    if (firstErrorField === 'thumbnail') {
+                      setFirstErrorField('');
+                    }
                   }
                 }}
               />
@@ -154,6 +337,20 @@ export default function CourseCreateForm() {
           <p className="mt-3 text-sm text-[#94A3B8]">
             jpg, png 형식 / 최대 5MB
           </p>
+          <div className="mt-2 min-h-[20px]">
+            {errors.thumbnail && (
+              <div className="flex items-center gap-1">
+                <Image
+                  src="/icons/error.svg"
+                  alt="error"
+                  width={14}
+                  height={14}
+                />
+
+                <p className="text-sm text-[#B91C1C]">{errors.thumbnail}</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* divider */}
@@ -198,11 +395,29 @@ export default function CourseCreateForm() {
                 가격
               </label>
 
-              <div className="flex h-14 w-[220px] items-center rounded-2xl border border-[#E2E8F0] px-5">
+              <div
+                className={`flex h-14 w-[220px] items-center rounded-2xl border px-5 ${
+                  firstErrorField === 'price'
+                    ? 'border-[#B91C1C]'
+                    : 'border-[#E2E8F0]'
+                }`}
+              >
                 <input
+                  ref={priceRef}
                   type="number"
                   value={price}
-                  onChange={(e) => setPrice(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setPrice(value);
+                    setErrors((prev) => ({
+                      ...prev,
+                      price: value.trim() ? '' : '가격을 입력해주세요',
+                    }));
+
+                    if (firstErrorField === 'price' && value.trim()) {
+                      setFirstErrorField('');
+                    }
+                  }}
                   className="w-full bg-transparent text-base outline-none"
                 />
 
@@ -210,6 +425,19 @@ export default function CourseCreateForm() {
               </div>
             </div>
           )}
+          <div className="mt-2 min-h-[20px]">
+            {errors.price && (
+              <div className="flex items-center gap-1">
+                <Image
+                  src="/icons/error.svg"
+                  alt="error"
+                  width={14}
+                  height={14}
+                />
+                <p className="text-sm text-[#B91C1C]">{errors.price}</p>
+              </div>
+            )}
+          </div>
         </div>
         {/* divider */}
         <div className="mb-8 border-t border-[#E2E8F0]" />
@@ -272,7 +500,7 @@ export default function CourseCreateForm() {
                         prev.filter((item) => item.id !== section.id)
                       )
                     }
-                    className="text-[#EF4444]"
+                    className="text-[#B91C1C]"
                   >
                     ✕
                   </button>
@@ -304,6 +532,7 @@ export default function CourseCreateForm() {
 
         <button
           type="button"
+          onClick={handleSubmit}
           className="h-14 flex-1 rounded-2xl bg-[#2F5DAA] text-base font-semibold text-white transition hover:bg-[#1D3E75]"
         >
           강의 등록
