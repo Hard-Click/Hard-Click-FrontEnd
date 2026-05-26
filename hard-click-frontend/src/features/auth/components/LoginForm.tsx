@@ -100,6 +100,18 @@ export default function LoginForm() {
     setIsSubmitting(false);
 
     if (!result.success || !result.data) {
+      // 423 Locked → 백엔드가 계정 잠금 처리 (5회 실패로 인증번호 발송됨)
+      if (result.isLocked) {
+        setErrors({
+          loginId: '',
+          password: result.message ?? '계정이 잠겼습니다',
+        });
+        setErrorBorder({ loginId: false, password: true });
+        setIsConfirmModalOpen(true);
+        passwordInputRef.current?.focus();
+        return;
+      }
+
       const nextCount = loginFailCount + 1;
       setLoginFailCount(nextCount);
       setErrors({
@@ -118,8 +130,13 @@ export default function LoginForm() {
       return;
     }
 
-    // 로그인 성공 → 토큰 저장 후 홈으로 이동
-    authStore.setTokens(result.data.accessToken, result.data.refreshToken);
+    // 로그인 성공 → 토큰 + memberId + role 저장 후 홈으로 이동
+    authStore.setAuth({
+      accessToken: result.data.accessToken,
+      refreshToken: result.data.refreshToken,
+      memberId: result.data.memberId,
+      role: result.data.role,
+    });
     router.push('/');
   };
 
