@@ -7,9 +7,8 @@ import VerificationCodeBox from './VerificationCodeBox';
 import PasswordResetForm from './PasswordResetForm';
 
 export default function AccountProtectionFlow() {
-  // TODO: 테스트 완료 후 'email'로 되돌리기
   const [step, setStep] = useState<'email' | 'verification' | 'resetPassword'>(
-    'verification'
+    'email'
   );
 
   return (

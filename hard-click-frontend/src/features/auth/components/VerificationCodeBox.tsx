@@ -6,24 +6,23 @@ interface VerificationCodeBoxProps {
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-
-const MAX_RESEND = 2; // 재발송 최대 횟수 (초기 발송 포함 총 3회)
 
 export default function VerificationCodeBox({
   onSuccess,
 }: VerificationCodeBoxProps) {
   const [code, setCode] = useState('');
   const [codeError, setCodeError] = useState('');
-  const [resendCount, setResendCount] = useState(0);
-  const [showLimitModal, setShowLimitModal] = useState(false);
 
+  const toastShownRef = useRef(false);
   const isFormValid = code.trim().length === 6;
 
-  // 마운트 시 발송 완료 toast
+  // 마운트 시 발송 완료 toast (StrictMode 두 번 실행 방지)
   useEffect(() => {
-    toast.success('인증코드가 이메일로 발송되었습니다');
+    if (toastShownRef.current) return;
+    toastShownRef.current = true;
+    toast.success('인증번호가 발송되었습니다.');
   }, []);
 
   const handleVerifyCode = () => {
@@ -47,12 +46,7 @@ export default function VerificationCodeBox({
   };
 
   const handleResend = () => {
-    if (resendCount >= MAX_RESEND) {
-      setShowLimitModal(true);
-      return;
-    }
-    setResendCount((prev) => prev + 1);
-    toast.success('인증코드가 이메일로 재발송되었습니다');
+    toast.success('인증번호가 재발송되었습니다.');
   };
 
   return (
@@ -110,7 +104,7 @@ export default function VerificationCodeBox({
           <button
             type="button"
             onClick={handleResend}
-            className="text-xs font-medium text-[#2F5DAA] underline underline-offset-2"
+            className="text-xs font-medium text-[#2F5DAA]"
           >
             인증번호 재발송
           </button>
@@ -148,27 +142,6 @@ export default function VerificationCodeBox({
         </div>
       </div>
 
-      {/* 재발송 횟수 초과 모달 */}
-      {showLimitModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-[320px] rounded-2xl bg-white px-6 py-7 shadow-xl">
-            <h3 className="mb-2 text-center text-base font-bold text-[#1F2937]">
-              인증번호 발급 제한
-            </h3>
-            <p className="mb-6 text-center text-sm leading-relaxed text-[#6B7280]">
-              인증번호 발급은 하루에 최대 3회 가능합니다.{'\n'}
-              내일 다시 시도해주세요.
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowLimitModal(false)}
-              className="h-11 w-full rounded-xl bg-[#2F5DAA] text-sm font-semibold text-white"
-            >
-              확인
-            </button>
-          </div>
-        </div>
-      )}
     </>
   );
 }
