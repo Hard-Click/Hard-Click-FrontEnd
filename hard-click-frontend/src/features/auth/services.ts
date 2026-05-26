@@ -95,6 +95,17 @@ export async function register(payload: RegisterRequest) {
 export async function login(payload: LoginRequest): Promise<LoginResult> {
   if (USE_MOCK) {
     console.log('[MOCK] 로그인 요청:', payload);
+
+    // 테스트 계정: test / test1234 일 때만 성공
+    const isValid = payload.username === 'test' && payload.password === 'test1234';
+
+    if (!isValid) {
+      return {
+        success: false,
+        message: '아이디 또는 비밀번호가 올바르지 않습니다',
+      };
+    }
+
     return {
       success: true,
       message: '로그인되었습니다',
