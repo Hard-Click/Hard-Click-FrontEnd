@@ -70,7 +70,6 @@ export const MOCK_COURSES: CourseListItem[] = [
     isFree: true,
     isEnrolled: false,
     hasPreview: false,
-    thumbnailUrl: '/image/lecture3.svg',
   },
   {
     courseId: 4,
@@ -134,7 +133,6 @@ export const MOCK_COURSES: CourseListItem[] = [
     isFree: true,
     isEnrolled: false,
     hasPreview: false,
-    thumbnailUrl: '/image/lecture7.svg',
   },
 ];
 
