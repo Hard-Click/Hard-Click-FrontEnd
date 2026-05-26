@@ -11,8 +11,6 @@ import { api } from '@/services/api';
 
 const USE_MOCK = false;
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
-
 export async function checkUsername(username: string) {
   if (USE_MOCK) {
     console.log('[MOCK] 아이디 중복 확인:', username);
@@ -118,11 +116,12 @@ export async function login(payload: LoginRequest): Promise<LoginResult> {
   }
 
   try {
+    // 프록시 경유 (next.config.ts rewrites): /api/auth/login → backend
     const response = await axios.post<{
       httpStatus: number;
       message: string;
       data: AuthToken;
-    }>(`${BASE_URL}/api/auth/login`, payload, {
+    }>('/api/auth/login', payload, {
       headers: { 'Content-Type': 'application/json' },
     });
 

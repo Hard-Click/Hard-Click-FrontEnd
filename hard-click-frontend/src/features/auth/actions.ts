@@ -39,6 +39,7 @@ export async function registerAction(values: RegisterFormValues) {
     };
   }
 
+  // 이메일 인증 완료 여부는 프론트에서만 확인 (백엔드 payload에는 포함 안 함)
   if (!values.emailVerificationToken) {
     return {
       success: false,
@@ -48,16 +49,24 @@ export async function registerAction(values: RegisterFormValues) {
     };
   }
 
+  // 비밀번호 일치 검증도 프론트에서만 수행
+  if (values.password !== values.passwordConfirm) {
+    return {
+      success: false,
+      httpStatus: 400,
+      data: undefined,
+      message: '비밀번호가 일치하지 않습니다',
+    };
+  }
+
   const payload: RegisterRequest = {
     username: values.username.trim(),
     email: getEmail(values),
     password: values.password,
-    passwordConfirm: values.passwordConfirm,
     name: values.name.trim(),
     gender: values.gender,
     birthDate: values.birthDate,
     phoneNumber: values.phoneNumber.trim(),
-    emailVerificationToken: values.emailVerificationToken,
     requiredTermsAgreed: values.agreeTerms && values.agreePrivacy,
     optionalTermsAgreed: values.agreeMarketing,
   };
