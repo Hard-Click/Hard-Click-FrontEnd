@@ -2,6 +2,9 @@
 
 import Image from 'next/image';
 import { useRef, useState } from 'react';
+import ConfirmModal from '@/components/ui/confirmModal';
+import { useRouter } from 'next/navigation';
+import LoadingModal from '@/components/ui/loadingModal';
 
 const SUBJECT_OPTIONS = [
   '국어',
@@ -18,6 +21,17 @@ const SUBJECT_OPTIONS = [
   '미적분',
 ];
 
+interface Lecture {
+  file: File;
+  duration: string;
+}
+
+interface Section {
+  id: number;
+  title: string;
+  lectures: Lecture[];
+}
+
 export default function CourseCreateForm() {
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState('');
@@ -25,12 +39,8 @@ export default function CourseCreateForm() {
   const [priceType, setPriceType] = useState<'FREE' | 'PAID'>('FREE');
   const [price, setPrice] = useState('');
   const [thumbnail, setThumbnail] = useState<File | null>(null);
-  const [sections, setSections] = useState([
-    {
-      id: 1,
-      title: '',
-    },
-  ]);
+  const [sections, setSections] = useState<Section[]>([]);
+  const router = useRouter();
 
   const [errors, setErrors] = useState({
     title: '',
@@ -45,6 +55,30 @@ export default function CourseCreateForm() {
   const subjectRef = useRef<HTMLSelectElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
+
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
+
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+  const isFormValid =
+    title.trim() &&
+    subject &&
+    description.trim() &&
+    thumbnail &&
+    (priceType === 'FREE' || price.trim());
+
+  const formatDuration = (seconds: number) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    const formattedHours = String(hrs).padStart(2, '0');
+    const formattedMinutes = String(mins).padStart(2, '0');
+    const formattedSeconds = String(secs).padStart(2, '0');
+    return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+  };
 
   const handleSubmit = () => {
     const newErrors = {
@@ -118,6 +152,8 @@ export default function CourseCreateForm() {
       targetRef?.current?.focus();
       return;
     }
+
+    setIsConfirmOpen(true);
   };
 
   return (
@@ -303,15 +339,45 @@ export default function CourseCreateForm() {
                 onChange={(e) => {
                   const file = e.target.files?.[0];
 
-                  if (file) {
-                    setThumbnail(file);
+                  if (!file) return;
+
+                  // 형식 검사
+                  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+                    setThumbnail(null);
+
                     setErrors((prev) => ({
                       ...prev,
-                      thumbnail: '',
+                      thumbnail: 'jpg, jpeg, png 형식만 업로드 가능합니다',
                     }));
-                    if (firstErrorField === 'thumbnail') {
-                      setFirstErrorField('');
-                    }
+
+                    e.target.value = '';
+
+                    return;
+                  }
+
+                  // 용량 검사
+                  if (file.size > MAX_FILE_SIZE) {
+                    setThumbnail(null);
+
+                    setErrors((prev) => ({
+                      ...prev,
+                      thumbnail: '이미지는 5MB 이하만 업로드 가능합니다',
+                    }));
+
+                    e.target.value = '';
+
+                    return;
+                  }
+
+                  // 성공
+                  setThumbnail(file);
+                  setErrors((prev) => ({
+                    ...prev,
+                    thumbnail: '',
+                  }));
+
+                  if (firstErrorField === 'thumbnail') {
+                    setFirstErrorField('');
                   }
                 }}
               />
@@ -335,7 +401,7 @@ export default function CourseCreateForm() {
           </div>
 
           <p className="mt-3 text-sm text-[#94A3B8]">
-            jpg, png 형식 / 최대 5MB
+            jpg, jpeg, png 형식 / 최대 5MB
           </p>
           <div className="mt-2 min-h-[20px]">
             {errors.thumbnail && (
@@ -455,7 +521,7 @@ export default function CourseCreateForm() {
                   {
                     id: Date.now(),
                     title: '',
-                    lectures: [''],
+                    lectures: [],
                   },
                 ])
               }
@@ -465,59 +531,162 @@ export default function CourseCreateForm() {
             </button>
           </div>
 
-          <div className="space-y-5">
-            {sections.map((section, sectionIndex) => (
-              <div
-                key={section.id}
-                className="rounded-3xl border border-[#E2E8F0] bg-white p-6"
-              >
-                {/* section title */}
-                <div className="mb-4 flex items-center gap-4">
-                  <button type="button" className="text-[#94A3B8] cursor-grab">
-                    ☰
-                  </button>
+          {sections.length === 0 ? (
+            <div className="flex h-[220px] flex-col items-center justify-center rounded-3xl border border-[#E2E8F0] bg-[#F8FAFC]">
+              <Image
+                src="/icons/curri.svg"
+                alt="empty curriculum"
+                width={48}
+                height={48}
+                className="mb-4 opacity-40"
+              />
 
-                  <input
-                    type="text"
-                    value={section.title}
-                    onChange={(e) => {
-                      setSections((prev) =>
-                        prev.map((item) =>
-                          item.id === section.id
-                            ? { ...item, title: e.target.value }
-                            : item
+              <p className="text-sm text-[#64748B]">
+                섹션을 추가하여 커리큘럼을 구성하세요
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {sections.map((section, sectionIndex) => (
+                <div
+                  key={section.id}
+                  className="rounded-3xl border border-[#E2E8F0] bg-white p-6"
+                >
+                  {/* section title */}
+                  <div className="mb-4 flex items-center gap-4">
+                    <button
+                      type="button"
+                      className="cursor-grab text-[#94A3B8]"
+                    >
+                      ☰
+                    </button>
+
+                    <input
+                      type="text"
+                      value={section.title}
+                      onChange={(e) => {
+                        setSections((prev) =>
+                          prev.map((item) =>
+                            item.id === section.id
+                              ? { ...item, title: e.target.value }
+                              : item
+                          )
+                        );
+                      }}
+                      placeholder={`섹션 ${sectionIndex + 1} 제목`}
+                      className="h-11 flex-1 rounded-xl border border-[#E2E8F0] px-4 text-sm outline-none"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSections((prev) =>
+                          prev.filter((item) => item.id !== section.id)
                         )
-                      );
-                    }}
-                    placeholder={`섹션 ${sectionIndex + 1} 제목`}
-                    className="h-11 flex-1 rounded-xl border border-[#E2E8F0] px-4 text-sm outline-none"
-                  />
+                      }
+                      className="text-[#B91C1C]"
+                    >
+                      ✕
+                    </button>
+                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSections((prev) =>
-                        prev.filter((item) => item.id !== section.id)
-                      )
-                    }
-                    className="text-[#B91C1C]"
-                  >
-                    ✕
-                  </button>
-                </div>
+                  {/* lectures */}
+                  <div className="pl-8">
+                    <div className="mb-4 mt-3 space-y-2">
+                      {section.lectures.map((lecture, index) => (
+                        <div
+                          key={index}
+                          className="grid grid-cols-[1fr_auto_auto] items-center rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3"
+                        >
+                          {/* 영상 제목 */}
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-[#334155]">
+                              {lecture.file.name}
+                            </p>
+                          </div>
 
-                {/* lectures */}
-                <div className="pl-8">
-                  <button
-                    type="button"
-                    className="h-12 w-full rounded-2xl border border-[#E2E8F0] bg-white text-sm font-medium text-[#475569] transition hover:bg-[#F8FAFC]"
-                  >
-                    + 강의 영상 추가
-                  </button>
+                          {/* 영상 길이 */}
+                          <div className="mx-6">
+                            <p className="text-sm text-[#64748B]">
+                              {lecture.duration}
+                            </p>
+                          </div>
+
+                          {/* 삭제 */}
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSections((prev) =>
+                                  prev.map((item) =>
+                                    item.id === section.id
+                                      ? {
+                                          ...item,
+                                          lectures: item.lectures.filter(
+                                            (_, lectureIndex) =>
+                                              lectureIndex !== index
+                                          ),
+                                        }
+                                      : item
+                                  )
+                                );
+                              }}
+                              className="text-sm font-medium text-[#B91C1C]"
+                            >
+                              삭제
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <label className="flex h-12 w-full cursor-pointer items-center justify-center rounded-2xl border border-[#E2E8F0] bg-white text-sm font-medium text-[#475569] transition hover:bg-[#F8FAFC]">
+                      + 강의 영상 추가
+                      <input
+                        type="file"
+                        accept="video/mp4,video/quicktime,video/x-msvideo"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+
+                          if (!file) return;
+
+                          const video = document.createElement('video');
+
+                          video.preload = 'metadata';
+
+                          video.onloadedmetadata = () => {
+                            window.URL.revokeObjectURL(video.src);
+
+                            const duration = formatDuration(video.duration);
+
+                            setSections((prev) =>
+                              prev.map((item) =>
+                                item.id === section.id
+                                  ? {
+                                      ...item,
+                                      lectures: [
+                                        ...item.lectures,
+                                        {
+                                          file,
+                                          duration,
+                                        },
+                                      ],
+                                    }
+                                  : item
+                              )
+                            );
+                          };
+
+                          video.src = URL.createObjectURL(file);
+                        }}
+                      />
+                    </label>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -533,11 +702,47 @@ export default function CourseCreateForm() {
         <button
           type="button"
           onClick={handleSubmit}
-          className="h-14 flex-1 rounded-2xl bg-[#2F5DAA] text-base font-semibold text-white transition hover:bg-[#1D3E75]"
+          className={`h-14 flex-1 rounded-2xl text-base font-semibold text-white transition ${
+            isFormValid
+              ? 'bg-[#2F5DAA] opacity-100 hover:bg-[#1D3E75]'
+              : 'bg-[#2F5DAA] opacity-50'
+          }`}
         >
           강의 등록
         </button>
       </div>
+
+      {isConfirmOpen && (
+        <ConfirmModal
+          icon="/icons/check.svg"
+          iconBgColor="rgba(22, 163, 74, 0.1)"
+          title="등록하기"
+          description="해당 강의를 등록하시겠습니까?"
+          cancelText="취소"
+          confirmText="확인"
+          onCancel={() => setIsConfirmOpen(false)}
+          onConfirm={async () => {
+            setIsConfirmOpen(false);
+            setIsLoading(true);
+
+            try {
+              // 여기 API 요청 들어갈 예정
+              await new Promise((resolve) => setTimeout(resolve, 2000));
+              setIsLoading(false);
+              router.push('/instructor/myCourses?created=true');
+            } catch (error) {
+              setIsLoading(false);
+              console.error(error);
+            }
+          }}
+        />
+      )}
+      {isLoading && (
+        <LoadingModal
+          title="강의를 등록하고 있습니다"
+          description="잠시만 기다려주세요."
+        />
+      )}
     </div>
   );
 }
