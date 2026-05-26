@@ -1,4 +1,7 @@
+'use client';
+
 interface MyCourseCardProps {
+  id: number;
   category: string;
   title: string;
   isPublic: boolean;
@@ -11,8 +14,10 @@ interface MyCourseCardProps {
 }
 
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 export default function MyCourseCard({
+  id,
   category,
   title,
   isPublic,
@@ -23,6 +28,7 @@ export default function MyCourseCard({
   price,
   thumbnailUrl,
 }: MyCourseCardProps) {
+  const router = useRouter();
   return (
     <div className="flex items-start justify-between rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
       {/* left */}
@@ -80,6 +86,7 @@ export default function MyCourseCard({
           {/* buttons */}
           <div className="flex items-center gap-2">
             <button
+              onClick={() => router.push(`/instructor/courses/${id}/edit`)}
               type="button"
               className="rounded-xl border border-[#CBD5E1] px-4 py-2 text-sm font-medium text-[#334155] transition hover:bg-[#F8FAFC]"
             >
