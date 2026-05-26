@@ -7,6 +7,7 @@ interface SingleButtonModalProps {
   iconBgColor?: string;
   title: string;
   description: string;
+  subDescription?: string;
   buttonText: string;
   onClick: () => void;
 }
@@ -17,6 +18,7 @@ export default function SingleButtonModal({
   title,
   description,
   buttonText,
+  subDescription,
   onClick,
 }: SingleButtonModalProps) {
   return (
@@ -38,9 +40,11 @@ export default function SingleButtonModal({
         </h2>
 
         {/* description */}
-        <p className="mb-10 text-center text-lg leading-relaxed text-[#4B5563]">
-          {description}
-        </p>
+        <div className="mb-10 text-center text-[#4B5563]">
+          {description && <p className="text-lg">{description}</p>}
+
+          {subDescription && <p className="mt-6 text-lg">{subDescription}</p>}
+        </div>
 
         {/* button */}
         <button

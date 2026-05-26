@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { label: '강의', href: '/instructor/courses' },
   { label: '퀴즈', href: '/instructor/quizzes' },
   { label: '공지', href: '/instructor/notices' },
-  { label: '내 강의', href: '/instructor/courses' },
+  { label: '내 강의', href: '/instructor/myCourses' },
   { label: '대시보드', href: '/instructor/dashboard' },
 ];
 
@@ -18,17 +18,19 @@ export default function InstructorHeader() {
   return (
     <header className="w-full h-16 bg-[#2F5DAA] shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)] flex-shrink-0">
       <div className="w-full max-w-[1440px] mx-auto px-8 h-full flex items-center">
-
         {/* 로고 */}
-        <Link href="/instructor/courses" className="flex items-center gap-3 flex-shrink-0">
+        <Link
+          href="/instructor/courses"
+          className="flex items-center gap-3 flex-shrink-0"
+        >
           <Image src="/logos/logo.svg" alt="logo" width={28} height={28} />
           <span className="text-white font-bold text-xl">FLOWN</span>
         </Link>
 
         {/* 네비게이션 */}
         <nav className="flex items-center gap-[108px] mx-auto">
-          {NAV_ITEMS.map(item => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+          {NAV_ITEMS.map((item) => {
+            const isActive = pathname === item.href;
             return (
               <Link
                 key={item.label}
@@ -50,7 +52,12 @@ export default function InstructorHeader() {
 
           {/* 알림 (빨간 점 배지) */}
           <button className="relative w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-colors">
-            <Image src="/icons/bellIcon.svg" alt="알림" width={20} height={20} />
+            <Image
+              src="/icons/bellIcon.svg"
+              alt="알림"
+              width={20}
+              height={20}
+            />
             <span
               className="absolute top-[7px] right-[7px] w-2 h-2 bg-[#EF4444] rounded-full"
               style={{ boxShadow: '0px 0px 0px 2px #2F5DAA' }}
@@ -65,7 +72,6 @@ export default function InstructorHeader() {
             김
           </Link>
         </div>
-
       </div>
     </header>
   );
