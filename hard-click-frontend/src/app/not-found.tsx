@@ -1,3 +1,5 @@
+import NotFoundView from '@/components/common/NotFoundView';
+
 export default function NotFound() {
-  return <div>404 NOT FOUND</div>;
+  return <NotFoundView code="404" />;
 }
