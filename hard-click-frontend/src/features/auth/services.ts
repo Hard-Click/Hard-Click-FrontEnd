@@ -73,6 +73,14 @@ export async function verifyEmailCode(email: string, code: string) {
   return api.post<EmailVerificationResponse>('/api/auth/email/verify', { email, code });
 }
 
+// 비밀번호 찾기 인증번호 발송 (POST /api/auth/password-reset/email)
+export async function sendPasswordResetEmail(email: string) {
+  if (USE_MOCK) {
+    return { success: true, httpStatus: 200, data: {}, message: '인증번호가 발송되었습니다' };
+  }
+  return api.post<Record<string, never>>('/api/auth/password-reset/email', { email });
+}
+
 // 잠긴 계정 인증번호 검증 (POST /api/auth/account-locks/verify)
 export async function verifyAccountLockCode(email: string, code: string) {
   if (USE_MOCK) {
