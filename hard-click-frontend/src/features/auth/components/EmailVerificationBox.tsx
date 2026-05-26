@@ -10,7 +10,7 @@ interface EmailVerificationBoxProps {
   title: string;
   description: string;
   buttonText: string;
-  onSuccess: () => void;
+  onSuccess: (email: string) => void;
 }
 
 export default function EmailVerificationBox({
@@ -38,13 +38,8 @@ export default function EmailVerificationBox({
       return;
     }
 
-    if (email !== 'test@test.com') {
-      setEmailError('가입되지 않은 이메일입니다.');
-      return;
-    }
-
     setEmailError('');
-    onSuccess();
+    onSuccess(email);
   };
 
   return (

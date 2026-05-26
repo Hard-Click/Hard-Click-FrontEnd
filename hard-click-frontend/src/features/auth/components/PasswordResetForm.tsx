@@ -9,8 +9,13 @@ import PasswordRuleList from './PasswordRuleList';
 import PasswordValidationMessage from './PasswordValidationMessage';
 import LoadingModal from '@/components/ui/loadingModal';
 import SingleButtonModal from '@/components/ui/singleButtonModal';
+import { changeLockedAccountPassword } from '../services';
 
-export default function PasswordResetForm() {
+interface PasswordResetFormProps {
+  passwordChangeToken: string;
+}
+
+export default function PasswordResetForm({ passwordChangeToken }: PasswordResetFormProps) {
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -42,7 +47,7 @@ export default function PasswordResetForm() {
 
   const isFormValid = isPasswordValid && isPasswordMatch;
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (!password.trim()) {
       setPasswordError('비밀번호 조건을 다시 확인해주세요.');
       passwordRef.current?.focus();
@@ -73,13 +78,22 @@ export default function PasswordResetForm() {
 
     setPasswordError('');
     setConfirmError('');
-
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsSuccessModalOpen(true);
-    }, 2000);
+    const res = await changeLockedAccountPassword({
+      passwordChangeToken,
+      newPassword: password,
+      newPasswordConfirm: passwordConfirm,
+    });
+
+    setIsLoading(false);
+
+    if (!res.success) {
+      setPasswordError(res.message || '비밀번호 변경에 실패했습니다.');
+      return;
+    }
+
+    setIsSuccessModalOpen(true);
   };
 
   return (

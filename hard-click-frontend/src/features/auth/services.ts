@@ -73,6 +73,31 @@ export async function verifyEmailCode(email: string, code: string) {
   return api.post<EmailVerificationResponse>('/api/auth/email/verify', { email, code });
 }
 
+// 잠긴 계정 인증번호 검증 (POST /api/auth/account-locks/verify)
+export async function verifyAccountLockCode(email: string, code: string) {
+  if (USE_MOCK) {
+    return {
+      success: true,
+      httpStatus: 200,
+      data: { passwordChangeToken: 'MOCK_PASSWORD_CHANGE_TOKEN' },
+      message: '인증 완료',
+    };
+  }
+  return api.post<{ passwordChangeToken: string }>('/api/auth/account-locks/verify', { email, code });
+}
+
+// 잠긴 계정 비밀번호 변경 (PATCH /api/auth/account-locks/password)
+export async function changeLockedAccountPassword(payload: {
+  passwordChangeToken: string;
+  newPassword: string;
+  newPasswordConfirm: string;
+}) {
+  if (USE_MOCK) {
+    return { success: true, httpStatus: 200, data: {}, message: '비밀번호 변경 완료' };
+  }
+  return api.patch<Record<string, never>>('/api/auth/account-locks/password', payload);
+}
+
 export async function register(payload: RegisterRequest) {
   if (USE_MOCK) {
     console.log('[MOCK] 회원가입 요청:', payload);
