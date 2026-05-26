@@ -8,8 +8,13 @@ export interface ApiResponse<T = unknown> {
   success: boolean;
 }
 
+/**
+ * baseURL은 빈 값 ('') → Next.js rewrites 프록시 경유
+ * next.config.ts의 rewrites가 /api/* → BACKEND_URL/api/* 로 처리
+ * 이렇게 하면 dev에서 CORS 우회 가능
+ */
 const axiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080',
+  baseURL: '',
   headers: {
     'Content-Type': 'application/json',
   },
