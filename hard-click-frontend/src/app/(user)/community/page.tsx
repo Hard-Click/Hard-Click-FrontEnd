@@ -2,11 +2,40 @@ import Image from 'next/image';
 import CommunityFilterTabs from '@/features/community/components/CommunityFilterTabs';
 import CommunityToolBar from '@/features/community/components/CommunityToolBar';
 import PostActionButtons from '@/features/community/components/PostActionButtons';
-import PostEmptyState from '@/features/community/components/PostEmptyState';
-import CommunityPostCard from '@/features/community/components/CommunityPostCard';
 
 export default function CommunityPage() {
-  const mockPosts: { id: number }[] = [];
+  // 임의 데이터!! 나중에 연동 하고 지우깅
+  const mockPosts = [
+    {
+      id: 1,
+      category: '질문게시판',
+      title: 'React Hook useEffect 사용 시 무한 루프 문제 해결 방법',
+      author: '이*호',
+      time: '2시간 전',
+      views: 145,
+      comments: 12,
+      status: '채택 완료',
+    },
+    {
+      id: 2,
+      category: '자유게시판',
+      title: '프론트엔드 개발자 로드맵 공유합니다',
+      author: '박*영',
+      time: '5시간 전',
+      views: 321,
+      comments: 23,
+    },
+    {
+      id: 3,
+      category: '질문게시판',
+      title: '가나다라',
+      author: '이*윤',
+      time: '8시간 전',
+      views: 120,
+      comments: 60,
+      status: '답변 대기',
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] px-8 py-10">
@@ -37,20 +66,7 @@ export default function CommunityPage() {
           <PostActionButtons />
         </div>
 
-        <CommunityFilterTabs />
-
-        <div className="mt-6">
-          <CommunityToolBar />
-        </div>
-        {mockPosts.length === 0 ? (
-          <PostEmptyState />
-        ) : (
-          <div className="mt-6 flex flex-col gap-4">
-            {mockPosts.map((post) => (
-              <CommunityPostCard key={post.id} />
-            ))}
-          </div>
-        )}
+        <CommunityFilterTabs posts={mockPosts} />
       </div>
     </div>
   );

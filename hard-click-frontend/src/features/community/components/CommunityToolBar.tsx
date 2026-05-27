@@ -1,16 +1,21 @@
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
+
+interface CommunityToolBarProps {
+  sortType: string;
+  onSortChange: (sort: string) => void;
+}
 
 const FILTERS = ['최신순', '조회순', '댓글순'];
 
-export default function CommunityToolBar() {
-  const [activeTab, setActiveTab] = useState('최신순');
+export default function CommunityToolBar({
+  sortType,
+  onSortChange,
+}: CommunityToolBarProps) {
   return (
-    <div className="flex items-center justify-between mt-6 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm">
+    <div className="mt-6 flex items-center justify-between rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm">
       {/* search */}
-
       <div className="flex h-11 w-full max-w-[870px] items-center rounded-xl border border-[#E2E8F0] px-4">
         <Image
           src="/icons/commuSearch.svg"
@@ -27,16 +32,15 @@ export default function CommunityToolBar() {
       </div>
 
       {/* filters */}
-
       <div className="ml-4 flex items-center gap-2">
         {FILTERS.map((filter) => {
-          const isActive = activeTab === filter;
+          const isActive = sortType === filter;
 
           return (
             <button
               key={filter}
               type="button"
-              onClick={() => setActiveTab(filter)}
+              onClick={() => onSortChange(filter)}
               className={`h-10 rounded-xl px-4 text-sm font-semibold transition ${
                 isActive
                   ? 'bg-[#2F5DAA] text-white'
