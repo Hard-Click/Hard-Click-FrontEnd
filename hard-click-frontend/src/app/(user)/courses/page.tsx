@@ -116,7 +116,7 @@ export default function CoursesPage() {
       {/* 히어로 */}
       <div
         className="w-full"
-        style={{ background: 'linear-gradient(90deg, #2F5DAA 0%, #4D6FBF 100%)' }}
+        style={{ backgroundColor: '#2F5DAA' }}
       >
         <div className="w-full max-w-[1440px] mx-auto px-8 py-20">
           <h1 className="text-white font-semibold text-5xl leading-[60px] tracking-wide mb-6">
