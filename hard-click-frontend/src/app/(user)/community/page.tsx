@@ -1,5 +1,7 @@
 import Image from 'next/image';
-import CommunitiyFilterTabs from '@/features/community/components/CommunityFilterTabs';
+import CommunityFilterTabs from '@/features/community/components/CommunityFilterTabs';
+import CommunityToolBar from '@/features/community/components/CommunityToolBar';
+
 export default function CommunityPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] px-8 py-10">
@@ -25,7 +27,9 @@ export default function CommunityPage() {
           함께 성장하는 학습 커뮤니티에 참여하세요
         </p>
       </div>
-      <CommunitiyFilterTabs />
+      <CommunityFilterTabs />
+
+      <CommunityToolBar />
     </div>
   );
 }
