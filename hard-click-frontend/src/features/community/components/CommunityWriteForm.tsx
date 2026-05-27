@@ -3,10 +3,12 @@
 import { useRef, useState } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 const FILTERS = ['자유게시판', '질문게시판', '스터디모집'];
 
 export default function CommunityWriteForm() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('스터디모집');
   const [previewImages, setPreviewImages] = useState<string[]>([]);
 
@@ -34,7 +36,8 @@ export default function CommunityWriteForm() {
       {/* back button */}
       <button
         type="button"
-        className="mb-6 flex items-center gap-2 text-sm font-medium text-[#4B5563]"
+        onClick={() => router.back()}
+        className="mb-6 cursor-pointer flex items-center gap-2 text-sm font-medium text-[#4B5563]"
       >
         <Image src="/icons/back.svg" alt="back" width={16} height={16} />
         목록으로 돌아가기
