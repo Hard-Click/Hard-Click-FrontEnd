@@ -4,31 +4,127 @@ import { useRef, useState } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { COMMUNITY_ERRORS } from '../constants/errorMessages';
 
 const FILTERS = ['자유게시판', '질문게시판', '스터디모집'];
 
 export default function CommunityWriteForm() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('스터디모집');
+  const [activeTab, setActiveTab] = useState('자유게시판');
   const [previewImages, setPreviewImages] = useState<string[]>([]);
 
+  const [title, setTitle] = useState('');
+  const [titleError, setTitleError] = useState('');
+  const [content, setContent] = useState('');
+  const [contentError, setContentError] = useState('');
+  const [subject, setSubject] = useState('');
+  const [subjectError, setSubjectError] = useState('');
+  const [recruit, setRecruit] = useState('');
+  const [recruitError, setRecruitError] = useState('');
+  const [description, setDescription] = useState('');
+  const [descriptionError, setDescriptionError] = useState('');
+  const [focusedErrorField, setFocusedErrorField] = useState<string | null>(
+    null,
+  );
+
+  const titleRef = useRef<HTMLInputElement>(null);
+  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const recruitRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isFormValid =
+    activeTab === '자유게시판'
+      ? title.trim() !== '' && content.trim() !== ''
+      : activeTab === '질문게시판'
+        ? title.trim() !== '' && subject !== '' && content.trim() !== ''
+        : true;
+
+  const handleTabChange = (filter: string) => {
+    setActiveTab(filter);
+    setTitle('');
+    setContent('');
+    setSubject('');
+    setRecruit('');
+    setDescription('');
+    setTitleError('');
+    setContentError('');
+    setSubjectError('');
+    setRecruitError('');
+    setDescriptionError('');
+    setFocusedErrorField(null);
+    setPreviewImages([]);
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-
     if (!files) return;
 
-    // 최대 2장 제한
+    const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+    const MAX_SIZE = 5 * 1024 * 1024;
+
+    for (const file of Array.from(files)) {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        toast.error(COMMUNITY_ERRORS.F001);
+        e.target.value = '';
+        return;
+      }
+      if (file.size > MAX_SIZE) {
+        toast.error(COMMUNITY_ERRORS.F002);
+        e.target.value = '';
+        return;
+      }
+    }
+
     const selectedFiles = Array.from(files).slice(0, 2);
     const imageUrls = selectedFiles.map((file) => URL.createObjectURL(file));
-
-    setPreviewImages((prev) => {
-      const combined = [...prev, ...imageUrls];
-
-      return combined.slice(0, 2);
-    });
+    setPreviewImages((prev) => [...prev, ...imageUrls].slice(0, 2));
     e.target.value = '';
+  };
+
+  const handleSubmit = () => {
+    let isValid = true;
+    let firstInvalid: string | null = null;
+
+    if (!title.trim()) {
+      setTitleError(COMMUNITY_ERRORS.TITLE_REQUIRED);
+      isValid = false;
+      if (!firstInvalid) firstInvalid = 'title';
+    }
+    if (activeTab === '질문게시판' && !subject) {
+      setSubjectError(COMMUNITY_ERRORS.P001);
+      isValid = false;
+      if (!firstInvalid) firstInvalid = 'subject';
+    }
+    if (activeTab !== '스터디모집' && !content.trim()) {
+      setContentError(COMMUNITY_ERRORS.CONTENT_REQUIRED);
+      isValid = false;
+      if (!firstInvalid) firstInvalid = 'content';
+    }
+    if (activeTab === '스터디모집') {
+      if (!recruit.trim()) {
+        setRecruitError(COMMUNITY_ERRORS.RECRUIT_REQUIRED);
+        isValid = false;
+        if (!firstInvalid) firstInvalid = 'recruit';
+      }
+      if (!description.trim()) {
+        setDescriptionError(COMMUNITY_ERRORS.DESCRIPTION_REQUIRED);
+        isValid = false;
+        if (!firstInvalid) firstInvalid = 'description';
+      }
+    }
+
+    if (!isValid) {
+      setFocusedErrorField(firstInvalid);
+      if (firstInvalid === 'title') titleRef.current?.focus();
+      if (firstInvalid === 'content') contentRef.current?.focus();
+      if (firstInvalid === 'recruit') recruitRef.current?.focus();
+      if (firstInvalid === 'description') descriptionRef.current?.focus();
+      return;
+    }
+
+    setFocusedErrorField(null);
+    // TODO: API 호출
   };
 
   return (
@@ -45,7 +141,6 @@ export default function CommunityWriteForm() {
 
       {/* form */}
       <div className="rounded-[24px] border border-[#E2E8F0] bg-white p-8 shadow-sm">
-        {/* title */}
         <h2 className="mb-8 text-2xl font-bold text-[#1E293B]">게시글 작성</h2>
 
         {/* category */}
@@ -53,16 +148,14 @@ export default function CommunityWriteForm() {
           <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
             게시판 선택 *
           </label>
-
           <div className="grid grid-cols-3 gap-3">
             {FILTERS.map((filter) => {
               const isActive = activeTab === filter;
-
               return (
                 <button
                   key={filter}
                   type="button"
-                  onClick={() => setActiveTab(filter)}
+                  onClick={() => handleTabChange(filter)}
                   className={`h-12 rounded-2xl text-sm font-semibold transition ${
                     isActive
                       ? 'bg-[#2F5DAA] text-white'
@@ -81,24 +174,48 @@ export default function CommunityWriteForm() {
           <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
             제목 *
           </label>
-
           <input
+            ref={titleRef}
             type="text"
             placeholder="제목을 입력하세요"
-            className="h-12 w-full rounded-xl border border-[#E2E8F0] px-4 text-sm outline-none placeholder:text-[#9CA3AF]"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (!e.target.value.trim()) {
+                setTitleError(COMMUNITY_ERRORS.TITLE_REQUIRED);
+                setFocusedErrorField('title');
+              } else {
+                setTitleError('');
+                setFocusedErrorField(null);
+              }
+            }}
+            className={`h-12 w-full rounded-xl border px-4 text-sm outline-none placeholder:text-[#9CA3AF] ${
+              focusedErrorField === 'title' && titleError
+                ? 'border-[#B91C1C]'
+                : 'border-[#E2E8F0]'
+            }`}
           />
+          {titleError && (
+            <div className="mt-1 flex items-center gap-1 text-sm text-[#B91C1C]">
+              <Image
+                src="/icons/error.svg"
+                alt="error"
+                width={14}
+                height={14}
+              />
+              {titleError}
+            </div>
+          )}
         </div>
 
-        {/* question board */}
+        {/* question board - 과목 */}
         {activeTab === '질문게시판' && (
           <div className="mb-8">
             <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
               과목 *
             </label>
-
             <div className="flex h-12 items-center justify-between rounded-xl border border-[#E2E8F0] px-4">
               <span className="text-sm text-[#9CA3AF]">과목을 선택하세요</span>
-
               <Image
                 src="/icons/chevronDownIcon.svg"
                 alt="down"
@@ -106,6 +223,17 @@ export default function CommunityWriteForm() {
                 height={18}
               />
             </div>
+            {subjectError && (
+              <div className="mt-1 flex items-center gap-1 text-sm text-[#B91C1C]">
+                <Image
+                  src="/icons/error.svg"
+                  alt="error"
+                  width={14}
+                  height={14}
+                />
+                {subjectError}
+              </div>
+            )}
           </div>
         )}
 
@@ -117,12 +245,10 @@ export default function CommunityWriteForm() {
               <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
                 과목 *
               </label>
-
               <div className="flex h-12 items-center justify-between rounded-xl border border-[#E2E8F0] px-4">
                 <span className="text-sm text-[#9CA3AF]">
                   과목을 선택하세요
                 </span>
-
                 <Image
                   src="/icons/chevronDownIcon.svg"
                   alt="down"
@@ -130,6 +256,17 @@ export default function CommunityWriteForm() {
                   height={18}
                 />
               </div>
+              {subjectError && (
+                <div className="mt-1 flex items-center gap-1 text-sm text-[#B91C1C]">
+                  <Image
+                    src="/icons/error.svg"
+                    alt="error"
+                    width={14}
+                    height={14}
+                  />
+                  {subjectError}
+                </div>
+              )}
             </div>
 
             {/* recruit */}
@@ -137,12 +274,38 @@ export default function CommunityWriteForm() {
               <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
                 모집 정원 *
               </label>
-
               <input
+                ref={recruitRef}
                 type="text"
                 placeholder="모집 정원을 입력하세요"
-                className="h-12 w-full rounded-xl border border-[#E2E8F0] px-4 text-sm outline-none placeholder:text-[#9CA3AF]"
+                value={recruit}
+                onChange={(e) => {
+                  setRecruit(e.target.value);
+                  if (!e.target.value.trim()) {
+                    setRecruitError(COMMUNITY_ERRORS.RECRUIT_REQUIRED);
+                    setFocusedErrorField('recruit');
+                  } else {
+                    setRecruitError('');
+                    setFocusedErrorField(null);
+                  }
+                }}
+                className={`h-12 w-full rounded-xl border px-4 text-sm outline-none placeholder:text-[#9CA3AF] ${
+                  focusedErrorField === 'recruit' && recruitError
+                    ? 'border-[#B91C1C]'
+                    : 'border-[#E2E8F0]'
+                }`}
               />
+              {recruitError && (
+                <div className="mt-1 flex items-center gap-1 text-sm text-[#B91C1C]">
+                  <Image
+                    src="/icons/error.svg"
+                    alt="error"
+                    width={14}
+                    height={14}
+                  />
+                  {recruitError}
+                </div>
+              )}
             </div>
 
             {/* description */}
@@ -151,14 +314,42 @@ export default function CommunityWriteForm() {
                 <label className="block text-sm font-semibold text-[#1E293B]">
                   설명 *
                 </label>
-
-                <span className="text-xs text-[#64748B]">0/20</span>
+                <span className="text-xs text-[#64748B]">
+                  {description.length}/20
+                </span>
               </div>
-
               <textarea
+                ref={descriptionRef}
                 placeholder="스터디 설명을 입력하세요 (최대 20자)"
-                className="h-[120px] w-full resize-none rounded-xl border border-[#E2E8F0] px-4 py-4 text-sm outline-none placeholder:text-[#9CA3AF]"
+                value={description}
+                maxLength={20}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  if (!e.target.value.trim()) {
+                    setDescriptionError(COMMUNITY_ERRORS.DESCRIPTION_REQUIRED);
+                    setFocusedErrorField('description');
+                  } else {
+                    setDescriptionError('');
+                    setFocusedErrorField(null);
+                  }
+                }}
+                className={`h-[120px] w-full resize-none rounded-xl border px-4 py-4 text-sm outline-none placeholder:text-[#9CA3AF] ${
+                  focusedErrorField === 'description' && descriptionError
+                    ? 'border-[#B91C1C]'
+                    : 'border-[#E2E8F0]'
+                }`}
               />
+              {descriptionError && (
+                <div className="mt-1 flex items-center gap-1 text-sm text-[#B91C1C]">
+                  <Image
+                    src="/icons/error.svg"
+                    alt="error"
+                    width={14}
+                    height={14}
+                  />
+                  {descriptionError}
+                </div>
+              )}
             </div>
           </>
         )}
@@ -169,11 +360,37 @@ export default function CommunityWriteForm() {
             <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
               내용 *
             </label>
-
             <textarea
+              ref={contentRef}
               placeholder="내용을 입력하세요"
-              className="h-[220px] w-full resize-none rounded-xl border border-[#E2E8F0] px-4 py-4 text-sm outline-none placeholder:text-[#9CA3AF]"
+              value={content}
+              onChange={(e) => {
+                setContent(e.target.value);
+                if (!e.target.value.trim()) {
+                  setContentError(COMMUNITY_ERRORS.CONTENT_REQUIRED);
+                  setFocusedErrorField('content');
+                } else {
+                  setContentError('');
+                  setFocusedErrorField(null);
+                }
+              }}
+              className={`h-[220px] w-full resize-none rounded-xl border px-4 py-4 text-sm outline-none placeholder:text-[#9CA3AF] ${
+                focusedErrorField === 'content' && contentError
+                  ? 'border-[#B91C1C]'
+                  : 'border-[#E2E8F0]'
+              }`}
             />
+            {contentError && (
+              <div className="mt-1 flex items-center gap-1 text-sm text-[#B91C1C]">
+                <Image
+                  src="/icons/error.svg"
+                  alt="error"
+                  width={14}
+                  height={14}
+                />
+                {contentError}
+              </div>
+            )}
           </div>
         )}
 
@@ -185,15 +402,12 @@ export default function CommunityWriteForm() {
               최대 2장까지 업로드 가능
             </span>
           </label>
-
           <div
             onClick={() => {
               if (previewImages.length >= 2) {
-                toast.error('사진은 최대 2장까지 업로드 가능합니다.');
-
+                toast.error(COMMUNITY_ERRORS.P002);
                 return;
               }
-
               fileInputRef.current?.click();
             }}
             className="flex h-[150px] cursor-pointer items-center justify-center rounded-2xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC]"
@@ -206,7 +420,6 @@ export default function CommunityWriteForm() {
                   width={28}
                   height={28}
                 />
-
                 <span className="mt-1 ml-4 text-sm text-[#64748B]">
                   이미지를 선택하세요
                 </span>
@@ -222,9 +435,7 @@ export default function CommunityWriteForm() {
                       type="button"
                       onClick={(e) => {
                         e.preventDefault();
-
                         e.stopPropagation();
-
                         setPreviewImages((prev) =>
                           prev.filter((_, i) => i !== index),
                         );
@@ -241,7 +452,6 @@ export default function CommunityWriteForm() {
                     />
                   </div>
                 ))}
-
                 {previewImages.length < 2 && (
                   <span className="text-xs text-[#94A3B8]">
                     이미지를 추가하려면 다시 클릭하세요
@@ -264,14 +474,19 @@ export default function CommunityWriteForm() {
         <div className="flex items-center gap-4">
           <button
             type="button"
+            onClick={() => router.back()}
             className="h-12 flex-1 rounded-xl border border-[#E2E8F0] bg-white text-sm font-semibold text-[#4B5563]"
           >
             취소
           </button>
-
           <button
             type="button"
-            className="h-12 flex-1 rounded-xl bg-[#B7C8EB] text-sm font-semibold text-white"
+            onClick={handleSubmit}
+            className={`h-12 flex-1 rounded-xl text-sm font-semibold text-white transition ${
+              isFormValid
+                ? 'bg-[#2F5DAA] opacity-100'
+                : 'bg-[#2F5DAA] opacity-50'
+            }`}
           >
             작성 완료
           </button>
