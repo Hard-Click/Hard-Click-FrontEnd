@@ -73,7 +73,6 @@ export async function registerAction(values: RegisterFormValues) {
     gender: values.gender,
     birthDate: values.birthDate,
     phoneNumber: values.phoneNumber.trim(),
-    requiredTermsAgreed: values.agreeTerms && values.agreePrivacy,
     optionalTermsAgreed: values.agreeMarketing,
   };
 
