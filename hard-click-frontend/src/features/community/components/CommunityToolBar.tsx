@@ -11,7 +11,7 @@ export default function CommunityToolBar() {
     <div className="flex items-center justify-between mt-6 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm">
       {/* search */}
 
-      <div className="flex h-11 w-full max-w-[1330px] items-center rounded-xl border border-[#E2E8F0] px-4">
+      <div className="flex h-11 w-full max-w-[870px] items-center rounded-xl border border-[#E2E8F0] px-4">
         <Image
           src="/icons/commuSearch.svg"
           alt="search"
