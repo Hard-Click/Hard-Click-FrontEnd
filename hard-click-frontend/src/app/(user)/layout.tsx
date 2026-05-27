@@ -1,4 +1,5 @@
 import StudyTimerPanel from '@/features/studyTimers/components/StudyTimerPanel';
+import UserHeader from '@/components/layout/headers/UserHeader';
 
 export default function UserLayout({
   children,
@@ -7,6 +8,7 @@ export default function UserLayout({
 }) {
   return (
     <>
+      <UserHeader />
       {children}
       <StudyTimerPanel />
     </>
