@@ -24,7 +24,6 @@ function saveStoredReview(courseId: number, rating: number, content: string) {
   map[courseId] = { courseId, rating, content };
   window.localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify(map));
 }
-import UserHeader from '@/components/layout/headers/UserHeader';
 import ProfileEditModal from '@/features/users/components/ProfileEditModal';
 import GrassYearlyModal from '@/features/grass/components/GrassYearlyModal';
 import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
@@ -322,7 +321,6 @@ export default function MyPage() {
 
   return (
     <div className="min-h-screen bg-[#F0F2F5]">
-      <UserHeader />
 
       {/* 페이지 히어로 */}
       <div className="w-full bg-white border-b border-[#E2E8F0]">

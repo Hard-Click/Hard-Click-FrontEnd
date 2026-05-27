@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import UserHeader from '@/components/layout/headers/UserHeader';
 import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
 import { createReview } from '@/features/reviews/services';
 import { getMyCompletedCourses } from '@/features/users/services';
@@ -72,7 +71,6 @@ export default function CompletedCoursesPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <UserHeader />
 
       <div className="w-full">
         <div className="max-w-[1280px] mx-auto px-8 pt-9 pb-32">
