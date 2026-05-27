@@ -58,29 +58,29 @@ export default function ForgotPasswordForm() {
       return;
     }
 
-    setEmailError('');
-    setIsLoading(true);
+    try {
+      setEmailError('');
+      setIsLoading(true);
 
-    // TODO: 백엔드 연동 시 sendPasswordResetEmail(email) 호출
-    setTimeout(() => {
-      incrementCount();
+      const result = await sendPasswordResetEmailAction(email);
+
       setIsLoading(false);
+
+      if (!result.success) {
+        setEmailError(
+          result.message ?? '가입되지 않은 이메일입니다. 다시 입력해주세요.'
+        );
+        return;
+      }
+
+      incrementCount();
+
       setIsSuccessModalOpen(true);
-    }, 2000);
-    setEmailError('');
-    setIsLoading(true);
+    } catch (error) {
+      setIsLoading(false);
 
-    const result = await sendPasswordResetEmailAction(email);
-
-    setIsLoading(false);
-
-    if (!result.success) {
-      // 404 → 가입되지 않은 이메일
-      setEmailError(result.message ?? '가입되지 않은 이메일입니다. 다시 입력해주세요.');
-      return;
+      setEmailError('오류가 발생했습니다. 다시 시도해주세요.');
     }
-
-    setIsSuccessModalOpen(true);
   };
 
   return (
@@ -115,7 +115,12 @@ export default function ForgotPasswordForm() {
               emailError ? 'border-[#B91C1C]' : 'border-[#E5E7EB]'
             }`}
           >
-            <Image src="/icons/mailIcon.svg" alt="mail" width={18} height={18} />
+            <Image
+              src="/icons/mailIcon.svg"
+              alt="mail"
+              width={18}
+              height={18}
+            />
             <input
               type="email"
               placeholder="가입한 이메일을 입력하세요"
@@ -132,7 +137,12 @@ export default function ForgotPasswordForm() {
           <div className="mt-2 flex min-h-[20px] items-center gap-1">
             {emailError && (
               <>
-                <Image src="/icons/error.svg" alt="error" width={16} height={16} />
+                <Image
+                  src="/icons/error.svg"
+                  alt="error"
+                  width={16}
+                  height={16}
+                />
                 <p className="text-sm text-[#B91C1C]">{emailError}</p>
               </>
             )}
@@ -145,7 +155,9 @@ export default function ForgotPasswordForm() {
           onClick={handleSendTempPassword}
           disabled={isLoading}
           className={`h-12 w-full rounded-xl text-base font-semibold text-white transition ${
-            isFormValid && !isLoading ? 'bg-[#2F5DAA] opacity-100' : 'bg-[#2F5DAA] opacity-50'
+            isFormValid && !isLoading
+              ? 'bg-[#2F5DAA] opacity-100'
+              : 'bg-[#2F5DAA] opacity-50'
           }`}
         >
           발급
@@ -156,7 +168,10 @@ export default function ForgotPasswordForm() {
 
         {/* back */}
         <div className="text-center">
-          <Link href="/auth/login" className="text-sm font-medium text-[#2F5DAA]">
+          <Link
+            href="/auth/login"
+            className="text-sm font-medium text-[#2F5DAA]"
+          >
             로그인으로 돌아가기
           </Link>
         </div>
