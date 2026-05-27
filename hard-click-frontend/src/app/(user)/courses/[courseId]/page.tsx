@@ -13,11 +13,37 @@ import {
   enrollCourse,
   addToCart,
   removeFromCart,
-  deleteReview as deleteReviewAPI,
 } from '@/features/courses/actions';
-// TODO: 리뷰 수정 모달 — 팀원 컴포넌트 완성 후 import 연결
-// import ReviewEditModal from '@/components/ui/reviewEditModal';
+import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
+import { updateReview, deleteReview } from '@/features/reviews/services';
 import type { CourseDetail, Review } from '@/features/courses/types';
+
+/* mock 리뷰 storage (mypage와 공유) */
+const REVIEW_STORAGE_KEY = 'mock_my_reviews';
+
+function loadStoredReviews(): Record<number, { courseId: number; rating: number; content: string }> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(REVIEW_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveStoredReview(courseId: number, rating: number, content: string) {
+  if (typeof window === 'undefined') return;
+  const map = loadStoredReviews();
+  map[courseId] = { courseId, rating, content };
+  window.localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify(map));
+}
+
+function deleteStoredReview(courseId: number) {
+  if (typeof window === 'undefined') return;
+  const map = loadStoredReviews();
+  delete map[courseId];
+  window.localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify(map));
+}
 
 // TODO: 리뷰 신고 모달 — 팀원 컴포넌트 완성 후 아래 import 연결
 // import ReviewReportModal from '@/components/ui/reviewReportModal';
@@ -204,6 +230,7 @@ export default function CourseDetailPage() {
 
   // 모달 상태
   const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const [deletingReview, setDeletingReview] = useState<Review | null>(null);
   // TODO: reportingReview — 팀원 ReviewReportModal 완성 후 활성화
   // const [reportingReview, setReportingReview] = useState<Review | null>(null);
 
@@ -217,8 +244,30 @@ export default function CourseDetailPage() {
         setIsEnrolled(data.isEnrolled);
         setIsWishlisted(data.isWishlisted);
         setIsInCart(data.isInCart);
+
+        // mock localStorage에서 사용자가 작성한 리뷰 추가 (테스트용)
+        let merged = [...data.reviews];
+        if (typeof window !== 'undefined') {
+          try {
+            const raw = window.localStorage.getItem('mock_my_reviews');
+            const storedMap = raw ? JSON.parse(raw) : {};
+            const stored = storedMap[courseId];
+            if (stored) {
+              merged = merged.filter((r) => !r.isMine);
+              merged.unshift({
+                reviewId: Date.now(),
+                studentName: '나',
+                rating: stored.rating,
+                content: stored.content,
+                createdAt: new Date().toISOString().split('T')[0] ?? '',
+                isMine: true,
+              });
+            }
+          } catch {}
+        }
+
         // UA-P1-192: 내 리뷰 최상단 표시
-        const sorted = [...data.reviews].sort((a, b) =>
+        const sorted = merged.sort((a, b) =>
           a.isMine === b.isMine ? 0 : a.isMine ? -1 : 1
         );
         setReviews(sorted);
@@ -284,7 +333,37 @@ export default function CourseDetailPage() {
     }
   };
 
-  // TODO: 리뷰 삭제 — 팀원 삭제 확인 모달 확인 후 연결 (UA-P1-192)
+  /* ── 리뷰 수정 (PATCH /api/courses/{courseId}/reviews/{reviewId}) ── */
+  const handleReviewEditSubmit = async (rating: number, content: string) => {
+    if (!editingReview) return;
+    const res = await updateReview(courseId, editingReview.reviewId, { rating, content });
+    if (!res.success) {
+      toast.error(res.message || '수강평 수정에 실패했습니다.');
+      return;
+    }
+    saveStoredReview(courseId, rating, content);
+    setReviews((prev) =>
+      prev.map((r) =>
+        r.reviewId === editingReview.reviewId ? { ...r, rating, content } : r,
+      ),
+    );
+    setEditingReview(null);
+    toast.success(res.message || '수강평이 수정되었습니다.');
+  };
+
+  /* ── 리뷰 삭제 (DELETE /api/courses/{courseId}/reviews/{reviewId}) ── */
+  const handleReviewDeleteConfirm = async () => {
+    if (!deletingReview) return;
+    const res = await deleteReview(courseId, deletingReview.reviewId);
+    if (!res.success) {
+      toast.error(res.message || '수강평 삭제에 실패했습니다.');
+      return;
+    }
+    deleteStoredReview(courseId);
+    setReviews((prev) => prev.filter((r) => r.reviewId !== deletingReview.reviewId));
+    setDeletingReview(null);
+    toast.success(res.message || '수강평이 삭제되었습니다.');
+  };
 
   if (isLoading) {
     return (
@@ -788,8 +867,8 @@ export default function CourseDetailPage() {
                                       {/* eslint-disable-next-line @next/next/no-img-element */}
                                       <img src="/icons/editIcon.svg" width={14} height={14} alt="" />
                                     </button>
-                                    {/* TODO: 삭제 버튼 onClick — 팀원 삭제 확인 모달 확인 후 연결 */}
                                     <button
+                                      onClick={() => setDeletingReview(review)}
                                       className="w-7 h-7 flex items-center justify-center rounded-2xl hover:bg-red-50 transition-colors"
                                       title="삭제"
                                     >
@@ -895,9 +974,55 @@ export default function CourseDetailPage() {
       )}
 
       {/* TODO: 수강신청 모달 — 팀원 결제 모달 확인 후 연결 */}
-      {/* TODO: 리뷰 수정 모달 — import ReviewEditModal from '@/components/ui/reviewEditModal' 팀원 확인 후 연결 */}
-      {/* TODO: 리뷰 삭제 확인 모달 — 팀원 모달 확인 후 연결 */}
       {/* TODO: 리뷰 신고 모달 — import ReviewReportModal from '@/components/ui/reviewReportModal' 팀원 확인 후 연결 */}
+
+      {/* 리뷰 수정 모달 */}
+      {editingReview && (
+        <ReviewFormModal
+          mode="edit"
+          initialRating={editingReview.rating}
+          initialContent={editingReview.content}
+          onCancel={() => setEditingReview(null)}
+          onSubmit={handleReviewEditSubmit}
+        />
+      )}
+
+      {/* 리뷰 삭제 확인 모달 */}
+      {deletingReview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div
+            className="w-full max-w-[448px] bg-white rounded-2xl"
+            style={{
+              padding: '32px',
+              boxShadow:
+                '0px 20px 25px -5px rgba(0, 0, 0, 0.1), 0px 8px 10px -6px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <h2 className="text-center text-2xl font-bold leading-8 text-[#1F2937]">리뷰 삭제</h2>
+            <p className="mt-3 text-center text-base leading-6 text-[#4B5563]">
+              해당 리뷰를 삭제하시겠습니까?
+              <br />
+              삭제한 리뷰는 복구할 수 없습니다.
+            </p>
+            <div className="mt-8 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setDeletingReview(null)}
+                className="h-12 flex-1 rounded-[10px] border border-[#E2E8F0] bg-white text-base font-semibold text-[#4B5563] hover:bg-[#F8FAFC] transition-colors"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleReviewDeleteConfirm}
+                className="h-12 flex-1 rounded-[10px] bg-[#DC2626] text-base font-semibold text-white hover:bg-[#B91C1C] transition-colors"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

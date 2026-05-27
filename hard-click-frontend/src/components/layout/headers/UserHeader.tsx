@@ -6,9 +6,9 @@ import { usePathname } from 'next/navigation';
 
 const NAV_ITEMS = [
   { label: '강의', href: '/courses' },
-  { label: '마이페이지', href: '/mypage' },
   { label: '커뮤니티', href: '/community' },
   { label: '랭킹', href: '/rankings' },
+  { label: '마이페이지', href: '/mypage' },
 ];
 
 export default function UserHeader() {
