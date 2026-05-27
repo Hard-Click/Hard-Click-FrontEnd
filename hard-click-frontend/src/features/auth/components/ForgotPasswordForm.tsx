@@ -85,7 +85,7 @@ export default function ForgotPasswordForm() {
 
   return (
     <>
-      <div className="w-full max-w-[420px] rounded-[16px] bg-white px-8 py-10 shadow-sm">
+      <div className="w-full max-w-105 rounded-2xl bg-white px-8 py-10 shadow-sm">
         {/* icon */}
         <div className="mb-6 flex justify-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#EEF2FF]">
@@ -134,7 +134,7 @@ export default function ForgotPasswordForm() {
           </div>
 
           {/* error */}
-          <div className="mt-2 flex min-h-[20px] items-center gap-1">
+          <div className="mt-2 flex min-h-5 items-center gap-1">
             {emailError && (
               <>
                 <Image
