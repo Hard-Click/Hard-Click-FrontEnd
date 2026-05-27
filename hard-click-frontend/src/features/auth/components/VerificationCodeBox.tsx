@@ -7,7 +7,8 @@ interface VerificationCodeBoxProps {
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { verifyAccountLockCodeAction } from '../actions';
 
 export default function VerificationCodeBox({
@@ -18,7 +19,15 @@ export default function VerificationCodeBox({
   const [codeError, setCodeError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const toastShownRef = useRef(false);
   const isFormValid = code.trim().length === 6;
+
+  // 마운트 시 발송 완료 toast (StrictMode 두 번 실행 방지)
+  useEffect(() => {
+    if (toastShownRef.current) return;
+    toastShownRef.current = true;
+    toast.success('인증번호가 발송되었습니다.');
+  }, []);
 
   const handleVerifyCode = async () => {
     if (!code.trim()) {
@@ -46,17 +55,16 @@ export default function VerificationCodeBox({
     onSuccess(result.data.passwordChangeToken);
   };
 
+  const handleResend = () => {
+    toast.success('인증번호가 재발송되었습니다.');
+  };
+
   return (
     <div className="w-full max-w-[420px] rounded-[16px] bg-white px-8 py-10 shadow-sm">
       {/* icon */}
       <div className="mb-6 flex justify-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(185,28,28,0.1)]">
-          <Image
-            src="/icons/security.svg"
-            alt="security"
-            width={32}
-            height={32}
-          />
+          <Image src="/icons/security.svg" alt="security" width={32} height={32} />
         </div>
       </div>
 
@@ -66,25 +74,10 @@ export default function VerificationCodeBox({
       </h2>
 
       {/* description */}
-      <p className="mb-4 text-center text-sm leading-relaxed whitespace-pre-line text-[#6B7280]">
-        비밀번호 입력 오류가 5회 발생하여
-        {'\n'}
+      <p className="mb-6 text-center text-sm leading-relaxed whitespace-pre-line text-[#6B7280]">
+        비밀번호 입력 오류가 5회 발생하여{'\n'}
         계정 보호 인증이 필요합니다.
       </p>
-
-      {/* helper text */}
-      <p className="mb-4 text-center text-xs text-[#6B7280]">
-        회원가입 시 입력한 이메일로 인증코드가 발송되었습니다.
-      </p>
-
-      {/* success alert */}
-      <div className="mb-5 flex items-center gap-2 rounded-xl bg-[#EAF7EE] px-4 py-3">
-        <Image src="/icons/check.svg" alt="success" width={16} height={16} />
-
-        <p className="text-sm text-[#16A34A]">
-          인증코드가 이메일로 발송되었습니다
-        </p>
-      </div>
 
       {/* label */}
       <label className="mb-3 block text-sm font-semibold text-[#374151]">
@@ -93,7 +86,7 @@ export default function VerificationCodeBox({
 
       {/* input */}
       <div
-        className={` flex h-14 items-center rounded-2xl border px-4 ${
+        className={`flex h-14 items-center rounded-2xl border px-4 ${
           codeError ? 'border-[#B91C1C]' : 'border-[#E5E7EB]'
         }`}
       >
@@ -109,17 +102,23 @@ export default function VerificationCodeBox({
         />
       </div>
 
-      {/* helper */}
-      <p className="mt-2 text-xs text-[#6B7280]">
-        인증코드는 숫자 6자리입니다.
-      </p>
+      {/* helper + 재발송 버튼 */}
+      <div className="mt-2 flex items-center justify-between">
+        <p className="text-xs text-[#6B7280]">인증코드는 숫자 6자리입니다.</p>
+        <button
+          type="button"
+          onClick={handleResend}
+          className="text-xs font-medium text-[#2F5DAA]"
+        >
+          인증번호 재발송
+        </button>
+      </div>
 
       {/* error */}
       <div className="mt-1 mb-1 flex h-5 items-center gap-1">
         {codeError && (
           <>
             <Image src="/icons/error.svg" alt="error" width={16} height={16} />
-
             <p className="text-sm text-[#B91C1C]">{codeError}</p>
           </>
         )}
@@ -129,11 +128,12 @@ export default function VerificationCodeBox({
       <button
         type="button"
         onClick={handleVerifyCode}
-        className={`h-12 w-full rounded-xl text-base font-semibold text-white transition ${
-          isFormValid ? 'bg-[#2F5DAA] opacity-100' : 'bg-[#2F5DAA] opacity-50'
+        disabled={isLoading}
+        className={`mt-2 h-12 w-full rounded-xl text-base font-semibold text-white transition ${
+          isFormValid && !isLoading ? 'bg-[#2F5DAA] opacity-100' : 'bg-[#2F5DAA] opacity-50'
         }`}
       >
-        인증 확인
+        {isLoading ? '확인 중...' : '인증 확인'}
       </button>
 
       {/* divider */}
