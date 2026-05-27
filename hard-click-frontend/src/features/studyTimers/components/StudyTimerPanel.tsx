@@ -15,7 +15,7 @@ import CurrentSessionAlert from './CurrentSessionAlert';
 // Heartbeat 간격: 60초마다 서버에 저장 (UA-P1-147)
 const HEARTBEAT_INTERVAL_MS = 60_000;
 
-const AUTH_PATHS = ['/auth'];
+const AUTH_PATHS = ['/auth', '/community/new'];
 
 export default function StudyTimerPanel() {
   const pathname = usePathname();
