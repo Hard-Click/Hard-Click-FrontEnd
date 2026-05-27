@@ -100,11 +100,28 @@ export default function LoginForm() {
     setIsSubmitting(false);
 
     if (!result.success || !result.data) {
+      // 423 Locked → 백엔드가 계정 잠금 처리 (5회 실패로 인증번호 발송됨)
+      if (result.isLocked) {
+        setErrors({
+          loginId: '',
+          password: result.message ?? '계정이 잠겼습니다',
+        });
+        setErrorBorder({ loginId: false, password: true });
+        setIsConfirmModalOpen(true);
+        passwordInputRef.current?.focus();
+        return;
+      }
+
       const nextCount = loginFailCount + 1;
       setLoginFailCount(nextCount);
+      // 성공 메시지가 새어들어오는 경우 방어 (백엔드가 200 + data null로 보낼 때)
+      const safeMessage =
+        result.message && !result.message.includes('로그인되었습니다')
+          ? result.message
+          : '아이디 또는 비밀번호가 올바르지 않습니다';
       setErrors({
         loginId: '',
-        password: `${result.message ?? '비밀번호가 일치하지 않습니다'} (${nextCount} / 5)`,
+        password: `${safeMessage} (${nextCount} / 5)`,
       });
       setErrorBorder({
         loginId: false,
@@ -118,9 +135,14 @@ export default function LoginForm() {
       return;
     }
 
-    // 로그인 성공 → 토큰 저장 후 홈으로 이동
-    authStore.setTokens(result.data.accessToken, result.data.refreshToken);
-    router.push('/');
+    // 로그인 성공 → 토큰 + memberId + role 저장 후 강의 전체 조회 페이지로 이동
+    authStore.setAuth({
+      accessToken: result.data.accessToken,
+      refreshToken: result.data.refreshToken,
+      memberId: result.data.memberId,
+      role: result.data.role,
+    });
+    router.push('/courses');
   };
 
   return (

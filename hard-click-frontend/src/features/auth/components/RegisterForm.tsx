@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode, RefObject } from 'react';
+import { toast } from 'sonner';
 
 import {
   checkEmailAction,
@@ -127,7 +128,6 @@ export default function RegisterForm() {
   const [values, setValues] = useState<RegisterFormValues>(initialValues);
 
   const [formMessage, setFormMessage] = useState<FieldStatus | null>(null);
-  const [toastMessage, setToastMessage] = useState('');
 
   const [usernameStatus, setUsernameStatus] = useState<FieldStatus | null>(
     null,
@@ -216,8 +216,8 @@ export default function RegisterForm() {
   }, [isEmailSent, isEmailVerified]);
 
   const showToast = (text: string) => {
-    setToastMessage(text);
-    window.setTimeout(() => setToastMessage(''), 2500);
+    // sonner 라이브러리 사용 (layout.tsx의 Toaster) — 에러 메시지용
+    toast.error(text);
   };
 
   const focusInput = (ref: RefObject<HTMLInputElement | null>) => {
@@ -425,7 +425,11 @@ export default function RegisterForm() {
     setIsEmailVerified(false);
     setRemainingSeconds(300);
     // 재발송 시 이전 토큰/코드 초기화
-    setValues((prev) => ({ ...prev, verificationCode: '', emailVerificationToken: '' }));
+    setValues((prev) => ({
+      ...prev,
+      verificationCode: '',
+      emailVerificationToken: '',
+    }));
     setVerificationStatus({
       type: 'success',
       text: isResend
@@ -475,7 +479,10 @@ export default function RegisterForm() {
     }
 
     // 인증 성공 → 토큰 저장 (회원가입 시 같이 보냄)
-    setValues(prev => ({ ...prev, emailVerificationToken: result.data!.emailVerificationToken }));
+    setValues((prev) => ({
+      ...prev,
+      emailVerificationToken: result.data!.emailVerificationToken,
+    }));
     setIsEmailVerified(true);
     setVerificationStatus({
       type: 'success',
@@ -649,8 +656,8 @@ export default function RegisterForm() {
   };
 
   return (
-    <main className="relative min-h-screen bg-[#F8FAFC] font-sans text-[#1F2937]">
-      {toastMessage && <ToastMessage text={toastMessage} />}
+    <main className="relative min-h-full bg-[#F8FAFC] font-sans text-[#1F2937]">
+      {/* 토스트는 sonner Toaster가 layout.tsx에서 처리 */}
       {step !== 4 && <BrandLogo />}
 
       {step !== 4 ? (
@@ -1972,14 +1979,6 @@ function FooterLogin() {
       <Link href="/auth/login" className="font-semibold text-[#2F5DAA]">
         로그인
       </Link>
-    </div>
-  );
-}
-
-function ToastMessage({ text }: { text: string }) {
-  return (
-    <div className="absolute left-1/2 top-[12px] z-50 flex h-[56px] -translate-x-1/2 items-center justify-center rounded-[20px] bg-[#B91C1C] px-[20px] text-[16px] font-semibold leading-[24px] text-white shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)]">
-      {text}
     </div>
   );
 }
