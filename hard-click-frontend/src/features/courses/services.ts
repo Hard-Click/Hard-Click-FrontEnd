@@ -20,16 +20,35 @@ interface CourseDetailApiResponse {
   thumbnailUrl: string;
   averageRating: number;
   reviewCount: number;
-  curriculum: Array<{
-    order: number;
+  sections?: Array<{
+    sectionId: number;
     title: string;
-    durationMinutes: number;
+    orderIndex: number;
+    lessons?: Array<{
+      lessonId: number;
+      title: string;
+      durationSeconds?: number;
+      isPreview?: boolean;
+    }>;
   }>;
   createdAt: string;
 }
 
+function formatTotalDuration(totalSecs: number): string {
+  if (totalSecs <= 0) return '0분';
+  const h = Math.floor(totalSecs / 3600);
+  const m = Math.floor((totalSecs % 3600) / 60);
+  const s = totalSecs % 60;
+  if (h > 0) return `${h}시간 ${m}분`;
+  if (m > 0) return `${m}분`;
+  return `${s}초`;
+}
+
 /** 백엔드 응답을 UI에서 사용하는 CourseDetail 형태로 변환 */
 function toCourseDetail(api: CourseDetailApiResponse): CourseDetail {
+  const allLessons = (api.sections ?? []).flatMap(s => s.lessons ?? []);
+  const totalSecs = allLessons.reduce((sum, l) => sum + (l.durationSeconds ?? 0), 0);
+
   return {
     courseId: api.courseId,
     title: api.title,
@@ -51,8 +70,8 @@ function toCourseDetail(api: CourseDetailApiResponse): CourseDetail {
     techTags: [],                   // 백엔드 미제공
     materialsProvided: [],          // 백엔드 미제공
     level: '',                      // 백엔드 미제공
-    totalLessons: api.curriculum.length,
-    totalDuration: `${api.curriculum.reduce((sum, c) => sum + c.durationMinutes, 0)}분`,
+    totalLessons: allLessons.length,
+    totalDuration: formatTotalDuration(totalSecs),
     notices: [],                    // 별도 API: 공지사항 목록 조회
     instructor: {
       instructorId: api.instructorId,
@@ -65,18 +84,18 @@ function toCourseDetail(api: CourseDetailApiResponse): CourseDetail {
       instructorCourseCount: 0,
       instructorRating: 0,
     },
-    curriculum: [
-      {
-        sectionId: 1,
-        title: '커리큘럼',
-        lessons: api.curriculum.map((c, idx) => ({
-          lessonId: idx + 1,
-          title: c.title,
-          duration: `${String(Math.floor(c.durationMinutes)).padStart(2, '0')}:00`,
-          isPreview: false,
-        })),
-      },
-    ],
+    curriculum: (api.sections ?? []).map((sec) => ({
+      sectionId: sec.sectionId,
+      title: sec.title,
+      lessons: (sec.lessons ?? []).map((l) => ({
+        lessonId: l.lessonId,
+        title: l.title,
+        duration: l.durationSeconds
+          ? `${String(Math.floor(l.durationSeconds / 60)).padStart(2, '0')}:${String(l.durationSeconds % 60).padStart(2, '0')}`
+          : '00:00',
+        isPreview: l.isPreview ?? false,
+      })),
+    })),
     reviews: [],                    // 별도 API: 리뷰 목록 조회
     ratingDistribution: [],         // 별도 API
   };

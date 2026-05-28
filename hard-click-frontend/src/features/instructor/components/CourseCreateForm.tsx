@@ -6,6 +6,8 @@ import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import { useRouter } from 'next/navigation';
 import LoadingModal from '@/components/ui/loadingModal';
 import { createCourse, updateCourse } from '../services';
+import { api } from '@/services/api';
+import axios from 'axios';
 
 const SUBJECT_OPTIONS = [
   '국어',
@@ -790,6 +792,14 @@ export default function CourseCreateForm({
                     title: lec.fileName,
                     description: '',
                     orderIndex: lIdx,
+                    durationSeconds: lec.duration
+                      ? (() => {
+                          const parts = lec.duration.split(':').map(Number);
+                          if (parts.length === 3) return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
+                          if (parts.length === 2) return (parts[0] || 0) * 60 + (parts[1] || 0);
+                          return undefined;
+                        })()
+                      : undefined,
                   })),
                 })),
               };
@@ -832,6 +842,45 @@ export default function CourseCreateForm({
                   'myCourses',
                   JSON.stringify([newCourse, ...savedCourses]),
                 );
+              }
+
+              const savedCourseId: number =
+                result.data?.courseId ?? (mode === 'edit' ? Number((initialData as any)?.courseId ?? 0) : 0);
+
+              const hasFiles = sections.some((sec) => sec.lectures.some((lec) => lec.file));
+
+              if (hasFiles && savedCourseId) {
+                const detailRes = await api.get<any>(`/api/courses/${savedCourseId}`);
+                if (detailRes.success && detailRes.data) {
+                  const apiSections: any[] = detailRes.data.sections ?? [];
+                  const token = localStorage.getItem('accessToken');
+                  const memberId = localStorage.getItem('memberId');
+                  const authHeaders: Record<string, string> = {};
+                  if (token) authHeaders['Authorization'] = `Bearer ${token}`;
+                  if (memberId) authHeaders['X-Member-Id'] = memberId;
+                  for (let sIdx = 0; sIdx < sections.length; sIdx++) {
+                    const apiSection = apiSections[sIdx];
+                    if (!apiSection) continue;
+                    const apiLessons: any[] = apiSection.lessons ?? [];
+                    for (let lIdx = 0; lIdx < sections[sIdx].lectures.length; lIdx++) {
+                      const lecture = sections[sIdx].lectures[lIdx];
+                      const apiLesson = apiLessons[lIdx];
+                      if (lecture.file && apiLesson?.lessonId) {
+                        const videoForm = new FormData();
+                        videoForm.append('file', lecture.file);
+                        try {
+                          await axios.post(
+                            `/api/courses/lessons/${apiLesson.lessonId}/video`,
+                            videoForm,
+                            { headers: authHeaders },
+                          );
+                        } catch (err) {
+                          console.error(`영상 업로드 실패 lessonId=${apiLesson.lessonId}`, err);
+                        }
+                      }
+                    }
+                  }
+                }
               }
 
               sessionStorage.setItem(
