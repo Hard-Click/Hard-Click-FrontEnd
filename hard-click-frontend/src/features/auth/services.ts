@@ -314,5 +314,11 @@ export async function logout() {
       message: '로그아웃 완료',
     };
   }
-  return api.post<Record<string, never>>('/api/auth/logout');
+
+  const refreshToken =
+    typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+
+  return api.post<Record<string, never>>('/api/auth/logout', {
+    refreshToken,
+  });
 }
