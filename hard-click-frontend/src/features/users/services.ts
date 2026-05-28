@@ -95,6 +95,20 @@ export async function updateMyProfile(body: UpdateProfileRequest) {
   return api.patch<UpdateProfileResponse>('/api/users/me', jsonBody);
 }
 
+/* ───── 회원 탈퇴 (DELETE /api/members/me) ─────
+ * 401 인증 실패 / 404 회원 없음 / 409 이미 탈퇴한 회원 */
+export async function withdrawAccount() {
+  if (USE_MOCK) {
+    return {
+      success: true,
+      httpStatus: 200,
+      message: '회원 탈퇴가 완료되었습니다',
+      data: {} as Record<string, never>,
+    };
+  }
+  return api.delete<Record<string, never>>('/api/members/me');
+}
+
 /* ───── 내 수강 강의 목록 (GET /api/users/me/courses?sort=) ───── */
 export async function getMyCourses(sort?: MyCourseSort) {
   if (USE_MOCK) {

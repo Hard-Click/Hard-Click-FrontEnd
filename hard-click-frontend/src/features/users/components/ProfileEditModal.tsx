@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import LoadingModal from '@/components/ui/loadingModal';
 import WithdrawConfirmModal from './WithdrawConfirmModal';
-import { updateMyProfile } from '@/features/users/services';
+import { updateMyProfile, withdrawAccount } from '@/features/users/services';
+import { authStore } from '@/store/auth.store';
 
 interface ProfileEditModalProps {
   /** 현재 프로필 이미지 (있으면 미리보기) */
@@ -170,12 +171,18 @@ export default function ProfileEditModal({ initialImageUrl, onClose, onSaved }: 
     onClose();
   };
 
-  /* ── 회원 탈퇴 ── */
-  const handleWithdrawConfirm = () => {
+  /* ── 회원 탈퇴 (DELETE /api/members/me) ── */
+  const handleWithdrawConfirm = async () => {
+    const res = await withdrawAccount();
+    if (!res.success) {
+      // 409: 이미 탈퇴 / 404: 회원 없음 / 401: 인증 실패
+      toast.error(res.message || '회원 탈퇴에 실패했습니다.');
+      return;
+    }
+    authStore.clear();
     setIsWithdrawOpen(false);
     onClose();
-    // TODO: 실제 API 연동 — DELETE /api/users/me + 토큰 제거 후 홈 이동
-    toast.success('회원 탈퇴가 완료되었습니다.');
+    toast.success(res.message || '회원 탈퇴가 완료되었습니다.');
     router.push('/');
   };
 
