@@ -242,7 +242,7 @@ export default function ProfileEditModal({
 
   const handleWithdrawConfirm = async () => {
     setIsWithdrawOpen(false);
-    const res = await withdrawAccount();
+    const res = await withdrawAccount(verifiedPassword);
     if (!res.success) {
       toast.error(res.message || '회원 탈퇴에 실패했습니다.');
       return;
