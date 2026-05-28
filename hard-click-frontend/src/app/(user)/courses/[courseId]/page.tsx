@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
@@ -76,11 +75,14 @@ function CurriculumAccordion({
   defaultOpen?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const totalMinutes = section.lessons.reduce((sum, l) => {
-    const [m, s] = l.duration.split(':').map(Number);
-    return sum + m + s / 60;
+  const totalSecs = section.lessons.reduce((sum, l) => {
+    const parts = l.duration.split(':').map(Number);
+    return sum + (parts[0] || 0) * 60 + (parts[1] || 0);
   }, 0);
-  const totalStr = `${Math.floor(totalMinutes)}분`;
+  const h = Math.floor(totalSecs / 3600);
+  const m = Math.floor((totalSecs % 3600) / 60);
+  const s = totalSecs % 60;
+  const totalStr = h > 0 ? `${h}시간 ${m}분` : m > 0 ? `${m}분` : totalSecs > 0 ? `${s}초` : '0분';
 
   return (
     <div className="border border-[#D5D8DD] rounded-2xl overflow-hidden">
@@ -418,7 +420,8 @@ export default function CourseDetailPage() {
                 {/* 썸네일 */}
                 <div className="flex-shrink-0 self-start w-[282px] h-[262px] bg-[#1A1F2E] rounded-2xl overflow-hidden relative">
                   {course.thumbnailUrl ? (
-                    <Image src={course.thumbnailUrl} alt={course.title} fill className="object-cover" />
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
