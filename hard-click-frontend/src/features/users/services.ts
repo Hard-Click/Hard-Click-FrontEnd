@@ -51,8 +51,10 @@ export async function updateMyProfile(body: UpdateProfileRequest) {
   if (body.profileImage) {
     const formData = new FormData();
     if (body.nickname !== undefined) formData.append('nickname', body.nickname);
-    if (body.currentPassword !== undefined) formData.append('currentPassword', body.currentPassword);
-    if (body.newPassword !== undefined) formData.append('newPassword', body.newPassword);
+    if (body.currentPassword !== undefined)
+      formData.append('currentPassword', body.currentPassword);
+    if (body.newPassword !== undefined)
+      formData.append('newPassword', body.newPassword);
     formData.append('profileImage', body.profileImage);
 
     try {
@@ -73,7 +75,10 @@ export async function updateMyProfile(body: UpdateProfileRequest) {
       };
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
-        const body = error.response.data as { httpStatus?: number; message?: string };
+        const body = error.response.data as {
+          httpStatus?: number;
+          message?: string;
+        };
         return {
           success: false,
           httpStatus: body?.httpStatus ?? error.response.status,

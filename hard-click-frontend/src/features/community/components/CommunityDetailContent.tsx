@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
+import ReportModal from '@/features/reports/components/ReportModal';
 
 interface Reply {
   id: number;
@@ -161,6 +162,7 @@ export default function CommunityDetailContent() {
   const [replyInputId, setReplyInputId] = useState<number | null>(null);
   const [replyText, setReplyText] = useState('');
   const [isAccepted, setIsAccepted] = useState(post.isAccepted);
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   const handleAccept = (commentId: number) => {
     setComments((prev) =>
@@ -300,7 +302,7 @@ export default function CommunityDetailContent() {
                 </button>
               </>
             ) : (
-              <button type="button">
+              <button type="button" onClick={() => setIsReportOpen(true)}>
                 <Image
                   src="/icons/reportFlagIcon.svg"
                   alt="신고"
@@ -405,7 +407,10 @@ export default function CommunityDetailContent() {
                         </button>
                       </>
                     ) : (
-                      <button type="button">
+                      <button
+                        type="button"
+                        onClick={() => setIsReportOpen(true)}
+                      >
                         <Image
                           src="/icons/reportFlagIcon.svg"
                           alt="신고"
@@ -504,7 +509,10 @@ export default function CommunityDetailContent() {
                                 </button>
                               </>
                             ) : (
-                              <button type="button">
+                              <button
+                                type="button"
+                                onClick={() => setIsReportOpen(true)}
+                              >
                                 <Image
                                   src="/icons/reportFlagIcon.svg"
                                   alt="신고"
@@ -548,6 +556,10 @@ export default function CommunityDetailContent() {
           >
             등록
           </button>
+
+          {isReportOpen && (
+            <ReportModal onClose={() => setIsReportOpen(false)} />
+          )}
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 interface MyCourseCardProps {
+  highlighted?: boolean;
   id: number;
   category: string;
   title: string;
@@ -32,6 +33,7 @@ export default function MyCourseCard({
   createdAt,
   price,
   thumbnailUrl,
+  highlighted = false,
 }: MyCourseCardProps) {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -86,7 +88,13 @@ export default function MyCourseCard({
   if (isDeleted) return null;
 
   return (
-    <div className="flex items-start justify-between rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
+    <div
+      className={`flex items-start justify-between rounded-2xl border bg-white p-6 shadow-sm transition-all ${
+        highlighted
+          ? 'border-[#2F5DAA] ring-2 ring-[#2F5DAA]/30'
+          : 'border-[#E2E8F0]'
+      }`}
+    >
       {/* left */}
       <div className="flex gap-5">
         {/* thumbnail */}

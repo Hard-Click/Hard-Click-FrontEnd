@@ -24,7 +24,9 @@ const MIN_LOADING_MS = 600;
 const ensureMinimumDelay = async (start: number) => {
   const elapsed = Date.now() - start;
   if (elapsed < MIN_LOADING_MS) {
-    await new Promise((resolve) => setTimeout(resolve, MIN_LOADING_MS - elapsed));
+    await new Promise((resolve) =>
+      setTimeout(resolve, MIN_LOADING_MS - elapsed),
+    );
   }
 };
 
@@ -41,7 +43,11 @@ const WITHDRAW_INFO_ITEMS = [
   '결제 내역 및 구독 정보',
 ];
 
-export default function ProfileEditModal({ initialImageUrl, onClose, onSaved }: ProfileEditModalProps) {
+export default function ProfileEditModal({
+  initialImageUrl,
+  onClose,
+  onSaved,
+}: ProfileEditModalProps) {
   const router = useRouter();
 
   const [step, setStep] = useState<Step>('verify');
@@ -169,7 +175,10 @@ export default function ProfileEditModal({ initialImageUrl, onClose, onSaved }: 
       return;
     }
     if (!newPwConfirm) {
-      setConfirmPwCheck({ type: 'error', text: '새 비밀번호 확인을 입력하세요' });
+      setConfirmPwCheck({
+        type: 'error',
+        text: '새 비밀번호 확인을 입력하세요',
+      });
       confirmPwRef.current?.focus();
       return;
     }
@@ -197,7 +206,10 @@ export default function ProfileEditModal({ initialImageUrl, onClose, onSaved }: 
         setStep('verify');
         setCurrentPw('');
         setVerifiedPassword('');
-        setCurrentPwCheck({ type: 'error', text: '비밀번호가 일치하지 않습니다' });
+        setCurrentPwCheck({
+          type: 'error',
+          text: '비밀번호가 일치하지 않습니다',
+        });
         return;
       }
       toast.error(res.message || '프로필 수정에 실패했습니다.');
@@ -256,7 +268,9 @@ export default function ProfileEditModal({ initialImageUrl, onClose, onSaved }: 
           >
             {/* 헤더 */}
             <div className="flex h-8 items-center justify-between">
-              <h2 className="text-2xl font-bold leading-8 text-[#1F2937]">프로필 수정</h2>
+              <h2 className="text-2xl font-bold leading-8 text-[#1F2937]">
+                프로필 수정
+              </h2>
               <button
                 type="button"
                 onClick={onClose}
@@ -383,7 +397,10 @@ export default function ProfileEditModal({ initialImageUrl, onClose, onSaved }: 
       )}
 
       {isSubmitting && (
-        <LoadingModal title="변경 중입니다" description="잠시만 기다려주세요...." />
+        <LoadingModal
+          title="변경 중입니다"
+          description="잠시만 기다려주세요...."
+        />
       )}
     </>
   );
@@ -401,7 +418,16 @@ interface VerifyStepProps {
   onConfirm: () => void;
 }
 
-function VerifyStep({ inputRef, value, onChange, show, onToggleShow, check, onCancel, onConfirm }: VerifyStepProps) {
+function VerifyStep({
+  inputRef,
+  value,
+  onChange,
+  show,
+  onToggleShow,
+  check,
+  onCancel,
+  onConfirm,
+}: VerifyStepProps) {
   const canConfirm = value.length > 0;
   return (
     <>
@@ -409,7 +435,9 @@ function VerifyStep({ inputRef, value, onChange, show, onToggleShow, check, onCa
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(47,93,170,0.1)]">
           <LockIcon className="h-8 w-8 text-[#2F5DAA]" />
         </div>
-        <h3 className="mt-4 text-xl font-semibold leading-7 text-[#1F2937]">본인 확인</h3>
+        <h3 className="mt-4 text-xl font-semibold leading-7 text-[#1F2937]">
+          본인 확인
+        </h3>
         <p className="mt-2 text-base leading-6 text-[#4B5563]">
           프로필 수정을 위해 현재 비밀번호를 입력해주세요
         </p>
@@ -460,12 +488,21 @@ interface SelectStepProps {
   onBack: () => void;
 }
 
-function SelectStep({ onSelectImage, onSelectPassword, onSelectWithdraw, onBack }: SelectStepProps) {
+function SelectStep({
+  onSelectImage,
+  onSelectPassword,
+  onSelectWithdraw,
+  onBack,
+}: SelectStepProps) {
   return (
     <>
       <div className="flex flex-col items-center">
-        <h3 className="text-xl font-semibold leading-7 text-[#1F2937]">수정할 항목 선택</h3>
-        <p className="mt-2 text-base leading-6 text-[#4B5563]">변경하실 항목을 선택해주세요</p>
+        <h3 className="text-xl font-semibold leading-7 text-[#1F2937]">
+          수정할 항목 선택
+        </h3>
+        <p className="mt-2 text-base leading-6 text-[#4B5563]">
+          변경하실 항목을 선택해주세요
+        </p>
       </div>
 
       <div className="mt-8 grid grid-cols-3 gap-4">
@@ -514,21 +551,29 @@ interface SelectCardProps {
 }
 
 function SelectCard({ onClick, title, subtitle, tone, icon }: SelectCardProps) {
-  const iconBg = tone === 'primary' ? 'bg-[rgba(47,93,170,0.1)]' : 'bg-[rgba(185,28,28,0.1)]';
-  const hoverBorder = tone === 'primary' ? 'hover:border-[#2F5DAA]' : 'hover:border-[#B91C1C]';
+  const iconBg =
+    tone === 'primary'
+      ? 'bg-[rgba(47,93,170,0.1)]'
+      : 'bg-[rgba(185,28,28,0.1)]';
+  const hoverBorder =
+    tone === 'primary' ? 'hover:border-[#2F5DAA]' : 'hover:border-[#B91C1C]';
   return (
     <button
       type="button"
       onClick={onClick}
       className={`flex flex-col items-center p-6 border-2 border-[#E2E8F0] rounded-2xl transition-colors ${hoverBorder}`}
     >
-      <div className={`flex h-14 w-14 items-center justify-center rounded-full ${iconBg}`}>
+      <div
+        className={`flex h-14 w-14 items-center justify-center rounded-full ${iconBg}`}
+      >
         {icon}
       </div>
       <div className="mt-3 text-center text-base font-semibold leading-6 text-[#1F2937]">
         {title}
       </div>
-      <div className="mt-1 text-center text-xs leading-4 text-[#4B5563]">{subtitle}</div>
+      <div className="mt-1 text-center text-xs leading-4 text-[#4B5563]">
+        {subtitle}
+      </div>
     </button>
   );
 }
@@ -545,18 +590,38 @@ interface ImageStepProps {
   onSave: () => void;
 }
 
-function ImageStep({ imagePreview, onUploadClick, fileInputRef, onFileChange, canSave, error, onBack, onSave }: ImageStepProps) {
+function ImageStep({
+  imagePreview,
+  onUploadClick,
+  fileInputRef,
+  onFileChange,
+  canSave,
+  error,
+  onBack,
+  onSave,
+}: ImageStepProps) {
   return (
     <>
-      <h3 className="text-lg font-semibold leading-7 text-[#1F2937]">프로필 이미지 변경</h3>
+      <h3 className="text-lg font-semibold leading-7 text-[#1F2937]">
+        프로필 이미지 변경
+      </h3>
 
       <div className="mt-4 flex flex-col items-center">
         <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-[rgba(47,93,170,0.1)]">
           {imagePreview ? (
             /* eslint-disable-next-line @next/next/no-img-element */
-            <img src={imagePreview} alt="" className="h-full w-full object-cover" />
+            <img
+              src={imagePreview}
+              alt=""
+              className="h-full w-full object-cover"
+            />
           ) : (
-            <Image src="/icons/profileAvatarIcon.svg" alt="" width={64} height={64} />
+            <Image
+              src="/icons/profileAvatarIcon.svg"
+              alt=""
+              width={64}
+              height={64}
+            />
           )}
         </div>
         <button
@@ -566,7 +631,9 @@ function ImageStep({ imagePreview, onUploadClick, fileInputRef, onFileChange, ca
         >
           이미지 업로드
         </button>
-        <p className="mt-2 text-sm leading-5 text-[#4B5563]">jpeg, jpg, png 형식 / 최대 5MB</p>
+        <p className="mt-2 text-sm leading-5 text-[#4B5563]">
+          jpeg, jpg, png 형식 / 최대 5MB
+        </p>
         <div className="mt-2 h-5">
           {error && (
             <p className="flex items-center gap-1 text-sm text-[#DC2626]">
@@ -646,7 +713,9 @@ function PasswordStep({
 }: PasswordStepProps) {
   return (
     <>
-      <h3 className="text-lg font-semibold leading-7 text-[#1F2937]">비밀번호 변경</h3>
+      <h3 className="text-lg font-semibold leading-7 text-[#1F2937]">
+        비밀번호 변경
+      </h3>
 
       <div className="mt-4 flex flex-col gap-5">
         <PwField
@@ -705,15 +774,26 @@ interface WithdrawStepProps {
   onWithdraw: () => void;
 }
 
-function WithdrawStep({ value, onChange, canWithdraw, error, onBack, onWithdraw }: WithdrawStepProps) {
+function WithdrawStep({
+  value,
+  onChange,
+  canWithdraw,
+  error,
+  onBack,
+  onWithdraw,
+}: WithdrawStepProps) {
   return (
     <>
       <div className="flex flex-col items-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(185,28,28,0.1)]">
           <UserXIcon className="h-8 w-8 text-[#B91C1C]" />
         </div>
-        <h3 className="mt-4 text-xl font-semibold leading-7 text-[#1F2937]">회원 탈퇴</h3>
-        <p className="mt-2 text-base leading-6 text-[#4B5563]">정말 회원 탈퇴하시겠습니까?</p>
+        <h3 className="mt-4 text-xl font-semibold leading-7 text-[#1F2937]">
+          회원 탈퇴
+        </h3>
+        <p className="mt-2 text-base leading-6 text-[#4B5563]">
+          정말 회원 탈퇴하시겠습니까?
+        </p>
         <p className="mt-1 text-sm leading-5 text-[#B91C1C]">
           탈퇴 후 계정 정보와 학습 기록 복구가 어려울 수 있습니다.
         </p>
@@ -723,10 +803,15 @@ function WithdrawStep({ value, onChange, canWithdraw, error, onBack, onWithdraw 
         className="mt-8 rounded-[20px] border p-6"
         style={{ background: '#FEF2F2', borderColor: 'rgba(185, 28, 28, 0.2)' }}
       >
-        <h4 className="text-base font-semibold leading-6 text-[#1F2937]">탈퇴 시 삭제되는 정보</h4>
+        <h4 className="text-base font-semibold leading-6 text-[#1F2937]">
+          탈퇴 시 삭제되는 정보
+        </h4>
         <ul className="mt-3 flex flex-col gap-2">
           {WITHDRAW_INFO_ITEMS.map((item) => (
-            <li key={item} className="flex items-start gap-2 text-sm leading-5 text-[#4B5563]">
+            <li
+              key={item}
+              className="flex items-start gap-2 text-sm leading-5 text-[#4B5563]"
+            >
               <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#B91C1C]" />
               <span>{item}</span>
             </li>
@@ -736,7 +821,9 @@ function WithdrawStep({ value, onChange, canWithdraw, error, onBack, onWithdraw 
 
       <div className="mt-6">
         <label className="block text-sm font-medium text-[#1F2937]">
-          탈퇴를 원하시면 <span className="font-bold">&ldquo;회원탈퇴&rdquo;</span>를 입력해주세요
+          탈퇴를 원하시면{' '}
+          <span className="font-bold">&ldquo;회원탈퇴&rdquo;</span>를
+          입력해주세요
         </label>
         <input
           type="text"
@@ -744,7 +831,9 @@ function WithdrawStep({ value, onChange, canWithdraw, error, onBack, onWithdraw 
           onChange={(e) => onChange(e.target.value)}
           placeholder="회원탈퇴"
           className={`mt-2 h-12 w-full rounded-[10px] border px-4 text-base outline-none placeholder:text-[rgba(26,31,46,0.5)] ${
-            error ? 'border-[#DC2626]' : 'border-[#E2E8F0] focus:border-[#B91C1C]'
+            error
+              ? 'border-[#DC2626]'
+              : 'border-[#E2E8F0] focus:border-[#B91C1C]'
           }`}
         />
         {error && (
@@ -801,7 +890,9 @@ const PwField = forwardRef<HTMLInputElement, PwFieldProps>(function PwField(
 
   return (
     <div>
-      <label className="mb-2 block text-sm font-medium text-[#1F2937]">{label}</label>
+      <label className="mb-2 block text-sm font-medium text-[#1F2937]">
+        {label}
+      </label>
       <div
         className={`flex h-12 items-center rounded-[10px] border pl-4 pr-12 transition-colors ${borderClass} relative`}
       >
@@ -834,7 +925,9 @@ const PwField = forwardRef<HTMLInputElement, PwFieldProps>(function PwField(
           }`}
         >
           <Image
-            src={check.type === 'success' ? '/icons/check.svg' : '/icons/error.svg'}
+            src={
+              check.type === 'success' ? '/icons/check.svg' : '/icons/error.svg'
+            }
             alt=""
             width={16}
             height={16}
@@ -849,7 +942,15 @@ const PwField = forwardRef<HTMLInputElement, PwFieldProps>(function PwField(
 /* ──────────────── Icons (inline SVG) ──────────────── */
 function LockIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <rect x="3" y="11" width="18" height="11" rx="2" />
       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </svg>
@@ -858,7 +959,15 @@ function LockIcon({ className }: { className?: string }) {
 
 function UserIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
     </svg>
@@ -867,7 +976,15 @@ function UserIcon({ className }: { className?: string }) {
 
 function UserXIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <line x1="17" y1="8" x2="22" y2="13" />
