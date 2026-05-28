@@ -302,3 +302,17 @@ export async function changePassword(payload: {
   }
   return api.patch<Record<string, never>>('/api/members/me/password', payload);
 }
+
+/** 로그아웃 (POST /api/auth/logout) */
+export async function logout() {
+  if (USE_MOCK) {
+    console.log('[MOCK] 로그아웃');
+    return {
+      success: true,
+      httpStatus: 200,
+      data: {},
+      message: '로그아웃 완료',
+    };
+  }
+  return api.post<Record<string, never>>('/api/auth/logout');
+}
