@@ -27,6 +27,8 @@ export default function CommunityDetailContent() {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
 
   const handleAccept = (commentId: number) => {
     setComments((prev) =>
@@ -82,6 +84,27 @@ export default function CommunityDetailContent() {
     setIsDeleting(false);
     toast.success('게시글이 삭제되었습니다.');
     router.push('/community');
+  };
+
+  const handleCommentEditStart = (commentId: number, content: string) => {
+    setEditingCommentId(commentId);
+    setEditingCommentText(content);
+  };
+
+  const handleCommentEditSave = (commentId: number) => {
+    if (!editingCommentText.trim()) return;
+    setComments((prev) =>
+      prev.map((c) =>
+        c.id === commentId ? { ...c, content: editingCommentText } : c,
+      ),
+    );
+    setEditingCommentId(null);
+    setEditingCommentText('');
+  };
+
+  const handleCommentEditCancel = () => {
+    setEditingCommentId(null);
+    setEditingCommentText('');
   };
 
   return (
@@ -253,7 +276,12 @@ export default function CommunityDetailContent() {
                       )}
                     {comment.isOwner ? (
                       <>
-                        <button type="button">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleCommentEditStart(comment.id, comment.content)
+                          }
+                        >
                           <Image
                             src="/icons/editIcon.svg"
                             alt="수정"
@@ -286,8 +314,36 @@ export default function CommunityDetailContent() {
                   </div>
                 </div>
 
-                <p className="mb-2 text-sm text-[#374151]">{comment.content}</p>
-
+                {editingCommentId === comment.id ? (
+                  <div className="mb-2">
+                    <textarea
+                      value={editingCommentText}
+                      onChange={(e) => setEditingCommentText(e.target.value)}
+                      className="w-full rounded-xl border border-[#2F5DAA] px-3 py-2 text-sm outline-none resize-none"
+                      rows={3}
+                    />
+                    <div className="mt-2 flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={handleCommentEditCancel}
+                        className="rounded-lg border border-[#E2E8F0] px-3 py-1 text-xs font-semibold text-[#4B5563] hover:bg-[#F8FAFC]"
+                      >
+                        취소
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCommentEditSave(comment.id)}
+                        className="rounded-lg bg-[#2F5DAA] px-3 py-1 text-xs font-semibold text-white hover:bg-[#1D3E75]"
+                      >
+                        저장
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="mb-2 text-sm text-[#374151]">
+                    {comment.content}
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={() =>
