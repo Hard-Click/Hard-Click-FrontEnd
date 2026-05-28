@@ -107,7 +107,7 @@ export default function NotFoundView({ code = '404', title, description }: Error
             </button>
 
             <Link
-              href="/"
+              href="/courses"
               className="w-full h-12 bg-[#2F5DAA] rounded-[10px] flex items-center justify-center gap-2 text-base font-semibold text-white hover:bg-[#264a87] transition-colors"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
