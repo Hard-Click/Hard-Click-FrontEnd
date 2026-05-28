@@ -16,7 +16,7 @@ export default function InstructorHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="w-full h-16 bg-[#2F5DAA] shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)] flex-shrink-0">
+    <header className="sticky top-0 z-50 w-full h-16 bg-[#2F5DAA] shadow-[0_2px_8px_rgba(0,0,0,0.15),0_1px_2px_rgba(0,0,0,0.08)] flex-shrink-0">
       <div className="w-full max-w-[1440px] mx-auto px-8 h-full flex items-center">
         {/* 로고 */}
         <Link
