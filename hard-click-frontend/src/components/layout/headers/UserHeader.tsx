@@ -61,7 +61,7 @@ export default function UserHeader() {
     await logout();
     authStore.clear();
     setIsLoggedIn(false);
-    router.push('/auth/login');
+    router.push('/courses');
   };
 
   return (
