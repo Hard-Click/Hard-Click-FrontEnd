@@ -52,7 +52,9 @@ async function request<T>(
   data?: unknown,
 ): Promise<ApiResponse<T>> {
   try {
-    const response = await axiosInstance.request<Omit<ApiResponse<T>, 'success'>>({
+    const response = await axiosInstance.request<
+      Omit<ApiResponse<T>, 'success'>
+    >({
       method,
       url,
       data,
@@ -80,5 +82,5 @@ export const api = {
   post: <T>(url: string, body?: unknown) => request<T>('POST', url, body),
   put: <T>(url: string, body?: unknown) => request<T>('PUT', url, body),
   patch: <T>(url: string, body?: unknown) => request<T>('PATCH', url, body),
-  delete: <T>(url: string) => request<T>('DELETE', url),
+  delete: <T>(url: string, body?: unknown) => request<T>('DELETE', url, body),
 };

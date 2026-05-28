@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-
+import { useSearchParams } from 'next/navigation';
 import MyCourseCard from '../../../features/instructor/components/MyCourseCard';
 import MyCoursesFilterBar from '@/features/instructor/components/MyCoursesFilterBar';
 import { useEffect, useRef, useState } from 'react';
@@ -24,13 +24,30 @@ export default function MyCoursesPage() {
   const toastShown = useRef(false);
 
   const [courses, setCourses] = useState<Course[]>([]);
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get('courseId')
+    ? Number(searchParams.get('courseId'))
+    : null;
+  const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
+  // courses 로드 후 해당 카드로 스크롤
+  useEffect(() => {
+    if (!highlightId || courses.length === 0) return;
+    const el = cardRefs.current.get(highlightId);
+    if (el) {
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+  }, [highlightId, courses]);
   useEffect(() => {
     // 강사 내 강의 목록 API 호출 (GET /api/instructor/courses)
     getInstructorCourses().then((res) => {
       if (!res.success || !res.data) {
         // 실패 시 localStorage 폴백
-        const savedCourses = JSON.parse(localStorage.getItem('myCourses') || '[]');
+        const savedCourses = JSON.parse(
+          localStorage.getItem('myCourses') || '[]',
+        );
         setCourses(savedCourses);
         return;
       }
@@ -62,7 +79,7 @@ export default function MyCoursesPage() {
         {
           duration: 2000,
           className: '!flex !items-center !justify-center !text-center',
-        }
+        },
       );
 
       toastShown.current = true;
@@ -98,7 +115,14 @@ export default function MyCoursesPage() {
       {/* list */}
       <div className="space-y-5">
         {courses.map((course) => (
-          <MyCourseCard key={course.id} {...course} />
+          <div
+            key={course.id}
+            ref={(el) => {
+              if (el) cardRefs.current.set(course.id, el);
+            }}
+          >
+            <MyCourseCard {...course} highlighted={course.id === highlightId} />
+          </div>
         ))}
       </div>
     </div>

@@ -39,7 +39,7 @@ export default function RecentCourseCard({
       </div>
 
       {/* button */}
-      <Link href={`/instructor/courses/${courseId}`}>
+      <Link href={`/instructor/myCourses?courseId=${courseId}`}>
         <button
           type="button"
           className="rounded-xl border border-[#E2E8F0] px-5 py-2 text-sm font-medium text-[#4B5563] transition hover:bg-[#F8FAFC]"
