@@ -29,6 +29,9 @@ export default function CommunityDetailContent() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
+  const [deletingCommentId, setDeletingCommentId] = useState<number | null>(
+    null,
+  );
 
   const handleAccept = (commentId: number) => {
     setComments((prev) =>
@@ -105,6 +108,12 @@ export default function CommunityDetailContent() {
   const handleCommentEditCancel = () => {
     setEditingCommentId(null);
     setEditingCommentText('');
+  };
+
+  const handleCommentDelete = (commentId: number) => {
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
+    setDeletingCommentId(null);
+    toast.success('댓글이 삭제되었습니다.');
   };
 
   return (
@@ -289,7 +298,10 @@ export default function CommunityDetailContent() {
                             height={16}
                           />
                         </button>
-                        <button type="button">
+                        <button
+                          type="button"
+                          onClick={() => setDeletingCommentId(comment.id)}
+                        >
                           <Image
                             src="/icons/trashIcon.svg"
                             alt="삭제"
@@ -528,6 +540,46 @@ export default function CommunityDetailContent() {
       )}
 
       <div className="flex flex-col gap-4"></div>
+
+      {/* 댓글 삭제 확인 모달 */}
+      {deletingCommentId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div
+            className="w-full max-w-[448px] bg-white rounded-2xl p-8"
+            style={{
+              boxShadow:
+                '0px 20px 25px -5px rgba(0,0,0,0.1), 0px 8px 10px -6px rgba(0,0,0,0.1)',
+            }}
+          >
+            <h2 className="text-center text-2xl font-bold text-[#1F2937]">
+              댓글 삭제
+            </h2>
+            <p className="mt-3 text-center text-base text-[#4B5563]">
+              댓글을 삭제하시겠습니까?
+              <br />
+              <span className="text-sm text-[#DC2626]">
+                삭제 후 복구가 불가능합니다.
+              </span>
+            </p>
+            <div className="mt-8 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setDeletingCommentId(null)}
+                className="h-12 flex-1 rounded-[10px] border border-[#E2E8F0] bg-white text-base font-semibold text-[#4B5563] hover:bg-[#F8FAFC] transition-colors"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCommentDelete(deletingCommentId)}
+                className="h-12 flex-1 rounded-[10px] bg-[#DC2626] text-base font-semibold text-white hover:bg-[#B91C1C] transition-colors"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
