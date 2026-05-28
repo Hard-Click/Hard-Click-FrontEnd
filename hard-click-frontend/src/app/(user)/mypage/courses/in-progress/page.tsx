@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import UserHeader from '@/components/layout/headers/UserHeader';
 import { getMyCourses } from '@/features/users/services';
 import type { MyCourse } from '@/features/users/types';
 
@@ -27,7 +26,6 @@ export default function InProgressCoursesPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <UserHeader />
 
       <div className="w-full">
         <div className="max-w-[1280px] mx-auto px-8 pt-9 pb-32">

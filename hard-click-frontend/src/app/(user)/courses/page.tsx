@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import UserHeader from '@/components/layout/headers/UserHeader';
 import CourseSearchBar from '@/features/courses/components/CourseSearchBar';
 import CourseFilterBar from '@/features/courses/components/CourseFilterBar';
 import CourseList from '@/features/courses/components/CourseList';
@@ -69,7 +68,6 @@ export default function CoursesPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <UserHeader />
 
       {/* 공지 배너 */}
       {notices.length > 0 && (

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import UserHeader from '@/components/layout/headers/UserHeader';
 import { getCourseDetail } from '@/features/courses/services';
 import type { CourseNotice, CourseDetail } from '@/features/courses/types';
 
@@ -74,7 +73,6 @@ export default function CourseNoticesPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F8FAFC]">
-        <UserHeader />
       </div>
     );
   }
@@ -82,7 +80,6 @@ export default function CourseNoticesPage() {
   if (!course) {
     return (
       <div className="min-h-screen bg-[#F8FAFC]">
-        <UserHeader />
       </div>
     );
   }
@@ -99,7 +96,6 @@ export default function CourseNoticesPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <UserHeader />
 
       <div className="w-full max-w-[1440px] mx-auto px-[93.5px] pt-8 pb-16">
 

@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import UserHeader from '@/components/layout/headers/UserHeader';
 import { toast } from 'sonner';
 // TODO: 수강신청 모달 — 팀원 결제 모달 확인 후 연결
 // TODO: 리뷰 삭제 확인 모달 — 팀원 모달 확인 후 연결
@@ -151,7 +150,6 @@ function CurriculumAccordion({
 function CourseErrorScreen({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div className="min-h-screen bg-[#F0F2F5]">
-      <UserHeader />
       <div className="w-full max-w-[1440px] mx-auto px-[157.5px] py-6">
         <Link
           href="/courses"
@@ -368,8 +366,7 @@ export default function CourseDetailPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F0F2F5]">
-        <UserHeader />
-        <div className="flex items-center justify-center h-96">
+          <div className="flex items-center justify-center h-96">
           <div className="w-8 h-8 border-2 border-[#2F5DAA] border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
@@ -404,7 +401,6 @@ export default function CourseDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F0F2F5]">
-      <UserHeader />
 
       {/* 토스트는 sonner Toaster가 layout.tsx에서 처리 */}
 
