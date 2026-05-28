@@ -45,6 +45,7 @@ export default function RecentCourseSection() {
         {recentCourses.map((course) => (
           <RecentCourseCard
             key={course.id}
+            courseId={course.id}
             title={course.title}
             isPublic={course.isPublic}
             students={course.students}
