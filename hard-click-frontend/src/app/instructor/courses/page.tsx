@@ -217,7 +217,7 @@ export default function InstructorCoursesPage() {
         </div>
 
         {/* 강의 목록 */}
-        <CourseList courses={courses} status={status} />
+        <CourseList courses={courses} status={status} hrefPrefix="/instructor/courses" />
       </div>
     </div>
   );

@@ -166,3 +166,24 @@ export async function deleteCourse(courseId: number) {
   }
   return api.delete<null>(`/api/courses/${courseId}`);
 }
+
+/** 강의 공개/비공개 전환 (PATCH /api/courses/{courseId}/status)
+ *  status: 'PUBLISHED' | 'DRAFT' */
+export async function toggleCourseStatus(
+  courseId: number,
+  status: 'PUBLISHED' | 'DRAFT',
+) {
+  if (USE_MOCK) {
+    console.log('[MOCK] 강의 상태 전환:', courseId, status);
+    return {
+      success: true,
+      httpStatus: 200,
+      data: { courseId, status },
+      message: status === 'PUBLISHED' ? '강의가 공개되었습니다.' : '강의가 비공개되었습니다.',
+    };
+  }
+  return api.patch<{ courseId: number; status: 'PUBLISHED' | 'DRAFT' }>(
+    `/api/courses/${courseId}/status`,
+    { status },
+  );
+}

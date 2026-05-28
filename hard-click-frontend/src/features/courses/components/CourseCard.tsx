@@ -41,14 +41,16 @@ function PeopleIcon() {
 
 interface Props {
   course: CourseListItem;
+  /** 상세 페이지 prefix — 기본 '/courses' (학생용), 강사용은 '/instructor/courses' */
+  hrefPrefix?: string;
 }
 
-export default function CourseCard({ course }: Props) {
+export default function CourseCard({ course, hrefPrefix = '/courses' }: Props) {
   const [fromColor, toColor] = SUBJECT_GRADIENTS[course.subjectName] ?? ['#475569', '#94A3B8'];
 
   return (
     <Link
-      href={`/courses/${course.courseId}`}
+      href={`${hrefPrefix}/${course.courseId}`}
       className="group block bg-white border border-[#E2E8F0] rounded-2xl shadow-[0_4px_10px_rgba(0,0,0,0.06)] overflow-hidden hover:shadow-xl transition-shadow duration-200"
     >
       {/* Thumbnail */}

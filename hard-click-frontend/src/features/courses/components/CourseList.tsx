@@ -6,6 +6,8 @@ type ListStatus = 'loading' | 'error' | 'empty' | 'no-results' | 'idle';
 interface Props {
   courses: CourseListItem[];
   status: ListStatus;
+  /** 카드 클릭 시 이동할 상세 페이지 prefix — 기본 '/courses', 강사용은 '/instructor/courses' */
+  hrefPrefix?: string;
 }
 
 const STATUS_MESSAGE: Record<Exclude<ListStatus, 'idle' | 'loading'>, string> = {
@@ -43,7 +45,7 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
-export default function CourseList({ courses, status }: Props) {
+export default function CourseList({ courses, status, hrefPrefix }: Props) {
   if (status === 'loading') {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-16 gap-y-6">
@@ -61,7 +63,7 @@ export default function CourseList({ courses, status }: Props) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-16 gap-y-6">
       {courses.map(course => (
-        <CourseCard key={course.courseId} course={course} />
+        <CourseCard key={course.courseId} course={course} hrefPrefix={hrefPrefix} />
       ))}
     </div>
   );
