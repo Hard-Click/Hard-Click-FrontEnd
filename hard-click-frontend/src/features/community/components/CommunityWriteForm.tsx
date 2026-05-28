@@ -5,20 +5,77 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { COMMUNITY_ERRORS } from '../constants/errorMessages';
+import LoadingModal from '@/components/ui/loadingModal';
 
 const FILTERS = ['자유게시판', '질문게시판', '스터디모집'];
 
-export default function CommunityWriteForm() {
+const SUBJECTS = [
+  '국어',
+  '화법과 작문',
+  '언어와 매체',
+  '수학',
+  '확률과 통계',
+  '미적분',
+  '기하',
+  '영어',
+  '한국사',
+  '생활과 윤리',
+  '윤리와 사상',
+  '한국지리',
+  '세계지리',
+  '동아시아사',
+  '세계사',
+  '경제',
+  '정치와 법',
+  '사회문화',
+  '물리학I',
+  '물리학II',
+  '화학I',
+  '화학II',
+  '생명과학I',
+  '생명과학II',
+  '지구과학I',
+  '지구과학II',
+  '농업 기초 기술',
+  '공업 일반',
+  '상업 경제',
+  '수산·해운 산업 기초',
+  '인간 발달',
+  '독일어I',
+  '프랑스어I',
+  '스페인어I',
+  '중국어I',
+  '일본어I',
+  '러시아어I',
+  '아랍어I',
+  '베트남어I',
+  '한문I',
+];
+
+interface CommunityWriteFormProps {
+  mode?: 'create' | 'edit';
+  initialCategory?: string;
+  initialTitle?: string;
+  initialContent?: string;
+}
+
+export default function CommunityWriteForm({
+  mode = 'create',
+  initialCategory = '자유게시판',
+  initialTitle = '',
+  initialContent = '',
+}: CommunityWriteFormProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('자유게시판');
+  const [activeTab, setActiveTab] = useState(initialCategory);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
 
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(initialTitle);
   const [titleError, setTitleError] = useState('');
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState(initialContent);
   const [contentError, setContentError] = useState('');
   const [subject, setSubject] = useState('');
   const [subjectError, setSubjectError] = useState('');
+  const [isSubjectOpen, setIsSubjectOpen] = useState(false);
   const [recruit, setRecruit] = useState('');
   const [recruitError, setRecruitError] = useState('');
   const [description, setDescription] = useState('');
@@ -26,6 +83,8 @@ export default function CommunityWriteForm() {
   const [focusedErrorField, setFocusedErrorField] = useState<string | null>(
     null,
   );
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const titleRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLTextAreaElement>(null);
@@ -41,6 +100,7 @@ export default function CommunityWriteForm() {
         : true;
 
   const handleTabChange = (filter: string) => {
+    if (mode === 'edit') return;
     setActiveTab(filter);
     setTitle('');
     setContent('');
@@ -124,106 +184,137 @@ export default function CommunityWriteForm() {
     }
 
     setFocusedErrorField(null);
-    // TODO: API 호출
+    setIsConfirmOpen(true);
+  };
+
+  const handleConfirmedSubmit = async () => {
+    setIsConfirmOpen(false);
+    setIsSubmitting(true);
+    await new Promise((r) => setTimeout(r, 800)); // TODO: 실제 API 호출로 교체
+    setIsSubmitting(false);
+    toast.success(
+      mode === 'edit' ? '게시글이 수정되었습니다.' : '게시글이 등록되었습니다.',
+    );
+    router.push('/community');
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1020px]">
-      {/* back button */}
-      <button
-        type="button"
-        onClick={() => router.back()}
-        className="mb-6 cursor-pointer flex items-center gap-2 text-sm font-medium text-[#4B5563]"
-      >
-        <Image src="/icons/back.svg" alt="back" width={16} height={16} />
-        목록으로 돌아가기
-      </button>
-
-      {/* form */}
-      <div className="rounded-[24px] border border-[#E2E8F0] bg-white p-8 shadow-sm">
-        <h2 className="mb-8 text-2xl font-bold text-[#1E293B]">게시글 작성</h2>
-
-        {/* category */}
-        <div className="mb-8">
-          <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
-            게시판 선택 *
-          </label>
-          <div className="grid grid-cols-3 gap-3">
-            {FILTERS.map((filter) => {
-              const isActive = activeTab === filter;
-              return (
-                <button
-                  key={filter}
-                  type="button"
-                  onClick={() => handleTabChange(filter)}
-                  className={`h-12 rounded-2xl text-sm font-semibold transition ${
-                    isActive
-                      ? 'bg-[#2F5DAA] text-white'
-                      : 'border border-[#E2E8F0] bg-[#F8FAFC] text-[#4B5563]'
-                  }`}
-                >
-                  {filter}
-                </button>
-              );
-            })}
+    <>
+      {/* 확인 모달 */}
+      {isConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-[448px] rounded-2xl bg-white p-8 shadow-xl">
+            <h2 className="text-center text-xl font-bold text-[#1F2937]">
+              {mode === 'edit' ? '게시글 수정' : '게시글 등록'}
+            </h2>
+            <p className="mt-3 text-center text-sm text-[#4B5563]">
+              {mode === 'edit'
+                ? '해당 게시글을 수정하시겠습니까?'
+                : '해당 게시글을 등록하시겠습니까?'}
+            </p>
+            <div className="mt-8 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setIsConfirmOpen(false)}
+                className="h-12 flex-1 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-[#4B5563] hover:bg-[#F8FAFC]"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmedSubmit}
+                className="h-12 flex-1 rounded-xl bg-[#2F5DAA] text-sm font-semibold text-white hover:bg-[#1D3E75]"
+              >
+                확인
+              </button>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* title input */}
-        <div className="mb-8">
-          <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
-            제목 *
-          </label>
-          <input
-            ref={titleRef}
-            type="text"
-            placeholder="제목을 입력하세요"
-            value={title}
-            onChange={(e) => {
-              setTitle(e.target.value);
-              if (!e.target.value.trim()) {
-                setTitleError(COMMUNITY_ERRORS.TITLE_REQUIRED);
-                setFocusedErrorField('title');
-              } else {
-                setTitleError('');
-                setFocusedErrorField(null);
-              }
-            }}
-            className={`h-12 w-full rounded-xl border px-4 text-sm outline-none placeholder:text-[#9CA3AF] ${
-              focusedErrorField === 'title' && titleError
-                ? 'border-[#B91C1C]'
-                : 'border-[#E2E8F0]'
-            }`}
-          />
-          {titleError && (
-            <div className="mt-1 flex items-center gap-1 text-sm text-[#B91C1C]">
-              <Image
-                src="/icons/error.svg"
-                alt="error"
-                width={14}
-                height={14}
-              />
-              {titleError}
-            </div>
-          )}
-        </div>
+      {/* 로딩 모달 */}
+      {isSubmitting && (
+        <LoadingModal
+          title={
+            mode === 'edit' ? '게시글 수정 중입니다' : '게시글 등록 중입니다'
+          }
+          description="잠시만 기다려주세요...."
+        />
+      )}
 
-        {/* question board - 과목 */}
-        {activeTab === '질문게시판' && (
+      <div className="mx-auto w-full max-w-[1020px]">
+        {/* back button */}
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="mb-6 cursor-pointer flex items-center gap-2 text-sm font-medium text-[#4B5563]"
+        >
+          <Image src="/icons/back.svg" alt="back" width={16} height={16} />
+          목록으로 돌아가기
+        </button>
+
+        {/* form */}
+        <div className="rounded-[24px] border border-[#E2E8F0] bg-white p-8 shadow-sm">
+          <h2 className="mb-8 text-2xl font-bold text-[#1E293B]">
+            {mode === 'edit' ? '게시글 수정' : '게시글 작성'}
+          </h2>
+
+          {/* category */}
           <div className="mb-8">
             <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
-              과목 *
+              게시판 선택 *
             </label>
-            <div className="flex h-12 items-center justify-between rounded-xl border border-[#E2E8F0] px-4">
-              <span className="text-sm text-[#9CA3AF]">과목을 선택하세요</span>
-              <Image
-                src="/icons/chevronDownIcon.svg"
-                alt="down"
-                width={18}
-                height={18}
-              />
+            <div className="grid grid-cols-3 gap-3">
+              {FILTERS.map((filter) => {
+                const isActive = activeTab === filter;
+                return (
+                  <button
+                    key={filter}
+                    type="button"
+                    onClick={() => handleTabChange(filter)}
+                    disabled={mode === 'edit'}
+                    className={`h-12 rounded-2xl text-sm font-semibold transition ${
+                      isActive
+                        ? 'bg-[#2F5DAA] text-white'
+                        : mode === 'edit'
+                          ? 'border border-[#E2E8F0] bg-[#F1F5F9] text-[#9CA3AF] cursor-not-allowed'
+                          : 'border border-[#E2E8F0] bg-[#F8FAFC] text-[#4B5563]'
+                    }`}
+                  >
+                    {filter}
+                  </button>
+                );
+              })}
             </div>
-            {subjectError && (
+          </div>
+
+          {/* title input */}
+          <div className="mb-8">
+            <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
+              제목 *
+            </label>
+            <input
+              ref={titleRef}
+              type="text"
+              placeholder="제목을 입력하세요"
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (!e.target.value.trim()) {
+                  setTitleError(COMMUNITY_ERRORS.TITLE_REQUIRED);
+                  setFocusedErrorField('title');
+                } else {
+                  setTitleError('');
+                  setFocusedErrorField(null);
+                }
+              }}
+              className={`h-12 w-full rounded-xl border px-4 text-sm outline-none placeholder:text-[#9CA3AF] ${
+                focusedErrorField === 'title' && titleError
+                  ? 'border-[#B91C1C]'
+                  : 'border-[#E2E8F0]'
+              }`}
+            />
+            {titleError && (
               <div className="mt-1 flex items-center gap-1 text-sm text-[#B91C1C]">
                 <Image
                   src="/icons/error.svg"
@@ -231,30 +322,56 @@ export default function CommunityWriteForm() {
                   width={14}
                   height={14}
                 />
-                {subjectError}
+                {titleError}
               </div>
             )}
           </div>
-        )}
 
-        {/* study board */}
-        {activeTab === '스터디모집' && (
-          <>
-            {/* subject */}
+          {/* question board - 과목 */}
+          {activeTab === '질문게시판' && (
             <div className="mb-8">
               <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
                 과목 *
               </label>
-              <div className="flex h-12 items-center justify-between rounded-xl border border-[#E2E8F0] px-4">
-                <span className="text-sm text-[#9CA3AF]">
-                  과목을 선택하세요
-                </span>
-                <Image
-                  src="/icons/chevronDownIcon.svg"
-                  alt="down"
-                  width={18}
-                  height={18}
-                />
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsSubjectOpen((prev) => !prev)}
+                  className={`flex h-12 w-full items-center justify-between rounded-xl border px-4 text-sm ${
+                    subject ? 'text-[#1E293B]' : 'text-[#9CA3AF]'
+                  } ${subjectError ? 'border-[#B91C1C]' : 'border-[#E2E8F0]'}`}
+                >
+                  <span>{subject || '과목을 선택하세요'}</span>
+                  <Image
+                    src="/icons/chevronDownIcon.svg"
+                    alt="down"
+                    width={18}
+                    height={18}
+                    className={`transition-transform ${isSubjectOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {isSubjectOpen && (
+                  <div className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-[#E2E8F0] bg-white shadow-lg">
+                    {SUBJECTS.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => {
+                          setSubject(s);
+                          setSubjectError('');
+                          setIsSubjectOpen(false);
+                        }}
+                        className={`w-full px-4 py-2.5 text-left text-sm hover:bg-[#F8FAFC] ${
+                          subject === s
+                            ? 'bg-[#EFF6FF] font-semibold text-[#2F5DAA]'
+                            : 'text-[#374151]'
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               {subjectError && (
                 <div className="mt-1 flex items-center gap-1 text-sm text-[#B91C1C]">
@@ -268,230 +385,292 @@ export default function CommunityWriteForm() {
                 </div>
               )}
             </div>
+          )}
 
-            {/* recruit */}
-            <div className="mb-8">
-              <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
-                모집 정원 *
-              </label>
-              <input
-                ref={recruitRef}
-                type="text"
-                placeholder="모집 정원을 입력하세요"
-                value={recruit}
-                onChange={(e) => {
-                  setRecruit(e.target.value);
-                  if (!e.target.value.trim()) {
-                    setRecruitError(COMMUNITY_ERRORS.RECRUIT_REQUIRED);
-                    setFocusedErrorField('recruit');
-                  } else {
-                    setRecruitError('');
-                    setFocusedErrorField(null);
-                  }
-                }}
-                className={`h-12 w-full rounded-xl border px-4 text-sm outline-none placeholder:text-[#9CA3AF] ${
-                  focusedErrorField === 'recruit' && recruitError
-                    ? 'border-[#B91C1C]'
-                    : 'border-[#E2E8F0]'
-                }`}
-              />
-              {recruitError && (
-                <div className="mt-1 flex items-center gap-1 text-sm text-[#B91C1C]">
-                  <Image
-                    src="/icons/error.svg"
-                    alt="error"
-                    width={14}
-                    height={14}
-                  />
-                  {recruitError}
-                </div>
-              )}
-            </div>
-
-            {/* description */}
-            <div className="mb-8">
-              <div className="mb-3 flex items-center justify-between">
-                <label className="block text-sm font-semibold text-[#1E293B]">
-                  설명 *
+          {/* study board */}
+          {activeTab === '스터디모집' && (
+            <>
+              <div className="mb-8">
+                <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
+                  과목 *
                 </label>
-                <span className="text-xs text-[#64748B]">
-                  {description.length}/20
-                </span>
-              </div>
-              <textarea
-                ref={descriptionRef}
-                placeholder="스터디 설명을 입력하세요 (최대 20자)"
-                value={description}
-                maxLength={20}
-                onChange={(e) => {
-                  setDescription(e.target.value);
-                  if (!e.target.value.trim()) {
-                    setDescriptionError(COMMUNITY_ERRORS.DESCRIPTION_REQUIRED);
-                    setFocusedErrorField('description');
-                  } else {
-                    setDescriptionError('');
-                    setFocusedErrorField(null);
-                  }
-                }}
-                className={`h-[120px] w-full resize-none rounded-xl border px-4 py-4 text-sm outline-none placeholder:text-[#9CA3AF] ${
-                  focusedErrorField === 'description' && descriptionError
-                    ? 'border-[#B91C1C]'
-                    : 'border-[#E2E8F0]'
-                }`}
-              />
-              {descriptionError && (
-                <div className="mt-1 flex items-center gap-1 text-sm text-[#B91C1C]">
-                  <Image
-                    src="/icons/error.svg"
-                    alt="error"
-                    width={14}
-                    height={14}
-                  />
-                  {descriptionError}
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* content */}
-        {activeTab !== '스터디모집' && (
-          <div className="mb-8">
-            <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
-              내용 *
-            </label>
-            <textarea
-              ref={contentRef}
-              placeholder="내용을 입력하세요"
-              value={content}
-              onChange={(e) => {
-                setContent(e.target.value);
-                if (!e.target.value.trim()) {
-                  setContentError(COMMUNITY_ERRORS.CONTENT_REQUIRED);
-                  setFocusedErrorField('content');
-                } else {
-                  setContentError('');
-                  setFocusedErrorField(null);
-                }
-              }}
-              className={`h-[220px] w-full resize-none rounded-xl border px-4 py-4 text-sm outline-none placeholder:text-[#9CA3AF] ${
-                focusedErrorField === 'content' && contentError
-                  ? 'border-[#B91C1C]'
-                  : 'border-[#E2E8F0]'
-              }`}
-            />
-            {contentError && (
-              <div className="mt-1 flex items-center gap-1 text-sm text-[#B91C1C]">
-                <Image
-                  src="/icons/error.svg"
-                  alt="error"
-                  width={14}
-                  height={14}
-                />
-                {contentError}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* image upload */}
-        <div className="mb-8">
-          <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
-            이미지 첨부 (선택)
-            <span className="ml-2 text-xs font-medium text-[#94A3B8]">
-              최대 2장까지 업로드 가능
-            </span>
-          </label>
-          <div
-            onClick={() => {
-              if (previewImages.length >= 2) {
-                toast.error(COMMUNITY_ERRORS.P002);
-                return;
-              }
-              fileInputRef.current?.click();
-            }}
-            className="flex h-[150px] cursor-pointer items-center justify-center rounded-2xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC]"
-          >
-            {previewImages.length === 0 ? (
-              <>
-                <Image
-                  src="/icons/image.svg"
-                  alt="upload"
-                  width={28}
-                  height={28}
-                />
-                <span className="mt-1 ml-4 text-sm text-[#64748B]">
-                  이미지를 선택하세요
-                </span>
-              </>
-            ) : (
-              <div className="flex w-full items-center justify-center gap-4">
-                {previewImages.map((image, index) => (
-                  <div
-                    key={index}
-                    className="relative h-[110px] w-[110px] overflow-hidden rounded-xl border border-[#E2E8F0]"
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsSubjectOpen((prev) => !prev)}
+                    className={`flex h-12 w-full items-center justify-between rounded-xl border px-4 text-sm ${
+                      subject ? 'text-[#1E293B]' : 'text-[#9CA3AF]'
+                    } ${subjectError ? 'border-[#B91C1C]' : 'border-[#E2E8F0]'}`}
                   >
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setPreviewImages((prev) =>
-                          prev.filter((_, i) => i !== index),
-                        );
-                      }}
-                      className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white transition hover:bg-black/80"
-                    >
-                      ✕
-                    </button>
+                    <span>{subject || '과목을 선택하세요'}</span>
                     <Image
-                      src={image}
-                      alt={`preview-${index}`}
-                      fill
-                      className="object-cover"
+                      src="/icons/chevronDownIcon.svg"
+                      alt="down"
+                      width={18}
+                      height={18}
+                      className={`transition-transform ${isSubjectOpen ? 'rotate-180' : ''}`}
                     />
+                  </button>
+                  {isSubjectOpen && (
+                    <div className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-[#E2E8F0] bg-white shadow-lg">
+                      {SUBJECTS.map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => {
+                            setSubject(s);
+                            setSubjectError('');
+                            setIsSubjectOpen(false);
+                          }}
+                          className={`w-full px-4 py-2.5 text-left text-sm hover:bg-[#F8FAFC] ${
+                            subject === s
+                              ? 'bg-[#EFF6FF] font-semibold text-[#2F5DAA]'
+                              : 'text-[#374151]'
+                          }`}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {subjectError && (
+                  <div className="mt-1 flex items-center gap-1 text-sm text-[#B91C1C]">
+                    <Image
+                      src="/icons/error.svg"
+                      alt="error"
+                      width={14}
+                      height={14}
+                    />
+                    {subjectError}
                   </div>
-                ))}
-                {previewImages.length < 2 && (
-                  <span className="text-xs text-[#94A3B8]">
-                    이미지를 추가하려면 다시 클릭하세요
-                  </span>
                 )}
               </div>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImageChange}
-              className="hidden"
-            />
+
+              <div className="mb-8">
+                <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
+                  모집 정원 *
+                </label>
+                <input
+                  ref={recruitRef}
+                  type="text"
+                  placeholder="모집 정원을 입력하세요"
+                  value={recruit}
+                  onChange={(e) => {
+                    setRecruit(e.target.value);
+                    if (!e.target.value.trim()) {
+                      setRecruitError(COMMUNITY_ERRORS.RECRUIT_REQUIRED);
+                      setFocusedErrorField('recruit');
+                    } else {
+                      setRecruitError('');
+                      setFocusedErrorField(null);
+                    }
+                  }}
+                  className={`h-12 w-full rounded-xl border px-4 text-sm outline-none placeholder:text-[#9CA3AF] ${
+                    focusedErrorField === 'recruit' && recruitError
+                      ? 'border-[#B91C1C]'
+                      : 'border-[#E2E8F0]'
+                  }`}
+                />
+                {recruitError && (
+                  <div className="mt-1 flex items-center gap-1 text-sm text-[#B91C1C]">
+                    <Image
+                      src="/icons/error.svg"
+                      alt="error"
+                      width={14}
+                      height={14}
+                    />
+                    {recruitError}
+                  </div>
+                )}
+              </div>
+
+              <div className="mb-8">
+                <div className="mb-3 flex items-center justify-between">
+                  <label className="block text-sm font-semibold text-[#1E293B]">
+                    설명 *
+                  </label>
+                  <span className="text-xs text-[#64748B]">
+                    {description.length}/20
+                  </span>
+                </div>
+                <textarea
+                  ref={descriptionRef}
+                  placeholder="스터디 설명을 입력하세요 (최대 20자)"
+                  value={description}
+                  maxLength={20}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    if (!e.target.value.trim()) {
+                      setDescriptionError(
+                        COMMUNITY_ERRORS.DESCRIPTION_REQUIRED,
+                      );
+                      setFocusedErrorField('description');
+                    } else {
+                      setDescriptionError('');
+                      setFocusedErrorField(null);
+                    }
+                  }}
+                  className={`h-[120px] w-full resize-none rounded-xl border px-4 py-4 text-sm outline-none placeholder:text-[#9CA3AF] ${
+                    focusedErrorField === 'description' && descriptionError
+                      ? 'border-[#B91C1C]'
+                      : 'border-[#E2E8F0]'
+                  }`}
+                />
+                {descriptionError && (
+                  <div className="mt-1 flex items-center gap-1 text-sm text-[#B91C1C]">
+                    <Image
+                      src="/icons/error.svg"
+                      alt="error"
+                      width={14}
+                      height={14}
+                    />
+                    {descriptionError}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* content */}
+          {activeTab !== '스터디모집' && (
+            <div className="mb-8">
+              <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
+                내용 *
+              </label>
+              <textarea
+                ref={contentRef}
+                placeholder="내용을 입력하세요"
+                value={content}
+                onChange={(e) => {
+                  setContent(e.target.value);
+                  if (!e.target.value.trim()) {
+                    setContentError(COMMUNITY_ERRORS.CONTENT_REQUIRED);
+                    setFocusedErrorField('content');
+                  } else {
+                    setContentError('');
+                    setFocusedErrorField(null);
+                  }
+                }}
+                className={`h-[220px] w-full resize-none rounded-xl border px-4 py-4 text-sm outline-none placeholder:text-[#9CA3AF] ${
+                  focusedErrorField === 'content' && contentError
+                    ? 'border-[#B91C1C]'
+                    : 'border-[#E2E8F0]'
+                }`}
+              />
+              {contentError && (
+                <div className="mt-1 flex items-center gap-1 text-sm text-[#B91C1C]">
+                  <Image
+                    src="/icons/error.svg"
+                    alt="error"
+                    width={14}
+                    height={14}
+                  />
+                  {contentError}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* image upload */}
+          <div className="mb-8">
+            <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
+              이미지 첨부 (선택)
+              <span className="ml-2 text-xs font-medium text-[#94A3B8]">
+                최대 2장까지 업로드 가능
+              </span>
+            </label>
+            <div
+              onClick={() => {
+                if (previewImages.length >= 2) {
+                  toast.error(COMMUNITY_ERRORS.P002);
+                  return;
+                }
+                fileInputRef.current?.click();
+              }}
+              className="flex h-[150px] cursor-pointer items-center justify-center rounded-2xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC]"
+            >
+              {previewImages.length === 0 ? (
+                <>
+                  <Image
+                    src="/icons/image.svg"
+                    alt="upload"
+                    width={28}
+                    height={28}
+                  />
+                  <span className="mt-1 ml-4 text-sm text-[#64748B]">
+                    이미지를 선택하세요
+                  </span>
+                </>
+              ) : (
+                <div className="flex w-full items-center justify-center gap-4">
+                  {previewImages.map((image, index) => (
+                    <div
+                      key={index}
+                      className="relative h-[110px] w-[110px] overflow-hidden rounded-xl border border-[#E2E8F0]"
+                    >
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setPreviewImages((prev) =>
+                            prev.filter((_, i) => i !== index),
+                          );
+                        }}
+                        className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white transition hover:bg-black/80"
+                      >
+                        ✕
+                      </button>
+                      <Image
+                        src={image}
+                        alt={`preview-${index}`}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ))}
+                  {previewImages.length < 2 && (
+                    <span className="text-xs text-[#94A3B8]">
+                      이미지를 추가하려면 다시 클릭하세요
+                    </span>
+                  )}
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </div>
+          </div>
+
+          {/* buttons */}
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="h-12 flex-1 rounded-xl border border-[#E2E8F0] bg-white text-sm font-semibold text-[#4B5563]"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              className={`h-12 flex-1 rounded-xl text-sm font-semibold text-white transition ${
+                isFormValid
+                  ? 'bg-[#2F5DAA] opacity-100'
+                  : 'bg-[#2F5DAA] opacity-50'
+              }`}
+            >
+              {mode === 'edit' ? '수정 완료' : '작성 완료'}
+            </button>
           </div>
         </div>
-
-        {/* buttons */}
-        <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="h-12 flex-1 rounded-xl border border-[#E2E8F0] bg-white text-sm font-semibold text-[#4B5563]"
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            className={`h-12 flex-1 rounded-xl text-sm font-semibold text-white transition ${
-              isFormValid
-                ? 'bg-[#2F5DAA] opacity-100'
-                : 'bg-[#2F5DAA] opacity-50'
-            }`}
-          >
-            작성 완료
-          </button>
-        </div>
       </div>
-    </div>
+    </>
   );
 }
