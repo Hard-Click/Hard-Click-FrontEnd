@@ -13,8 +13,9 @@ import {
   removeFromCart,
 } from '@/features/courses/actions';
 import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
+import PreviewVideoModal from '@/features/learning/components/PreviewVideoModal';
 import { updateReview, deleteReview } from '@/features/reviews/services';
-import type { CourseDetail, Review } from '@/features/courses/types';
+import type { CourseDetail, Review, CurriculumLesson } from '@/features/courses/types';
 
 /* mock 리뷰 storage (mypage와 공유) */
 const REVIEW_STORAGE_KEY = 'mock_my_reviews';
@@ -70,9 +71,11 @@ function StarRow({ rating, size = 20 }: { rating: number; size?: number }) {
 function CurriculumAccordion({
   section,
   defaultOpen = false,
+  onPreviewClick,
 }: {
   section: CourseDetail['curriculum'][0];
   defaultOpen?: boolean;
+  onPreviewClick: (lesson: CurriculumLesson) => void;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const totalSecs = section.lessons.reduce((sum, l) => {
@@ -128,14 +131,14 @@ function CurriculumAccordion({
               </>
             );
             return lesson.isPreview ? (
-              // TODO: /learning/preview/{lessonId} 미리보기 전용 라우트 완성 후 경로 교체
-              <Link
+              <button
                 key={lesson.lessonId}
-                href={`/learning/videos/${lesson.lessonId}`}
-                className={`${rowClass} hover:bg-[#F0F4FB] cursor-pointer`}
+                type="button"
+                onClick={() => onPreviewClick(lesson)}
+                className={`${rowClass} hover:bg-[#F0F4FB] cursor-pointer w-full text-left`}
               >
                 {inner}
-              </Link>
+              </button>
             ) : (
               <div key={lesson.lessonId} className={rowClass}>
                 {inner}
@@ -231,6 +234,7 @@ export default function CourseDetailPage() {
   // 모달 상태
   const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [deletingReview, setDeletingReview] = useState<Review | null>(null);
+  const [previewLesson, setPreviewLesson] = useState<CurriculumLesson | null>(null);
   // TODO: reportingReview — 팀원 ReviewReportModal 완성 후 활성화
   // const [reportingReview, setReportingReview] = useState<Review | null>(null);
 
@@ -306,7 +310,14 @@ export default function CourseDetailPage() {
       }
     } else {
       // TODO: 유료 수강신청 — 팀원 결제 모달 확인 후 연결 (UA-P0-121)
-      // 모달에서 결제 완료 후 enrollCourse(courseId, 'PAID') 호출
+      // 결제 모달 완성 전까지는 mock에서 결제 우회하여 즉시 수강 처리
+      const result = await enrollCourse(courseId, 'PAID');
+      if (result.success) {
+        setIsEnrolled(true);
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
     }
   };
 
@@ -777,7 +788,12 @@ export default function CourseDetailPage() {
                   </div>
                   <div className="flex flex-col gap-3 pb-8">
                     {course.curriculum.map((section, idx) => (
-                      <CurriculumAccordion key={section.sectionId} section={section} defaultOpen={idx === 0} />
+                      <CurriculumAccordion
+                        key={section.sectionId}
+                        section={section}
+                        defaultOpen={idx === 0}
+                        onPreviewClick={setPreviewLesson}
+                      />
                     ))}
                   </div>
                 </div>
@@ -974,6 +990,15 @@ export default function CourseDetailPage() {
 
       {/* TODO: 수강신청 모달 — 팀원 결제 모달 확인 후 연결 */}
       {/* TODO: 리뷰 신고 모달 — import ReviewReportModal from '@/components/ui/reviewReportModal' 팀원 확인 후 연결 */}
+
+      {/* 미리보기 영상 모달 */}
+      {previewLesson && (
+        <PreviewVideoModal
+          lessonId={previewLesson.lessonId}
+          title={previewLesson.title}
+          onClose={() => setPreviewLesson(null)}
+        />
+      )}
 
       {/* 리뷰 수정 모달 */}
       {editingReview && (
