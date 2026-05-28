@@ -414,19 +414,17 @@ export default function InstructorCourseDetailPage() {
                 )}
               </div>
 
-              {/* Row 2: 강사 상태 버튼 — 공개 / 비공개 */}
+              {/* Row 2: 강의 상태 표시 (읽기 전용 — 변경은 케밥 메뉴에서) */}
               <div className="border-t border-[#D5D8DD] pt-6 pb-8">
-                <button
-                  type="button"
-                  onClick={() => setIsStatusModalOpen(true)}
-                  className={`w-full h-14 rounded-[10px] font-semibold text-base border transition-colors ${
+                <div
+                  className={`w-full h-14 rounded-[10px] font-semibold text-base border flex items-center justify-center cursor-default ${
                     isPublished
-                      ? 'bg-[rgba(22,163,74,0.1)] border-[rgba(22,163,74,0.2)] text-[#1F2937] hover:bg-[rgba(22,163,74,0.18)]'
-                      : 'bg-[rgba(245,158,11,0.1)] border-[rgba(245,158,11,0.2)] text-[#1F2937] hover:bg-[rgba(245,158,11,0.18)]'
+                      ? 'bg-[rgba(22,163,74,0.1)] border-[rgba(22,163,74,0.2)] text-[#1F2937]'
+                      : 'bg-[rgba(245,158,11,0.1)] border-[rgba(245,158,11,0.2)] text-[#1F2937]'
                   }`}
                 >
                   {isPublished ? '공개' : '비공개'}
-                </button>
+                </div>
               </div>
 
             </div>
