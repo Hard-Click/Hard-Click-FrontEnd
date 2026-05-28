@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import UserHeader from '@/components/layout/headers/UserHeader';
 import CourseSearchBar from '@/features/courses/components/CourseSearchBar';
 import CourseFilterBar from '@/features/courses/components/CourseFilterBar';
 import CourseList from '@/features/courses/components/CourseList';
@@ -69,7 +68,6 @@ export default function CoursesPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <UserHeader />
 
       {/* 공지 배너 */}
       {notices.length > 0 && (
@@ -116,7 +114,7 @@ export default function CoursesPage() {
       {/* 히어로 */}
       <div
         className="w-full"
-        style={{ background: 'linear-gradient(90deg, #2F5DAA 0%, #4D6FBF 100%)' }}
+        style={{ backgroundColor: '#2F5DAA' }}
       >
         <div className="w-full max-w-[1440px] mx-auto px-8 py-20">
           <h1 className="text-white font-semibold text-5xl leading-[60px] tracking-wide mb-6">

@@ -8,8 +8,7 @@ import {
   getCurrentSession,
 } from './services';
 
-// TODO: 백엔드 연동 완료 후 false로 변경
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 // 순공시간 세션 시작
 export async function startTimerAction(): Promise<{ sessionId: number; startedAt: string } | null> {

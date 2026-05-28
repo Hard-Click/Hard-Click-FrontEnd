@@ -19,7 +19,7 @@ export default function DoubleBtnModal({
 }: DoubleBtnModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-[550px] rounded-[28px] bg-white px-8 py-10 shadow-xl">
+      <div className="w-full max-w-137.5 rounded-[28px] bg-white px-8 py-10 shadow-xl">
         {/* title */}
         <h2 className="mb-6 text-center  text-[36px] font-bold text-[#1F2937]">
           {title}
@@ -35,7 +35,7 @@ export default function DoubleBtnModal({
           <button
             type="button"
             onClick={onLeftClick}
-            className="h-[60px] flex-1 rounded-2xl border border-[#D1D5DB] bg-white text-2xl font-semibold text-[#4B5563] transition hover:bg-[#F9FAFB]"
+            className="h-15 flex-1 rounded-2xl border border-[#D1D5DB] bg-white text-2xl font-semibold text-[#4B5563] transition hover:bg-[#F9FAFB]"
           >
             {leftText}
           </button>
@@ -43,7 +43,7 @@ export default function DoubleBtnModal({
           <button
             type="button"
             onClick={onRightClick}
-            className="h-[60px] flex-1 rounded-2xl bg-[#3563B7] text-2xl font-semibold text-white transition hover:bg-[#274B8A]"
+            className="h-15 flex-1 rounded-2xl bg-[#3563B7] text-2xl font-semibold text-white transition hover:bg-[#274B8A]"
           >
             {rightText}
           </button>

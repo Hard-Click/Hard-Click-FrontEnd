@@ -92,7 +92,7 @@ const termsContent = {
     ],
   },
   privacy: {
-    title: '개인정보 처리방침',
+    title: '개인정보 활용 동의',
     content: [
       '제1조 (개인정보의 처리 목적)',
       '회사는 다음의 목적을 위하여 개인정보를 처리합니다. 처리하고 있는 개인정보는 다음의 목적 이외의 용도로는 이용되지 않으며, 이용 목적이 변경되는 경우에는 별도의 동의를 받는 등 필요한 조치를 이행할 예정입니다.',
@@ -656,7 +656,7 @@ export default function RegisterForm() {
   };
 
   return (
-    <main className="relative min-h-full bg-[#F8FAFC] font-sans text-[#1F2937]">
+    <main className="relative min-h-screen bg-[#F8FAFC] font-sans text-[#1F2937]">
       {/* 토스트는 sonner Toaster가 layout.tsx에서 처리 */}
       {step !== 4 && <BrandLogo />}
 
@@ -965,7 +965,8 @@ export default function RegisterForm() {
                     </label>
 
                     <p className="mt-[12px] text-[12px] leading-[16px] text-[#4B5563]">
-                      jpg, png 형식, 최대 5MB 이하 파일만 업로드할 수 있습니다.
+                      jpeg, jpg, png 형식, 최대 5MB 이하 파일만 업로드할 수
+                      있습니다.
                       <br />
                       업로드하지 않으면 기본 이미지가 적용됩니다.
                     </p>
@@ -1040,7 +1041,7 @@ export default function RegisterForm() {
 
                     <AgreementRow
                       required
-                      label="개인정보 처리방침 동의"
+                      label="개인정보 활용 동의"
                       checked={values.agreePrivacy}
                       onChange={(checked) => {
                         updateValue('agreePrivacy', checked);
@@ -1562,18 +1563,21 @@ function DatePickerInput({
   }, [viewMonth]);
 
   useEffect(() => {
+    // click 이벤트로 처리 (mousedown → click 변경: input click과 순서 충돌 방지)
+    // isOpen이 false면 외부 클릭 체크 자체 불필요 → 다시 열기 트리거가 막히는 버그 방지
+    if (!isOpen) return;
     const handleClickOutside = (event: MouseEvent) => {
       if (!wrapperRef.current?.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
 
-    window.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('click', handleClickOutside);
 
     return () => {
-      window.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('click', handleClickOutside);
     };
-  }, []);
+  }, [isOpen]);
 
   const getDaysInMonth = (year: number, month: number) => {
     return new Date(year, month, 0).getDate();
@@ -1694,7 +1698,10 @@ function DatePickerInput({
     <div ref={wrapperRef} className="relative mt-[8px] h-[48px] w-[590px]">
       <button
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen((prev) => !prev);
+        }}
         className="absolute left-[16px] top-[14px] z-20 h-[20px] w-[20px] outline-none focus:outline-none"
       >
         <Image src={iconPath.calendar} alt="" width={20} height={20} />
@@ -1704,7 +1711,10 @@ function DatePickerInput({
         ref={inputRef}
         value={value}
         readOnly
-        onClick={() => setIsOpen(true)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen((prev) => !prev);
+        }}
         placeholder="YYYY-MM-DD"
         className={`h-[48px] w-full cursor-pointer rounded-[10px] border bg-white pl-[48px] pr-[16px] text-[16px] leading-[19px] tracking-[-0.31px] text-[#1F2937] outline-none placeholder:text-[#9CA3AF] focus:outline-none focus:ring-0 ${getInputBorderClass(
           status,

@@ -29,9 +29,9 @@ export interface RegisterFormValues {
 
 /**
  * 백엔드 SignupRequest와 매칭
- * passwordConfirm, emailVerificationToken은 백엔드 결정으로 제거됨
- * - passwordConfirm: 프론트 검증만 수행
- * - emailVerificationToken: 별도 검증 흐름으로 처리
+ * - passwordConfirm: 프론트 검증만 수행 (백엔드 미전송)
+ * - requiredTermsAgreed: 프론트 검증만 수행 (백엔드 미전송)
+ * - emailVerificationToken: 이메일 인증 성공 응답의 토큰을 그대로 전달
  */
 export interface RegisterRequest {
   username: string;
@@ -41,8 +41,8 @@ export interface RegisterRequest {
   gender: 'MALE' | 'FEMALE';
   birthDate: string;        // YYYY-MM-DD
   phoneNumber: string;
-  profileImageUrl?: string;
-  requiredTermsAgreed: boolean;
+  profileImageUrl?: string | null;
+  emailVerificationToken: string;
   optionalTermsAgreed?: boolean;
 }
 

@@ -6,7 +6,8 @@ import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import { useRouter } from 'next/navigation';
 import LoadingModal from '@/components/ui/loadingModal';
 import { createCourse, updateCourse } from '../services';
-import { MOCK_SUBJECTS } from '@/features/courses/services';
+import { api } from '@/services/api';
+import axios from 'axios';
 
 const SUBJECT_OPTIONS = [
   '국어',
@@ -60,21 +61,21 @@ export default function CourseCreateForm({
   const [subject, setSubject] = useState(initialData?.subject ?? '');
 
   const [description, setDescription] = useState(
-    initialData?.description ?? ''
+    initialData?.description ?? '',
   );
 
   const [priceType, setPriceType] = useState<'FREE' | 'PAID'>(
-    initialData?.priceType ?? 'FREE'
+    initialData?.priceType ?? 'FREE',
   );
 
   const [price, setPrice] = useState(initialData?.price ?? '');
   const [thumbnailPreview, setThumbnailPreview] = useState(
-    initialData?.thumbnailUrl ?? ''
+    initialData?.thumbnailUrl ?? '',
   );
 
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [sections, setSections] = useState<Section[]>(
-    initialData?.curriculum ?? []
+    initialData?.curriculum ?? [],
   );
   const router = useRouter();
 
@@ -616,8 +617,8 @@ export default function CourseCreateForm({
                           prev.map((item) =>
                             item.id === section.id
                               ? { ...item, title: e.target.value }
-                              : item
-                          )
+                              : item,
+                          ),
                         );
                       }}
                       placeholder={`섹션 ${sectionIndex + 1} 제목`}
@@ -628,7 +629,7 @@ export default function CourseCreateForm({
                       type="button"
                       onClick={() =>
                         setSections((prev) =>
-                          prev.filter((item) => item.id !== section.id)
+                          prev.filter((item) => item.id !== section.id),
                         )
                       }
                       className="text-[#B91C1C]"
@@ -671,11 +672,11 @@ export default function CourseCreateForm({
                                           ...item,
                                           lectures: item.lectures.filter(
                                             (_, lectureIndex) =>
-                                              lectureIndex !== index
+                                              lectureIndex !== index,
                                           ),
                                         }
-                                      : item
-                                  )
+                                      : item,
+                                  ),
                                 );
                               }}
                               className="text-sm font-medium text-[#B91C1C]"
@@ -721,8 +722,8 @@ export default function CourseCreateForm({
                                         },
                                       ],
                                     }
-                                  : item
-                              )
+                                  : item,
+                              ),
                             );
                           };
 
@@ -777,49 +778,38 @@ export default function CourseCreateForm({
             setIsLoading(true);
 
             try {
-              // 과목명 → subjectId 매핑
-              const subjectId =
-                MOCK_SUBJECTS.find((s) => s.name === subject)?.subjectId ?? 1;
-
-              // 섹션의 강의들을 백엔드 curriculum 포맷({title, durationMinutes})으로 변환
-              const flatCurriculum = sections.flatMap((sec) =>
-                sec.lectures.map((lec) => ({
-                  title: lec.fileName || sec.title,
-                  durationMinutes: parseInt(lec.duration ?? '0', 10) || 0,
-                })),
-              );
-
-              // 첫 번째 영상 파일이 있으면 업로드 (API는 단일 파일만 받음)
-              const firstFile = sections
-                .flatMap((s) => s.lectures)
-                .find((l) => l.file)?.file;
-
               const payload = {
                 title,
-                subjectId,
+                subject,
                 description,
-                price: priceType === 'FREE' ? 0 : Number(price) || 0,
-                free: (priceType === 'FREE' ? '무료' : '유료') as '무료' | '유료',
-                status: 'PUBLISHED' as const,
-                thumbnailUrl: thumbnail
-                  ? URL.createObjectURL(thumbnail)
-                  : thumbnailPreview,
-                curriculum: flatCurriculum,
-                courseFile: firstFile,
+                thumbnailUrl: thumbnailPreview,
+                priceType,
+                price: priceType === 'FREE' ? 0 : Number(price),
+                sections: sections.map((sec, sIdx) => ({
+                  title: sec.title,
+                  orderIndex: sIdx,
+                  lessons: sec.lectures.map((lec, lIdx) => ({
+                    title: lec.fileName,
+                    description: '',
+                    orderIndex: lIdx,
+                    durationSeconds: lec.duration
+                      ? (() => {
+                          const parts = lec.duration.split(':').map(Number);
+                          if (parts.length === 3) return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
+                          if (parts.length === 2) return (parts[0] || 0) * 60 + (parts[1] || 0);
+                          return undefined;
+                        })()
+                      : undefined,
+                  })),
+                })),
               };
 
               const result =
                 mode === 'edit' && initialData
-                  ? await updateCourse(Number((initialData as any).id ?? 0), {
-                      title: payload.title,
-                      subjectId: payload.subjectId,
-                      description: payload.description,
-                      price: payload.price,
-                      free: payload.free,
-                      status: payload.status,
-                      thumbnailUrl: payload.thumbnailUrl,
-                      curriculum: payload.curriculum,
-                    })
+                  ? await updateCourse(
+                      Number((initialData as any).id ?? 0),
+                      payload,
+                    )
                   : await createCourse(payload);
 
               if (!result.success) {
@@ -852,6 +842,45 @@ export default function CourseCreateForm({
                   'myCourses',
                   JSON.stringify([newCourse, ...savedCourses]),
                 );
+              }
+
+              const savedCourseId: number =
+                result.data?.courseId ?? (mode === 'edit' ? Number((initialData as any)?.courseId ?? 0) : 0);
+
+              const hasFiles = sections.some((sec) => sec.lectures.some((lec) => lec.file));
+
+              if (hasFiles && savedCourseId) {
+                const detailRes = await api.get<any>(`/api/courses/${savedCourseId}`);
+                if (detailRes.success && detailRes.data) {
+                  const apiSections: any[] = detailRes.data.sections ?? [];
+                  const token = localStorage.getItem('accessToken');
+                  const memberId = localStorage.getItem('memberId');
+                  const authHeaders: Record<string, string> = {};
+                  if (token) authHeaders['Authorization'] = `Bearer ${token}`;
+                  if (memberId) authHeaders['X-Member-Id'] = memberId;
+                  for (let sIdx = 0; sIdx < sections.length; sIdx++) {
+                    const apiSection = apiSections[sIdx];
+                    if (!apiSection) continue;
+                    const apiLessons: any[] = apiSection.lessons ?? [];
+                    for (let lIdx = 0; lIdx < sections[sIdx].lectures.length; lIdx++) {
+                      const lecture = sections[sIdx].lectures[lIdx];
+                      const apiLesson = apiLessons[lIdx];
+                      if (lecture.file && apiLesson?.lessonId) {
+                        const videoForm = new FormData();
+                        videoForm.append('file', lecture.file);
+                        try {
+                          await axios.post(
+                            `/api/courses/lessons/${apiLesson.lessonId}/video`,
+                            videoForm,
+                            { headers: authHeaders },
+                          );
+                        } catch (err) {
+                          console.error(`영상 업로드 실패 lessonId=${apiLesson.lessonId}`, err);
+                        }
+                      }
+                    }
+                  }
+                }
               }
 
               sessionStorage.setItem(

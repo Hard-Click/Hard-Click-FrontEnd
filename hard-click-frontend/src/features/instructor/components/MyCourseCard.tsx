@@ -1,6 +1,7 @@
 'use client';
 
 interface MyCourseCardProps {
+  highlighted?: boolean;
   id: number;
   category: string;
   title: string;
@@ -19,7 +20,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import LoadingModal from '@/components/ui/loadingModal';
-import { deleteCourse, updateCourse } from '../services';
+import { deleteCourse, publishCourse } from '../services';
 
 export default function MyCourseCard({
   id,
@@ -32,6 +33,7 @@ export default function MyCourseCard({
   createdAt,
   price,
   thumbnailUrl,
+  highlighted = false,
 }: MyCourseCardProps) {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -70,23 +72,14 @@ export default function MyCourseCard({
 
   const handleTogglePublic = async () => {
     const newPublicState = !publicState;
-
-    // PATCH /api/courses/{courseId} (status 변경)
-    const result = await updateCourse(id, {
-      status: newPublicState ? 'PUBLISHED' : 'DRAFT',
-    });
+    const result = await publishCourse(id, newPublicState);
 
     if (!result.success) {
-      // 실패 시 localStorage 폴백
-      const savedCourses = JSON.parse(localStorage.getItem('myCourses') || '[]');
-      const updatedCourses = savedCourses.map((course: any) =>
-        course.id === id ? { ...course, isPublic: newPublicState } : course,
-      );
-      localStorage.setItem('myCourses', JSON.stringify(updatedCourses));
+      toast.error('상태 변경에 실패했습니다.');
+      return;
     }
 
     setPublicState(newPublicState);
-
     toast.success(
       newPublicState ? '강의가 공개되었습니다.' : '강의가 비공개되었습니다.',
       { duration: 2000 },
@@ -95,7 +88,13 @@ export default function MyCourseCard({
   if (isDeleted) return null;
 
   return (
-    <div className="flex items-start justify-between rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
+    <div
+      className={`flex items-start justify-between rounded-2xl border bg-white p-6 shadow-sm transition-all ${
+        highlighted
+          ? 'border-[#2F5DAA] ring-2 ring-[#2F5DAA]/30'
+          : 'border-[#E2E8F0]'
+      }`}
+    >
       {/* left */}
       <div className="flex gap-5">
         {/* thumbnail */}
