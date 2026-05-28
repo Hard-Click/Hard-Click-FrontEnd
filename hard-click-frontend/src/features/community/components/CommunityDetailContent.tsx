@@ -32,6 +32,8 @@ export default function CommunityDetailContent() {
   const [deletingCommentId, setDeletingCommentId] = useState<number | null>(
     null,
   );
+  const [editingReplyId, setEditingReplyId] = useState<number | null>(null);
+  const [editingReplyText, setEditingReplyText] = useState('');
 
   const handleAccept = (commentId: number) => {
     setComments((prev) =>
@@ -114,6 +116,34 @@ export default function CommunityDetailContent() {
     setComments((prev) => prev.filter((c) => c.id !== commentId));
     setDeletingCommentId(null);
     toast.success('댓글이 삭제되었습니다.');
+  };
+
+  const handleReplyEditStart = (replyId: number, content: string) => {
+    setEditingReplyId(replyId);
+    setEditingReplyText(content);
+  };
+
+  const handleReplyEditSave = (commentId: number, replyId: number) => {
+    if (!editingReplyText.trim()) return;
+    setComments((prev) =>
+      prev.map((c) =>
+        c.id === commentId
+          ? {
+              ...c,
+              replies: c.replies.map((r) =>
+                r.id === replyId ? { ...r, content: editingReplyText } : r,
+              ),
+            }
+          : c,
+      ),
+    );
+    setEditingReplyId(null);
+    setEditingReplyText('');
+  };
+
+  const handleReplyEditCancel = () => {
+    setEditingReplyId(null);
+    setEditingReplyText('');
   };
 
   return (
@@ -420,7 +450,15 @@ export default function CommunityDetailContent() {
                           <div className="flex items-center gap-2">
                             {reply.isOwner ? (
                               <>
-                                <button type="button">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleReplyEditStart(
+                                      reply.id,
+                                      reply.content,
+                                    )
+                                  }
+                                >
                                   <Image
                                     src="/icons/editIcon.svg"
                                     alt="수정"
@@ -452,9 +490,40 @@ export default function CommunityDetailContent() {
                             )}
                           </div>
                         </div>
-                        <p className="text-sm text-[#374151]">
-                          {reply.content}
-                        </p>
+                        {editingReplyId === reply.id ? (
+                          <div>
+                            <textarea
+                              value={editingReplyText}
+                              onChange={(e) =>
+                                setEditingReplyText(e.target.value)
+                              }
+                              className="w-full rounded-xl border border-[#2F5DAA] px-3 py-2 text-sm outline-none resize-none"
+                              rows={3}
+                            />
+                            <div className="mt-2 flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={handleReplyEditCancel}
+                                className="rounded-lg border border-[#E2E8F0] px-3 py-1 text-xs font-semibold text-[#4B5563] hover:bg-[#F8FAFC]"
+                              >
+                                취소
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleReplyEditSave(comment.id, reply.id)
+                                }
+                                className="rounded-lg bg-[#2F5DAA] px-3 py-1 text-xs font-semibold text-white hover:bg-[#1D3E75]"
+                              >
+                                저장
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-[#374151]">
+                            {reply.content}
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))}
