@@ -6,7 +6,11 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import LoadingModal from '@/components/ui/loadingModal';
 import WithdrawConfirmModal from './WithdrawConfirmModal';
-import { updateMyProfile, withdrawAccount } from '@/features/users/services';
+import {
+  updateMyProfile,
+  changePassword,
+  withdrawAccount,
+} from '@/features/users/services';
 import { authStore } from '@/store/auth.store';
 
 interface ProfileEditModalProps {
@@ -86,7 +90,8 @@ export default function ProfileEditModal({
 
   /* ── 본인 확인 ──
    * 백엔드에 별도 verify API가 없으므로 Step 1에서는 형식 검증만 진행하고,
-   * 실제 비밀번호 일치 여부는 PATCH /api/users/me 응답(409)으로 확인. */
+   * 실제 비밀번호 일치 여부는 PATCH /api/members/me(이미지) 또는
+   * PATCH /api/members/me/password(비밀번호) 응답(409)으로 확인. */
   const handleCurrentPwChange = (value: string) => {
     setCurrentPw(value);
     if (currentPwCheck) setCurrentPwCheck(null);
@@ -193,11 +198,19 @@ export default function ProfileEditModal({
     setIsConfirmOpen(false);
     setIsSubmitting(true);
     const start = Date.now();
-    const payload =
-      step === 'image'
-        ? { currentPassword: verifiedPassword, profileImage: imageFile }
-        : { currentPassword: verifiedPassword, newPassword: newPw };
-    const res = await updateMyProfile(payload);
+    /* 비밀번호 변경은 별도 endpoint(PATCH /api/members/me/password) — newPasswordConfirm 포함.
+     * 이미지 변경은 multipart로 PATCH /api/members/me. */
+    const res =
+      step === 'password'
+        ? await changePassword({
+            currentPassword: verifiedPassword,
+            newPassword: newPw,
+            newPasswordConfirm: newPwConfirm,
+          })
+        : await updateMyProfile({
+            currentPassword: verifiedPassword,
+            profileImage: imageFile,
+          });
     await ensureMinimumDelay(start);
     setIsSubmitting(false);
     if (!res.success) {
