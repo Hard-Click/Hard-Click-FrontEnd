@@ -656,7 +656,7 @@ export default function RegisterForm() {
   };
 
   return (
-    <main className="relative min-h-full bg-[#F8FAFC] font-sans text-[#1F2937]">
+    <main className="relative min-h-screen bg-[#F8FAFC] font-sans text-[#1F2937]">
       {/* 토스트는 sonner Toaster가 layout.tsx에서 처리 */}
       {step !== 4 && <BrandLogo />}
 
