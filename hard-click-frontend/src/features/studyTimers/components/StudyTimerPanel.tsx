@@ -11,6 +11,7 @@ import {
 } from '../actions';
 import FocusModeOverlay from './FocusModeOverlay';
 import CurrentSessionAlert from './CurrentSessionAlert';
+import { authStore } from '@/store/auth.store';
 
 // Heartbeat 간격: 60초마다 서버에 저장 (UA-P1-147)
 const HEARTBEAT_INTERVAL_MS = 60_000;
@@ -20,6 +21,11 @@ const AUTH_PATHS = ['/auth', '/community/new'];
 export default function StudyTimerPanel() {
   const pathname = usePathname();
   const isAuthPage = AUTH_PATHS.some((path) => pathname.startsWith(path));
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(authStore.isLoggedIn());
+  }, []);
 
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -138,7 +144,7 @@ export default function StudyTimerPanel() {
     return () => stopIntervals();
   }, [stopIntervals]);
 
-  if (isAuthPage) return null;
+  if (isAuthPage || !isLoggedIn) return null;
 
   return (
     <>
