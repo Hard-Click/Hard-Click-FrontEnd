@@ -101,8 +101,9 @@ export async function updateMyProfile(body: UpdateProfileRequest) {
 }
 
 /* ───── 회원 탈퇴 (DELETE /api/members/me) ─────
+ * 백엔드가 body로 currentPassword 필수 요구 — 본인 확인 후 받은 비밀번호 전달.
  * 401 인증 실패 / 404 회원 없음 / 409 이미 탈퇴한 회원 */
-export async function withdrawAccount() {
+export async function withdrawAccount(currentPassword: string) {
   if (USE_MOCK) {
     return {
       success: true,
@@ -111,7 +112,9 @@ export async function withdrawAccount() {
       data: {} as Record<string, never>,
     };
   }
-  return api.delete<Record<string, never>>('/api/members/me');
+  return api.delete<Record<string, never>>('/api/members/me', {
+    currentPassword,
+  });
 }
 
 /* ───── 내 수강 강의 목록 (GET /api/users/me/courses?sort=) ───── */
