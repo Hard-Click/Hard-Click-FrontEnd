@@ -142,7 +142,11 @@ export default function LoginForm() {
       memberId: result.data.memberId,
       role: result.data.role,
     });
-    router.push('/courses');
+    if (result.data.role === 'INSTRUCTOR') {
+      router.push('/instructor/dashboard');
+    } else {
+      router.push('/courses');
+    }
   };
 
   return (

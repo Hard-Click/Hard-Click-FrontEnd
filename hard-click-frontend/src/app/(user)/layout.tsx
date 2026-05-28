@@ -1,8 +1,11 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import StudyTimerPanel from '@/features/studyTimers/components/StudyTimerPanel';
 import UserHeader from '@/components/layout/headers/UserHeader';
+import InstructorHeader from '@/components/layout/headers/InstructorHeader';
+import { authStore } from '@/store/auth.store';
 
 export default function UserLayout({
   children,
@@ -10,12 +13,17 @@ export default function UserLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  // auth 페이지(/auth/*)는 자체 BrandLogo + 전체화면 레이아웃을 사용하므로 layout 헤더/타이머 제외
   const isAuthPage = pathname?.startsWith('/auth') ?? false;
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    setRole(authStore.getRole());
+  }, []);
 
   return (
     <>
-      {!isAuthPage && <UserHeader />}
+      {!isAuthPage &&
+        (role === 'INSTRUCTOR' ? <InstructorHeader /> : <UserHeader />)}
       {children}
       {!isAuthPage && <StudyTimerPanel />}
     </>
