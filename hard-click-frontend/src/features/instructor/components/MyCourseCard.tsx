@@ -19,7 +19,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import LoadingModal from '@/components/ui/loadingModal';
-import { deleteCourse, updateCourse } from '../services';
+import { deleteCourse, publishCourse } from '../services';
 
 export default function MyCourseCard({
   id,
@@ -70,23 +70,14 @@ export default function MyCourseCard({
 
   const handleTogglePublic = async () => {
     const newPublicState = !publicState;
-
-    // PATCH /api/courses/{courseId} (status 변경)
-    const result = await updateCourse(id, {
-      status: newPublicState ? 'PUBLISHED' : 'DRAFT',
-    });
+    const result = await publishCourse(id, newPublicState);
 
     if (!result.success) {
-      // 실패 시 localStorage 폴백
-      const savedCourses = JSON.parse(localStorage.getItem('myCourses') || '[]');
-      const updatedCourses = savedCourses.map((course: any) =>
-        course.id === id ? { ...course, isPublic: newPublicState } : course,
-      );
-      localStorage.setItem('myCourses', JSON.stringify(updatedCourses));
+      toast.error('상태 변경에 실패했습니다.');
+      return;
     }
 
     setPublicState(newPublicState);
-
     toast.success(
       newPublicState ? '강의가 공개되었습니다.' : '강의가 비공개되었습니다.',
       { duration: 2000 },

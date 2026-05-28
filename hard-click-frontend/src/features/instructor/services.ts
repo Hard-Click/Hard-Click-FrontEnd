@@ -1,11 +1,9 @@
-import axios from 'axios';
 import { api } from '@/services/api';
 
 // TODO: Replace with auth store — current instructor's name
 export const MOCK_CURRENT_INSTRUCTOR = '박지훈';
 
 const USE_MOCK = false;
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
 
 /** 강사 내 강의 목록 item (노션 명세) */
 export interface InstructorCourseItem {
@@ -43,20 +41,20 @@ export async function getInstructorCourses(page = 0, size = 20) {
 }
 
 /**
- * 강의 등록 (POST /api/courses, multipart/form-data)
- * 영상 파일 업로드 포함 가능
+ * 강의 등록 (POST /api/courses)
  */
 export async function createCourse(payload: {
   title: string;
-  subjectId: number;
+  subject: string;
   description: string;
-  price: number;
-  free: '무료' | '유료';
-  status?: 'DRAFT' | 'PUBLISHED';
   thumbnailUrl?: string;
-  curriculum?: Array<{ title: string; durationMinutes: number }>;
-  courseFile?: File;
-  fileUrl?: string;
+  priceType: 'FREE' | 'PAID';
+  price: number;
+  sections: Array<{
+    title: string;
+    orderIndex: number;
+    lessons: Array<{ title: string; description?: string; orderIndex: number }>;
+  }>;
 }) {
   if (USE_MOCK) {
     console.log('[MOCK] 강의 등록:', payload);
@@ -66,65 +64,14 @@ export async function createCourse(payload: {
       data: {
         courseId: 1,
         title: payload.title,
-        status: payload.status ?? 'DRAFT',
-        fileUrl: null,
-        fileStatus: 'PENDING',
+        status: 'DRAFT',
         createdAt: new Date().toISOString(),
       },
       message: '강의 등록 완료',
     };
   }
 
-  // multipart/form-data 구성
-  const formData = new FormData();
-  formData.append('title', payload.title);
-  formData.append('subjectId', String(payload.subjectId));
-  formData.append('description', payload.description);
-  formData.append('price', String(payload.price));
-  formData.append('free', payload.free);
-  if (payload.status) formData.append('status', payload.status);
-  if (payload.thumbnailUrl) formData.append('thumbnailUrl', payload.thumbnailUrl);
-  if (payload.curriculum) {
-    formData.append('curriculum', JSON.stringify(payload.curriculum));
-  }
-  if (payload.courseFile) {
-    formData.append('courseFile', payload.courseFile);
-  } else if (payload.fileUrl) {
-    formData.append('fileUrl', payload.fileUrl);
-  }
-
-  try {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-    const memberId = typeof window !== 'undefined' ? localStorage.getItem('memberId') : null;
-    const response = await axios.post(`${BASE_URL}/api/courses`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...(memberId ? { 'X-Member-Id': memberId } : {}),
-      },
-    });
-    return {
-      success: true,
-      httpStatus: response.data?.httpStatus ?? 201,
-      data: response.data?.data,
-      message: response.data?.message ?? '강의 등록 완료',
-    };
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      return {
-        success: false,
-        httpStatus: error.response.status,
-        data: undefined,
-        message: error.response.data?.message ?? '강의 등록 실패',
-      };
-    }
-    return {
-      success: false,
-      httpStatus: 500,
-      data: undefined,
-      message: '서버와 연결할 수 없습니다',
-    };
-  }
+  return api.post('/api/courses', payload); // headers 제거
 }
 
 /**
@@ -133,14 +80,21 @@ export async function createCourse(payload: {
 export async function updateCourse(
   courseId: number,
   payload: {
-    title?: string;
-    subjectId?: number;
-    description?: string;
-    price?: number;
-    free?: '무료' | '유료';
-    status?: 'DRAFT' | 'PUBLISHED';
+    title: string;
+    subject: string;
+    description: string;
     thumbnailUrl?: string;
-    curriculum?: Array<{ title: string; durationMinutes: number }>;
+    priceType: 'FREE' | 'PAID';
+    price: number;
+    sections: Array<{
+      title: string;
+      orderIndex: number;
+      lessons: Array<{
+        title: string;
+        description?: string;
+        orderIndex: number;
+      }>;
+    }>;
   },
 ) {
   if (USE_MOCK) {
@@ -148,42 +102,39 @@ export async function updateCourse(
     return {
       success: true,
       httpStatus: 200,
-      data: { courseId, title: payload.title ?? '', updatedAt: new Date().toISOString() },
+      data: { courseId },
       message: '강의 수정 완료',
     };
   }
-  return api.patch<{ courseId: number; title: string; updatedAt: string }>(
-    `/api/courses/${courseId}`,
-    payload,
-  );
+  return api.patch<{ courseId: number }>(`/api/courses/${courseId}`, payload);
 }
 
 /** 강의 삭제 (DELETE /api/courses/{courseId}) */
 export async function deleteCourse(courseId: number) {
   if (USE_MOCK) {
     console.log('[MOCK] 강의 삭제:', courseId);
-    return { success: true, httpStatus: 200, data: null, message: '강의 삭제 완료' };
+    return {
+      success: true,
+      httpStatus: 200,
+      data: null,
+      message: '강의 삭제 완료',
+    };
   }
   return api.delete<null>(`/api/courses/${courseId}`);
 }
 
-/** 강의 공개/비공개 전환 (PATCH /api/courses/{courseId}/status)
- *  status: 'PUBLISHED' | 'DRAFT' */
-export async function toggleCourseStatus(
-  courseId: number,
-  status: 'PUBLISHED' | 'DRAFT',
-) {
+/** 강의 공개/비공개 전환 (PATCH /api/courses/{courseId}/status) */
+export async function publishCourse(courseId: number, published: boolean) {
   if (USE_MOCK) {
-    console.log('[MOCK] 강의 상태 전환:', courseId, status);
+    console.log('[MOCK] 공개/비공개:', courseId, published);
     return {
       success: true,
       httpStatus: 200,
-      data: { courseId, status },
-      message: status === 'PUBLISHED' ? '강의가 공개되었습니다.' : '강의가 비공개되었습니다.',
+      data: null,
+      message: published ? '공개 완료' : '비공개 완료',
     };
   }
-  return api.patch<{ courseId: number; status: 'PUBLISHED' | 'DRAFT' }>(
-    `/api/courses/${courseId}/status`,
-    { status },
+  return api.patch<null>(
+    `/api/courses/${courseId}/status?published=${published}`,
   );
 }
