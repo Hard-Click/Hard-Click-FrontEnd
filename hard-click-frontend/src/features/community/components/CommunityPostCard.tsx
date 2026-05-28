@@ -1,8 +1,10 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface CommunityPostCardProps {
+  id: number;
   category: string;
   title: string;
   author: string;
@@ -14,6 +16,7 @@ interface CommunityPostCardProps {
 }
 
 export default function CommunityPostCard({
+  id,
   category,
   title,
   author,
@@ -25,7 +28,10 @@ export default function CommunityPostCard({
   const isQuestion = category === '질문게시판';
 
   return (
-    <div className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
+    <Link
+      href={`/community/${id}`}
+      className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm block"
+    >
       {/* top badges */}
       <div className="mb-4 flex items-center gap-2">
         {/* category */}
@@ -85,6 +91,6 @@ export default function CommunityPostCard({
           <p>{comments}</p>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
