@@ -14,6 +14,8 @@ export default function UserLayout({
 }) {
   const pathname = usePathname();
   const isAuthPage = pathname?.startsWith('/auth') ?? false;
+  // 강의 시청 페이지(/learning/*)는 페이지 내 inline 타이머 위젯을 쓰므로 floating panel 제외
+  const isLearningPage = pathname?.startsWith('/learning') ?? false;
   const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
@@ -25,7 +27,7 @@ export default function UserLayout({
       {!isAuthPage &&
         (role === 'INSTRUCTOR' ? <InstructorHeader /> : <UserHeader />)}
       {children}
-      {!isAuthPage && <StudyTimerPanel />}
+      {!isAuthPage && !isLearningPage && <StudyTimerPanel />}
     </>
   );
 }
