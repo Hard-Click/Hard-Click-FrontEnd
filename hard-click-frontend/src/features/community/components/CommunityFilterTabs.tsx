@@ -86,6 +86,7 @@ export default function CommunityFilterTabs({
           {sortedPosts.map((post) => (
             <CommunityPostCard
               key={post.id}
+              id={post.id}
               category={post.category}
               title={post.title}
               author={post.author}
