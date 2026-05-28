@@ -1,15 +1,18 @@
 'use client';
 
-interface ForgotPasswordCodeBoxProps {
-  email: string;
-  onSuccess: (passwordChangeToken: string) => void;
-}
-
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { verifyPasswordResetCodeAction } from '../actions';
+import {
+  verifyPasswordResetCodeAction,
+  sendPasswordResetEmailAction,
+} from '../actions';
+
+interface ForgotPasswordCodeBoxProps {
+  email: string;
+  onSuccess: (passwordChangeToken: string) => void;
+}
 
 export default function ForgotPasswordCodeBox({
   email,
@@ -62,7 +65,12 @@ export default function ForgotPasswordCodeBox({
     onSuccess(token);
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
+    const result = await sendPasswordResetEmailAction(email);
+    if (!result.success) {
+      toast.error(result.message || '재발송에 실패했습니다.');
+      return;
+    }
     toast.success('인증번호가 재발송되었습니다.');
   };
 
