@@ -5,6 +5,7 @@ import type {
   MyProfile,
   UpdateProfileRequest,
   UpdateProfileResponse,
+  ChangePasswordRequest,
   MyCourse,
   MyCourseSort,
   MyCompletedCourse,
@@ -13,7 +14,7 @@ import type {
 const USE_MOCK = false;
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
 
-/* ───── 내 프로필 조회 (GET /api/users/me) ───── */
+/* ───── 내 프로필 조회 (GET /api/members/me) ───── */
 export async function getMyProfile() {
   if (USE_MOCK) {
     return {
@@ -28,11 +29,12 @@ export async function getMyProfile() {
       } as MyProfile,
     };
   }
-  return api.get<MyProfile>('/api/users/me');
+  return api.get<MyProfile>('/api/members/me');
 }
 
-/* ───── 내 프로필 수정 (PATCH /api/users/me) ─────
- * 파일 업로드가 포함되면 multipart/form-data, 없으면 application/json */
+/* ───── 내 프로필 수정 (PATCH /api/members/me) ─────
+ * 파일 업로드가 포함되면 multipart/form-data, 없으면 application/json.
+ * 비밀번호 변경은 별도 endpoint(`changePassword`) 사용 — 단독 변경 시 호출. */
 export async function updateMyProfile(body: UpdateProfileRequest) {
   if (USE_MOCK) {
     return {
@@ -60,7 +62,7 @@ export async function updateMyProfile(body: UpdateProfileRequest) {
     try {
       const token = authStore.getAccessToken();
       const memberId = authStore.getMemberId();
-      const response = await axios.patch(`${BASE_URL}/api/users/me`, formData, {
+      const response = await axios.patch(`${BASE_URL}/api/members/me`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -97,7 +99,22 @@ export async function updateMyProfile(body: UpdateProfileRequest) {
 
   // 파일 없으면 JSON
   const { profileImage, ...jsonBody } = body;
-  return api.patch<UpdateProfileResponse>('/api/users/me', jsonBody);
+  return api.patch<UpdateProfileResponse>('/api/members/me', jsonBody);
+}
+
+/* ───── 비밀번호 변경 (PATCH /api/members/me/password) ─────
+ * body: { currentPassword, newPassword, newPasswordConfirm }
+ * 401 인증 / 409 현재 비밀번호 불일치 / 400 newPassword·newPasswordConfirm 불일치 */
+export async function changePassword(body: ChangePasswordRequest) {
+  if (USE_MOCK) {
+    return {
+      success: true,
+      httpStatus: 200,
+      message: '비밀번호가 변경되었습니다.',
+      data: {} as Record<string, never>,
+    };
+  }
+  return api.patch<Record<string, never>>('/api/members/me/password', body);
 }
 
 /* ───── 회원 탈퇴 (DELETE /api/members/me) ─────
@@ -117,7 +134,7 @@ export async function withdrawAccount(currentPassword: string) {
   });
 }
 
-/* ───── 내 수강 강의 목록 (GET /api/users/me/courses?sort=) ───── */
+/* ───── 내 수강 강의 목록 (GET /api/members/me/courses?sort=) ───── */
 export async function getMyCourses(sort?: MyCourseSort) {
   if (USE_MOCK) {
     return {
@@ -159,10 +176,10 @@ export async function getMyCourses(sort?: MyCourseSort) {
     };
   }
   const query = sort ? `?sort=${sort}` : '';
-  return api.get<MyCourse[]>(`/api/users/me/courses${query}`);
+  return api.get<MyCourse[]>(`/api/members/me/courses${query}`);
 }
 
-/* ───── 완료 강의 목록 (GET /api/users/me/courses/completed) ───── */
+/* ───── 완료 강의 목록 (GET /api/members/me/courses/completed) ───── */
 export async function getMyCompletedCourses() {
   if (USE_MOCK) {
     return {
@@ -187,5 +204,5 @@ export async function getMyCompletedCourses() {
       ] as MyCompletedCourse[],
     };
   }
-  return api.get<MyCompletedCourse[]>('/api/users/me/courses/completed');
+  return api.get<MyCompletedCourse[]>('/api/members/me/courses/completed');
 }
