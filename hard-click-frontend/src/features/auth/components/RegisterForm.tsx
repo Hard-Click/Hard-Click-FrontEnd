@@ -1563,18 +1563,21 @@ function DatePickerInput({
   }, [viewMonth]);
 
   useEffect(() => {
+    // click 이벤트로 처리 (mousedown → click 변경: input click과 순서 충돌 방지)
+    // isOpen이 false면 외부 클릭 체크 자체 불필요 → 다시 열기 트리거가 막히는 버그 방지
+    if (!isOpen) return;
     const handleClickOutside = (event: MouseEvent) => {
       if (!wrapperRef.current?.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
 
-    window.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('click', handleClickOutside);
 
     return () => {
-      window.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('click', handleClickOutside);
     };
-  }, []);
+  }, [isOpen]);
 
   const getDaysInMonth = (year: number, month: number) => {
     return new Date(year, month, 0).getDate();
@@ -1695,7 +1698,10 @@ function DatePickerInput({
     <div ref={wrapperRef} className="relative mt-[8px] h-[48px] w-[590px]">
       <button
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen((prev) => !prev);
+        }}
         className="absolute left-[16px] top-[14px] z-20 h-[20px] w-[20px] outline-none focus:outline-none"
       >
         <Image src={iconPath.calendar} alt="" width={20} height={20} />
@@ -1705,7 +1711,10 @@ function DatePickerInput({
         ref={inputRef}
         value={value}
         readOnly
-        onClick={() => setIsOpen(true)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen((prev) => !prev);
+        }}
         placeholder="YYYY-MM-DD"
         className={`h-[48px] w-full cursor-pointer rounded-[10px] border bg-white pl-[48px] pr-[16px] text-[16px] leading-[19px] tracking-[-0.31px] text-[#1F2937] outline-none placeholder:text-[#9CA3AF] focus:outline-none focus:ring-0 ${getInputBorderClass(
           status,
