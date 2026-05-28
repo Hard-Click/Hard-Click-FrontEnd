@@ -28,6 +28,7 @@ export default function CommunityEditPage() {
         initialCategory={post.category}
         initialTitle={post.title}
         initialContent={post.content}
+        postId={Number(postid)}
       />
     </div>
   );

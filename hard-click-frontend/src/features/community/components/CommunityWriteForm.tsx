@@ -57,6 +57,7 @@ interface CommunityWriteFormProps {
   initialCategory?: string;
   initialTitle?: string;
   initialContent?: string;
+  postId?: number;
 }
 
 export default function CommunityWriteForm({
@@ -64,6 +65,7 @@ export default function CommunityWriteForm({
   initialCategory = '자유게시판',
   initialTitle = '',
   initialContent = '',
+  postId,
 }: CommunityWriteFormProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(initialCategory);
@@ -192,10 +194,15 @@ export default function CommunityWriteForm({
     setIsSubmitting(true);
     await new Promise((r) => setTimeout(r, 800)); // TODO: 실제 API 호출로 교체
     setIsSubmitting(false);
-    toast.success(
-      mode === 'edit' ? '게시글이 수정되었습니다.' : '게시글이 등록되었습니다.',
-    );
-    router.push('/community');
+
+    if (mode === 'edit' && postId) {
+      toast.success('게시글이 수정되었습니다.');
+      router.push(`/community/${postId}`);
+    } else {
+      // TODO: API 연동 후 응답받은 postId로 교체
+      toast.success('게시글이 등록되었습니다.');
+      router.push('/community');
+    }
   };
 
   return (
