@@ -68,7 +68,10 @@ export async function verifyEmailCode(email: string, code: string) {
     };
   }
 
-  return api.post<EmailVerificationResponse>('/api/auth/email/verify', { email, code });
+  return api.post<EmailVerificationResponse>('/api/auth/email/verify', {
+    email,
+    code,
+  });
 }
 
 export async function register(payload: RegisterRequest) {
@@ -94,7 +97,8 @@ export async function login(payload: LoginRequest): Promise<LoginResult> {
     console.log('[MOCK] 로그인 요청:', payload);
 
     // 테스트 계정: test / test1234 일 때만 성공
-    const isValid = payload.username === 'test' && payload.password === 'test1234';
+    const isValid =
+      payload.username === 'test' && payload.password === 'test1234';
 
     if (!isValid) {
       return {
@@ -133,7 +137,9 @@ export async function login(payload: LoginRequest): Promise<LoginResult> {
     if (httpStatus === 423) {
       return {
         success: false,
-        message: body?.message ?? '로그인 5회 실패로 계정이 잠겼습니다. 이메일 인증을 진행해주세요.',
+        message:
+          body?.message ??
+          '로그인 5회 실패로 계정이 잠겼습니다. 이메일 인증을 진행해주세요.',
         isLocked: true,
       };
     }
@@ -153,13 +159,18 @@ export async function login(payload: LoginRequest): Promise<LoginResult> {
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       const status = error.response.status;
-      const body = error.response.data as { message?: string; errorCode?: string };
+      const body = error.response.data as {
+        message?: string;
+        errorCode?: string;
+      };
 
       // 423 Locked → 5회 실패로 계정 잠금
       if (status === 423) {
         return {
           success: false,
-          message: body?.message ?? '로그인 5회 실패로 계정이 잠겼습니다. 이메일 인증을 진행해주세요.',
+          message:
+            body?.message ??
+            '로그인 5회 실패로 계정이 잠겼습니다. 이메일 인증을 진행해주세요.',
           errorCode: body?.errorCode,
           isLocked: true,
         };
@@ -184,9 +195,16 @@ export async function login(payload: LoginRequest): Promise<LoginResult> {
 export async function sendPasswordResetEmail(email: string) {
   if (USE_MOCK) {
     console.log('[MOCK] 비번 재설정 인증번호 발송:', email);
-    return { success: true, httpStatus: 200, data: {}, message: '인증번호 발송되었습니다' };
+    return {
+      success: true,
+      httpStatus: 200,
+      data: {},
+      message: '인증번호 발송되었습니다',
+    };
   }
-  return api.post<Record<string, never>>('/api/auth/password-reset/email', { email });
+  return api.post<Record<string, never>>('/api/auth/password-reset/email', {
+    email,
+  });
 }
 
 /** 비밀번호 찾기 인증번호 검증 (POST /api/auth/password-reset/verify) */
@@ -215,7 +233,12 @@ export async function resetPassword(payload: {
 }) {
   if (USE_MOCK) {
     console.log('[MOCK] 비번 재설정:', payload);
-    return { success: true, httpStatus: 200, data: {}, message: '비밀번호 재설정 완료' };
+    return {
+      success: true,
+      httpStatus: 200,
+      data: {},
+      message: '비밀번호 재설정 완료',
+    };
   }
   return api.patch<Record<string, never>>('/api/auth/password-reset', payload);
 }
@@ -247,9 +270,17 @@ export async function changeLockedAccountPassword(payload: {
 }) {
   if (USE_MOCK) {
     console.log('[MOCK] 잠긴 계정 비번 변경:', payload);
-    return { success: true, httpStatus: 200, data: {}, message: '비번 변경 및 잠금 해제 완료' };
+    return {
+      success: true,
+      httpStatus: 200,
+      data: {},
+      message: '비번 변경 및 잠금 해제 완료',
+    };
   }
-  return api.patch<Record<string, never>>('/api/auth/account-locks/password', payload);
+  return api.patch<Record<string, never>>(
+    '/api/auth/account-locks/password',
+    payload,
+  );
 }
 
 /* ─────────────────────────── 비밀번호 변경 (로그인 상태) ─────────────────────────── */
@@ -262,7 +293,12 @@ export async function changePassword(payload: {
 }) {
   if (USE_MOCK) {
     console.log('[MOCK] 비밀번호 변경:', payload);
-    return { success: true, httpStatus: 200, data: {}, message: '비밀번호 변경 완료' };
+    return {
+      success: true,
+      httpStatus: 200,
+      data: {},
+      message: '비밀번호 변경 완료',
+    };
   }
   return api.patch<Record<string, never>>('/api/members/me/password', payload);
 }
