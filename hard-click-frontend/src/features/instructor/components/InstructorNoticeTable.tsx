@@ -1,9 +1,17 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { getInstructorCourses } from '@/features/instructor/services';
+import {
+  getNotices,
+  getNoticeDetail,
+  createCourseNotice,
+  updateNotice,
+  deleteNotice,
+} from '@/features/notices/services';
 
 interface CourseOption {
   id: number;
@@ -21,40 +29,10 @@ interface Notice {
   isPinned: boolean;
 }
 
-// TODO: API 연동 시 교체
-const MOCK_COURSES: CourseOption[] = [
-  { id: 1, title: '수1 정복하기' },
-  { id: 2, title: '영어 독해 완성' },
-];
-
-const MOCK_NOTICES: Notice[] = [
-  {
-    id: 1,
-    courseId: 1,
-    courseTitle: '수1 정복하기',
-    title: '3주차 과제 제출 안내',
-    content: '3주차 과제를 제출해주세요.',
-    createdAt: '2024/01/14',
-    views: 0,
-    isPinned: true,
-  },
-  {
-    id: 2,
-    courseId: 1,
-    courseTitle: '수1 정복하기',
-    title: '2주차 실습 자료 업로드',
-    content: '2주차 실습 자료를 업로드했습니다.',
-    createdAt: '2024/01/14',
-    views: 0,
-    isPinned: false,
-  },
-];
-
 export default function InstructorNoticeTable() {
-  const [notices, setNotices] = useState<Notice[]>(MOCK_NOTICES);
-  const [selectedCourseId, setSelectedCourseId] = useState<number>(
-    MOCK_COURSES[0].id,
-  );
+  const [courses, setCourses] = useState<CourseOption[]>([]);
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<number>(0);
   const [isCourseOpen, setIsCourseOpen] = useState(false);
 
   // 모달
@@ -65,7 +43,7 @@ export default function InstructorNoticeTable() {
   const [isEditConfirmOpen, setIsEditConfirmOpen] = useState(false);
 
   // 폼 상태
-  const [formCourseId, setFormCourseId] = useState<number>(MOCK_COURSES[0].id);
+  const [formCourseId, setFormCourseId] = useState<number>(0);
   const [formTitle, setFormTitle] = useState('');
   const [formContent, setFormContent] = useState('');
   const [formIsPinned, setFormIsPinned] = useState(false);
@@ -76,17 +54,61 @@ export default function InstructorNoticeTable() {
   const titleRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLTextAreaElement>(null);
 
-  const filteredNotices = notices
-    .filter((n) => n.courseId === selectedCourseId)
-    .sort((a, b) => Number(b.isPinned) - Number(a.isPinned));
+  // 강의 공지 목록 로드 (GET /api/notices?type=COURSE&courseId=)
+  const reloadNotices = useCallback(async (courseId: number) => {
+    if (!courseId) {
+      setNotices([]);
+      return;
+    }
+    const res = await getNotices({ type: 'COURSE', courseId, size: 100 });
+    if (!res.success || !res.data) {
+      setNotices([]);
+      return;
+    }
+    setNotices(
+      res.data.content.map((n) => ({
+        id: n.noticeId,
+        courseId,
+        courseTitle: n.courseName ?? '',
+        title: n.title,
+        content: '',
+        createdAt: (n.createdAt.split('T')[0] ?? n.createdAt).replace(/-/g, '/'),
+        views: 0,
+        isPinned: n.isPinned,
+      })),
+    );
+  }, []);
+
+  // 강사 본인 강의 목록 (GET /api/instructor/courses)
+  useEffect(() => {
+    getInstructorCourses().then((res) => {
+      if (res.success && res.data) {
+        const list = res.data.content.map((c) => ({ id: c.courseId, title: c.title }));
+        setCourses(list);
+        if (list.length > 0) {
+          setSelectedCourseId(list[0].id);
+          setFormCourseId(list[0].id);
+        }
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    reloadNotices(selectedCourseId);
+  }, [selectedCourseId, reloadNotices]);
+
+  // 목록은 서버에서 이미 강의별 필터됨 — 고정 공지 우선 정렬만
+  const filteredNotices = [...notices].sort(
+    (a, b) => Number(b.isPinned) - Number(a.isPinned),
+  );
 
   const selectedCourseName =
-    MOCK_COURSES.find((c) => c.id === selectedCourseId)?.title ?? '';
+    courses.find((c) => c.id === selectedCourseId)?.title ?? '';
 
   const openCreate = () => {
     setModalMode('create');
     setEditingNotice(null);
-    setFormCourseId(selectedCourseId ?? MOCK_COURSES[0].id);
+    setFormCourseId(selectedCourseId);
     setFormTitle('');
     setFormContent('');
     setFormIsPinned(false);
@@ -96,12 +118,14 @@ export default function InstructorNoticeTable() {
     setIsModalOpen(true);
   };
 
-  const openEdit = (notice: Notice) => {
+  const openEdit = async (notice: Notice) => {
     setModalMode('edit');
     setEditingNotice(notice);
     setFormCourseId(notice.courseId);
     setFormTitle(notice.title);
-    setFormContent(notice.content);
+    // 목록 응답엔 content가 없어 상세 조회로 본문 채움
+    const detail = await getNoticeDetail(notice.id);
+    setFormContent(detail.success && detail.data ? detail.data.content : notice.content);
     setFormIsPinned(notice.isPinned);
     setTitleError('');
     setContentError('');
@@ -109,7 +133,7 @@ export default function InstructorNoticeTable() {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setSubmitted(true);
 
     const isTitleEmpty = !formTitle.trim();
@@ -124,53 +148,48 @@ export default function InstructorNoticeTable() {
       return;
     }
 
+    const body = {
+      title: formTitle.trim(),
+      content: formContent.trim(),
+      isPinned: formIsPinned,
+    };
+
     if (modalMode === 'create') {
-      const course =
-        MOCK_COURSES.find((c) => c.id === formCourseId) ?? MOCK_COURSES[0];
-      const newNotice: Notice = {
-        id: Date.now(),
-        courseId: course.id,
-        courseTitle: course.title,
-        title: formTitle.trim(),
-        content: formContent.trim(),
-        createdAt: new Date()
-          .toLocaleDateString('ko-KR')
-          .replaceAll('. ', '/')
-          .replace('.', ''),
-        views: 0,
-        isPinned: formIsPinned,
-      };
-      setNotices((prev) =>
-        formIsPinned ? [newNotice, ...prev] : [...prev, newNotice],
-      );
+      // POST /api/courses/{courseId}/notices
+      const res = await createCourseNotice(formCourseId, body);
+      if (!res.success) {
+        toast.error(res.message || '공지사항 등록에 실패했습니다.');
+        return;
+      }
       toast.success('공지사항이 등록되었습니다.');
     } else if (editingNotice) {
-      setNotices((prev) =>
-        prev.map((n) =>
-          n.id === editingNotice.id
-            ? {
-                ...n,
-                title: formTitle.trim(),
-                content: formContent.trim(),
-                isPinned: formIsPinned,
-              }
-            : n,
-        ),
-      );
+      // PATCH /api/notices/{noticeId}
+      const res = await updateNotice(editingNotice.id, body);
+      if (!res.success) {
+        toast.error(res.message || '공지사항 수정에 실패했습니다.');
+        return;
+      }
       toast.success('공지사항이 수정되었습니다.');
     }
     setIsModalOpen(false);
+    await reloadNotices(selectedCourseId);
   };
 
-  const handleDelete = (id: number) => {
-    setNotices((prev) => prev.filter((n) => n.id !== id));
+  const handleDelete = async (id: number) => {
+    // DELETE /api/notices/{noticeId}
+    const res = await deleteNotice(id);
+    if (!res.success) {
+      toast.error(res.message || '공지사항 삭제에 실패했습니다.');
+      return;
+    }
     setDeletingNoticeId(null);
     toast.success('공지사항이 삭제되었습니다.');
+    await reloadNotices(selectedCourseId);
   };
 
   const isFormValid = formTitle.trim() !== '' && formContent.trim() !== '';
   const modalCourseTitle =
-    MOCK_COURSES.find((c) => c.id === formCourseId)?.title ?? '';
+    courses.find((c) => c.id === formCourseId)?.title ?? '';
 
   return (
     <div>
@@ -194,7 +213,7 @@ export default function InstructorNoticeTable() {
           </button>
           {isCourseOpen && (
             <div className="absolute z-10 mt-1 w-52 rounded-xl border border-[#E2E8F0] bg-white shadow-lg">
-              {MOCK_COURSES.map((c) => (
+              {courses.map((c) => (
                 <button
                   key={c.id}
                   type="button"

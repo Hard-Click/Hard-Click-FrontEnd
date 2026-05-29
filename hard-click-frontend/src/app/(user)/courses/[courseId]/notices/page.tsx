@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { getCourseDetail } from '@/features/courses/services';
+import { getCourseNotices } from '@/features/notices/services';
 import type { CourseNotice, CourseDetail } from '@/features/courses/types';
+import type { Notice } from '@/features/notices/types';
 
 /* ── 공지 카드 ── */
 function NoticeCard({ notice, instructorName }: { notice: CourseNotice; instructorName: string }) {
@@ -60,6 +62,7 @@ export default function CourseNoticesPage() {
   const courseId = Number(params.courseId);
 
   const [course, setCourse] = useState<CourseDetail | null>(null);
+  const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
@@ -68,6 +71,8 @@ export default function CourseNoticesPage() {
       setCourse(data);
       setLoading(false);
     });
+    // 강의 공지 목록 (GET /api/notices?type=COURSE&courseId=)
+    getCourseNotices(courseId).then(setNotices);
   }, [courseId]);
 
   if (loading) {
@@ -84,7 +89,7 @@ export default function CourseNoticesPage() {
     );
   }
 
-  const sortedNotices = [...course.notices].sort((a, b) => {
+  const sortedNotices = [...notices].sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1;
     if (!a.isPinned && b.isPinned) return 1;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
