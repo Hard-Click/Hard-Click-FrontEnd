@@ -11,10 +11,12 @@ const MOCK_NOTICE: NoticeDetail = {
   title: '⚠️ 서버 점검 안내 (5월 10일 02:00~04:00)',
   content:
     '안녕하세요.\n\n서버 점검으로 인해 아래 일정 동안 서비스 이용이 일시 중단됩니다.\n\n■ 점검 일시: 2026년 5월 10일 (일) 02:00 ~ 04:00\n■ 점검 내용: 서버 인프라 업그레이드 및 보안 패치\n\n점검 시간 동안은 모든 서비스(강의 수강, 게시판, 결제 등)를 이용하실 수 없습니다.\n\n이용에 불편을 드려 죄송합니다.\n감사합니다.',
-  authorName: '관리자',
   noticeType: 'GLOBAL',
+  courseName: null,
   isPinned: true,
+  isRead: false,
   createdAt: '2026-05-01T09:00:00',
+  previousNotice: null,
 };
 
 function formatDate(isoString: string): string {
@@ -108,7 +110,7 @@ export default function StudentNoticeDetailPage() {
 
           {/* 작성자 · 날짜 */}
           <div className="mb-6 flex items-center gap-2 text-sm text-[#64748B]">
-            <span>{notice.authorName}</span>
+            <span>{notice.courseName ?? '관리자'}</span>
             <span>•</span>
             <span>{formatDate(notice.createdAt)}</span>
           </div>
@@ -122,13 +124,19 @@ export default function StudentNoticeDetailPage() {
           </p>
         </div>
 
-        {/* 이전 공지 네비게이션 (추후 연결 예정) */}
-        <div className="mt-4 rounded-2xl border border-[#E2E8F0] bg-white px-6 py-4 shadow-sm">
-          <p className="mb-1 text-xs text-[#94A3B8]">&gt; 이전 공지</p>
-          <p className="text-sm font-semibold text-[#1E293B]">
-            이전 공지사항 제목
-          </p>
-        </div>
+        {/* 이전 공지 네비게이션 (백엔드 previousNotice 연결) */}
+        {notice.previousNotice && (
+          <button
+            type="button"
+            onClick={() => router.push(`/notices/${notice.previousNotice!.noticeId}`)}
+            className="mt-4 block w-full rounded-2xl border border-[#E2E8F0] bg-white px-6 py-4 text-left shadow-sm transition-colors hover:border-[#2F5DAA]"
+          >
+            <p className="mb-1 text-xs text-[#94A3B8]">&gt; 이전 공지</p>
+            <p className="text-sm font-semibold text-[#1E293B]">
+              {notice.previousNotice.title}
+            </p>
+          </button>
+        )}
       </div>
     </div>
   );

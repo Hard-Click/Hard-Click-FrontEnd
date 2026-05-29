@@ -1,4 +1,4 @@
-import type { Notice, NoticeDetail } from './types';
+import type { Notice, NoticeDetail, NoticeWriteRequest } from './types';
 import { api } from '@/services/api';
 
 const USE_MOCK = false;
@@ -52,6 +52,45 @@ export async function getNoticeDetail(noticeId: number) {
 
 export async function deleteNotice(noticeId: number) {
   return api.delete<void>(`/api/notices/${noticeId}`);
+}
+
+/** 공지 목록 조회 (GET /api/notices) — type 필수, page 0-based */
+export async function getNotices(params: {
+  type: 'GLOBAL' | 'COURSE';
+  courseId?: number;
+  keyword?: string;
+  page?: number;
+  size?: number;
+}) {
+  const q = new URLSearchParams();
+  q.set('type', params.type);
+  if (params.courseId != null) q.set('courseId', String(params.courseId));
+  if (params.keyword) q.set('keyword', params.keyword);
+  q.set('page', String(params.page ?? 0));
+  q.set('size', String(params.size ?? 100));
+  return api.get<NoticeApiResponse>(`/api/notices?${q.toString()}`);
+}
+
+/** 강의 공지 목록 (GET /api/notices?type=COURSE&courseId=) → Notice[] 매핑 */
+export async function getCourseNotices(courseId: number): Promise<Notice[]> {
+  const res = await getNotices({ type: 'COURSE', courseId, size: 100 });
+  if (!res.success || !res.data) return [];
+  return res.data.content.map(toNotice);
+}
+
+/** 강의 공지 작성 (POST /api/courses/{courseId}/notices) */
+export async function createCourseNotice(courseId: number, body: NoticeWriteRequest) {
+  return api.post<{ noticeId: number }>(`/api/courses/${courseId}/notices`, body);
+}
+
+/** 전역 공지 작성 (POST /api/notices) */
+export async function createGlobalNotice(body: NoticeWriteRequest) {
+  return api.post<{ noticeId: number }>(`/api/notices`, body);
+}
+
+/** 공지 수정 (PATCH /api/notices/{noticeId}) */
+export async function updateNotice(noticeId: number, body: NoticeWriteRequest) {
+  return api.patch<void>(`/api/notices/${noticeId}`, body);
 }
 
 export async function getPinnedNotices(): Promise<Notice[]> {

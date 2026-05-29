@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { getNoticeDetailAction, deleteNoticeAction } from '@/features/notices/actions';
+import { updateNotice } from '@/features/notices/services';
 import type { NoticeDetail } from '@/features/notices/types';
 
 const MOCK_NOTICE: NoticeDetail = {
@@ -12,10 +13,12 @@ const MOCK_NOTICE: NoticeDetail = {
   title: '⚠️ 서버 점검 안내 (5월 10일 02:00~04:00)',
   content:
     '안녕하세요.\n\n서버 점검으로 인해 아래 일정 동안 서비스 이용이 일시 중단됩니다.\n\n■ 점검 일시: 2026년 5월 10일 (일) 02:00 ~ 04:00\n■ 점검 내용: 서버 인프라 업그레이드 및 보안 패치\n\n점검 시간 동안은 모든 서비스(강의 수강, 게시판, 결제 등)를 이용하실 수 없습니다.\n\n이용에 불편을 드려 죄송합니다.\n감사합니다.',
-  authorName: '박지훈',
   noticeType: 'GLOBAL',
+  courseName: null,
   isPinned: true,
+  isRead: false,
   createdAt: '2026-05-01T09:00:00',
+  previousNotice: null,
 };
 
 // TODO: API 연동 시 교체
@@ -95,8 +98,17 @@ export default function InstructorNoticeDetailPage() {
     setIsEditConfirmOpen(true);
   };
 
-  const handleEditConfirm = () => {
-    // TODO: API 연동 (updateNoticeAction)
+  const handleEditConfirm = async () => {
+    // PATCH /api/notices/{noticeId}
+    const result = await updateNotice(Number(noticeId), {
+      title: formTitle.trim(),
+      content: formContent.trim(),
+      isPinned: formIsPinned,
+    });
+    if (!result.success) {
+      toast.error(result.message || '공지사항 수정에 실패했습니다.');
+      return;
+    }
     setNotice((prev) =>
       prev
         ? { ...prev, title: formTitle.trim(), content: formContent.trim(), isPinned: formIsPinned }
@@ -104,7 +116,7 @@ export default function InstructorNoticeDetailPage() {
     );
     setIsEditConfirmOpen(false);
     setIsEditModalOpen(false);
-    toast.success('공지사항이 수정되었습니다.');
+    toast.success(result.message || '공지사항이 수정되었습니다.');
   };
 
   const handleDelete = async () => {
@@ -346,7 +358,7 @@ export default function InstructorNoticeDetailPage() {
 
             {/* 작성자 · 날짜 */}
             <div className="mb-6 flex items-center gap-2 text-sm text-[#64748B]">
-              <span>{notice.authorName}</span>
+              <span>{notice.courseName ?? '관리자'}</span>
               <span>•</span>
               <span>{formatDate(notice.createdAt)}</span>
             </div>
