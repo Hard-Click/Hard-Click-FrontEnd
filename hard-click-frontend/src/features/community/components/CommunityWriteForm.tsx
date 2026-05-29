@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { COMMUNITY_ERRORS } from '../constants/errorMessages';
 import LoadingModal from '@/components/ui/loadingModal';
+import { createPostAction, updatePostAction } from '../actions';
+import { BOARD_TYPE_VALUE } from '../types';
 
 const FILTERS = ['자유게시판', '질문게시판', '스터디모집'];
 
@@ -192,16 +194,39 @@ export default function CommunityWriteForm({
   const handleConfirmedSubmit = async () => {
     setIsConfirmOpen(false);
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 800)); // TODO: 실제 API 호출로 교체
-    setIsSubmitting(false);
+
+    const boardType = BOARD_TYPE_VALUE[activeTab];
+    // 스터디모집은 description을 content로, 나머지는 content 그대로
+    const contentToSend =
+      activeTab === '스터디모집'
+        ? `모집 인원: ${recruit}\n\n${description}`
+        : content;
 
     if (mode === 'edit' && postId) {
+      const result = await updatePostAction(postId, {
+        title,
+        content: contentToSend,
+      });
+      setIsSubmitting(false);
+      if (!result.success) {
+        toast.error(result.message || '게시글 수정에 실패했습니다.');
+        return;
+      }
       toast.success('게시글이 수정되었습니다.');
       router.push(`/community/${postId}`);
     } else {
-      // TODO: API 연동 후 응답받은 postId로 교체
+      const result = await createPostAction({
+        boardType,
+        title,
+        content: contentToSend,
+      });
+      setIsSubmitting(false);
+      if (!result.success || !('data' in result) || !result.data?.postId) {
+        toast.error(result.message || '게시글 등록에 실패했습니다.');
+        return;
+      }
       toast.success('게시글이 등록되었습니다.');
-      router.push('/community');
+      router.push(`/community/${result.data.postId}`);
     }
   };
 

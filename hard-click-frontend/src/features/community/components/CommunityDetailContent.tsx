@@ -1,12 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
 import ReportModal from '@/features/reports/components/ReportModal';
-import { MOCK_POSTS } from '../mock';
 import { toast } from 'sonner';
 import LoadingModal from '@/components/ui/loadingModal';
+import {
+  getPostDetailAction,
+  deletePostAction,
+  getCommentsAction,
+  createCommentAction,
+  updateCommentAction,
+  deleteCommentAction,
+  acceptCommentAction,
+} from '../actions';
+import type { PostDetail, CommentItem } from '../types';
+import { BOARD_TYPE_LABEL } from '../types';
 
 const CATEGORY_STYLE: Record<string, string> = {
   질문게시판: 'bg-[#FEF3C7] text-[#D97706]',
@@ -14,16 +24,32 @@ const CATEGORY_STYLE: Record<string, string> = {
   스터디모집: 'bg-[#F3E8FF] text-[#9333EA]',
 };
 
+function formatDate(isoString: string): string {
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  if (diffMins < 1) return '방금 전';
+  if (diffMins < 60) return `${diffMins}분 전`;
+  if (diffHours < 24) return `${diffHours}시간 전`;
+  if (diffDays < 7) return `${diffDays}일 전`;
+  return date.toLocaleDateString('ko-KR');
+}
+
 export default function CommunityDetailContent() {
   const router = useRouter();
   const { postid } = useParams();
-  const post = MOCK_POSTS[Number(postid)] ?? MOCK_POSTS[1];
-  const [comments, setComments] = useState(post.comments);
+  const postId = Number(postid);
+
+  const [post, setPost] = useState<PostDetail | null>(null);
+  const [comments, setComments] = useState<CommentItem[]>([]);
+  const [isPageLoading, setIsPageLoading] = useState(true);
 
   const [commentText, setCommentText] = useState('');
   const [replyInputId, setReplyInputId] = useState<number | null>(null);
   const [replyText, setReplyText] = useState('');
-  const [isAccepted, setIsAccepted] = useState(post.isAccepted);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -39,58 +65,100 @@ export default function CommunityDetailContent() {
     replyId: number;
   } | null>(null);
 
-  const handleAccept = (commentId: number) => {
-    setComments((prev) =>
-      prev.map((c) => (c.id === commentId ? { ...c, isAccepted: true } : c)),
-    );
-    setIsAccepted(true);
+  const fetchComments = async () => {
+    const result = await getCommentsAction(postId);
+    if (result.success && result.data) {
+      setComments(result.data.comments);
+    }
   };
 
+  useEffect(() => {
+    const load = async () => {
+      setIsPageLoading(true);
+      const [postResult, commentsResult] = await Promise.all([
+        getPostDetailAction(postId),
+        getCommentsAction(postId),
+      ]);
+      if (!postResult.success || !postResult.data) {
+        toast.error('게시글을 불러오지 못했습니다.');
+        router.push('/community');
+        return;
+      }
+      setPost(postResult.data);
+      if (commentsResult.success && commentsResult.data) {
+        setComments(commentsResult.data.comments);
+      }
+      setIsPageLoading(false);
+    };
+    load();
+  }, [postId, router]);
+
+  if (isPageLoading || !post) {
+    return (
+      <div className="flex justify-center py-20 text-[#64748B]">
+        불러오는 중...
+      </div>
+    );
+  }
+
+  const category = BOARD_TYPE_LABEL[post.boardType];
+  const isAccepted = post.status === 'ADOPTED';
+
   const totalComments = comments.reduce(
-    (acc, c) => acc + 1 + c.replies.length,
+    (acc, c) => acc + 1 + (c.replies?.length ?? 0),
     0,
   );
 
-  const handleCommentSubmit = () => {
-    if (!commentText.trim()) return;
-    const newComment = {
-      id: Date.now(),
-      author: '나',
-      avatar: '나',
-      time: '방금 전',
-      content: commentText,
-      isOwner: true,
-      isAccepted: false,
-      replies: [],
-    };
-    setComments((prev) => [...prev, newComment]);
-    setCommentText('');
+  const handleAccept = async (commentId: number) => {
+    const result = await acceptCommentAction(commentId);
+    if (!result.success) {
+      toast.error(result.message || '채택에 실패했습니다.');
+      return;
+    }
+    const [postResult] = await Promise.all([
+      getPostDetailAction(postId),
+      fetchComments(),
+    ]);
+    if (postResult.success && postResult.data) setPost(postResult.data);
+    toast.success('답변이 채택되었습니다.');
   };
 
-  const handleReplySubmit = (commentId: number) => {
+  const handleCommentSubmit = async () => {
+    if (!commentText.trim()) return;
+    const result = await createCommentAction({ postId, content: commentText });
+    if (!result.success) {
+      toast.error(result.message || '댓글 등록에 실패했습니다.');
+      return;
+    }
+    setCommentText('');
+    await fetchComments();
+  };
+
+  const handleReplySubmit = async (parentCommentId: number) => {
     if (!replyText.trim()) return;
-    const newReply = {
-      id: Date.now(),
-      author: '나',
-      avatar: '나',
-      time: '방금 전',
+    const result = await createCommentAction({
+      postId,
       content: replyText,
-      isOwner: true,
-    };
-    setComments((prev) =>
-      prev.map((c) =>
-        c.id === commentId ? { ...c, replies: [...c.replies, newReply] } : c,
-      ),
-    );
+      parentCommentId,
+    });
+    if (!result.success) {
+      toast.error(result.message || '답글 등록에 실패했습니다.');
+      return;
+    }
     setReplyText('');
     setReplyInputId(null);
+    await fetchComments();
   };
 
   const handleDeletePost = async () => {
     setIsDeleteConfirmOpen(false);
     setIsDeleting(true);
-    await new Promise((r) => setTimeout(r, 800)); // 나중에 API로 교체
+    const result = await deletePostAction(postId);
     setIsDeleting(false);
+    if (!result.success) {
+      toast.error(result.message || '게시글 삭제에 실패했습니다.');
+      return;
+    }
     toast.success('게시글이 삭제되었습니다.');
     router.push('/community');
   };
@@ -100,15 +168,19 @@ export default function CommunityDetailContent() {
     setEditingCommentText(content);
   };
 
-  const handleCommentEditSave = (commentId: number) => {
+  const handleCommentEditSave = async (commentId: number) => {
     if (!editingCommentText.trim()) return;
-    setComments((prev) =>
-      prev.map((c) =>
-        c.id === commentId ? { ...c, content: editingCommentText } : c,
-      ),
-    );
+    const result = await updateCommentAction(commentId, {
+      content: editingCommentText,
+    });
+    if (!result.success) {
+      toast.error(result.message || '댓글 수정에 실패했습니다.');
+      return;
+    }
     setEditingCommentId(null);
     setEditingCommentText('');
+    await fetchComments();
+    toast.success('댓글이 수정되었습니다.');
   };
 
   const handleCommentEditCancel = () => {
@@ -116,9 +188,14 @@ export default function CommunityDetailContent() {
     setEditingCommentText('');
   };
 
-  const handleCommentDelete = (commentId: number) => {
-    setComments((prev) => prev.filter((c) => c.id !== commentId));
+  const handleCommentDelete = async (commentId: number) => {
+    const result = await deleteCommentAction(commentId);
+    if (!result.success) {
+      toast.error(result.message || '댓글 삭제에 실패했습니다.');
+      return;
+    }
     setDeletingCommentId(null);
+    await fetchComments();
     toast.success('댓글이 삭제되었습니다.');
   };
 
@@ -127,22 +204,19 @@ export default function CommunityDetailContent() {
     setEditingReplyText(content);
   };
 
-  const handleReplyEditSave = (commentId: number, replyId: number) => {
+  const handleReplyEditSave = async (replyId: number) => {
     if (!editingReplyText.trim()) return;
-    setComments((prev) =>
-      prev.map((c) =>
-        c.id === commentId
-          ? {
-              ...c,
-              replies: c.replies.map((r) =>
-                r.id === replyId ? { ...r, content: editingReplyText } : r,
-              ),
-            }
-          : c,
-      ),
-    );
+    const result = await updateCommentAction(replyId, {
+      content: editingReplyText,
+    });
+    if (!result.success) {
+      toast.error(result.message || '답글 수정에 실패했습니다.');
+      return;
+    }
     setEditingReplyId(null);
     setEditingReplyText('');
+    await fetchComments();
+    toast.success('답글이 수정되었습니다.');
   };
 
   const handleReplyEditCancel = () => {
@@ -150,15 +224,14 @@ export default function CommunityDetailContent() {
     setEditingReplyText('');
   };
 
-  const handleReplyDelete = (commentId: number, replyId: number) => {
-    setComments((prev) =>
-      prev.map((c) =>
-        c.id === commentId
-          ? { ...c, replies: c.replies.filter((r) => r.id !== replyId) }
-          : c,
-      ),
-    );
+  const handleReplyDelete = async (replyId: number) => {
+    const result = await deleteCommentAction(replyId);
+    if (!result.success) {
+      toast.error(result.message || '답글 삭제에 실패했습니다.');
+      return;
+    }
     setDeletingReplyInfo(null);
+    await fetchComments();
     toast.success('답글이 삭제되었습니다.');
   };
 
@@ -179,11 +252,11 @@ export default function CommunityDetailContent() {
         {/* badges */}
         <div className="mb-3 flex items-center gap-2">
           <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${CATEGORY_STYLE[post.category]}`}
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${CATEGORY_STYLE[category]}`}
           >
-            {post.category}
+            {category}
           </span>
-          {post.category === '질문게시판' && isAccepted && (
+          {category === '질문게시판' && isAccepted && (
             <span className="flex items-center gap-1 rounded-full bg-[#D1FAE5] px-3 py-1 text-xs font-semibold text-[#059669]">
               <Image
                 src="/icons/check.svg"
@@ -194,7 +267,7 @@ export default function CommunityDetailContent() {
               채택 완료
             </span>
           )}
-          {post.category === '질문게시판' && !isAccepted && (
+          {category === '질문게시판' && !isAccepted && (
             <span className="rounded-full bg-[#FEF3C7] px-3 py-1 text-xs font-semibold text-[#D97706]">
               답변 대기
             </span>
@@ -207,9 +280,9 @@ export default function CommunityDetailContent() {
         {/* meta + actions */}
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-[#64748B]">
-            <span>{post.author}</span>
+            <span>{post.authorName}</span>
             <span>•</span>
-            <span>{post.date}</span>
+            <span>{formatDate(post.createdAt)}</span>
             <span>•</span>
             <span className="flex items-center gap-1">
               <Image
@@ -218,15 +291,15 @@ export default function CommunityDetailContent() {
                 width={14}
                 height={14}
               />
-              {post.views}
+              {post.viewCount}
             </span>
           </div>
           <div className="flex items-center gap-3">
-            {post.isOwner ? (
+            {post.isMine ? (
               <>
                 <button
                   type="button"
-                  onClick={() => router.push(`/community/${postid}/edit`)}
+                  onClick={() => router.push(`/community/${postId}/edit`)}
                 >
                   <Image
                     src="/icons/editIcon.svg"
@@ -284,7 +357,7 @@ export default function CommunityDetailContent() {
         {/* comment list */}
         <div className="flex flex-col gap-4">
           {comments.map((comment) => (
-            <div key={comment.id}>
+            <div key={comment.commentId}>
               <div
                 className={`rounded-2xl p-4 ${
                   comment.isAccepted
@@ -307,34 +380,37 @@ export default function CommunityDetailContent() {
                 <div className="mb-2 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E2E8F0] text-sm font-semibold text-[#475569]">
-                      {comment.avatar}
+                      {comment.authorName.charAt(0)}
                     </div>
                     <span className="text-sm font-semibold text-[#1E293B]">
-                      {comment.author}
+                      {comment.authorName}
                     </span>
                     <span className="text-xs text-[#94A3B8]">
-                      {comment.time}
+                      {formatDate(comment.createdAt)}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {post.category === '질문게시판' &&
-                      post.isOwner &&
+                    {category === '질문게시판' &&
+                      post.isMine &&
                       !isAccepted &&
                       !comment.isAccepted && (
                         <button
                           type="button"
-                          onClick={() => handleAccept(comment.id)}
+                          onClick={() => handleAccept(comment.commentId)}
                           className="rounded-full cursor-pointer bg-[#2F5DAA] px-3 py-1 text-xs font-semibold text-white"
                         >
                           채택
                         </button>
                       )}
-                    {comment.isOwner ? (
+                    {comment.isMine ? (
                       <>
                         <button
                           type="button"
                           onClick={() =>
-                            handleCommentEditStart(comment.id, comment.content)
+                            handleCommentEditStart(
+                              comment.commentId,
+                              comment.content,
+                            )
                           }
                         >
                           <Image
@@ -346,7 +422,9 @@ export default function CommunityDetailContent() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setDeletingCommentId(comment.id)}
+                          onClick={() =>
+                            setDeletingCommentId(comment.commentId)
+                          }
                         >
                           <Image
                             src="/icons/trashIcon.svg"
@@ -372,7 +450,7 @@ export default function CommunityDetailContent() {
                   </div>
                 </div>
 
-                {editingCommentId === comment.id ? (
+                {editingCommentId === comment.commentId ? (
                   <div className="mb-2">
                     <textarea
                       value={editingCommentText}
@@ -390,7 +468,7 @@ export default function CommunityDetailContent() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleCommentEditSave(comment.id)}
+                        onClick={() => handleCommentEditSave(comment.commentId)}
                         className="rounded-lg bg-[#2F5DAA] px-3 py-1 text-xs font-semibold text-white hover:bg-[#1D3E75]"
                       >
                         저장
@@ -402,11 +480,14 @@ export default function CommunityDetailContent() {
                     {comment.content}
                   </p>
                 )}
+
                 <button
                   type="button"
                   onClick={() =>
                     setReplyInputId(
-                      replyInputId === comment.id ? null : comment.id,
+                      replyInputId === comment.commentId
+                        ? null
+                        : comment.commentId,
                     )
                   }
                   className="flex items-center gap-1 text-xs text-[#64748B] hover:text-[#2F5DAA]"
@@ -414,7 +495,7 @@ export default function CommunityDetailContent() {
                   ↩ 답글
                 </button>
 
-                {replyInputId === comment.id && (
+                {replyInputId === comment.commentId && (
                   <div className="mt-3 flex gap-2">
                     <input
                       type="text"
@@ -425,7 +506,7 @@ export default function CommunityDetailContent() {
                     />
                     <button
                       type="button"
-                      onClick={() => handleReplySubmit(comment.id)}
+                      onClick={() => handleReplySubmit(comment.commentId)}
                       className={`rounded-xl px-4 py-2 text-sm font-semibold text-white transition ${
                         replyText.trim()
                           ? 'bg-[#2F5DAA]'
@@ -439,10 +520,13 @@ export default function CommunityDetailContent() {
               </div>
 
               {/* replies */}
-              {comment.replies.length > 0 && (
+              {comment.replies && comment.replies.length > 0 && (
                 <div className="mt-2 flex flex-col gap-2 pl-4">
                   {comment.replies.map((reply) => (
-                    <div key={reply.id} className="flex items-start gap-2">
+                    <div
+                      key={reply.commentId}
+                      className="flex items-start gap-2"
+                    >
                       <Image
                         src="/icons/arrowLeftIcon.svg"
                         alt="reply"
@@ -454,23 +538,23 @@ export default function CommunityDetailContent() {
                         <div className="mb-2 flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E2E8F0] text-sm font-semibold text-[#475569]">
-                              {reply.avatar}
+                              {reply.authorName.charAt(0)}
                             </div>
                             <span className="text-sm font-semibold text-[#1E293B]">
-                              {reply.author}
+                              {reply.authorName}
                             </span>
                             <span className="text-xs text-[#94A3B8]">
-                              {reply.time}
+                              {formatDate(reply.createdAt)}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
-                            {reply.isOwner ? (
+                            {reply.isMine ? (
                               <>
                                 <button
                                   type="button"
                                   onClick={() =>
                                     handleReplyEditStart(
-                                      reply.id,
+                                      reply.commentId,
                                       reply.content,
                                     )
                                   }
@@ -486,8 +570,8 @@ export default function CommunityDetailContent() {
                                   type="button"
                                   onClick={() =>
                                     setDeletingReplyInfo({
-                                      commentId: comment.id,
-                                      replyId: reply.id,
+                                      commentId: comment.commentId,
+                                      replyId: reply.commentId,
                                     })
                                   }
                                 >
@@ -514,7 +598,7 @@ export default function CommunityDetailContent() {
                             )}
                           </div>
                         </div>
-                        {editingReplyId === reply.id ? (
+                        {editingReplyId === reply.commentId ? (
                           <div>
                             <textarea
                               value={editingReplyText}
@@ -535,7 +619,7 @@ export default function CommunityDetailContent() {
                               <button
                                 type="button"
                                 onClick={() =>
-                                  handleReplyEditSave(comment.id, reply.id)
+                                  handleReplyEditSave(reply.commentId)
                                 }
                                 className="rounded-lg bg-[#2F5DAA] px-3 py-1 text-xs font-semibold text-white hover:bg-[#1D3E75]"
                               >
@@ -584,7 +668,8 @@ export default function CommunityDetailContent() {
           )}
         </div>
       </div>
-      {/* 삭제 확인 모달 */}
+
+      {/* 게시글 삭제 확인 모달 */}
       {isDeleteConfirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div
@@ -631,8 +716,6 @@ export default function CommunityDetailContent() {
           description="잠시만 기다려주세요...."
         />
       )}
-
-      <div className="flex flex-col gap-4"></div>
 
       {/* 댓글 삭제 확인 모달 */}
       {deletingCommentId !== null && (
@@ -704,12 +787,7 @@ export default function CommunityDetailContent() {
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  handleReplyDelete(
-                    deletingReplyInfo.commentId,
-                    deletingReplyInfo.replyId,
-                  )
-                }
+                onClick={() => handleReplyDelete(deletingReplyInfo.replyId)}
                 className="h-12 flex-1 rounded-[10px] bg-[#DC2626] text-base font-semibold text-white hover:bg-[#B91C1C] transition-colors"
               >
                 삭제
