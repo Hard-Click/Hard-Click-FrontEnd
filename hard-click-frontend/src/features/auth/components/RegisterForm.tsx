@@ -13,6 +13,7 @@ import {
   sendEmailVerificationAction,
   verifyEmailCodeAction,
 } from '../actions';
+import { useResendCooldown } from '@/hooks/useResendCooldown';
 
 import {
   formatPhoneNumber,
@@ -161,6 +162,7 @@ export default function RegisterForm() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const { cooldown, isCoolingDown, startCooldown } = useResendCooldown();
 
   const usernameRef = useRef<HTMLInputElement | null>(null);
   const emailRef = useRef<HTMLInputElement | null>(null);
@@ -430,6 +432,7 @@ export default function RegisterForm() {
       verificationCode: '',
       emailVerificationToken: '',
     }));
+    if (isResend) startCooldown();
     setVerificationStatus({
       type: 'success',
       text: isResend
@@ -1175,14 +1178,14 @@ export default function RegisterForm() {
                       <button
                         type="button"
                         onClick={() => handleSendEmailCode(true)}
-                        disabled={isEmailSendLimitExceeded}
+                        disabled={isEmailSendLimitExceeded || isCoolingDown}
                         className={`ml-[12px] h-[20px] shrink-0 text-[14px] font-medium leading-[20px] tracking-[-0.15px] outline-none focus:outline-none ${
-                          isEmailSendLimitExceeded
+                          isEmailSendLimitExceeded || isCoolingDown
                             ? 'text-[#9CA3AF]'
                             : 'text-[#2F5DAA]'
                         }`}
                       >
-                        인증번호 재발송
+                        {isCoolingDown ? `재발송 (${cooldown}초)` : '인증번호 재발송'}
                       </button>
                     </div>
                   </>

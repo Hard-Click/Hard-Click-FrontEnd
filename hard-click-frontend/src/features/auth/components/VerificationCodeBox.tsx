@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { verifyAccountLockCodeAction } from '../actions';
 import { sendAccountLockEmailAction } from '../actions';
+import { useResendCooldown } from '@/hooks/useResendCooldown';
 
 interface VerificationCodeBoxProps {
   email: string;
@@ -22,6 +23,7 @@ export default function VerificationCodeBox({
 
   const toastShownRef = useRef(false);
   const isFormValid = code.trim().length === 6;
+  const { cooldown, isCoolingDown, startCooldown } = useResendCooldown();
 
   // 마운트 시 발송 완료 toast (StrictMode 두 번 실행 방지)
   useEffect(() => {
@@ -67,6 +69,7 @@ export default function VerificationCodeBox({
       toast.error(result.message || '재발송에 실패했습니다.');
       return;
     }
+    startCooldown();
     toast.success('인증번호가 재발송되었습니다.');
   };
 
@@ -124,9 +127,10 @@ export default function VerificationCodeBox({
         <button
           type="button"
           onClick={handleResend}
-          className="text-xs font-medium text-[#2F5DAA]"
+          disabled={isCoolingDown}
+          className={`text-xs font-medium ${isCoolingDown ? 'text-[#9CA3AF]' : 'text-[#2F5DAA]'}`}
         >
-          인증번호 재발송
+          {isCoolingDown ? `재발송 (${cooldown}초)` : '인증번호 재발송'}
         </button>
       </div>
 

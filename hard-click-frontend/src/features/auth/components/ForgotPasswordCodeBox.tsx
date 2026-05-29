@@ -8,6 +8,7 @@ import {
   verifyPasswordResetCodeAction,
   sendPasswordResetEmailAction,
 } from '../actions';
+import { useResendCooldown } from '@/hooks/useResendCooldown';
 
 interface ForgotPasswordCodeBoxProps {
   email: string;
@@ -24,6 +25,7 @@ export default function ForgotPasswordCodeBox({
 
   const toastShownRef = useRef(false);
   const isFormValid = code.trim().length === 6;
+  const { cooldown, isCoolingDown, startCooldown } = useResendCooldown();
 
   useEffect(() => {
     if (toastShownRef.current) return;
@@ -71,6 +73,7 @@ export default function ForgotPasswordCodeBox({
       toast.error(result.message || '재발송에 실패했습니다.');
       return;
     }
+    startCooldown();
     toast.success('인증번호가 재발송되었습니다.');
   };
 
@@ -122,9 +125,10 @@ export default function ForgotPasswordCodeBox({
         <button
           type="button"
           onClick={handleResend}
-          className="text-xs font-medium text-[#2F5DAA]"
+          disabled={isCoolingDown}
+          className={`text-xs font-medium ${isCoolingDown ? 'text-[#9CA3AF]' : 'text-[#2F5DAA]'}`}
         >
-          인증번호 재발송
+          {isCoolingDown ? `재발송 (${cooldown}초)` : '인증번호 재발송'}
         </button>
       </div>
 
