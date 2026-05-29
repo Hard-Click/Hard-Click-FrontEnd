@@ -1,6 +1,6 @@
 /** 백엔드 enrollment 도메인 명세 매칭 */
 
-export type EnrollmentStatus = 'IN_PROGRESS' | 'COMPLETED' | 'EXPIRED' | 'REFUNDED';
+export type EnrollmentStatus = 'ENROLLED' | 'IN_PROGRESS' | 'COMPLETED' | 'EXPIRED' | 'REFUNDED';
 export type EnrollmentStatusFilter = EnrollmentStatus | 'ALL';
 
 export type PaymentType = 'FREE' | 'PAID';
@@ -22,7 +22,7 @@ export interface MyEnrollment {
   courseId: number;
   courseTitle: string;
   status: EnrollmentStatus;
-  progressRate: number;          // 0.00 ~ 100.00 (소수점 2자리)
+  progressPercent: number;       // 0 ~ 100 (백엔드 progressPercent)
   expiredAt: string | null;      // ISO 8601 또는 null
-  createdAt: string;             // ISO 8601
+  enrolledAt: string;            // ISO 8601 (백엔드 enrolledAt)
 }
