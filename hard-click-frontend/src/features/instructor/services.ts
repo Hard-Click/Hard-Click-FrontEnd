@@ -123,6 +123,38 @@ export async function deleteCourse(courseId: number) {
   return api.delete<null>(`/api/courses/${courseId}`);
 }
 
+interface UploadFileResponse {
+  fileId: number;
+  fileUrl: string;
+}
+
+/** 썸네일 파일 업로드 (POST /api/files/upload?fileType=POST) */
+export async function uploadCourseThumbnail(file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const token =
+    typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+
+  const res = await fetch('/api/files/upload?fileType=POST', {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: formData,
+  });
+
+  const body = await res.json();
+
+  return {
+    ...body,
+    success: res.ok && body.httpStatus < 400,
+  } as {
+    httpStatus: number;
+    message: string;
+    success: boolean;
+    data?: UploadFileResponse;
+  };
+}
+
 /** 강의 공개/비공개 전환 (PATCH /api/courses/{courseId}/status) */
 export async function publishCourse(courseId: number, published: boolean) {
   if (USE_MOCK) {

@@ -5,9 +5,10 @@ import { useRef, useState } from 'react';
 import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import { useRouter } from 'next/navigation';
 import LoadingModal from '@/components/ui/loadingModal';
-import { createCourse, updateCourse } from '../services';
+import { createCourse, updateCourse, uploadCourseThumbnail } from '../services';
 import { api } from '@/services/api';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const SUBJECT_OPTIONS = [
   '국어',
@@ -37,6 +38,7 @@ interface Section {
 }
 
 interface CourseDetail {
+  courseId?: number;
   title: string;
   subject: string;
   description: string;
@@ -411,6 +413,7 @@ export default function CourseCreateForm({
 
                   // 성공
                   setThumbnail(file);
+                  setThumbnailPreview(URL.createObjectURL(file));
                   setErrors((prev) => ({
                     ...prev,
                     thumbnail: '',
@@ -778,11 +781,26 @@ export default function CourseCreateForm({
             setIsLoading(true);
 
             try {
+              // 썸네일 파일 먼저 업로드
+              let thumbnailUrl = thumbnailPreview;
+              if (thumbnail) {
+                const uploadResult = await uploadCourseThumbnail(thumbnail);
+                if (!uploadResult.success || !uploadResult.data?.fileUrl) {
+                  setErrors((prev) => ({
+                    ...prev,
+                    thumbnail: '썸네일 업로드에 실패했습니다.',
+                  }));
+                  setIsLoading(false);
+                  return;
+                }
+                thumbnailUrl = uploadResult.data.fileUrl;
+              }
+
               const payload = {
                 title,
                 subject,
                 description,
-                thumbnailUrl: thumbnailPreview,
+                thumbnailUrl,
                 priceType,
                 price: priceType === 'FREE' ? 0 : Number(price),
                 sections: sections.map((sec, sIdx) => ({
@@ -806,46 +824,17 @@ export default function CourseCreateForm({
 
               const result =
                 mode === 'edit' && initialData
-                  ? await updateCourse(
-                      Number((initialData as any).id ?? 0),
-                      payload,
-                    )
+                  ? await updateCourse(initialData.courseId ?? 0, payload)
                   : await createCourse(payload);
 
               if (!result.success) {
-                console.error('강의 저장 실패:', result.message);
-                // 백엔드 실패 시 localStorage 폴백
-                const newCourse = {
-                  id: Date.now(),
-                  category: subject,
-                  title,
-                  description,
-                  thumbnailName: thumbnail
-                    ? thumbnail.name
-                    : initialData?.thumbnailName || '',
-                  thumbnailUrl: thumbnail
-                    ? URL.createObjectURL(thumbnail)
-                    : thumbnailPreview,
-                  curriculum: sections,
-                  isPublic: true,
-                  students: 0,
-                  rating: 0,
-                  reviewCount: 0,
-                  createdAt: new Date().toISOString().split('T')[0],
-                  priceType,
-                  price: priceType === 'FREE' ? '무료' : `${price}원`,
-                };
-                const savedCourses = JSON.parse(
-                  localStorage.getItem('myCourses') || '[]',
-                );
-                localStorage.setItem(
-                  'myCourses',
-                  JSON.stringify([newCourse, ...savedCourses]),
-                );
+                setIsLoading(false);
+                toast.error(result.message || '강의 저장에 실패했습니다.');
+                return;
               }
 
               const savedCourseId: number =
-                result.data?.courseId ?? (mode === 'edit' ? Number((initialData as any)?.courseId ?? 0) : 0);
+                result.data?.courseId ?? (mode === 'edit' ? (initialData?.courseId ?? 0) : 0);
 
               const hasFiles = sections.some((sec) => sec.lectures.some((lec) => lec.file));
 

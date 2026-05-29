@@ -10,7 +10,7 @@ import {
   getSubjects,
   getInstructors,
 } from '@/features/courses/services';
-import { MOCK_CURRENT_INSTRUCTOR } from '@/features/instructor/services';
+import { getInstructorCourses } from '@/features/instructor/services';
 import { getPinnedNotices } from '@/features/notices/services';
 import type {
   CourseListItem,
@@ -46,34 +46,67 @@ export default function InstructorCoursesPage() {
 
   useEffect(() => {
     setStatus('loading');
-    getCourses({
-      keyword: submittedKeyword || undefined,
-      subjectId: selectedSubjectId,
-      instructor: myCoursesOnly
-        ? MOCK_CURRENT_INSTRUCTOR
-        : selectedInstructor || undefined,
-      sort,
-    })
-      .then((data) => {
-        setCourses(data);
-        if (data.length === 0) {
-          const hasFilter =
-            submittedKeyword ||
-            selectedSubjectId ||
-            selectedInstructor ||
-            myCoursesOnly;
-          setStatus(hasFilter ? 'no-results' : 'empty');
-        } else {
-          setStatus('idle');
-        }
+
+    if (myCoursesOnly) {
+      getInstructorCourses()
+        .then((res) => {
+          if (!res.success || !res.data) {
+            setStatus('empty');
+            return;
+          }
+          let data = res.data.content.map((c) => ({
+            courseId: c.courseId,
+            title: c.title,
+            instructorName: '',
+            subjectName: c.subjectName,
+            price: c.price,
+            thumbnailUrl: c.thumbnailUrl,
+            averageRating: c.averageRating,
+            reviewCount: c.reviewCount,
+            studentCount: c.enrollmentCount,
+            status: c.status,
+            createdAt: c.createdAt,
+            isFree: c.price === 0,
+            isEnrolled: false,
+            hasPreview: false,
+          }));
+          if (submittedKeyword) {
+            const kw = submittedKeyword.toLowerCase();
+            data = data.filter((c) => c.title.toLowerCase().includes(kw));
+          }
+          if (selectedSubjectId) {
+            const subject = subjects.find((s) => s.subjectId === selectedSubjectId);
+            if (subject) data = data.filter((c) => c.subjectName === subject.name);
+          }
+          setCourses(data);
+          setStatus(data.length === 0 ? 'no-results' : 'idle');
+        })
+        .catch(() => setStatus('error'));
+    } else {
+      getCourses({
+        keyword: submittedKeyword || undefined,
+        subjectId: selectedSubjectId,
+        instructor: selectedInstructor || undefined,
+        sort,
       })
-      .catch(() => setStatus('error'));
+        .then((data) => {
+          setCourses(data);
+          if (data.length === 0) {
+            const hasFilter = submittedKeyword || selectedSubjectId || selectedInstructor;
+            setStatus(hasFilter ? 'no-results' : 'empty');
+          } else {
+            setStatus('idle');
+          }
+        })
+        .catch(() => setStatus('error'));
+    }
   }, [
     submittedKeyword,
     selectedSubjectId,
     selectedInstructor,
     sort,
     myCoursesOnly,
+    subjects,
   ]);
 
   const handleSearch = () => {
