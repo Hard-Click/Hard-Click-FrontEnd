@@ -28,11 +28,11 @@ import ProfileEditModal from '@/features/users/components/ProfileEditModal';
 import GrassYearlyModal from '@/features/grass/components/GrassYearlyModal';
 import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
 import { createReview } from '@/features/reviews/services';
-import { getMyProfile, getMyCourses } from '@/features/users/services';
+import { getMyProfile, getMyCourses, getMyCompletedCourses } from '@/features/users/services';
 import { getStreak, getStudyTimeGrass, getLessonsGrass } from '@/features/grass/services';
 import { getMyRankingSummary } from '@/features/rankings/services';
 import { getDailyStudyStats } from '@/features/studyTimers/services';
-import type { MyProfile, MyCourse } from '@/features/users/types';
+import type { MyProfile, MyCourse, CompletedCourse } from '@/features/users/types';
 import type { StudyTimeGrassCell, LessonsGrassCell } from '@/features/grass/types';
 import type { MyRankingSummary } from '@/features/rankings/types';
 
@@ -255,7 +255,7 @@ export default function MyPage() {
   const [profile, setProfile] = useState<MyProfile | null>(null);
   const [ranking, setRanking] = useState<MyRankingSummary | null>(null);
   const [inProgress, setInProgress] = useState<MyCourse[]>([]);
-  const [completed, setCompleted] = useState<MyCourse[]>([]);
+  const [completed, setCompleted] = useState<CompletedCourse[]>([]);
   const [streakDays, setStreakDays] = useState<number>(0);
   const [todayStudySeconds, setTodayStudySeconds] = useState<number>(0);
   const [studyTimeCells, setStudyTimeCells] = useState<HeatmapCell[]>([]);
@@ -277,17 +277,21 @@ export default function MyPage() {
       getStreak(),
       getMyRankingSummary(),
       getMyCourses(),
+      getMyCompletedCourses(),
       getDailyStudyStats({ startDate: todayStr, endDate: todayStr }),
       getStudyTimeGrass({ year: HEATMAP_YEAR, month: HEATMAP_MONTH }),
       getLessonsGrass({ year: HEATMAP_YEAR, month: HEATMAP_MONTH }),
-    ]).then(([p, s, r, mc, ds, stg, lg]) => {
+    ]).then(([p, s, r, mc, cc, ds, stg, lg]) => {
       if (p.success) setProfile(p.data);
       if (s.success) setStreakDays(s.data.streak);
       if (r.success) setRanking(r.data);
       if (mc.success) {
-        // 백엔드 통합 endpoint — 진행 중/완료를 클라이언트에서 progressRate로 분리
+        // 수강 강의 endpoint — 진행 중만 (완료는 전용 endpoint 사용)
         setInProgress(mc.data.filter((c) => c.progressRate < 100));
-        setCompleted(mc.data.filter((c) => c.progressRate === 100));
+      }
+      if (cc.success) {
+        // 완료 강의 전용 endpoint (GET /api/members/me/courses/completed)
+        setCompleted(cc.data);
       }
       if (ds.success && Array.isArray(ds.data)) {
         const todayEntry = ds.data.find((x) => x.date === todayStr);
@@ -489,8 +493,18 @@ export default function MyPage() {
                         <img src="/icons/courseThumbnailIcon.svg" width={48} height={48} alt="" />
                       </div>
                       <div className="flex-1 flex flex-col gap-3">
-                        <div>
+                        {/* 제목 + 커리큘럼 페이지 이동(>) */}
+                        <div className="flex items-center justify-between gap-3">
                           <p className="text-lg font-semibold leading-7 text-[#1F2937]">{c.courseTitle}</p>
+                          <Link
+                            href={`/learning/${c.courseId}`}
+                            aria-label="강의 커리큘럼 보기"
+                            className="w-6 h-6 flex items-center justify-center text-[#4B5563] hover:text-[#2F5DAA] transition-colors flex-shrink-0"
+                          >
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                              <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </Link>
                         </div>
                         <div className="flex flex-col gap-2">
                           <div className="flex items-center justify-between">
@@ -504,8 +518,11 @@ export default function MyPage() {
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-[#4B5563]">최근 학습: {formatDisplayDate(c.lastStudiedAt)}</span>
                           <Link
-                            href={`/learning/videos/${c.courseId}`}
-                            className="w-[95px] h-10 bg-[#2F5DAA] rounded-[10px] flex items-center justify-center text-white text-base font-semibold hover:bg-[#1D3E75] transition-colors"
+                            href={c.lastVideoId ? `/learning/videos/${c.lastVideoId}` : '#'}
+                            aria-disabled={!c.lastVideoId}
+                            className={`w-[95px] h-10 rounded-[10px] flex items-center justify-center text-white text-base font-semibold transition-colors ${
+                              c.lastVideoId ? 'bg-[#2F5DAA] hover:bg-[#1D3E75]' : 'bg-[#9CA3AF] pointer-events-none'
+                            }`}
                           >
                             이어보기
                           </Link>
@@ -531,13 +548,16 @@ export default function MyPage() {
                     </div>
                   ) : (completed.map((c) => (
                     <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-5 flex gap-5 items-center">
-                      <div className="w-40 h-24 bg-[#F8FAFC] rounded-2xl flex items-center justify-center flex-shrink-0">
+                      <Link
+                        href={`/courses/${c.courseId}`}
+                        className="w-40 h-24 bg-[#F8FAFC] rounded-2xl flex items-center justify-center flex-shrink-0 hover:bg-[#EEF2F7] transition-colors"
+                      >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src="/icons/trophyIcon.svg" width={48} height={48} alt="" />
-                      </div>
+                      </Link>
                       <div className="flex-1 flex flex-col gap-3">
                         <div className="flex items-start justify-between gap-3">
-                          <p className="text-lg font-semibold leading-7 text-[#1F2937]">{c.courseTitle}</p>
+                          <Link href={`/courses/${c.courseId}`} className="text-lg font-semibold leading-7 text-[#1F2937] hover:text-[#2F5DAA] transition-colors">{c.courseTitle}</Link>
                           <span className="flex-shrink-0 px-4 py-2 bg-[rgba(22,163,74,0.1)] text-[#16A34A] text-sm font-semibold rounded-2xl">
                             수강 완료
                           </span>
@@ -546,7 +566,7 @@ export default function MyPage() {
                           <div className="h-full bg-[#16A34A] rounded-full" style={{ width: '100%' }} />
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-[#4B5563]">완료일: {formatDisplayDate(c.lastStudiedAt)}</span>
+                          <span className="text-sm text-[#4B5563]">완료일: {formatDisplayDate(c.completedAt)}</span>
                           {reviewMap[c.courseId] ? (
                             <Link
                               href={`/courses/${c.courseId}#reviews`}

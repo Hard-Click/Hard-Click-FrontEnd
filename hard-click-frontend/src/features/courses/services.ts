@@ -295,7 +295,7 @@ const MOCK_COURSE_DETAIL: CourseDetail = {
       title: '섹션 1: 함수의 극한',
       lessons: [
         { lessonId: 1, title: 'OT 및 학습 방향', duration: '05:23', isPreview: true },
-        { lessonId: 2, title: '함수의 극한 개념 정리', duration: '12:45', isPreview: true },
+        { lessonId: 2, title: '함수의 극한 개념 정리', duration: '12:45', isPreview: false },
         { lessonId: 3, title: '극한값 계산 문제풀이', duration: '18:30', isPreview: false },
       ],
     },

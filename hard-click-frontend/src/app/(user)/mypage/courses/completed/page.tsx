@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
 import { createReview } from '@/features/reviews/services';
-import { getMyCourses } from '@/features/users/services';
-import type { MyCourse } from '@/features/users/types';
+import { getMyCompletedCourses } from '@/features/users/services';
+import type { CompletedCourse } from '@/features/users/types';
 
 /** ISO 날짜 → YYYY.MM.DD */
 function formatDisplayDate(iso: string | null): string {
@@ -42,15 +42,13 @@ export default function CompletedCoursesPage() {
   const router = useRouter();
   const [reviewMap, setReviewMap] = useState<Record<number, StoredReview>>({});
   const [reviewTargetId, setReviewTargetId] = useState<number | null>(null);
-  const [completed, setCompleted] = useState<MyCourse[]>([]);
+  const [completed, setCompleted] = useState<CompletedCourse[]>([]);
 
   useEffect(() => {
     setReviewMap(loadStoredReviews());
-    getMyCourses().then((res) => {
-      if (res.success) {
-        // 백엔드 통합 endpoint — 수강 완료 강의만 필터링
-        setCompleted(res.data.filter((c) => c.progressRate === 100));
-      }
+    // 백엔드 완료 강의 전용 endpoint (GET /api/members/me/courses/completed)
+    getMyCompletedCourses().then((res) => {
+      if (res.success) setCompleted(res.data);
     });
   }, []);
 
@@ -129,11 +127,14 @@ export default function CompletedCoursesPage() {
                     key={course.courseId}
                     className="border border-[#E2E8F0] rounded-[20px] p-5 flex gap-5 items-center"
                   >
-                    {/* 트로피 박스 */}
-                    <div className="w-40 h-[140px] bg-[#F8FAFC] rounded-2xl flex items-center justify-center flex-shrink-0">
+                    {/* 트로피 박스 — 강의 상세로 (완료 API엔 lastVideoId 없음) */}
+                    <Link
+                      href={`/courses/${course.courseId}`}
+                      className="w-40 h-[140px] bg-[#F8FAFC] rounded-2xl flex items-center justify-center flex-shrink-0 hover:bg-[#EEF2F7] transition-colors"
+                    >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src="/icons/trophyIcon.svg" width={48} height={48} alt="" />
-                    </div>
+                    </Link>
 
                     {/* 우측 컨텐츠 */}
                     <div className="flex-1 flex flex-col gap-[15px]">
@@ -153,7 +154,7 @@ export default function CompletedCoursesPage() {
 
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-[#4B5563]">
-                          완료일: {formatDisplayDate(course.lastStudiedAt)}
+                          완료일: {formatDisplayDate(course.completedAt)}
                         </span>
                         {hasReview ? (
                           <Link
