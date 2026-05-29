@@ -46,6 +46,7 @@ export default function CommunityDetailContent() {
   const [post, setPost] = useState<PostDetail | null>(null);
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const [blobUrls, setBlobUrls] = useState<string[]>([]);
 
   const [commentText, setCommentText] = useState('');
   const [replyInputId, setReplyInputId] = useState<number | null>(null);
@@ -88,10 +89,39 @@ export default function CommunityDetailContent() {
       if (commentsResult.success && commentsResult.data) {
         setComments(commentsResult.data.comments);
       }
+
+      // ✅ 이미지를 토큰 포함 fetch로 가져와 Blob URL로 변환
+      if (postResult.data.fileUrls && postResult.data.fileUrls.length > 0) {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+        const urls = await Promise.all(
+          postResult.data.fileUrls.map(async (url) => {
+            try {
+              const res = await fetch(url, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+              });
+              const blob = await res.blob();
+              return URL.createObjectURL(blob);
+            } catch {
+              return '';
+            }
+          }),
+        );
+        setBlobUrls(urls);
+      }
+
       setIsPageLoading(false);
     };
     load();
   }, [postId, router]);
+
+  // Blob URL 메모리 해제
+  useEffect(() => {
+    return () => {
+      blobUrls.forEach((url) => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    };
+  }, [blobUrls]);
 
   if (isPageLoading || !post) {
     return (
@@ -339,20 +369,22 @@ export default function CommunityDetailContent() {
         </p>
 
         {/* 첨부파일 */}
-        {post.fileUrls && post.fileUrls.length > 0 && (
+        {blobUrls.length > 0 && (
           <div className="mt-4 flex flex-col gap-2">
             <span className="text-xs font-semibold text-[#64748B]">첨부파일</span>
             <div className="flex flex-wrap gap-3">
-              {post.fileUrls.map((url, i) => (
-                <a key={i} href={url} target="_blank" rel="noopener noreferrer">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={url}
-                    alt={`첨부이미지-${i + 1}`}
-                    className="max-h-[300px] max-w-full rounded-xl border border-[#E2E8F0] object-contain"
-                  />
-                </a>
-              ))}
+              {blobUrls.map((blobUrl, i) =>
+                blobUrl ? (
+                  <a key={i} href={blobUrl} target="_blank" rel="noopener noreferrer">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={blobUrl}
+                      alt={`첨부이미지-${i + 1}`}
+                      className="max-h-[300px] max-w-full rounded-xl border border-[#E2E8F0] object-contain"
+                    />
+                  </a>
+                ) : null,
+              )}
             </div>
           </div>
         )}
