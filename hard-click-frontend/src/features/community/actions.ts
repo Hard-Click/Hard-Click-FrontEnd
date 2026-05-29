@@ -36,15 +36,16 @@ export async function getPostDetailAction(postId: number) {
   return getPostDetail(postId);
 }
 
-export async function createPostAction(body: CreatePostRequest) {
-  return createPost(body);
+export async function createPostAction(body: CreatePostRequest, files?: File[]) {
+  return createPost(body, files);
 }
 
 export async function updatePostAction(
   postId: number,
   body: UpdatePostRequest,
+  files?: File[],
 ) {
-  return updatePost(postId, body);
+  return updatePost(postId, body, files);
 }
 
 export async function deletePostAction(postId: number) {

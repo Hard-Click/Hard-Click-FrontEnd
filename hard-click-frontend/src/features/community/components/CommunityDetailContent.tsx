@@ -240,7 +240,7 @@ export default function CommunityDetailContent() {
       {/* back button */}
       <button
         type="button"
-        onClick={() => router.back()}
+        onClick={() => router.push('/community')}
         className="mb-6 cursor-pointer flex items-center gap-2 text-sm font-medium text-[#4B5563]"
       >
         <Image src="/icons/back.svg" alt="back" width={16} height={16} />

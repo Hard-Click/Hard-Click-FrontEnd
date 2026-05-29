@@ -30,6 +30,7 @@ export default function CommunityWriteForm({
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(initialCategory);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [subjects, setSubjects] = useState<SubjectItem[]>([]);
 
   useEffect(() => {
@@ -83,6 +84,7 @@ export default function CommunityWriteForm({
     setDescriptionError('');
     setFocusedErrorField(null);
     setPreviewImages([]);
+    setSelectedFiles([]);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,9 +107,10 @@ export default function CommunityWriteForm({
       }
     }
 
-    const selectedFiles = Array.from(files).slice(0, 2);
-    const imageUrls = selectedFiles.map((file) => URL.createObjectURL(file));
+    const newFiles = Array.from(files).slice(0, 2);
+    const imageUrls = newFiles.map((file) => URL.createObjectURL(file));
     setPreviewImages((prev) => [...prev, ...imageUrls].slice(0, 2));
+    setSelectedFiles((prev) => [...prev, ...newFiles].slice(0, 2));
     e.target.value = '';
   };
 
@@ -152,12 +155,14 @@ export default function CommunityWriteForm({
         ? subjects.find((s) => s.subjectName === subject)?.subjectId
         : undefined;
 
+    const filesToUpload = selectedFiles.length > 0 ? selectedFiles : undefined;
+
     if (mode === 'edit' && postId) {
       const result = await updatePostAction(postId, {
         title,
         content,
         ...(subjectId !== undefined ? { subjectId } : {}),
-      });
+      }, filesToUpload);
       setIsSubmitting(false);
       if (!result.success) {
         toast.error(result.message || '게시글 수정에 실패했습니다.');
@@ -171,7 +176,7 @@ export default function CommunityWriteForm({
         title,
         content,
         ...(subjectId !== undefined ? { subjectId } : {}),
-      });
+      }, filesToUpload);
       setIsSubmitting(false);
       if (!result.success || !('data' in result) || !result.data?.postId) {
         toast.error(result.message || '게시글 등록에 실패했습니다.');
@@ -230,7 +235,7 @@ export default function CommunityWriteForm({
         {/* back button */}
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={() => router.push('/community')}
           className="mb-6 cursor-pointer flex items-center gap-2 text-sm font-medium text-[#4B5563]"
         >
           <Image src="/icons/back.svg" alt="back" width={16} height={16} />
@@ -596,9 +601,8 @@ export default function CommunityWriteForm({
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          setPreviewImages((prev) =>
-                            prev.filter((_, i) => i !== index),
-                          );
+                          setPreviewImages((prev) => prev.filter((_, i) => i !== index));
+                          setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
                         }}
                         className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white transition hover:bg-black/80"
                       >
@@ -634,7 +638,7 @@ export default function CommunityWriteForm({
           <div className="flex items-center gap-4">
             <button
               type="button"
-              onClick={() => router.back()}
+              onClick={() => router.push('/community')}
               className="h-12 flex-1 rounded-xl border border-[#E2E8F0] bg-white text-sm font-semibold text-[#4B5563]"
             >
               취소

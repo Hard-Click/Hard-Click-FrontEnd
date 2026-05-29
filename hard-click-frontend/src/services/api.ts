@@ -20,7 +20,7 @@ export interface ApiResponse<T = unknown> {
 const axiosInstance = axios.create({
   baseURL: '',
   headers: {
-    'Content-Type': 'application/json',
+
   },
 });
 
@@ -62,6 +62,9 @@ async function request<T>(
       method,
       url,
       data,
+      headers: data instanceof FormData
+        ? { 'Content-Type': 'multipart/form-data' }
+        : { 'Content-Type': 'application/json' },
     });
     return withSuccess(response.data);
   } catch (error) {
