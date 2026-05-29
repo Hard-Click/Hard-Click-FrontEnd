@@ -24,10 +24,11 @@ export default function EditCoursePage() {
       .then((data) => {
         if (data) {
           setCourse({
+            courseId,
             title: data.title,
             category: data.subjectName,
             description: data.description,
-            priceType: data.isFree ? '무료' : '유료',
+            priceType: data.isFree ? 'FREE' : 'PAID',
             price: data.isFree ? '' : String(data.price),
             thumbnailUrl: data.thumbnailUrl,
             thumbnailName: '',
@@ -57,6 +58,7 @@ export default function EditCoursePage() {
     <CourseCreateForm
       mode="edit"
       initialData={{
+        courseId: course.courseId,
         title: course.title,
         subject: course.category,
         description: course.description,
