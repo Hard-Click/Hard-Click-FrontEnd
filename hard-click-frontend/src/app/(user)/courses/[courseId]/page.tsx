@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { authStore } from '@/store/auth.store';
 // TODO: 수강신청 모달 — 팀원 결제 모달 확인 후 연결
 // TODO: 리뷰 삭제 확인 모달 — 팀원 모달 확인 후 연결
 import { getCourseDetail } from '@/features/courses/services';
@@ -220,6 +221,7 @@ function SideNav({ activeId, onNav }: { activeId: string; onNav: (id: string) =>
 /* ── 메인 페이지 ── */
 export default function CourseDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const courseId = Number(params.courseId);
 
   const [course, setCourse] = useState<CourseDetail | null>(null);
@@ -240,6 +242,16 @@ export default function CourseDetailPage() {
 
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewPage, setReviewPage] = useState(1);
+
+  /* 미리보기 클릭 가드 — 비로그인 시 차단 (영상 API가 JWT 필수, 401 응답 방지) */
+  const handlePreviewClick = (lesson: CurriculumLesson) => {
+    if (!authStore.isAuthenticated()) {
+      toast.error('로그인이 필요합니다');
+      router.push('/auth/login');
+      return;
+    }
+    setPreviewLesson(lesson);
+  };
 
   useEffect(() => {
     getCourseDetail(courseId).then(data => {
@@ -792,7 +804,7 @@ export default function CourseDetailPage() {
                         key={section.sectionId}
                         section={section}
                         defaultOpen={idx === 0}
-                        onPreviewClick={setPreviewLesson}
+                        onPreviewClick={handlePreviewClick}
                       />
                     ))}
                   </div>
