@@ -18,8 +18,13 @@ import type {
   UpdateCommentRequest,
 } from './types';
 
-export async function getPostsAction(boardType: BoardType = 'ALL', page = 0) {
-  return getPosts(boardType, page);
+export async function getPostsAction(
+  boardType: BoardType = 'ALL',
+  page = 0,
+  keyword?: string,
+  sort?: string,
+) {
+  return getPosts(boardType, page, keyword, sort);
 }
 
 export async function getPostDetailAction(postId: number) {

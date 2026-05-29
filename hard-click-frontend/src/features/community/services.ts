@@ -10,10 +10,23 @@ import type {
   UpdateCommentRequest,
 } from './types';
 
-export async function getPosts(boardType: BoardType = 'ALL', page = 0) {
-  return api.get<PostListResponse>(
-    `/api/boards/${boardType}/posts?page=${page}`,
-  );
+export async function getPosts(
+  boardType: BoardType = 'ALL',
+  page = 0,
+  keyword?: string,
+  sort?: string,
+) {
+  const params = new URLSearchParams();
+  params.set('page', String(page));
+  if (keyword) params.set('keyword', keyword);
+  if (sort) params.set('sort', sort);
+
+  const url =
+    boardType === 'ALL'
+      ? `/api/boards/posts?${params.toString()}`
+      : `/api/boards/${boardType}/posts?${params.toString()}`;
+
+  return api.get<PostListResponse>(url);
 }
 
 export async function getPostDetail(postId: number) {
