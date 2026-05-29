@@ -51,7 +51,7 @@ export async function updateProfileImage(profileImage: File) {
       success: true,
       httpStatus: 200,
       message: '프로필 이미지가 변경되었습니다.',
-      data: { profileImageUrl: '' } as UpdateProfileImageResponse,
+      data: {} as UpdateProfileImageResponse,
     };
   }
 
