@@ -337,6 +337,24 @@ export default function CommunityDetailContent() {
         <p className="whitespace-pre-line text-sm leading-relaxed text-[#374151]">
           {post.content}
         </p>
+
+        {/* 첨부파일 */}
+        {post.fileUrls && post.fileUrls.length > 0 && (
+          <div className="mt-4 flex flex-col gap-2">
+            <span className="text-xs font-semibold text-[#64748B]">첨부파일</span>
+            {post.fileUrls.map((url, i) => (
+              <a
+                key={i}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-[#2F5DAA] underline break-all"
+              >
+                {url.substring(url.lastIndexOf('/') + 1)}
+              </a>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* comments card */}
