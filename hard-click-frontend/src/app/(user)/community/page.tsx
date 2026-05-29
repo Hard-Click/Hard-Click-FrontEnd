@@ -1,48 +1,58 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import CommunityFilterTabs from '@/features/community/components/CommunityFilterTabs';
-import CommunityToolBar from '@/features/community/components/CommunityToolBar';
 import PostActionButtons from '@/features/community/components/PostActionButtons';
+import { getPostsAction } from '@/features/community/actions';
+import type { PostListItem } from '@/features/community/types';
+import {
+  BOARD_TYPE_LABEL,
+  POST_STATUS_LABEL,
+} from '@/features/community/types';
+
+function formatDate(isoString: string): string {
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  if (diffMins < 1) return '방금 전';
+  if (diffMins < 60) return `${diffMins}분 전`;
+  if (diffHours < 24) return `${diffHours}시간 전`;
+  if (diffDays < 7) return `${diffDays}일 전`;
+  return date.toLocaleDateString('ko-KR');
+}
 
 export default function CommunityPage() {
-  // 임의 데이터!! 나중에 연동 하고 지우깅
-  const mockPosts = [
-    {
-      id: 1,
-      category: '질문게시판',
-      title: 'React Hook useEffect 사용 시 무한 루프 문제 해결 방법',
-      author: '이*호',
-      time: '2시간 전',
-      views: 145,
-      comments: 12,
-      status: '채택 완료',
-    },
-    {
-      id: 2,
-      category: '자유게시판',
-      title: '프론트엔드 개발자 로드맵 공유합니다',
-      author: '박*영',
-      time: '5시간 전',
-      views: 321,
-      comments: 23,
-    },
-    {
-      id: 3,
-      category: '질문게시판',
-      title: '가나다라',
-      author: '이*윤',
-      time: '8시간 전',
-      views: 120,
-      comments: 60,
-      status: '답변 대기',
-    },
-  ];
+  const [posts, setPosts] = useState<PostListItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    getPostsAction('ALL').then((result) => {
+      if (result.success && result.data) {
+        setPosts(result.data.content);
+      }
+      setIsLoading(false);
+    });
+  }, []);
+
+  const mappedPosts = posts.map((p) => ({
+    id: p.postId,
+    category: BOARD_TYPE_LABEL[p.boardType],
+    title: p.title,
+    author: p.authorName,
+    time: formatDate(p.createdAt),
+    views: p.viewCount,
+    comments: p.commentCount,
+    status: p.status ? POST_STATUS_LABEL[p.status] : undefined,
+  }));
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] px-8 py-10">
       <div className="mx-auto w-full max-w-[1152px]">
-        {/* top */}
         <div className="mb-8 flex items-start justify-between">
-          {/* left */}
           <div>
             <div className="mb-3 flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-[20px] bg-[#2F5DAA]">
@@ -53,20 +63,20 @@ export default function CommunityPage() {
                   height={30}
                 />
               </div>
-
               <h1 className="text-4xl font-bold text-[#1E293B]">커뮤니티</h1>
             </div>
-
             <p className="text-base text-[#4B5563]">
               함께 성장하는 학습 커뮤니티에 참여하세요
             </p>
           </div>
-
-          {/* right */}
           <PostActionButtons />
         </div>
 
-        <CommunityFilterTabs posts={mockPosts} />
+        {isLoading ? (
+          <div className="py-20 text-center text-[#64748B]">불러오는 중...</div>
+        ) : (
+          <CommunityFilterTabs posts={mappedPosts} />
+        )}
       </div>
     </div>
   );

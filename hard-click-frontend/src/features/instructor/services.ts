@@ -71,7 +71,7 @@ export async function createCourse(payload: {
     };
   }
 
-  return api.post('/api/courses', payload); // headers 제거
+  return api.post<{ courseId: number }>('/api/courses', payload);
 }
 
 /**
