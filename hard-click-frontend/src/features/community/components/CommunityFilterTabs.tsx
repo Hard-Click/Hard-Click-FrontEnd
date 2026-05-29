@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import CommunityPostCard from './CommunityPostCard';
 import PostEmptyState from './PostEmptyState';
 import CommunityToolBar from './CommunityToolBar';
-<<<<<<< HEAD
 import { getPostsAction } from '../actions';
 import type { PostListItem, BoardType } from '../types';
 import { BOARD_TYPE_LABEL } from '../types';
@@ -126,7 +125,6 @@ export default function CommunityFilterTabs() {
         <CommunityToolBar
           sortType={sortType}
           onSortChange={setSortType}
-<<<<<<< HEAD
           searchValue={searchValue}
           onSearchChange={setSearchValue}
           onSearch={handleSearch}
