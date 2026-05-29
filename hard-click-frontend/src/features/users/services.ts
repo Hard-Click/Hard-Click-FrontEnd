@@ -3,8 +3,8 @@ import { api } from '@/services/api';
 import { authStore } from '@/store/auth.store';
 import type {
   MyProfile,
-  UpdateProfileRequest,
-  UpdateProfileResponse,
+  MyProfileApi,
+  UpdateProfileImageResponse,
   ChangePasswordRequest,
   MyCourse,
 } from './types';
@@ -12,7 +12,8 @@ import type {
 const USE_MOCK = false;
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
 
-/* ───── 내 프로필 조회 (GET /api/members/me) ───── */
+/* ───── 내 프로필 조회 (GET /api/members/me) ─────
+ * 백엔드는 memberId 필드로 내려옴 — 프론트 타입(MyProfile)에 맞게 userId로 매핑한다. */
 export async function getMyProfile() {
   if (USE_MOCK) {
     return {
@@ -21,83 +22,81 @@ export async function getMyProfile() {
       message: '내 프로필을 조회했습니다.',
       data: {
         userId: 7,
+        name: '안현',
         email: 'hyun030514@naver.com',
-        nickname: '안현',
-        profileImageUrl: '',
+        profileImageUrl: null,
       } as MyProfile,
     };
   }
-  return api.get<MyProfile>('/api/members/me');
+  const res = await api.get<MyProfileApi>('/api/members/me');
+  return {
+    ...res,
+    data: res.data
+      ? ({
+          userId: res.data.memberId,
+          name: res.data.name,
+          email: res.data.email,
+          profileImageUrl: res.data.profileImageUrl,
+        } as MyProfile)
+      : res.data,
+  };
 }
 
-/* ───── 내 프로필 수정 (PATCH /api/members/me) ─────
- * 파일 업로드가 포함되면 multipart/form-data, 없으면 application/json.
- * 비밀번호 변경은 별도 endpoint(`changePassword`) 사용 — 단독 변경 시 호출. */
-export async function updateMyProfile(body: UpdateProfileRequest) {
+/* ───── 프로필 이미지 변경 (PATCH /api/members/me/profile-image) ─────
+ * multipart/form-data 로 profileImage 필드만 전송. */
+export async function updateProfileImage(profileImage: File) {
   if (USE_MOCK) {
     return {
       success: true,
       httpStatus: 200,
-      message: '회원 정보가 수정되었습니다.',
-      data: {
-        userId: 7,
-        nickname: body.nickname ?? '안현',
-        profileImageUrl: '',
-      } as UpdateProfileResponse,
+      message: '프로필 이미지가 변경되었습니다.',
+      data: { profileImageUrl: '' } as UpdateProfileImageResponse,
     };
   }
 
-  // 파일 포함 시 multipart 별도 처리 (axios interceptor가 'Content-Type'을 덮어쓰지 않도록)
-  if (body.profileImage) {
-    const formData = new FormData();
-    if (body.nickname !== undefined) formData.append('nickname', body.nickname);
-    if (body.currentPassword !== undefined)
-      formData.append('currentPassword', body.currentPassword);
-    if (body.newPassword !== undefined)
-      formData.append('newPassword', body.newPassword);
-    formData.append('profileImage', body.profileImage);
+  const formData = new FormData();
+  formData.append('profileImage', profileImage);
 
-    try {
-      const token = authStore.getAccessToken();
-      const memberId = authStore.getMemberId();
-      const response = await axios.patch(`${BASE_URL}/api/members/me`, formData, {
+  try {
+    const token = authStore.getAccessToken();
+    const memberId = authStore.getMemberId();
+    const response = await axios.patch(
+      `${BASE_URL}/api/members/me/profile-image`,
+      formData,
+      {
         headers: {
           'Content-Type': 'multipart/form-data',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
           ...(memberId ? { 'X-Member-Id': String(memberId) } : {}),
         },
-      });
-      return {
-        success: true,
-        httpStatus: response.data?.httpStatus ?? response.status,
-        message: response.data?.message ?? '회원 정보가 수정되었습니다.',
-        data: response.data?.data as UpdateProfileResponse,
+      },
+    );
+    return {
+      success: true,
+      httpStatus: response.data?.httpStatus ?? response.status,
+      message: response.data?.message ?? '프로필 이미지가 변경되었습니다.',
+      data: response.data?.data as UpdateProfileImageResponse,
+    };
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      const body = error.response.data as {
+        httpStatus?: number;
+        message?: string;
       };
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        const body = error.response.data as {
-          httpStatus?: number;
-          message?: string;
-        };
-        return {
-          success: false,
-          httpStatus: body?.httpStatus ?? error.response.status,
-          message: body?.message ?? '회원 정보 수정에 실패했습니다.',
-          data: undefined as unknown as UpdateProfileResponse,
-        };
-      }
       return {
         success: false,
-        httpStatus: 500,
-        message: '서버와 연결할 수 없습니다',
-        data: undefined as unknown as UpdateProfileResponse,
+        httpStatus: body?.httpStatus ?? error.response.status,
+        message: body?.message ?? '프로필 이미지 변경에 실패했습니다.',
+        data: undefined as unknown as UpdateProfileImageResponse,
       };
     }
+    return {
+      success: false,
+      httpStatus: 500,
+      message: '서버와 연결할 수 없습니다',
+      data: undefined as unknown as UpdateProfileImageResponse,
+    };
   }
-
-  // 파일 없으면 JSON
-  const { profileImage, ...jsonBody } = body;
-  return api.patch<UpdateProfileResponse>('/api/members/me', jsonBody);
 }
 
 /* ───── 비밀번호 변경 (PATCH /api/members/me/password) ─────

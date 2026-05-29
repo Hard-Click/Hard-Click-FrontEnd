@@ -1,28 +1,25 @@
 /** 사용자(users) 도메인 타입 — 노션 RestAPI 명세 매칭 */
 
-/* ───── 내 프로필 조회 (GET /api/members/me) ───── */
+/* ───── 내 프로필 조회 (GET /api/members/me) ─────
+ * 백엔드 응답은 memberId 필드로 내려옴 — service에서 userId로 매핑한다. */
+export interface MyProfileApi {
+  memberId: number;
+  name: string;
+  email: string;
+  profileImageUrl: string | null;
+}
+
 export interface MyProfile {
   userId: number;
+  name: string;
   email: string;
-  nickname: string;
-  profileImageUrl: string;
+  profileImageUrl: string | null;
 }
 
-/* ───── 내 프로필 수정 (PATCH /api/members/me) ─────
- * 비밀번호 변경은 별도 endpoint(/api/members/me/password) 사용 — newPassword 필드는
- * multipart 이미지 업로드와 동시 변경하는 경우에만 사용. 단독 비밀번호 변경은 changePassword. */
-export interface UpdateProfileRequest {
-  nickname?: string;
-  currentPassword?: string;
-  newPassword?: string;
-  /** multipart/form-data 모드에서만 사용 */
-  profileImage?: File;
-}
-
-export interface UpdateProfileResponse {
-  userId: number;
-  nickname: string;
-  profileImageUrl: string;
+/* ───── 프로필 이미지 변경 (PATCH /api/members/me/profile-image) ─────
+ * multipart/form-data 로 profileImage 필드만 전송. 비밀번호 변경은 별도 endpoint(/api/members/me/password). */
+export interface UpdateProfileImageResponse {
+  profileImageUrl: string | null;
 }
 
 /* ───── 비밀번호 변경 (PATCH /api/members/me/password) ───── */
