@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
         source: "/community/:path*",
         destination: `${BACKEND_URL}/community/:path*`,
       },
+      {
+        source: "/uploads/:path*",
+        destination: `${BACKEND_URL}/uploads/:path*`,
+      },
     ];
   },
 };
