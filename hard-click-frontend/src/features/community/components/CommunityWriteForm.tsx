@@ -1,58 +1,15 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { COMMUNITY_ERRORS } from '../constants/errorMessages';
 import LoadingModal from '@/components/ui/loadingModal';
-import { createPostAction, updatePostAction } from '../actions';
+import { createPostAction, updatePostAction, getSubjectsAction } from '../actions';
 import { BOARD_TYPE_VALUE } from '../types';
 
 const FILTERS = ['자유게시판', '질문게시판', '스터디모집'];
-
-const SUBJECTS = [
-  '국어',
-  '화법과 작문',
-  '언어와 매체',
-  '수학',
-  '확률과 통계',
-  '미적분',
-  '기하',
-  '영어',
-  '한국사',
-  '생활과 윤리',
-  '윤리와 사상',
-  '한국지리',
-  '세계지리',
-  '동아시아사',
-  '세계사',
-  '경제',
-  '정치와 법',
-  '사회문화',
-  '물리학I',
-  '물리학II',
-  '화학I',
-  '화학II',
-  '생명과학I',
-  '생명과학II',
-  '지구과학I',
-  '지구과학II',
-  '농업 기초 기술',
-  '공업 일반',
-  '상업 경제',
-  '수산·해운 산업 기초',
-  '인간 발달',
-  '독일어I',
-  '프랑스어I',
-  '스페인어I',
-  '중국어I',
-  '일본어I',
-  '러시아어I',
-  '아랍어I',
-  '베트남어I',
-  '한문I',
-];
 
 interface CommunityWriteFormProps {
   mode?: 'create' | 'edit';
@@ -72,6 +29,15 @@ export default function CommunityWriteForm({
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(initialCategory);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [subjects, setSubjects] = useState<string[]>([]);
+
+  useEffect(() => {
+    getSubjectsAction().then((result) => {
+      if (result.success && result.data) {
+        setSubjects(result.data.map((s) => s.subjectName));
+      }
+    });
+  }, []);
 
   const [title, setTitle] = useState(initialTitle);
   const [titleError, setTitleError] = useState('');
@@ -387,7 +353,7 @@ export default function CommunityWriteForm({
                 </button>
                 {isSubjectOpen && (
                   <div className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-[#E2E8F0] bg-white shadow-lg">
-                    {SUBJECTS.map((s) => (
+                    {subjects.map((s) => (
                       <button
                         key={s}
                         type="button"
@@ -448,7 +414,7 @@ export default function CommunityWriteForm({
                   </button>
                   {isSubjectOpen && (
                     <div className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-[#E2E8F0] bg-white shadow-lg">
-                      {SUBJECTS.map((s) => (
+                      {subjects.map((s) => (
                         <button
                           key={s}
                           type="button"

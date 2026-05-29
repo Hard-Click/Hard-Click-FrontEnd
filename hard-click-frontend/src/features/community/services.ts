@@ -8,12 +8,26 @@ import type {
   UpdatePostRequest,
   CreateCommentRequest,
   UpdateCommentRequest,
+  SubjectItem,
 } from './types';
 
-export async function getPosts(boardType: BoardType = 'ALL', page = 0) {
+export async function getPosts(
+  boardType: BoardType = 'ALL',
+  page = 0,
+  keyword?: string,
+  sort?: string,
+) {
+  const params = new URLSearchParams();
+  params.set('page', String(page));
+  if (keyword) params.set('keyword', keyword);
+  if (sort) params.set('sort', sort);
   return api.get<PostListResponse>(
-    `/api/boards/${boardType}/posts?page=${page}`,
+    `/api/boards/${boardType}/posts?${params.toString()}`,
   );
+}
+
+export async function getSubjects() {
+  return api.get<SubjectItem[]>('/api/subjects');
 }
 
 export async function getPostDetail(postId: number) {

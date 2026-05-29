@@ -20,6 +20,13 @@ export const POST_STATUS_LABEL: Record<PostStatus, string> = {
   ADOPTED: '채택 완료',
 };
 
+// GET /api/subjects
+export interface SubjectItem {
+  subjectId: number;
+  subjectName: string;
+  courseCount: number;
+}
+
 // GET /api/boards/{boardType}/posts
 export interface PostListItem {
   postId: number;

@@ -3,14 +3,6 @@
 import { useState } from 'react';
 import Image from 'next/image';
 
-const SUBJECTS = [
-  '국어', '화법과 작문', '언어와 매체', '수학', '확률과 통계', '미적분', '기하', '영어', '한국사',
-  '생활과 윤리', '윤리와 사상', '한국지리', '세계지리', '동아시아사', '세계사', '경제', '정치와 법',
-  '사회문화', '물리학I', '물리학II', '화학I', '화학II', '생명과학I', '생명과학II', '지구과학I',
-  '지구과학II', '농업 기초 기술', '공업 일반', '상업 경제', '수산·해운 산업 기초', '인간 발달',
-  '독일어I', '프랑스어I', '스페인어I', '중국어I', '일본어I', '러시아어I', '아랍어I', '베트남어I', '한문I',
-];
-
 const SORT_FILTERS = ['최신순', '조회순', '댓글순'];
 
 interface CommunityToolBarProps {
@@ -22,6 +14,8 @@ interface CommunityToolBarProps {
   onReset?: () => void;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
+  onSearch?: () => void;
+  subjects?: string[];
 }
 
 export default function CommunityToolBar({
@@ -33,6 +27,8 @@ export default function CommunityToolBar({
   onReset,
   searchValue = '',
   onSearchChange,
+  onSearch,
+  subjects = [],
 }: CommunityToolBarProps) {
   const [isSubjectOpen, setIsSubjectOpen] = useState(false);
   const isQuestion = boardType === '질문게시판' || boardType === '전체';
@@ -53,6 +49,7 @@ export default function CommunityToolBar({
         </div>
         <button
           type="button"
+          onClick={onSearch}
           className="h-11 rounded-xl bg-[#2F5DAA] px-5 text-sm font-semibold text-white transition hover:bg-[#1D3E75]"
         >
           검색
@@ -93,7 +90,7 @@ export default function CommunityToolBar({
                   >
                     전체 과목
                   </button>
-                  {SUBJECTS.map((s) => (
+                  {subjects.map((s) => (
                     <button
                       key={s}
                       type="button"
