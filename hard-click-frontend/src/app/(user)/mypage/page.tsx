@@ -4,30 +4,11 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
-/* mock 리뷰 storage (테스트용) — 실제 API 연동 시 제거 */
-const REVIEW_STORAGE_KEY = 'mock_my_reviews';
-type StoredReview = { courseId: number; rating: number; content: string };
-
-function loadStoredReviews(): Record<number, StoredReview> {
-  if (typeof window === 'undefined') return {};
-  try {
-    const raw = window.localStorage.getItem(REVIEW_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveStoredReview(courseId: number, rating: number, content: string) {
-  if (typeof window === 'undefined') return;
-  const map = loadStoredReviews();
-  map[courseId] = { courseId, rating, content };
-  window.localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify(map));
-}
 import ProfileEditModal from '@/features/users/components/ProfileEditModal';
 import GrassYearlyModal from '@/features/grass/components/GrassYearlyModal';
 import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
 import { createReview } from '@/features/reviews/services';
+import { getMyActivities } from '@/features/mypage/services';
 import { getMyProfile, getMyCourses, getMyCompletedCourses } from '@/features/users/services';
 import { getStreak, getStudyTimeGrass, getLessonsGrass } from '@/features/grass/services';
 import { getMyRankingSummary } from '@/features/rankings/services';
@@ -248,7 +229,7 @@ const HEATMAP_MONTH = 5;
 export default function MyPage() {
   const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
   const [yearlyModalType, setYearlyModalType] = useState<'green' | 'orange' | null>(null);
-  const [reviewMap, setReviewMap] = useState<Record<number, StoredReview>>({});
+  const [reviewedIds, setReviewedIds] = useState<Set<number>>(new Set());
   const [reviewTargetId, setReviewTargetId] = useState<number | null>(null);
 
   /* API 데이터 (USE_MOCK=true 시 service가 mock 반환) */
@@ -267,7 +248,12 @@ export default function MyPage() {
   };
 
   useEffect(() => {
-    setReviewMap(loadStoredReviews());
+    // 내가 작성한 수강평 courseId 집합 (GET /api/members/me/activities)
+    getMyActivities().then((res) => {
+      if (res.success && res.data) {
+        setReviewedIds(new Set(res.data.reviews.map((r) => r.courseId)));
+      }
+    });
 
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -315,12 +301,7 @@ export default function MyPage() {
       toast.error(res.message || '수강평 등록에 실패했습니다.');
       return;
     }
-    // mock 시각화용 localStorage — 백엔드 연동 후 GET /api/courses/{id}/reviews 로 대체 가능
-    saveStoredReview(reviewTargetId, rating, content);
-    setReviewMap((prev) => ({
-      ...prev,
-      [reviewTargetId]: { courseId: reviewTargetId, rating, content },
-    }));
+    setReviewedIds((prev) => new Set(prev).add(reviewTargetId));
     setReviewTargetId(null);
     toast.success(res.message || '수강평이 등록되었습니다.');
   };
@@ -567,7 +548,7 @@ export default function MyPage() {
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-[#4B5563]">완료일: {formatDisplayDate(c.completedAt)}</span>
-                          {reviewMap[c.courseId] ? (
+                          {reviewedIds.has(c.courseId) ? (
                             <Link
                               href={`/courses/${c.courseId}#reviews`}
                               className="w-[115px] h-10 flex items-center justify-center bg-[#2F5DAA] rounded-[10px] text-base font-semibold text-white hover:bg-[#1D3E75] transition-colors"

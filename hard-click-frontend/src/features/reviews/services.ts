@@ -49,6 +49,36 @@ export async function updateReview(
   );
 }
 
+/* ───── 리뷰 목록 조회 (GET /api/courses/{courseId}/reviews) ─────
+ * 비로그인 공개. sort: 'latest' | 'rating' (백엔드 enum 소문자), page 1-based
+ * 응답: { avgRating, totalCount, ratingStats:[{rating,count}], reviews:[...], currentPage, totalPages } */
+export interface ReviewListItemApi {
+  reviewId: number;
+  authorName: string;
+  authorInitial: string;
+  rating: number;
+  content: string;
+  createdDate: string;
+  isMyReview: boolean;
+}
+export interface ReviewListApiResponse {
+  avgRating: number | null;
+  totalCount: number;
+  ratingStats: Array<{ rating: number; count: number }>;
+  reviews: ReviewListItemApi[];
+  currentPage: number;
+  totalPages: number;
+}
+export async function getReviews(
+  courseId: number,
+  sort: 'latest' | 'rating' = 'latest',
+  page = 1,
+) {
+  return api.get<ReviewListApiResponse>(
+    `/api/courses/${courseId}/reviews?sort=${sort}&page=${page}`,
+  );
+}
+
 /* ───── 본인 리뷰 삭제 (DELETE /api/courses/{courseId}/reviews/{reviewId}) ─────
  * body 없음 → response body 없음 (200)
  * 403: 작성자 본인이 아님 | 404: 없는 리뷰 */

@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
 import { createReview } from '@/features/reviews/services';
 import { getMyCompletedCourses } from '@/features/users/services';
+import { getMyActivities } from '@/features/mypage/services';
 import type { CompletedCourse } from '@/features/users/types';
 
 /** ISO 날짜 → YYYY.MM.DD */
@@ -17,38 +18,22 @@ function formatDisplayDate(iso: string | null): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/* mock 리뷰 storage (mypage/page.tsx와 공유) */
-const REVIEW_STORAGE_KEY = 'mock_my_reviews';
-type StoredReview = { courseId: number; rating: number; content: string };
-
-function loadStoredReviews(): Record<number, StoredReview> {
-  if (typeof window === 'undefined') return {};
-  try {
-    const raw = window.localStorage.getItem(REVIEW_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveStoredReview(courseId: number, rating: number, content: string) {
-  if (typeof window === 'undefined') return;
-  const map = loadStoredReviews();
-  map[courseId] = { courseId, rating, content };
-  window.localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify(map));
-}
-
 export default function CompletedCoursesPage() {
   const router = useRouter();
-  const [reviewMap, setReviewMap] = useState<Record<number, StoredReview>>({});
+  const [reviewedIds, setReviewedIds] = useState<Set<number>>(new Set());
   const [reviewTargetId, setReviewTargetId] = useState<number | null>(null);
   const [completed, setCompleted] = useState<CompletedCourse[]>([]);
 
   useEffect(() => {
-    setReviewMap(loadStoredReviews());
     // 백엔드 완료 강의 전용 endpoint (GET /api/members/me/courses/completed)
     getMyCompletedCourses().then((res) => {
       if (res.success) setCompleted(res.data);
+    });
+    // 내가 작성한 수강평 courseId 집합 (GET /api/members/me/activities)
+    getMyActivities().then((res) => {
+      if (res.success && res.data) {
+        setReviewedIds(new Set(res.data.reviews.map((r) => r.courseId)));
+      }
     });
   }, []);
 
@@ -61,11 +46,7 @@ export default function CompletedCoursesPage() {
       toast.error(res.message || '수강평 등록에 실패했습니다.');
       return;
     }
-    saveStoredReview(reviewTargetId, rating, content);
-    setReviewMap((prev) => ({
-      ...prev,
-      [reviewTargetId]: { courseId: reviewTargetId, rating, content },
-    }));
+    setReviewedIds((prev) => new Set(prev).add(reviewTargetId));
     setReviewTargetId(null);
     toast.success(res.message || '수강평이 등록되었습니다.');
   };
@@ -120,8 +101,8 @@ export default function CompletedCoursesPage() {
               <EmptyState />
             ) : (
               completed.map((course) => {
-                // 백엔드 통합 endpoint에는 hasReview 없음 — 클라이언트 localStorage 기준으로 판단
-                const hasReview = !!reviewMap[course.courseId];
+                // 완료강의 응답엔 리뷰여부 없음 → activities(내 수강평)로 판단
+                const hasReview = reviewedIds.has(course.courseId);
                 return (
                   <article
                     key={course.courseId}
