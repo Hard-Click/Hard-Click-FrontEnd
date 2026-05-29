@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
+import { toast } from 'sonner';
 import { getMyProfile } from '@/features/users/services';
 import { authStore } from '@/store/auth.store';
 import { logout } from '@/features/auth/services';
@@ -14,6 +15,9 @@ const NAV_ITEMS = [
   { label: '랭킹', href: '/rankings' },
   { label: '마이페이지', href: '/mypage' },
 ];
+
+/** 비로그인 사용자에게 허용되는 메뉴 (그 외는 로그인 페이지로 이동) */
+const PUBLIC_NAV_HREFS = new Set<string>(['/courses']);
 
 const DROPDOWN_ITEMS = [
   { label: '찜한 강의', href: '/mypage/wishlist' },
@@ -77,10 +81,18 @@ export default function UserHeader() {
         <nav className="flex items-center justify-center gap-[60px]">
           {NAV_ITEMS.map((item) => {
             const isActive = pathname.startsWith(item.href);
+            const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+              // 비로그인 + 비공개 메뉴 → 토스트만 (페이지 이동 X)
+              if (!isLoggedIn && !PUBLIC_NAV_HREFS.has(item.href)) {
+                e.preventDefault();
+                toast.error('로그인이 필요합니다');
+              }
+            };
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={handleClick}
                 className={`h-10 px-4 flex items-center font-medium text-base text-white rounded-2xl transition-colors whitespace-nowrap ${
                   isActive ? 'bg-[#1D3E75]' : 'hover:bg-white/10'
                 }`}
