@@ -559,10 +559,15 @@ export async function getCourses(query?: CourseListQuery): Promise<CourseListIte
   const params = new URLSearchParams();
   params.set('page', '0');
   params.set('size', '100');
-  if (query?.subjectId) params.set('subjectId', String(query.subjectId));
   if (query?.keyword) params.set('keyword', query.keyword);
   // 백엔드 CourseSortType enum은 대문자(LATEST/POPULAR/RATING) — 소문자 전송 시 500
   params.set('sort', (query?.sort ?? 'latest').toUpperCase());
+  // 백엔드는 과목명(subject) 문자열로 필터 — subjectId를 과목명으로 변환해 전송
+  if (query?.subjectId) {
+    const subjects = await getSubjects();
+    const matched = subjects.find((s) => s.subjectId === query.subjectId);
+    if (matched) params.set('subject', matched.name);
+  }
 
   const response = await api.get<CourseListApiResponse>(`/api/courses?${params.toString()}`);
 
