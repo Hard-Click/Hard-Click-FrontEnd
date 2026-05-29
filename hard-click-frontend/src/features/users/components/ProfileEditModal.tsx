@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import LoadingModal from '@/components/ui/loadingModal';
 import WithdrawConfirmModal from './WithdrawConfirmModal';
 import {
-  updateMyProfile,
+  updateProfileImage,
   changePassword,
   withdrawAccount,
 } from '@/features/users/services';
@@ -198,8 +198,8 @@ export default function ProfileEditModal({
     setIsConfirmOpen(false);
     setIsSubmitting(true);
     const start = Date.now();
-    /* 비밀번호 변경은 별도 endpoint(PATCH /api/members/me/password) — newPasswordConfirm 포함.
-     * 이미지 변경은 multipart로 PATCH /api/members/me. */
+    /* 비밀번호 변경: PATCH /api/members/me/password — 현재 비밀번호 + 새 비밀번호 + 확인.
+     * 이미지 변경: PATCH /api/members/me/profile-image — multipart로 profileImage 만 전송 (비밀번호 X). */
     const res =
       step === 'password'
         ? await changePassword({
@@ -207,15 +207,12 @@ export default function ProfileEditModal({
             newPassword: newPw,
             newPasswordConfirm: newPwConfirm,
           })
-        : await updateMyProfile({
-            currentPassword: verifiedPassword,
-            profileImage: imageFile,
-          });
+        : await updateProfileImage(imageFile!);
     await ensureMinimumDelay(start);
     setIsSubmitting(false);
     if (!res.success) {
-      // 409: 현재 비밀번호 불일치 — Step 1로 복귀해서 다시 입력받기
-      if (res.httpStatus === 409) {
+      // 409: 현재 비밀번호 불일치 — Step 1로 복귀해서 다시 입력받기 (비밀번호 변경 케이스에만 해당)
+      if (res.httpStatus === 409 && step === 'password') {
         setStep('verify');
         setCurrentPw('');
         setVerifiedPassword('');

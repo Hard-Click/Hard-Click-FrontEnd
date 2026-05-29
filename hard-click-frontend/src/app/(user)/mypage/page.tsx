@@ -391,7 +391,7 @@ export default function MyPage() {
                       )}
                     </div>
                     <div className="flex flex-col">
-                      <p className="text-2xl font-bold text-[#1F2937] leading-8 mb-1">{profile?.nickname ?? ''}</p>
+                      <p className="text-2xl font-bold text-[#1F2937] leading-8 mb-1">{profile?.name ?? ''}</p>
                       <p className="text-base text-[#4B5563]">{profile?.email ?? ''}</p>
                     </div>
                   </div>
