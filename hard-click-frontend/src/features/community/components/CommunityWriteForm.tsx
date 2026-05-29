@@ -219,6 +219,9 @@ export default function CommunityWriteForm({
         boardType,
         title,
         content: contentToSend,
+        ...(activeTab === '질문게시판' && subject
+          ? { subjects: [subject] }
+          : {}),
       });
       setIsSubmitting(false);
       if (!result.success || !('data' in result) || !result.data?.postId) {

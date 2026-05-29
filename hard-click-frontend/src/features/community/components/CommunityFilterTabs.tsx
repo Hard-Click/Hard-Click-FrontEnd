@@ -36,6 +36,15 @@ export default function CommunityFilterTabs({
       : posts.filter((post) => post.category === activeTab);
 
   const [sortType, setSortType] = useState('최신순');
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [searchValue, setSearchValue] = useState('');
+
+  const handleReset = () => {
+    setSelectedSubject('');
+    setSortType('최신순');
+    setSearchValue('');
+  };
+
   const sortedPosts = [...filteredPosts].sort((a, b) => {
     if (sortType === '조회순') {
       return b.views - a.views;
@@ -75,7 +84,16 @@ export default function CommunityFilterTabs({
 
       {/* toolbar */}
       <div className="mt-6">
-        <CommunityToolBar sortType={sortType} onSortChange={setSortType} />
+        <CommunityToolBar
+          sortType={sortType}
+          onSortChange={setSortType}
+          boardType={activeTab}
+          selectedSubject={selectedSubject}
+          onSubjectChange={setSelectedSubject}
+          onReset={handleReset}
+          searchValue={searchValue}
+          onSearchChange={setSearchValue}
+        />
       </div>
 
       {/* posts */}

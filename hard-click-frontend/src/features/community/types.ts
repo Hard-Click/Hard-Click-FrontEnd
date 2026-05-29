@@ -81,6 +81,7 @@ export interface CreatePostRequest {
   boardType: Exclude<BoardType, 'ALL'>;
   title: string;
   content: string;
+  subjects?: string[];
   fileUrls?: string[];
 }
 
