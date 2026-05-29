@@ -60,8 +60,8 @@ export async function getPinnedNotices(): Promise<Notice[]> {
     return MOCK_NOTICES.filter(n => n.isPinned);
   }
 
-  // 노션 명세: GET /api/notices?page=0&size=10
-  const response = await api.get<NoticeApiResponse>('/api/notices?page=0&size=20');
+  // 노션 명세: GET /api/notices?type=GLOBAL&page=0&size=20
+  const response = await api.get<NoticeApiResponse>('/api/notices?type=GLOBAL&page=0&size=20');
 
   if (!response.success || !response.data) {
     return [];

@@ -6,15 +6,14 @@ import PostEmptyState from './PostEmptyState';
 import CommunityToolBar from './CommunityToolBar';
 import { getPostsAction, getSubjectsAction } from '../actions';
 import type { PostListItem, BoardType } from '../types';
-import { BOARD_TYPE_LABEL, POST_STATUS_LABEL } from '../types';
+import { BOARD_TYPE_LABEL } from '../types';
 
-const FILTERS = ['전체', '자유게시판', '질문게시판', '스터디모집'];
+const FILTERS = ['전체', '자유게시판', '질문게시판'];
 
 const TAB_TO_BOARD_TYPE: Record<string, BoardType> = {
   전체: 'ALL',
   자유게시판: 'FREE',
   질문게시판: 'QUESTION',
-  스터디모집: 'STUDY',
 };
 
 function formatDate(isoString: string): string {
@@ -78,7 +77,7 @@ export default function CommunityFilterTabs() {
     getPostsAction(boardType, 0, debouncedSearch || undefined, apiSort).then(
       (result) => {
         if (result.success && result.data) {
-          setPosts(result.data.content);
+          setPosts(result.data.posts);
         }
         setIsLoading(false);
       },
@@ -112,14 +111,13 @@ export default function CommunityFilterTabs() {
     time: formatDate(p.createdAt),
     views: p.viewCount,
     comments: p.commentCount,
-    status: p.status ? POST_STATUS_LABEL[p.status] : undefined,
   }));
 
   return (
     <>
       {/* filter tabs */}
       <div className="overflow-hidden rounded-[16px] border border-[#E2E8F0] bg-white p-1 shadow-sm">
-        <div className="grid grid-cols-4 gap-1">
+        <div className="grid grid-cols-3 gap-1">
           {FILTERS.map((filter) => {
             const isActive = activeTab === filter;
             return (
