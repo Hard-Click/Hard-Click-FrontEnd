@@ -1,3 +1,5 @@
+'use client';
+
 import CommunityWriteForm from '@/features/community/components/CommunityWriteForm';
 import Image from 'next/image';
 
