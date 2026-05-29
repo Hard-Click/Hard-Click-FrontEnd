@@ -48,10 +48,13 @@ export default function NoticesPage() {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    // GET /api/notices?type=GLOBAL
-    getNotices({ type: 'GLOBAL', size: 100 }).then((res) => {
+    setLoading(true);
+    // GET /api/notices?type=GLOBAL&page=&size=10&keyword= (검색·페이징 서버 위임)
+    getNotices({ type: 'GLOBAL', page, size: 10, keyword: search || undefined }).then((res) => {
       if (res.success && res.data) {
         setNotices(
           res.data.content.map((n) => ({
@@ -62,19 +65,18 @@ export default function NoticesPage() {
             createdAt: n.createdAt.split('T')[0] ?? n.createdAt,
           })),
         );
+        setTotalPages(Math.max(1, res.data.totalPages ?? 1));
       }
       setLoading(false);
     });
-  }, []);
+  }, [page, search]);
 
+  // 현재 페이지 내 고정 공지 우선 정렬
   const sorted = [...notices].sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1;
     if (!a.isPinned && b.isPinned) return 1;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
-  const filtered = sorted.filter((n) =>
-    n.title.toLowerCase().includes(search.toLowerCase()),
-  );
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -104,7 +106,7 @@ export default function NoticesPage() {
               type="text"
               placeholder="공지사항 검색"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
               className="w-full border border-[#E2E8F0] rounded-[10px] h-12 pl-12 pr-4 text-base text-[#4B5563] tracking-[-0.31px] outline-none focus:border-[#2F5DAA] transition-colors"
             />
           </div>
@@ -114,11 +116,11 @@ export default function NoticesPage() {
         <div className="w-full bg-white border border-[#E2E8F0] shadow-[0px_4px_10px_rgba(0,0,0,0.06)] rounded-2xl px-[33px] py-[33px]">
           {loading ? (
             <p className="text-center text-[#9CA3AF] py-10">불러오는 중...</p>
-          ) : filtered.length === 0 ? (
+          ) : sorted.length === 0 ? (
             <p className="text-center text-[#9CA3AF] py-10">공지사항이 없습니다.</p>
           ) : (
             <div className="flex flex-col gap-3">
-              {filtered.map((notice) => (
+              {sorted.map((notice) => (
                 <NoticeCard
                   key={notice.noticeId}
                   notice={notice}
@@ -128,6 +130,42 @@ export default function NoticesPage() {
             </div>
           )}
         </div>
+
+        {/* 페이지네이션 (백엔드 totalPages 기준) */}
+        {!loading && totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-center gap-2">
+            <button
+              type="button"
+              disabled={page === 0}
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              className="h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm text-[#4B5563] disabled:opacity-40 hover:bg-[#F1F5F9] transition-colors"
+            >
+              이전
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPage(p)}
+                className={`h-9 w-9 rounded-lg text-sm transition-colors ${
+                  page === p
+                    ? 'bg-[#2F5DAA] text-white'
+                    : 'border border-[#E2E8F0] text-[#4B5563] hover:bg-[#F1F5F9]'
+                }`}
+              >
+                {p + 1}
+              </button>
+            ))}
+            <button
+              type="button"
+              disabled={page >= totalPages - 1}
+              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              className="h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm text-[#4B5563] disabled:opacity-40 hover:bg-[#F1F5F9] transition-colors"
+            >
+              다음
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
