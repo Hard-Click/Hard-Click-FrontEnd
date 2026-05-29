@@ -342,17 +342,18 @@ export default function CommunityDetailContent() {
         {post.fileUrls && post.fileUrls.length > 0 && (
           <div className="mt-4 flex flex-col gap-2">
             <span className="text-xs font-semibold text-[#64748B]">첨부파일</span>
-            {post.fileUrls.map((url, i) => (
-              <a
-                key={i}
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-[#2F5DAA] underline break-all"
-              >
-                {url.substring(url.lastIndexOf('/') + 1)}
-              </a>
-            ))}
+            <div className="flex flex-wrap gap-3">
+              {post.fileUrls.map((url, i) => (
+                <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt={`첨부이미지-${i + 1}`}
+                    className="max-h-[300px] max-w-full rounded-xl border border-[#E2E8F0] object-contain"
+                  />
+                </a>
+              ))}
+            </div>
           </div>
         )}
       </div>
