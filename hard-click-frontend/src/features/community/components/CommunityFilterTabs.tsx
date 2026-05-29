@@ -4,10 +4,17 @@ import { useState, useEffect, useRef } from 'react';
 import CommunityPostCard from './CommunityPostCard';
 import PostEmptyState from './PostEmptyState';
 import CommunityToolBar from './CommunityToolBar';
-import { getPostsAction, getSubjectsAction } from '../actions';
+<<<<<<< HEAD
+import { getPostsAction } from '../actions';
 import type { PostListItem, BoardType } from '../types';
 import { BOARD_TYPE_LABEL } from '../types';
 
+// UI 표시 → 백엔드 sort enum
+const SORT_MAP: Record<string, string> = {
+  최신순: 'latest',
+  조회순: 'views',
+  댓글순: 'comments',
+};
 const FILTERS = ['전체', '자유게시판', '질문게시판'];
 
 const TAB_TO_BOARD_TYPE: Record<string, BoardType> = {
@@ -33,24 +40,13 @@ function formatDate(isoString: string): string {
 export default function CommunityFilterTabs() {
   const [activeTab, setActiveTab] = useState('전체');
   const [sortType, setSortType] = useState('최신순');
-  const [selectedSubject, setSelectedSubject] = useState('');
   const [searchValue, setSearchValue] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
   const [posts, setPosts] = useState<PostListItem[]>([]);
-  const [subjects, setSubjects] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // 과목 목록 API 로드
-  useEffect(() => {
-    getSubjectsAction().then((result) => {
-      if (result.success && result.data) {
-        setSubjects(result.data.map((s) => s.subjectName));
-      }
-    });
-  }, []);
 
   // 검색어 debounce 500ms
   useEffect(() => {
@@ -66,44 +62,31 @@ export default function CommunityFilterTabs() {
   // 탭/정렬/검색 변경 시 API 호출
   useEffect(() => {
     const boardType = TAB_TO_BOARD_TYPE[activeTab];
-    const apiSort =
-      sortType === '조회순'
-        ? 'viewCount,desc'
-        : sortType === '최신순'
-          ? 'createdAt,desc'
-          : undefined; // 댓글순은 클라이언트 정렬
+    const apiSort = SORT_MAP[sortType]; // 최신순→latest, 조회순→views, 댓글순→comments
 
     setIsLoading(true);
     getPostsAction(boardType, 0, debouncedSearch || undefined, apiSort).then(
       (result) => {
         if (result.success && result.data) {
-          setPosts(result.data.posts);
+          // content(구) / posts(신) 둘 다 대응
+          const items =
+            (result.data as { posts?: PostListItem[]; content?: PostListItem[] }).posts ??
+            (result.data as { content?: PostListItem[] }).content ??
+            [];
+          setPosts(items);
         }
         setIsLoading(false);
       },
     );
   }, [activeTab, sortType, debouncedSearch]);
 
-  // 댓글순: 클라이언트 정렬 (API 미지원)
-  const sortedPosts =
-    sortType === '댓글순'
-      ? [...posts].sort((a, b) => b.commentCount - a.commentCount)
-      : posts;
-
-  const handleReset = () => {
-    setSelectedSubject('');
-    setSortType('최신순');
-    setSearchValue('');
-    setDebouncedSearch(''); // debounce 스킵하고 즉시 초기화
-  };
-
-  // 검색 버튼 클릭 → 즉시 검색 (debounce 스킵)
+  // 검색 버튼 클릭 → 즉시 검색
   const handleSearch = () => {
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     setDebouncedSearch(searchValue);
   };
 
-  const mappedPosts = sortedPosts.map((p) => ({
+  const mappedPosts = posts.map((p) => ({
     id: p.postId,
     category: BOARD_TYPE_LABEL[p.boardType],
     title: p.title,
@@ -143,14 +126,10 @@ export default function CommunityFilterTabs() {
         <CommunityToolBar
           sortType={sortType}
           onSortChange={setSortType}
-          boardType={activeTab}
-          selectedSubject={selectedSubject}
-          onSubjectChange={setSelectedSubject}
-          onReset={handleReset}
+<<<<<<< HEAD
           searchValue={searchValue}
           onSearchChange={setSearchValue}
           onSearch={handleSearch}
-          subjects={subjects}
         />
       </div>
 
