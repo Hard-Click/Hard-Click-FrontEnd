@@ -5,6 +5,7 @@ import { useState } from 'react';
 import EmailVerificationBox from './EmailVerificationBox';
 import VerificationCodeBox from './VerificationCodeBox';
 import PasswordResetForm from './PasswordResetForm';
+import { sendAccountLockEmailAction } from '../actions';
 
 export default function AccountProtectionFlow() {
   const [step, setStep] = useState<'email' | 'verification' | 'resetPassword'>(
@@ -23,6 +24,7 @@ export default function AccountProtectionFlow() {
           description={`비밀번호 입력 오류가 5회 발생하여
             계정 보호 인증이 필요합니다.`}
           buttonText="발급"
+          onSend={sendAccountLockEmailAction}
           onSuccess={(submittedEmail) => {
             setEmail(submittedEmail);
             setStep('verification');

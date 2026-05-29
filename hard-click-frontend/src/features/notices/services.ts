@@ -1,4 +1,4 @@
-import type { Notice } from './types';
+import type { Notice, NoticeDetail } from './types';
 import { api } from '@/services/api';
 
 const USE_MOCK = false;
@@ -44,6 +44,14 @@ function toNotice(api: NoticeApiItem): Notice {
     isPinned: api.isPinned,
     createdAt: api.createdAt.split('T')[0] ?? api.createdAt,
   };
+}
+
+export async function getNoticeDetail(noticeId: number) {
+  return api.get<NoticeDetail>(`/api/notices/${noticeId}`);
+}
+
+export async function deleteNotice(noticeId: number) {
+  return api.delete<void>(`/api/notices/${noticeId}`);
 }
 
 export async function getPinnedNotices(): Promise<Notice[]> {

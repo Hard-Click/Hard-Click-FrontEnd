@@ -9,7 +9,7 @@ import type {
 } from './types';
 import { api } from '@/services/api';
 
-const USE_MOCK = false;
+const USE_MOCK = true;
 
 export async function checkUsername(username: string) {
   if (USE_MOCK) {

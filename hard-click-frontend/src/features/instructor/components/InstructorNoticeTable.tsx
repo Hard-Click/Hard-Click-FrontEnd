@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { toast } from 'sonner';
 
 interface CourseOption {
@@ -262,19 +263,21 @@ export default function InstructorNoticeTable() {
                   className="border-b border-[#E2E8F0] last:border-none hover:bg-[#F8FAFC]"
                 >
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      {notice.isPinned && (
-                        <Image
-                          src="/icons/noticePin.svg"
-                          alt="중요"
-                          width={16}
-                          height={16}
-                        />
-                      )}
-                      <span className="text-sm font-medium text-[#1E293B]">
-                        {notice.title}
-                      </span>
-                    </div>
+                    <Link href={`/instructor/notices/${notice.id}`}>
+                      <div className="flex cursor-pointer items-center gap-2">
+                        {notice.isPinned && (
+                          <Image
+                            src="/icons/noticePin.svg"
+                            alt="중요"
+                            width={16}
+                            height={16}
+                          />
+                        )}
+                        <span className="text-sm font-medium text-[#1E293B] hover:text-[#2F5DAA] hover:underline">
+                          {notice.title}
+                        </span>
+                      </div>
+                    </Link>
                   </td>
                   <td className="px-6 py-4 text-sm text-[#64748B]">
                     {notice.createdAt}
