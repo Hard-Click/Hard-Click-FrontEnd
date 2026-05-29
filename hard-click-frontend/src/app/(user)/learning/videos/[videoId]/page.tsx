@@ -7,29 +7,70 @@ import VideoPlayer from '@/features/learning/components/VideoPlayer';
 import CourseProgressSummary from '@/features/learning/components/CourseProgressSummary';
 import LearningCurriculumSidebar from '@/features/learning/components/LearningCurriculumSidebar';
 import ResumeControlPanel from '@/features/learning/components/ResumeControlPanel';
-import VideoErrorState from '@/features/learning/components/VideoErrorState';
 import ResumeWatchModal from '@/features/learning/components/ResumeWatchModal';
 import VideoStatusModal from '@/features/learning/components/VideoStatusModal';
 import TimerInfoModal from '@/features/learning/components/TimerInfoModal';
-import { getVideoPlayInfo, getCourseProgress } from '@/features/learning/services';
+import {
+  getVideoPlayInfo,
+  getCourseProgress,
+} from '@/features/learning/services';
+import { getCourseDetail } from '@/features/courses/services';
 import {
   startTimerAction,
   endTimerAction,
   heartbeatAction,
   fetchCurrentSessionAction,
 } from '@/features/studyTimers/actions';
-import type { VideoPlayInfo, CourseProgress } from '@/features/learning/types';
+import type {
+  VideoPlayInfo,
+  CourseProgress,
+  SidebarVideoItem,
+} from '@/features/learning/types';
+import type { CourseDetail } from '@/features/courses/types';
 
 const HEARTBEAT_INTERVAL_MS = 60_000;
 
-/** module-level cache — 페이지 navigation 간 마지막 정상 영상 유지 (page remount에도 살아남음) */
+/** module-level cache — 페이지 navigation 간 마지막 정상 상태 유지 (page remount에도 살아남음) */
 let lastValidVideoCache: VideoPlayInfo | null = null;
 let lastValidProgressCache: CourseProgress | null = null;
+let lastValidDetailCache: CourseDetail | null = null;
 
 function formatStudyTime(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+/** 백엔드 progress.lessons + 강의 상세 curriculum (title/section/duration/isPreview) 머지 */
+function mergeLessons(
+  detail: CourseDetail | null,
+  progress: CourseProgress | null,
+): SidebarVideoItem[] {
+  if (!detail) return [];
+  const progressMap = new Map<number, { completed: boolean; lastPositionSeconds: number }>();
+  progress?.lessons.forEach((l) =>
+    progressMap.set(l.videoId, {
+      completed: l.completed,
+      lastPositionSeconds: l.lastPositionSeconds,
+    }),
+  );
+  const result: SidebarVideoItem[] = [];
+  detail.curriculum.forEach((section) => {
+    section.lessons.forEach((lesson) => {
+      const lp = progressMap.get(lesson.lessonId);
+      const [m, s] = lesson.duration.split(':').map(Number);
+      result.push({
+        videoId: lesson.lessonId,
+        title: lesson.title,
+        sectionTitle: section.title,
+        durationSeconds: (m ?? 0) * 60 + (s ?? 0),
+        completed: lp?.completed ?? false,
+        lastPositionSeconds: lp?.lastPositionSeconds ?? 0,
+        isPreview: lesson.isPreview,
+      });
+    });
+  });
+  return result;
 }
 
 export default function LearningVideoPage() {
@@ -39,15 +80,20 @@ export default function LearningVideoPage() {
 
   const [video, setVideo] = useState<VideoPlayInfo | null>(null);
   const [progress, setProgress] = useState<CourseProgress | null>(null);
+  const [detail, setDetail] = useState<CourseDetail | null>(null);
   const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
-  /* 이전 영상/진도 백업 — module-level cache 사용 (page remount 시에도 유지) */
+
+  /* module cache — page remount에도 마지막 정상 상태 유지 */
   useEffect(() => {
     if (video) lastValidVideoCache = video;
   }, [video]);
   useEffect(() => {
     if (progress) lastValidProgressCache = progress;
   }, [progress]);
+  useEffect(() => {
+    if (detail) lastValidDetailCache = detail;
+  }, [detail]);
 
   /* 이어보기 모달 */
   const [resumePromptOpen, setResumePromptOpen] = useState(false);
@@ -64,7 +110,7 @@ export default function LearningVideoPage() {
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  /* 영상 + 강의 진도 조회 */
+  /* 영상 + 강의 진도 + 강의 상세 조회 (강의 상세는 사이드바 title/section/duration용) */
   useEffect(() => {
     if (!Number.isFinite(videoId)) {
       setErrorStatus(404);
@@ -84,9 +130,13 @@ export default function LearningVideoPage() {
       }
       setVideo(videoRes.data);
 
-      const progRes = await getCourseProgress(videoRes.data.courseId);
+      const [progRes, detailRes] = await Promise.all([
+        getCourseProgress(videoRes.data.courseId),
+        getCourseDetail(videoRes.data.courseId),
+      ]);
       if (cancelled) return;
       if (progRes.success) setProgress(progRes.data);
+      if (detailRes) setDetail(detailRes);
     };
 
     void load();
@@ -95,8 +145,8 @@ export default function LearningVideoPage() {
     };
   }, [videoId]);
 
-  /* 영상 변경 시(videoId) 이어보기 모달 여부 결정.
-   * 이전 시청 기록 (localStorage 또는 백엔드 lastPositionSeconds) > 0 이면 모달 */
+  /* 영상 변경 시 이어보기 모달 여부 결정.
+   * 백엔드 video.lastPositionSec 기준 + localStorage 폴백 */
   useEffect(() => {
     if (!video) return;
     setPlayerReady(false);
@@ -108,7 +158,7 @@ export default function LearningVideoPage() {
     const storedSec = stored ? Number(stored) : 0;
     const lastSec = Math.max(
       Number.isFinite(storedSec) ? storedSec : 0,
-      video.lastPositionSeconds || 0,
+      video.lastPositionSec || 0,
     );
 
     /* 끝까지 본 영상은 처음부터 자동 (모달 X) */
@@ -176,7 +226,6 @@ export default function LearningVideoPage() {
     heartbeatRef.current = null;
   };
 
-  /* 타이머 시작/종료 — 버튼 클릭 시 confirm 모달 표시 → 확인 시 실제 동작 */
   const handleTimerStartClick = () => {
     if (timerSessionId) return;
     setTimerConfirmMode('start');
@@ -210,48 +259,44 @@ export default function LearningVideoPage() {
     }
   };
 
-  /* 현재 영상 메타 */
-  const currentVideoItem = useMemo(() => {
-    if (!progress || !video) return null;
-    return progress.videos.find((v) => v.videoId === video.videoId) ?? null;
-  }, [progress, video]);
-
-  /* 진도율 갱신 — 진행률은 단조 증가 (클라이언트/백엔드 두 콜백 충돌 방지) */
-  const handleProgressChange = (rate: number) => {
-    setProgress((prev) => {
-      if (!prev || !video) return prev;
-      const nextVideos = prev.videos.map((v) =>
-        v.videoId === video.videoId
-          ? {
-              ...v,
-              /* 완료된 영상은 100 고정. 그 외엔 이전 값과 새 값 중 큰 값 (감소 방지) */
-              progressRate: v.isCompleted ? 100 : Math.max(v.progressRate, rate),
-              isCompleted: v.isCompleted || rate >= 90,
-            }
-          : v,
-      );
-      const completedCount = nextVideos.filter((v) => v.isCompleted).length;
-      const overall =
-        nextVideos.reduce((sum, v) => sum + v.progressRate, 0) / nextVideos.length;
-      return {
-        ...prev,
-        videos: nextVideos,
-        completedVideoCount: completedCount,
-        progressRate: overall,
-      };
-    });
-
-    if (rate >= 100 && video && !video.isCompleted) {
-      setVideo({ ...video, isCompleted: true });
-    }
-  };
-
-  /* fetch 실패 시 이전 영상/진도(module cache)로 UI 유지 */
+  /* fetch 실패 시 이전 상태(module cache)로 UI 유지 */
   const displayVideo = video ?? lastValidVideoCache;
   const displayProgress = progress ?? lastValidProgressCache;
+  const displayDetail = detail ?? lastValidDetailCache;
+  const sidebarVideos = useMemo(
+    () => mergeLessons(displayDetail, displayProgress),
+    [displayDetail, displayProgress],
+  );
+  const currentLessonTitle = useMemo(
+    () =>
+      sidebarVideos.find((v) => v.videoId === displayVideo?.videoId)?.title ?? '',
+    [sidebarVideos, displayVideo?.videoId],
+  );
 
-  /* 첫 진입 자체가 실패한 경우만 fallback (이전 영상도 없을 때) */
-  if (!displayVideo || !displayProgress) {
+  /* 진도율 갱신 — 백엔드 응답이 void라 클라이언트에서 lessons completed 갱신 */
+  const handleProgressChange = (rate: number) => {
+    if (rate < 90 || !video) return;
+    setProgress((prev) => {
+      if (!prev) return prev;
+      const nextLessons = prev.lessons.map((l) =>
+        l.videoId === video.videoId ? { ...l, completed: true } : l,
+      );
+      const completedCount = nextLessons.filter((l) => l.completed).length;
+      const newRate = nextLessons.length > 0
+        ? (completedCount / nextLessons.length) * 100
+        : 0;
+      return {
+        ...prev,
+        lessons: nextLessons,
+        completedLessonCount: completedCount,
+        progressRate: newRate,
+      };
+    });
+    if (!video.completed) setVideo({ ...video, completed: true });
+  };
+
+  /* 첫 진입 자체가 실패한 경우만 fallback */
+  if (!displayVideo || !displayProgress || !displayDetail) {
     if (errorStatus !== null) {
       return (
         <div className="min-h-screen bg-[#1F2937]">
@@ -275,12 +320,12 @@ export default function LearningVideoPage() {
   return (
     <div className="h-[calc(100vh-64px)] bg-[#1F2937] flex flex-col overflow-hidden">
       <CourseProgressSummary
-        courseTitle={displayProgress.courseTitle ?? `강의 #${displayVideo.courseId}`}
-        videoTitle={displayVideo.title}
-        instructorName={displayProgress.instructorName ?? '강사'}
+        courseTitle={displayDetail.title}
+        videoTitle={currentLessonTitle}
+        instructorName={displayDetail.instructorName}
         progressRate={displayProgress.progressRate}
-        completedVideoCount={displayProgress.completedVideoCount}
-        totalVideoCount={displayProgress.totalVideoCount}
+        completedVideoCount={displayProgress.completedLessonCount}
+        totalVideoCount={displayProgress.totalLessonCount}
         backHref={`/courses/${displayVideo.courseId}`}
       />
 
@@ -290,12 +335,12 @@ export default function LearningVideoPage() {
             {playerReady && video ? (
               <VideoPlayer
                 videoId={video.videoId}
-                playUrl={video.playUrl}
+                playUrl={video.streamingUrl}
                 lastPositionSeconds={startPosition}
                 durationSeconds={video.durationSeconds}
-                isCompleted={video.isCompleted}
+                isCompleted={video.completed}
                 onProgressChange={handleProgressChange}
-                onCompleted={() => video && setVideo({ ...video, isCompleted: true })}
+                onCompleted={() => video && setVideo({ ...video, completed: true })}
               />
             ) : (
               <div className="text-white/60 text-sm">잠시만 기다려주세요...</div>
@@ -303,7 +348,7 @@ export default function LearningVideoPage() {
           </div>
 
           <ResumeControlPanel
-            videos={displayProgress.videos}
+            videos={sidebarVideos}
             currentVideoId={displayVideo.videoId}
           />
 
@@ -334,7 +379,7 @@ export default function LearningVideoPage() {
         </main>
 
         <LearningCurriculumSidebar
-          videos={displayProgress.videos}
+          videos={sidebarVideos}
           currentVideoId={displayVideo.videoId}
         />
       </div>
@@ -361,7 +406,6 @@ export default function LearningVideoPage() {
           message={errorMessage}
           onClose={() => {
             setErrorStatus(null);
-            /* 이전 영상이 있으면 그 URL로 복귀, 없으면 뒤로 가기 */
             if (lastValidVideoCache) {
               router.replace(`/learning/videos/${lastValidVideoCache.videoId}`);
             } else {

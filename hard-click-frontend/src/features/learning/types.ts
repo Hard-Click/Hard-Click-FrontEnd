@@ -1,86 +1,74 @@
-/** 영상학습/진도 도메인 타입 — 노션 RestAPI 명세 매칭 */
+/** 영상학습/진도 도메인 타입 — 백엔드 controller/DTO 매칭 */
 
 /* ───── 강의 영상 재생 정보 조회 (GET /api/learning/videos/{videoId}/play) ───── */
 export interface VideoPlayInfo {
   videoId: number;
   courseId: number;
-  title: string;
+  /** HLS m3u8 스트리밍 URL */
+  streamingUrl: string;
   durationSeconds: number;
-  playUrl: string;
-  lastPositionSeconds: number;
-  isCompleted: boolean;
+  lastPositionSec: number;
+  watchTimeSec: number;
+  completed: boolean;
 }
 
-/* ───── 영상 시청 시간 저장 (PATCH /api/learning/videos/{videoId}/progress/watch-time) ───── */
+/* ───── 영상 시청 시간 누적 (PATCH /api/learning/videos/{videoId}/progress/watch-time) ─────
+ * Response: void */
 export interface WatchTimeRequest {
-  watchedSecondsDelta: number;
-  clientPlayedRangeStart?: number;
-  clientPlayedRangeEnd?: number;
+  /** 추가로 누적할 시청 시간(초). 1 이상 */
+  watchTimeSeconds: number;
 }
 
-export interface WatchTimeResponse {
+/* ───── 마지막 재생 위치 저장 (PATCH /api/learning/videos/{videoId}/progress/position) ─────
+ * Response: void */
+export interface LastPositionRequest {
+  /** 마지막 재생 위치(초). 0 이상 */
+  positionSeconds: number;
+}
+
+/* ───── 이어보기 위치 조회 (GET /api/learning/videos/{videoId}/progress/position) ───── */
+export interface PositionInfo {
   videoId: number;
-  watchedSeconds: number;
-  progressRate: number;
-}
-
-/* ───── 강의 전체 진도 조회 (GET /api/learning/courses/{courseId}/progress) ───── */
-export interface VideoProgressItem {
-  videoId: number;
-  title: string;
-  progressRate: number;
-  isCompleted: boolean;
-  /** 섹션 구분용 — 백엔드 추가 시 사용 (선택) */
-  sectionId?: number;
-  sectionTitle?: string;
-  /** 영상 길이/순서 — 백엔드 추가 시 사용 (선택) */
-  durationSeconds?: number;
-  orderInSection?: number;
-  /** 미리보기 가능 여부 — 강의 상세 페이지에서 사용 */
-  isPreview?: boolean;
-}
-
-export interface CourseProgress {
-  courseId: number;
-  progressRate: number;
-  completedVideoCount: number;
-  totalVideoCount: number;
-  videos: VideoProgressItem[];
-  /** mock 전용 — 강의 시청 페이지 헤더 표시용. 백엔드 명세 외 (별도 강의 상세 API로 받아야 함) */
-  courseTitle?: string;
-  /** mock 전용 — 강의 시청 페이지 헤더 표시용. 백엔드 명세 외 */
-  instructorName?: string;
+  positionSeconds: number;
 }
 
 /* ───── 단일 영상 진도 조회 (GET /api/learning/videos/{videoId}/progress) ───── */
 export interface VideoProgress {
   videoId: number;
   lastPositionSeconds: number;
-  watchedSeconds: number;
-  durationSeconds: number;
+  watchTimeSeconds: number;
+  completed: boolean;
+  /** ISO 8601 LocalDateTime — 완료 처리 시각. 미완료면 null */
+  completedAt: string | null;
+}
+
+/* ───── 영상 완료 처리 (PATCH /api/learning/videos/{videoId}/progress/complete) ─────
+ * Request: body 없음, Response: void */
+
+/* ───── 강의 전체 진도 조회 (GET /api/learning/courses/{courseId}/progress) ───── */
+export interface CourseProgressLesson {
+  videoId: number;
+  completed: boolean;
+  lastPositionSeconds: number;
+}
+
+export interface CourseProgress {
+  courseId: number;
+  /** 0~100 (BigDecimal — 소수점 포함) */
   progressRate: number;
-  isCompleted: boolean;
+  completedLessonCount: number;
+  totalLessonCount: number;
+  lessons: CourseProgressLesson[];
 }
 
-/* ───── 영상 완료 처리 (PATCH /api/learning/videos/{videoId}/progress/complete) ───── */
-export interface CompleteVideoRequest {
-  watchedSeconds: number;
+/* ───── 사이드바/ResumeControlPanel UI 전용 ─────
+ * 백엔드 CourseProgress.lessons + 강의 상세 curriculum (title/section/duration/isPreview) 머지 */
+export interface SidebarVideoItem {
+  videoId: number;
+  title: string;
+  sectionTitle: string;
   durationSeconds: number;
-}
-
-export interface CompleteVideoResponse {
-  videoId: number;
-  isCompleted: boolean;
-  completedAt: string;
-}
-
-/* ───── 마지막 재생 위치 저장 (PATCH /api/learning/videos/{videoId}/progress/position) ───── */
-export interface LastPositionRequest {
+  completed: boolean;
   lastPositionSeconds: number;
-}
-
-export interface LastPositionResponse {
-  videoId: number;
-  lastPositionSeconds: number;
-  savedAt: string;
+  isPreview: boolean;
 }

@@ -6,11 +6,11 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
 import { createReview } from '@/features/reviews/services';
-import { getMyCompletedCourses } from '@/features/users/services';
-import type { MyCompletedCourse } from '@/features/users/types';
+import { getMyCourses } from '@/features/users/services';
+import type { MyCourse } from '@/features/users/types';
 
 /** ISO 날짜 → YYYY.MM.DD */
-function formatDisplayDate(iso: string): string {
+function formatDisplayDate(iso: string | null): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
@@ -42,12 +42,15 @@ export default function CompletedCoursesPage() {
   const router = useRouter();
   const [reviewMap, setReviewMap] = useState<Record<number, StoredReview>>({});
   const [reviewTargetId, setReviewTargetId] = useState<number | null>(null);
-  const [completed, setCompleted] = useState<MyCompletedCourse[]>([]);
+  const [completed, setCompleted] = useState<MyCourse[]>([]);
 
   useEffect(() => {
     setReviewMap(loadStoredReviews());
-    getMyCompletedCourses().then((res) => {
-      if (res.success) setCompleted(res.data);
+    getMyCourses().then((res) => {
+      if (res.success) {
+        // 백엔드 통합 endpoint — 수강 완료 강의만 필터링
+        setCompleted(res.data.filter((c) => c.progressRate === 100));
+      }
     });
   }, []);
 
@@ -119,7 +122,8 @@ export default function CompletedCoursesPage() {
               <EmptyState />
             ) : (
               completed.map((course) => {
-                const hasReview = course.hasReview || !!reviewMap[course.courseId];
+                // 백엔드 통합 endpoint에는 hasReview 없음 — 클라이언트 localStorage 기준으로 판단
+                const hasReview = !!reviewMap[course.courseId];
                 return (
                   <article
                     key={course.courseId}
@@ -149,7 +153,7 @@ export default function CompletedCoursesPage() {
 
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-[#4B5563]">
-                          완료일: {formatDisplayDate(course.completedAt)}
+                          완료일: {formatDisplayDate(course.lastStudiedAt)}
                         </span>
                         {hasReview ? (
                           <Link

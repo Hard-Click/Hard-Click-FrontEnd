@@ -255,7 +255,7 @@ export default function VideoPlayer({
         window.localStorage.setItem(LAST_POS_KEY, String(position));
       }
       void saveLastPosition(videoId, {
-        lastPositionSeconds: Math.floor(position),
+        positionSeconds: Math.floor(position),
       });
     };
     const onPlay = () => setIsPlaying(true);

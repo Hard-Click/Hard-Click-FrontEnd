@@ -37,7 +37,7 @@ export default function PreviewVideoModal({ lessonId, title, onClose }: PreviewV
     setLoadError(false);
     void getVideoPlayInfo(lessonId).then((res) => {
       if (cancelled) return;
-      if (res.success) setPlayUrl(res.data.playUrl);
+      if (res.success) setPlayUrl(res.data.streamingUrl);
       else setLoadError(true);
     });
     return () => {
