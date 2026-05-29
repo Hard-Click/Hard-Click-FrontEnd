@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import type { VideoProgressItem } from '@/features/learning/types';
+import type { SidebarVideoItem } from '@/features/learning/types';
 
 interface ResumeControlPanelProps {
-  videos: VideoProgressItem[];
+  videos: SidebarVideoItem[];
   currentVideoId: number;
   routePrefix?: string;
 }

@@ -28,11 +28,11 @@ import ProfileEditModal from '@/features/users/components/ProfileEditModal';
 import GrassYearlyModal from '@/features/grass/components/GrassYearlyModal';
 import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
 import { createReview } from '@/features/reviews/services';
-import { getMyProfile, getMyCourses, getMyCompletedCourses } from '@/features/users/services';
+import { getMyProfile, getMyCourses } from '@/features/users/services';
 import { getStreak, getStudyTimeGrass, getLessonsGrass } from '@/features/grass/services';
 import { getMyRankingSummary } from '@/features/rankings/services';
 import { getDailyStudyStats } from '@/features/studyTimers/services';
-import type { MyProfile, MyCourse, MyCompletedCourse } from '@/features/users/types';
+import type { MyProfile, MyCourse } from '@/features/users/types';
 import type { StudyTimeGrassCell, LessonsGrassCell } from '@/features/grass/types';
 import type { MyRankingSummary } from '@/features/rankings/types';
 
@@ -227,7 +227,7 @@ function Heatmap({
 /* ─────────────────────────── 메인 페이지 ─────────────────────────── */
 
 /** ISO 날짜 → YYYY.MM.DD 표시용 */
-function formatDisplayDate(iso: string): string {
+function formatDisplayDate(iso: string | null): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
@@ -255,7 +255,7 @@ export default function MyPage() {
   const [profile, setProfile] = useState<MyProfile | null>(null);
   const [ranking, setRanking] = useState<MyRankingSummary | null>(null);
   const [inProgress, setInProgress] = useState<MyCourse[]>([]);
-  const [completed, setCompleted] = useState<MyCompletedCourse[]>([]);
+  const [completed, setCompleted] = useState<MyCourse[]>([]);
   const [streakDays, setStreakDays] = useState<number>(0);
   const [todayStudySeconds, setTodayStudySeconds] = useState<number>(0);
   const [studyTimeCells, setStudyTimeCells] = useState<HeatmapCell[]>([]);
@@ -276,17 +276,19 @@ export default function MyPage() {
       getMyProfile(),
       getStreak(),
       getMyRankingSummary(),
-      getMyCourses('recent'),
-      getMyCompletedCourses(),
+      getMyCourses(),
       getDailyStudyStats({ startDate: todayStr, endDate: todayStr }),
       getStudyTimeGrass({ year: HEATMAP_YEAR, month: HEATMAP_MONTH }),
       getLessonsGrass({ year: HEATMAP_YEAR, month: HEATMAP_MONTH }),
-    ]).then(([p, s, r, mc, cc, ds, stg, lg]) => {
+    ]).then(([p, s, r, mc, ds, stg, lg]) => {
       if (p.success) setProfile(p.data);
       if (s.success) setStreakDays(s.data.streak);
       if (r.success) setRanking(r.data);
-      if (mc.success) setInProgress(mc.data);
-      if (cc.success) setCompleted(cc.data);
+      if (mc.success) {
+        // 백엔드 통합 endpoint — 진행 중/완료를 클라이언트에서 progressRate로 분리
+        setInProgress(mc.data.filter((c) => c.progressRate < 100));
+        setCompleted(mc.data.filter((c) => c.progressRate === 100));
+      }
       if (ds.success && Array.isArray(ds.data)) {
         const todayEntry = ds.data.find((x) => x.date === todayStr);
         setTodayStudySeconds(todayEntry?.studySeconds ?? 0);
@@ -489,7 +491,6 @@ export default function MyPage() {
                       <div className="flex-1 flex flex-col gap-3">
                         <div>
                           <p className="text-lg font-semibold leading-7 text-[#1F2937]">{c.courseTitle}</p>
-                          <p className="text-sm text-[#4B5563] mt-0.5">{c.instructorName}</p>
                         </div>
                         <div className="flex flex-col gap-2">
                           <div className="flex items-center justify-between">
@@ -545,8 +546,8 @@ export default function MyPage() {
                           <div className="h-full bg-[#16A34A] rounded-full" style={{ width: '100%' }} />
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-[#4B5563]">완료일: {formatDisplayDate(c.completedAt)}</span>
-                          {(c.hasReview || reviewMap[c.courseId]) ? (
+                          <span className="text-sm text-[#4B5563]">완료일: {formatDisplayDate(c.lastStudiedAt)}</span>
+                          {reviewMap[c.courseId] ? (
                             <Link
                               href={`/courses/${c.courseId}#reviews`}
                               className="w-[115px] h-10 flex items-center justify-center bg-[#2F5DAA] rounded-[10px] text-base font-semibold text-white hover:bg-[#1D3E75] transition-colors"

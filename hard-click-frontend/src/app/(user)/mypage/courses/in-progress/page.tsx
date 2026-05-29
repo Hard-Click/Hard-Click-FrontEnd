@@ -7,7 +7,7 @@ import { getMyCourses } from '@/features/users/services';
 import type { MyCourse } from '@/features/users/types';
 
 /** ISO 날짜 → YYYY.MM.DD */
-function formatDisplayDate(iso: string): string {
+function formatDisplayDate(iso: string | null): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
@@ -19,8 +19,11 @@ export default function InProgressCoursesPage() {
   const [courses, setCourses] = useState<MyCourse[]>([]);
 
   useEffect(() => {
-    getMyCourses('recent').then((res) => {
-      if (res.success) setCourses(res.data);
+    getMyCourses().then((res) => {
+      if (res.success) {
+        // 백엔드 통합 endpoint — 진행 중 강의만 필터링
+        setCourses(res.data.filter((c) => c.progressRate < 100));
+      }
     });
   }, []);
 
@@ -90,7 +93,6 @@ export default function InProgressCoursesPage() {
                       <h3 className="text-lg font-semibold leading-7 text-[#1F2937]">
                         {course.courseTitle}
                       </h3>
-                      <p className="text-sm text-[#4B5563] mt-0.5">{course.instructorName}</p>
                     </div>
 
                     {/* 진도바 */}

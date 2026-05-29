@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import type { VideoProgressItem } from '@/features/learning/types';
+import type { SidebarVideoItem } from '@/features/learning/types';
 
 interface LearningCurriculumSidebarProps {
-  videos: VideoProgressItem[];
+  videos: SidebarVideoItem[];
   currentVideoId: number;
   routePrefix?: string;
 }
@@ -62,7 +62,7 @@ export default function LearningCurriculumSidebar({
   }, [videos, currentVideoId]);
 
   /* 섹션별 그룹화 */
-  const sections = new Map<string, VideoProgressItem[]>();
+  const sections = new Map<string, SidebarVideoItem[]>();
   videos.forEach((v) => {
     const key = v.sectionTitle ?? '강의 목록';
     if (!sections.has(key)) sections.set(key, []);
@@ -93,13 +93,16 @@ export default function LearningCurriculumSidebar({
               <ul className="flex flex-col gap-2">
                 {items.map((v) => {
                   const isActive = v.videoId === currentVideoId;
-                  /* 누적 시청 시간 기반 진행률 (localStorage watchedSeconds) — 백엔드 응답과 둘 중 큰 값 */
+                  /* 진행률 = 누적 시청 시간 / durationSeconds. localStorage 또는 백엔드 lastPositionSeconds 기준 */
                   const watchedSec = storedWatched[v.videoId] || 0;
+                  const positionRate = v.durationSeconds
+                    ? Math.min(100, (v.lastPositionSeconds / v.durationSeconds) * 100)
+                    : 0;
                   const localRate = v.durationSeconds
                     ? Math.min(100, (watchedSec / v.durationSeconds) * 100)
                     : 0;
-                  const effectiveRate = v.isCompleted ? 100 : Math.max(v.progressRate, localRate);
-                  const isInProgress = !v.isCompleted && effectiveRate > 0;
+                  const effectiveRate = v.completed ? 100 : Math.max(positionRate, localRate);
+                  const isInProgress = !v.completed && effectiveRate > 0;
                   const cardBg = isActive ? 'bg-[#2F5DAA]' : 'bg-[#1F2937]';
                   const titleColor = isActive ? 'text-white' : 'text-[#9CA3AF]';
                   const timeColor = isActive ? 'text-white' : 'text-[#9CA3AF]';
@@ -110,7 +113,7 @@ export default function LearningCurriculumSidebar({
                         className={`block rounded-[20px] p-4 transition-colors hover:opacity-90 ${cardBg}`}
                       >
                         <div className="flex items-start gap-3">
-                          {v.isCompleted ? <CheckIcon /> : <PlayIcon />}
+                          {v.completed ? <CheckIcon /> : <PlayIcon />}
                           <div className="flex-1 min-w-0 flex flex-col gap-1">
                             <div className={`text-base font-medium leading-6 truncate ${titleColor}`}>
                               {v.title}
@@ -119,7 +122,7 @@ export default function LearningCurriculumSidebar({
                               <span className={`text-sm font-medium ${timeColor}`}>
                                 {formatDuration(v.durationSeconds)}
                               </span>
-                              {v.isCompleted && (
+                              {v.completed && (
                                 <span className="px-2 py-0.5 rounded text-xs font-medium ml-auto" style={{ background: 'rgba(22,163,74,0.2)', color: '#16A34A' }}>
                                   완료
                                 </span>
