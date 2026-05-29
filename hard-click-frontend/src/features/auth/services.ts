@@ -243,6 +243,20 @@ export async function resetPassword(payload: {
   return api.patch<Record<string, never>>('/api/auth/password-reset', payload);
 }
 
+/** 잠긴 계정 인증번호 발송/재발송 (POST /api/auth/account-locks/email) */
+export async function sendAccountLockEmail(email: string) {
+  if (USE_MOCK) {
+    console.log('[MOCK] 계정 잠금 인증번호 발송:', email);
+    return {
+      success: true,
+      httpStatus: 200,
+      data: {},
+      message: '계정 보호 인증번호가 발송되었습니다',
+    };
+  }
+  return api.post<{}>('/api/auth/account-locks/email', { email });
+}
+
 /* ─────────────────────────── 잠긴 계정 흐름 ─────────────────────────── */
 
 /** 잠긴 계정 인증번호 검증 (POST /api/auth/account-locks/verify) */
