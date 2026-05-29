@@ -157,6 +157,9 @@ export async function getVideoProgress(videoId: number) {
       entry.isCompleted ||
       (entry.durationSeconds > 0 &&
         watchTimeSec >= Math.ceil(entry.durationSeconds * 0.9));
+    const progressRate = entry.durationSeconds > 0
+      ? Math.min(100, Math.round((watchTimeSec / entry.durationSeconds) * 100))
+      : 0;
     return {
       success: true,
       httpStatus: 200,
@@ -165,6 +168,8 @@ export async function getVideoProgress(videoId: number) {
         videoId,
         lastPositionSeconds: entry.lastPositionSeconds,
         watchTimeSeconds: watchTimeSec,
+        durationSeconds: entry.durationSeconds,
+        progressRate,
         completed,
         completedAt: completed ? new Date().toISOString() : null,
       } as VideoProgress,

@@ -37,6 +37,10 @@ export interface VideoProgress {
   videoId: number;
   lastPositionSeconds: number;
   watchTimeSeconds: number;
+  /** 영상 총 길이(초) */
+  durationSeconds: number;
+  /** 진도율 0~100 */
+  progressRate: number;
   completed: boolean;
   /** ISO 8601 LocalDateTime — 완료 처리 시각. 미완료면 null */
   completedAt: string | null;
