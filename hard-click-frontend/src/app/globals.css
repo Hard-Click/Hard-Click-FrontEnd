@@ -85,12 +85,12 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* 강의 시청 페이지 — 볼륨 슬라이더 디자인 명세 (108x4, track #374151, thumb white) */
+/* 강의 시청 페이지 — 볼륨 슬라이더 디자인 명세 (108x4, track white, thumb white) */
 input[type='range'].volume-slider {
   -webkit-appearance: none;
   appearance: none;
   height: 4px;
-  background: #374151;
+  background: #ffffff;
   border-radius: 16px;
   outline: none;
 }

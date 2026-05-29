@@ -89,10 +89,20 @@ export default function InProgressCoursesPage() {
 
                   {/* 우측 컨텐츠 */}
                   <div className="flex-1 flex flex-col gap-[15px]">
-                    <div>
+                    {/* 제목 + 커리큘럼 페이지 이동(>) */}
+                    <div className="flex items-center justify-between gap-3">
                       <h3 className="text-lg font-semibold leading-7 text-[#1F2937]">
                         {course.courseTitle}
                       </h3>
+                      <Link
+                        href={`/learning/${course.courseId}`}
+                        aria-label="강의 커리큘럼 보기"
+                        className="w-6 h-6 flex items-center justify-center text-[#4B5563] hover:text-[#2F5DAA] transition-colors flex-shrink-0"
+                      >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                          <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </Link>
                     </div>
 
                     {/* 진도바 */}
@@ -116,8 +126,11 @@ export default function InProgressCoursesPage() {
                         최근 학습: {formatDisplayDate(course.lastStudiedAt)}
                       </span>
                       <Link
-                        href={`/learning/videos/${course.courseId}`}
-                        className="w-[95px] h-10 bg-[#2F5DAA] rounded-[10px] flex items-center justify-center text-white text-base font-semibold hover:bg-[#1D3E75] transition-colors"
+                        href={course.lastVideoId ? `/learning/videos/${course.lastVideoId}` : '#'}
+                        aria-disabled={!course.lastVideoId}
+                        className={`w-[95px] h-10 rounded-[10px] flex items-center justify-center text-white text-base font-semibold transition-colors ${
+                          course.lastVideoId ? 'bg-[#2F5DAA] hover:bg-[#1D3E75]' : 'bg-[#9CA3AF] pointer-events-none'
+                        }`}
                       >
                         이어보기
                       </Link>

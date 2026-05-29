@@ -18,72 +18,25 @@ interface VideoPlayerProps {
   onCompleted?: () => void;
 }
 
-/** 볼륨 레벨에 따라 4단계 아이콘 — mute / low / mid / high.
- * Lucide-style polygon base + smooth 호. 모든 path는 viewBox 24 안에 맞춰 잘림 없음. */
+/** 볼륨 아이콘 — 디자이너가 넣어둔 videoVolume.svg(소리 ON) + 음소거(사선) 2-state.
+ * 음소거(volume 0)일 때만 사선친 스피커를 인라인으로 표시한다. */
 function VolumeDynamicIcon({ volume }: { volume: number }) {
-  const stroke = '#FFFFFF';
-  const sw = '1.8';
-  /* 둥근 사다리꼴 스피커 베이스 — 항상 표시 */
-  const base = (
-    <polygon
-      points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"
-      fill={stroke}
-      stroke={stroke}
-      strokeWidth="0.8"
-      strokeLinejoin="round"
-    />
-  );
-  /* 작은 호 — mid / high 표시 */
-  const smallArc = (
-    <path
-      d="M15 9a4 4 0 0 1 0 6"
-      stroke={stroke}
-      strokeWidth={sw}
-      strokeLinecap="round"
-      fill="none"
-    />
-  );
-  /* 큰 호 — high 표시 */
-  const bigArc = (
-    <path
-      d="M17 6a6 6 0 0 1 0 12"
-      stroke={stroke}
-      strokeWidth={sw}
-      strokeLinecap="round"
-      fill="none"
-    />
-  );
   if (volume === 0) {
     return (
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
-        {base}
-        <line x1="16" y1="9" x2="22" y2="15" stroke={stroke} strokeWidth={sw} strokeLinecap="round" />
-        <line x1="22" y1="9" x2="16" y2="15" stroke={stroke} strokeWidth={sw} strokeLinecap="round" />
+        <polygon
+          points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"
+          fill="#FFFFFF"
+          stroke="#FFFFFF"
+          strokeWidth="0.8"
+          strokeLinejoin="round"
+        />
+        <line x1="16" y1="9" x2="22" y2="15" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" />
+        <line x1="22" y1="9" x2="16" y2="15" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" />
       </svg>
     );
   }
-  if (volume < 0.34) {
-    return (
-      <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
-        {base}
-      </svg>
-    );
-  }
-  if (volume < 0.67) {
-    return (
-      <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
-        {base}
-        {smallArc}
-      </svg>
-    );
-  }
-  return (
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
-      {base}
-      {smallArc}
-      {bigArc}
-    </svg>
-  );
+  return <Image src="/icons/videoVolume.svg" alt="" width={24} height={24} />;
 }
 
 function formatTime(seconds: number) {
@@ -111,7 +64,6 @@ export default function VideoPlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(durationSeconds);
   const [volume, setVolume] = useState(1);
-  const lastProgressRef = useRef(0);
   const restartToastFiredRef = useRef(false);
   /* 실시간 진행률용 — 영상 변경 시 baseline 누적 + 재생 중 매초 sessionWatched++.
    * 90% 도달 토스트는 useWatchTimeSaver(5초 heartbeat 응답 기반)에서만 fire — 중복 방지. */
