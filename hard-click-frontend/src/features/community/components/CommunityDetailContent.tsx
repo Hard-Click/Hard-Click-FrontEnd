@@ -102,7 +102,7 @@ export default function CommunityDetailContent() {
   }
 
   const category = BOARD_TYPE_LABEL[post.boardType];
-  const isAccepted = post.status === 'ADOPTED';
+  const isAccepted = post.isAccepted;
 
   const totalComments = comments.reduce(
     (acc, c) => acc + 1 + (c.replies?.length ?? 0),
@@ -139,7 +139,7 @@ export default function CommunityDetailContent() {
     const result = await createCommentAction({
       postId,
       content: replyText,
-      parentCommentId,
+      parentId: parentCommentId,
     });
     if (!result.success) {
       toast.error(result.message || '답글 등록에 실패했습니다.');
@@ -295,7 +295,7 @@ export default function CommunityDetailContent() {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            {post.isMine ? (
+            {post.isMyPost ? (
               <>
                 <button
                   type="button"
@@ -391,7 +391,7 @@ export default function CommunityDetailContent() {
                   </div>
                   <div className="flex items-center gap-2">
                     {category === '질문게시판' &&
-                      post.isMine &&
+                      post.isMyPost &&
                       !isAccepted &&
                       !comment.isAccepted && (
                         <button

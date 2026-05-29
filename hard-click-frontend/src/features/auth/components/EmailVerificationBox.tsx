@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
-import { sendPasswordResetEmailAction } from '../actions';
 
 interface EmailVerificationBoxProps {
   icon: string;
@@ -12,6 +11,7 @@ interface EmailVerificationBoxProps {
   description: string;
   buttonText: string;
   onSuccess: (email: string) => void;
+  onSend: (email: string) => Promise<{ success: boolean; message?: string }>;
 }
 
 export default function EmailVerificationBox({
@@ -21,6 +21,7 @@ export default function EmailVerificationBox({
   description,
   buttonText,
   onSuccess,
+  onSend,
 }: EmailVerificationBoxProps) {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -43,7 +44,7 @@ export default function EmailVerificationBox({
     setEmailError('');
     setIsLoading(true);
 
-    const result = await sendPasswordResetEmailAction(email);
+    const result = await onSend(email);
 
     setIsLoading(false);
 

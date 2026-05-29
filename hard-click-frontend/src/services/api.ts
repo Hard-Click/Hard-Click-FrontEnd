@@ -6,6 +6,10 @@ export interface ApiResponse<T = unknown> {
   data: T;
   /** httpStatus < 400 이면 true. 컴포넌트 호환용 derived 필드 */
   success: boolean;
+  /** 백엔드 ErrorResponse.errorCode (예: USER_NOT_FOUND) — 에러 응답에만 존재 */
+  errorCode?: string;
+  /** 백엔드 @Valid 실패 시 필드별 에러 (예: { email: '이메일을 입력해주세요' }) */
+  details?: Record<string, unknown>;
 }
 
 /**
@@ -62,11 +66,21 @@ async function request<T>(
     return withSuccess(response.data);
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      const body = error.response.data as Omit<ApiResponse<T>, 'success'>;
+      // 백엔드 ErrorResponse: { errorCode, message, timestamp, path, traceId, details }
+      // 백엔드 ApiResponse: { httpStatus, message, data } — 에러 시엔 ErrorResponse 형식이 옴
+      const body = error.response.data as {
+        httpStatus?: number;
+        message?: string;
+        data?: T;
+        errorCode?: string;
+        details?: Record<string, unknown>;
+      };
       return withSuccess({
         httpStatus: body?.httpStatus ?? error.response.status,
         message: body?.message ?? '요청 처리 중 오류가 발생했습니다',
         data: body?.data as T,
+        errorCode: body?.errorCode,
+        details: body?.details,
       });
     }
     return withSuccess({

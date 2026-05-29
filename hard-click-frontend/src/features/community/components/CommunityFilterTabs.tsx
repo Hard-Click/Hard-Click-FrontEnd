@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import CommunityPostCard from './CommunityPostCard';
 import PostEmptyState from './PostEmptyState';
 import CommunityToolBar from './CommunityToolBar';
+<<<<<<< HEAD
 import { getPostsAction } from '../actions';
 import type { PostListItem, BoardType } from '../types';
 import { BOARD_TYPE_LABEL } from '../types';
@@ -14,7 +15,6 @@ const SORT_MAP: Record<string, string> = {
   조회순: 'views',
   댓글순: 'comments',
 };
-
 const FILTERS = ['전체', '자유게시판', '질문게시판'];
 
 const TAB_TO_BOARD_TYPE: Record<string, BoardType> = {
@@ -126,6 +126,7 @@ export default function CommunityFilterTabs() {
         <CommunityToolBar
           sortType={sortType}
           onSortChange={setSortType}
+<<<<<<< HEAD
           searchValue={searchValue}
           onSearchChange={setSearchValue}
           onSearch={handleSearch}

@@ -1,26 +1,25 @@
-export type BoardType = 'FREE' | 'QUESTION' | 'STUDY' | 'ALL';
-export type PostStatus = 'PENDING' | 'ADOPTED';
+export type BoardType = 'FREE' | 'QUESTION' | 'ALL';
 
 // boardType → 화면 표시 레이블
 export const BOARD_TYPE_LABEL: Record<Exclude<BoardType, 'ALL'>, string> = {
   FREE: '자유게시판',
   QUESTION: '질문게시판',
-  STUDY: '스터디모집',
 };
 
 // 화면 표시 레이블 → boardType (글 작성/수정 폼용)
 export const BOARD_TYPE_VALUE: Record<string, Exclude<BoardType, 'ALL'>> = {
   자유게시판: 'FREE',
   질문게시판: 'QUESTION',
-  스터디모집: 'STUDY',
 };
 
-export const POST_STATUS_LABEL: Record<PostStatus, string> = {
-  PENDING: '답변 대기',
-  ADOPTED: '채택 완료',
-};
+// GET /api/subjects
+export interface SubjectItem {
+  subjectId: number;
+  subjectName: string;
+  courseCount: number;
+}
 
-// GET /api/boards/{boardType}/posts
+// GET /api/boards/{boardType}/posts  or  GET /api/boards/posts (ALL)
 export interface PostListItem {
   postId: number;
   boardType: Exclude<BoardType, 'ALL'>;
@@ -28,13 +27,14 @@ export interface PostListItem {
   authorName: string;
   viewCount: number;
   commentCount: number;
-  status: PostStatus | null;
   createdAt: string;
 }
 
 export interface PostListResponse {
-  content: PostListItem[];
+  posts: PostListItem[];
+  currentPage: number;
   totalPages: number;
+  totalCount: number;
 }
 
 // GET /api/posts/{postId}
@@ -45,9 +45,9 @@ export interface PostDetail {
   content: string;
   authorName: string;
   viewCount: number;
-  status: PostStatus | null;
+  isMyPost: boolean;
+  isAccepted: boolean;
   fileUrls: string[];
-  isMine: boolean;
   createdAt: string;
 }
 
@@ -56,7 +56,6 @@ export interface ReplyItem {
   commentId: number;
   authorName: string;
   content: string;
-  imageUrl: string | null;
   isMine: boolean;
   createdAt: string;
 }
@@ -65,7 +64,6 @@ export interface CommentItem {
   commentId: number;
   authorName: string;
   content: string;
-  imageUrl: string | null;
   isAccepted: boolean;
   isMine: boolean;
   createdAt: string;
@@ -81,23 +79,21 @@ export interface CreatePostRequest {
   boardType: Exclude<BoardType, 'ALL'>;
   title: string;
   content: string;
-  fileUrls?: string[];
+  subjectId?: number;
 }
 
 export interface UpdatePostRequest {
   title: string;
   content: string;
-  fileUrls?: string[];
+  subjectId?: number;
 }
 
 export interface CreateCommentRequest {
   postId: number;
   content: string;
-  parentCommentId?: number;
-  imageUrl?: string;
+  parentId?: number;
 }
 
 export interface UpdateCommentRequest {
   content: string;
-  imageUrl?: string;
 }

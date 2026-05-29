@@ -1,58 +1,16 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { COMMUNITY_ERRORS } from '../constants/errorMessages';
 import LoadingModal from '@/components/ui/loadingModal';
-import { createPostAction, updatePostAction } from '../actions';
+import { createPostAction, updatePostAction, getSubjectsAction } from '../actions';
 import { BOARD_TYPE_VALUE } from '../types';
+import type { SubjectItem } from '../types';
 
-const FILTERS = ['자유게시판', '질문게시판', '스터디모집'];
-
-const SUBJECTS = [
-  '국어',
-  '화법과 작문',
-  '언어와 매체',
-  '수학',
-  '확률과 통계',
-  '미적분',
-  '기하',
-  '영어',
-  '한국사',
-  '생활과 윤리',
-  '윤리와 사상',
-  '한국지리',
-  '세계지리',
-  '동아시아사',
-  '세계사',
-  '경제',
-  '정치와 법',
-  '사회문화',
-  '물리학I',
-  '물리학II',
-  '화학I',
-  '화학II',
-  '생명과학I',
-  '생명과학II',
-  '지구과학I',
-  '지구과학II',
-  '농업 기초 기술',
-  '공업 일반',
-  '상업 경제',
-  '수산·해운 산업 기초',
-  '인간 발달',
-  '독일어I',
-  '프랑스어I',
-  '스페인어I',
-  '중국어I',
-  '일본어I',
-  '러시아어I',
-  '아랍어I',
-  '베트남어I',
-  '한문I',
-];
+const FILTERS = ['자유게시판', '질문게시판'];
 
 interface CommunityWriteFormProps {
   mode?: 'create' | 'edit';
@@ -72,6 +30,15 @@ export default function CommunityWriteForm({
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(initialCategory);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [subjects, setSubjects] = useState<SubjectItem[]>([]);
+
+  useEffect(() => {
+    getSubjectsAction().then((result) => {
+      if (result.success && result.data) {
+        setSubjects(result.data);
+      }
+    });
+  }, []);
 
   const [title, setTitle] = useState(initialTitle);
   const [titleError, setTitleError] = useState('');
@@ -99,9 +66,7 @@ export default function CommunityWriteForm({
   const isFormValid =
     activeTab === '자유게시판'
       ? title.trim() !== '' && content.trim() !== ''
-      : activeTab === '질문게시판'
-        ? title.trim() !== '' && subject !== '' && content.trim() !== ''
-        : true;
+      : title.trim() !== '' && subject !== '' && content.trim() !== '';
 
   const handleTabChange = (filter: string) => {
     if (mode === 'edit') return;
@@ -160,30 +125,16 @@ export default function CommunityWriteForm({
       isValid = false;
       if (!firstInvalid) firstInvalid = 'subject';
     }
-    if (activeTab !== '스터디모집' && !content.trim()) {
+    if (!content.trim()) {
       setContentError(COMMUNITY_ERRORS.CONTENT_REQUIRED);
       isValid = false;
       if (!firstInvalid) firstInvalid = 'content';
-    }
-    if (activeTab === '스터디모집') {
-      if (!recruit.trim()) {
-        setRecruitError(COMMUNITY_ERRORS.RECRUIT_REQUIRED);
-        isValid = false;
-        if (!firstInvalid) firstInvalid = 'recruit';
-      }
-      if (!description.trim()) {
-        setDescriptionError(COMMUNITY_ERRORS.DESCRIPTION_REQUIRED);
-        isValid = false;
-        if (!firstInvalid) firstInvalid = 'description';
-      }
     }
 
     if (!isValid) {
       setFocusedErrorField(firstInvalid);
       if (firstInvalid === 'title') titleRef.current?.focus();
       if (firstInvalid === 'content') contentRef.current?.focus();
-      if (firstInvalid === 'recruit') recruitRef.current?.focus();
-      if (firstInvalid === 'description') descriptionRef.current?.focus();
       return;
     }
 
@@ -196,16 +147,16 @@ export default function CommunityWriteForm({
     setIsSubmitting(true);
 
     const boardType = BOARD_TYPE_VALUE[activeTab];
-    // 스터디모집은 description을 content로, 나머지는 content 그대로
-    const contentToSend =
-      activeTab === '스터디모집'
-        ? `모집 인원: ${recruit}\n\n${description}`
-        : content;
+    const subjectId =
+      activeTab === '질문게시판' && subject
+        ? subjects.find((s) => s.subjectName === subject)?.subjectId
+        : undefined;
 
     if (mode === 'edit' && postId) {
       const result = await updatePostAction(postId, {
         title,
-        content: contentToSend,
+        content,
+        ...(subjectId !== undefined ? { subjectId } : {}),
       });
       setIsSubmitting(false);
       if (!result.success) {
@@ -218,7 +169,8 @@ export default function CommunityWriteForm({
       const result = await createPostAction({
         boardType,
         title,
-        content: contentToSend,
+        content,
+        ...(subjectId !== undefined ? { subjectId } : {}),
       });
       setIsSubmitting(false);
       if (!result.success || !('data' in result) || !result.data?.postId) {
@@ -296,7 +248,7 @@ export default function CommunityWriteForm({
             <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
               게시판 선택 *
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {FILTERS.map((filter) => {
                 const isActive = activeTab === filter;
                 return (
@@ -384,22 +336,22 @@ export default function CommunityWriteForm({
                 </button>
                 {isSubjectOpen && (
                   <div className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-[#E2E8F0] bg-white shadow-lg">
-                    {SUBJECTS.map((s) => (
+                    {subjects.map((s) => (
                       <button
-                        key={s}
+                        key={s.subjectId}
                         type="button"
                         onClick={() => {
-                          setSubject(s);
+                          setSubject(s.subjectName);
                           setSubjectError('');
                           setIsSubjectOpen(false);
                         }}
                         className={`w-full px-4 py-2.5 text-left text-sm hover:bg-[#F8FAFC] ${
-                          subject === s
+                          subject === s.subjectName
                             ? 'bg-[#EFF6FF] font-semibold text-[#2F5DAA]'
                             : 'text-[#374151]'
                         }`}
                       >
-                        {s}
+                        {s.subjectName}
                       </button>
                     ))}
                   </div>
@@ -419,8 +371,8 @@ export default function CommunityWriteForm({
             </div>
           )}
 
-          {/* study board */}
-          {activeTab === '스터디모집' && (
+          {/* study board - REMOVED (스터디모집 게시판 삭제됨) */}
+          {false && (
             <>
               <div className="mb-8">
                 <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
@@ -445,22 +397,22 @@ export default function CommunityWriteForm({
                   </button>
                   {isSubjectOpen && (
                     <div className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-[#E2E8F0] bg-white shadow-lg">
-                      {SUBJECTS.map((s) => (
+                      {subjects.map((s) => (
                         <button
-                          key={s}
+                          key={s.subjectId}
                           type="button"
                           onClick={() => {
-                            setSubject(s);
+                            setSubject(s.subjectName);
                             setSubjectError('');
                             setIsSubjectOpen(false);
                           }}
                           className={`w-full px-4 py-2.5 text-left text-sm hover:bg-[#F8FAFC] ${
-                            subject === s
+                            subject === s.subjectName
                               ? 'bg-[#EFF6FF] font-semibold text-[#2F5DAA]'
                               : 'text-[#374151]'
                           }`}
                         >
-                          {s}
+                          {s.subjectName}
                         </button>
                       ))}
                     </div>
@@ -565,8 +517,7 @@ export default function CommunityWriteForm({
           )}
 
           {/* content */}
-          {activeTab !== '스터디모집' && (
-            <div className="mb-8">
+          <div className="mb-8">
               <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
                 내용 *
               </label>
@@ -602,7 +553,6 @@ export default function CommunityWriteForm({
                 </div>
               )}
             </div>
-          )}
 
           {/* image upload */}
           <div className="mb-8">

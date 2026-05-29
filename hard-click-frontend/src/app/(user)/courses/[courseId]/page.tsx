@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { authStore } from '@/store/auth.store';
 // TODO: 수강신청 모달 — 팀원 결제 모달 확인 후 연결
@@ -221,7 +221,6 @@ function SideNav({ activeId, onNav }: { activeId: string; onNav: (id: string) =>
 /* ── 메인 페이지 ── */
 export default function CourseDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const courseId = Number(params.courseId);
 
   const [course, setCourse] = useState<CourseDetail | null>(null);
@@ -243,13 +242,18 @@ export default function CourseDetailPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewPage, setReviewPage] = useState(1);
 
+  /* 비로그인 액션 공통 가드 — 토스트만 표시, 페이지 이동 X */
+  const requireLogin = (): boolean => {
+    if (!authStore.isLoggedIn()) {
+      toast.error('로그인이 필요합니다');
+      return false;
+    }
+    return true;
+  };
+
   /* 미리보기 클릭 가드 — 비로그인 시 차단 (영상 API가 JWT 필수, 401 응답 방지) */
   const handlePreviewClick = (lesson: CurriculumLesson) => {
-    if (!authStore.isAuthenticated()) {
-      toast.error('로그인이 필요합니다');
-      router.push('/auth/login');
-      return;
-    }
+    if (!requireLogin()) return;
     setPreviewLesson(lesson);
   };
 
@@ -312,6 +316,7 @@ export default function CourseDetailPage() {
   // UA-P0-120: 무료 → POST /api/enrollments 즉시 처리
   // UA-P0-121: 유료 → 결제 모달 → POST /api/payments → enrollments 자동 생성
   const handleEnrollClick = async () => {
+    if (!requireLogin()) return;
     if (course?.isFree) {
       const result = await enrollCourse(courseId, 'FREE');
       if (result.success) {
@@ -335,6 +340,7 @@ export default function CourseDetailPage() {
 
   // UA-P0-130: POST /api/cart / DELETE /api/cart/{cartItemId}
   const handleCartClick = async () => {
+    if (!requireLogin()) return;
     if (isInCart && cartItemId) {
       const result = await removeFromCart(cartItemId);
       if (result.success) {
@@ -559,6 +565,7 @@ export default function CourseDetailPage() {
                 {/* TODO: 찜 API 엔드포인트 명세에 없음 — 백엔드 확인 후 연결 */}
                 <button
                   onClick={() => {
+                    if (!requireLogin()) return;
                     setIsWishlisted(v => !v);
                     toast.success(isWishlisted ? '찜이 해제되었습니다.' : '찜 목록에 추가되었습니다.');
                   }}
@@ -597,6 +604,9 @@ export default function CourseDetailPage() {
                     </div>
                     <Link
                       href={`/courses/${courseId}/notices`}
+                      onClick={(e) => {
+                        if (!requireLogin()) e.preventDefault();
+                      }}
                       className="w-20 h-10 border border-[#E2E8F0] rounded-2xl text-sm font-medium text-[#4B5563] hover:bg-[#F8FAFC] transition-colors flex items-center justify-center"
                     >
                       전체보기
@@ -608,9 +618,13 @@ export default function CourseDetailPage() {
                   ) : (
                     <div className="flex flex-col gap-3">
                       {displayedNotices.map((notice) => (
-                          <div
+                          <Link
                             key={notice.noticeId}
-                            className={`rounded-[20px] h-[89px] overflow-hidden flex flex-col ${
+                            href={`/courses/${courseId}/notices/${notice.noticeId}`}
+                            onClick={(e) => {
+                              if (!requireLogin()) e.preventDefault();
+                            }}
+                            className={`rounded-[20px] h-[89px] overflow-hidden flex flex-col hover:opacity-80 transition-opacity ${
                               notice.isPinned
                                 ? 'bg-[rgba(47,93,170,0.05)] border border-[#2F5DAA]'
                                 : 'bg-white border border-[#E2E8F0]'
@@ -631,7 +645,7 @@ export default function CourseDetailPage() {
                               <span className="text-xs text-[#9CA3AF] flex-shrink-0">{notice.createdAt}</span>
                             </div>
                             <p className="text-sm text-[#4B5563] line-clamp-1">{notice.content}</p>
-                          </div>
+                          </Link>
                         )
                       )}
                     </div>
@@ -887,7 +901,7 @@ export default function CourseDetailPage() {
                                 {review.isMine && (
                                   <>
                                     <button
-                                      onClick={() => setEditingReview(review)}
+                                      onClick={() => { if (requireLogin()) setEditingReview(review); }}
                                       className="w-7 h-7 flex items-center justify-center rounded-2xl hover:bg-[#EEF3FB] transition-colors"
                                       title="수정"
                                     >
@@ -895,7 +909,7 @@ export default function CourseDetailPage() {
                                       <img src="/icons/editIcon.svg" width={14} height={14} alt="" />
                                     </button>
                                     <button
-                                      onClick={() => setDeletingReview(review)}
+                                      onClick={() => { if (requireLogin()) setDeletingReview(review); }}
                                       className="w-7 h-7 flex items-center justify-center rounded-2xl hover:bg-red-50 transition-colors"
                                       title="삭제"
                                     >

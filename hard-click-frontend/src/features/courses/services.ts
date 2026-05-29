@@ -295,7 +295,7 @@ const MOCK_COURSE_DETAIL: CourseDetail = {
       title: '섹션 1: 함수의 극한',
       lessons: [
         { lessonId: 1, title: 'OT 및 학습 방향', duration: '05:23', isPreview: true },
-        { lessonId: 2, title: '함수의 극한 개념 정리', duration: '12:45', isPreview: true },
+        { lessonId: 2, title: '함수의 극한 개념 정리', duration: '12:45', isPreview: false },
         { lessonId: 3, title: '극한값 계산 문제풀이', duration: '18:30', isPreview: false },
       ],
     },
@@ -540,9 +540,15 @@ export async function getCourses(query?: CourseListQuery): Promise<CourseListIte
     return sorted;
   }
 
-  // 실제 API 호출 (노션 명세: GET /api/courses?page=0&size=10)
-  // 명세에 검색/필터/정렬 파라미터 없어 클라이언트에서 처리
-  const response = await api.get<CourseListApiResponse>('/api/courses?page=0&size=100');
+  // 실제 API 호출 (노션 명세: GET /api/courses)
+  const params = new URLSearchParams();
+  params.set('page', '0');
+  params.set('size', '100');
+  if (query?.subjectId) params.set('subjectId', String(query.subjectId));
+  if (query?.keyword) params.set('keyword', query.keyword);
+  if (query?.sort) params.set('sort', query.sort);
+
+  const response = await api.get<CourseListApiResponse>(`/api/courses?${params.toString()}`);
 
   if (!response.success || !response.data) {
     return [];
@@ -550,32 +556,32 @@ export async function getCourses(query?: CourseListQuery): Promise<CourseListIte
 
   let courses = response.data.content.map(toCourseListItem);
 
-  // 클라이언트 측 필터링 (백엔드 미지원이라 임시 처리)
-  if (query?.keyword) {
-    const kw = query.keyword.toLowerCase();
-    courses = courses.filter(c => c.title.toLowerCase().includes(kw));
-  }
-  if (query?.subjectId) {
-    const subject = MOCK_SUBJECTS.find(s => s.subjectId === query.subjectId);
-    if (subject) courses = courses.filter(c => c.subjectName === subject.name);
-  }
+  // 클라이언트 측 필터링 (백엔드 미지원 필드)
   if (query?.instructor) {
     courses = courses.filter(c => c.instructorName === query.instructor);
   }
 
-  const sort = query?.sort ?? 'latest';
-  const sorted = [...courses];
-  if (sort === 'rating') {
-    sorted.sort((a, b) => b.averageRating - a.averageRating);
-  }
-  // latest/popular은 백엔드 데이터 부족으로 보류
+  return courses;
+}
 
-  return sorted;
+/** 백엔드 과목 응답 item */
+interface SubjectApiItem {
+  subjectId: number;
+  subjectName: string;
+  courseCount: number;
 }
 
 export async function getSubjects(): Promise<Subject[]> {
-  // 노션 명세상 별도 API 없음 — 목 데이터로 유지
-  return MOCK_SUBJECTS;
+  const response = await api.get<SubjectApiItem[]>('/api/subjects');
+
+  if (!response.success || !response.data) {
+    return MOCK_SUBJECTS;
+  }
+
+  return response.data.map((s) => ({
+    subjectId: s.subjectId,
+    name: s.subjectName,
+  }));
 }
 
 export function getInstructors(): string[] {

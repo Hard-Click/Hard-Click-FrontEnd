@@ -1,5 +1,6 @@
 import {
   getPosts,
+  getSubjects,
   getPostDetail,
   createPost,
   updatePost,
@@ -25,6 +26,10 @@ export async function getPostsAction(
   sort?: string,
 ) {
   return getPosts(boardType, page, keyword, sort);
+}
+
+export async function getSubjectsAction() {
+  return getSubjects();
 }
 
 export async function getPostDetailAction(postId: number) {

@@ -8,6 +8,7 @@ import type {
   UpdatePostRequest,
   CreateCommentRequest,
   UpdateCommentRequest,
+  SubjectItem,
 } from './types';
 
 export async function getPosts(
@@ -29,16 +30,26 @@ export async function getPosts(
   return api.get<PostListResponse>(url);
 }
 
+export async function getSubjects() {
+  return api.get<SubjectItem[]>('/api/subjects');
+}
+
 export async function getPostDetail(postId: number) {
   return api.get<PostDetail>(`/api/posts/${postId}`);
 }
 
-export async function createPost(body: CreatePostRequest) {
-  return api.post<{ postId: number }>('/api/posts', body);
+export async function createPost(body: CreatePostRequest, files?: File[]) {
+  const form = new FormData();
+  form.append('data', new Blob([JSON.stringify(body)], { type: 'application/json' }));
+  if (files) files.forEach((f) => form.append('files', f));
+  return api.post<{ postId: number }>('/api/posts', form);
 }
 
-export async function updatePost(postId: number, body: UpdatePostRequest) {
-  return api.patch<{ postId: number }>(`/api/posts/${postId}`, body);
+export async function updatePost(postId: number, body: UpdatePostRequest, files?: File[]) {
+  const form = new FormData();
+  form.append('data', new Blob([JSON.stringify(body)], { type: 'application/json' }));
+  if (files) files.forEach((f) => form.append('files', f));
+  return api.patch<{ postId: number }>(`/api/posts/${postId}`, form);
 }
 
 export async function deletePost(postId: number) {
@@ -50,14 +61,15 @@ export async function getComments(postId: number) {
 }
 
 export async function createComment(body: CreateCommentRequest) {
-  return api.post<{ commentId: number }>('/api/comments', body);
+  const form = new FormData();
+  form.append('data', new Blob([JSON.stringify(body)], { type: 'application/json' }));
+  return api.post<{ commentId: number }>('/api/comments', form);
 }
 
-export async function updateComment(
-  commentId: number,
-  body: UpdateCommentRequest,
-) {
-  return api.patch<{ commentId: number }>(`/api/comments/${commentId}`, body);
+export async function updateComment(commentId: number, body: UpdateCommentRequest) {
+  const form = new FormData();
+  form.append('data', new Blob([JSON.stringify(body)], { type: 'application/json' }));
+  return api.patch<{ commentId: number }>(`/api/comments/${commentId}`, form);
 }
 
 export async function deleteComment(commentId: number) {
@@ -65,8 +77,5 @@ export async function deleteComment(commentId: number) {
 }
 
 export async function acceptComment(commentId: number) {
-  return api.post<{ isAccepted: boolean }>(
-    `/api/comments/${commentId}/accept`,
-    {},
-  );
+  return api.post<{ isAccepted: boolean }>(`/api/comments/${commentId}/accept`, {});
 }

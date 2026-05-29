@@ -1,4 +1,4 @@
-import type { Notice } from './types';
+import type { Notice, NoticeDetail } from './types';
 import { api } from '@/services/api';
 
 const USE_MOCK = false;
@@ -46,14 +46,22 @@ function toNotice(api: NoticeApiItem): Notice {
   };
 }
 
+export async function getNoticeDetail(noticeId: number) {
+  return api.get<NoticeDetail>(`/api/notices/${noticeId}`);
+}
+
+export async function deleteNotice(noticeId: number) {
+  return api.delete<void>(`/api/notices/${noticeId}`);
+}
+
 export async function getPinnedNotices(): Promise<Notice[]> {
   if (USE_MOCK) {
     await new Promise(resolve => setTimeout(resolve, 0));
     return MOCK_NOTICES.filter(n => n.isPinned);
   }
 
-  // 노션 명세: GET /api/notices?page=0&size=10
-  const response = await api.get<NoticeApiResponse>('/api/notices?page=0&size=20');
+  // 노션 명세: GET /api/notices?type=GLOBAL&page=0&size=20
+  const response = await api.get<NoticeApiResponse>('/api/notices?type=GLOBAL&page=0&size=20');
 
   if (!response.success || !response.data) {
     return [];

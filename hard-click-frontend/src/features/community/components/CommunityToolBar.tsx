@@ -2,6 +2,8 @@
 
 import Image from 'next/image';
 
+const SORT_OPTIONS = ['최신순', '조회순', '댓글순'];
+
 interface CommunityToolBarProps {
   sortType: string;
   onSortChange: (sort: string) => void;
@@ -9,8 +11,6 @@ interface CommunityToolBarProps {
   onSearchChange?: (value: string) => void;
   onSearch?: () => void;
 }
-
-const SORT_OPTIONS = ['최신순', '조회순', '댓글순'];
 
 export default function CommunityToolBar({
   sortType,
