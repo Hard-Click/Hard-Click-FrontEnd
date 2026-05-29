@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { verifyAccountLockCodeAction } from '../actions';
-import { sendEmailVerification } from '../services';
+import { sendAccountLockEmailAction } from '../actions';
 
 interface VerificationCodeBoxProps {
   email: string;
@@ -62,7 +62,7 @@ export default function VerificationCodeBox({
   };
 
   const handleResend = async () => {
-    const result = await sendEmailVerification(email); // POST /api/auth/email/send
+    const result = await sendAccountLockEmailAction(email);
     if (!result.success) {
       toast.error(result.message || '재발송에 실패했습니다.');
       return;

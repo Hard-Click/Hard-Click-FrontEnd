@@ -8,29 +8,39 @@ import {
   sendPasswordResetEmail,
   verifyPasswordResetCode,
   resetPassword,
+  sendAccountLockEmail,
   verifyAccountLockCode,
   changeLockedAccountPassword,
   changePassword,
 } from './services';
 import { getEmail } from './schemas';
-import type { LoginRequest, RegisterFormValues, RegisterRequest } from './types';
+import type {
+  LoginRequest,
+  RegisterFormValues,
+  RegisterRequest,
+} from './types';
 
 export async function checkUsernameAction(username: string) {
   return checkUsername(username.trim());
 }
 
-export async function checkEmailAction(values: Pick<RegisterFormValues, 'emailId' | 'emailDomain'>) {
+export async function checkEmailAction(
+  values: Pick<RegisterFormValues, 'emailId' | 'emailDomain'>,
+) {
   return checkEmail(getEmail(values));
 }
 
 export async function sendEmailVerificationAction(
-  values: Pick<RegisterFormValues, 'emailId' | 'emailDomain'>
+  values: Pick<RegisterFormValues, 'emailId' | 'emailDomain'>,
 ) {
   return sendEmailVerification(getEmail(values));
 }
 
 export async function verifyEmailCodeAction(
-  values: Pick<RegisterFormValues, 'emailId' | 'emailDomain' | 'verificationCode'>
+  values: Pick<
+    RegisterFormValues,
+    'emailId' | 'emailDomain' | 'verificationCode'
+  >,
 ) {
   return verifyEmailCode(getEmail(values), values.verificationCode.trim());
 }
@@ -104,7 +114,10 @@ export async function sendPasswordResetEmailAction(email: string) {
   return sendPasswordResetEmail(email.trim());
 }
 
-export async function verifyPasswordResetCodeAction(email: string, code: string) {
+export async function verifyPasswordResetCodeAction(
+  email: string,
+  code: string,
+) {
   if (!email.trim() || !code.trim()) {
     return { success: false, message: '이메일과 인증번호를 모두 입력해주세요' };
   }
@@ -121,6 +134,10 @@ export async function resetPasswordAction(payload: {
     return { success: false, message: '비밀번호가 일치하지 않습니다' };
   }
   return resetPassword(payload);
+}
+
+export async function sendAccountLockEmailAction(email: string) {
+  return sendAccountLockEmail(email);
 }
 
 /* ─────────────── 잠긴 계정 흐름 ─────────────── */
