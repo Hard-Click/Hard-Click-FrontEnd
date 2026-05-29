@@ -32,7 +32,7 @@ export interface ChangePasswordRequest {
   newPasswordConfirm: string;
 }
 
-/* ───── 내 수강 강의 목록 (GET /api/users/me/courses) ─────
+/* ───── 내 수강 강의 목록 (GET /api/members/me/courses) ─────
  * 백엔드 통합 endpoint — query 파라미터 없음.
  * 수강 완료 강의는 클라이언트에서 progressRate === 100 으로 필터링한다. */
 export interface MyCourse {
