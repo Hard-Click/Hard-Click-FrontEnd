@@ -7,8 +7,6 @@ import type {
   UpdateProfileResponse,
   ChangePasswordRequest,
   MyCourse,
-  MyCourseSort,
-  MyCompletedCourse,
 } from './types';
 
 const USE_MOCK = false;
@@ -134,8 +132,10 @@ export async function withdrawAccount(currentPassword: string) {
   });
 }
 
-/* ───── 내 수강 강의 목록 (GET /api/members/me/courses?sort=) ───── */
-export async function getMyCourses(sort?: MyCourseSort) {
+/* ───── 내 수강 강의 목록 (GET /api/users/me/courses) ─────
+ * 백엔드 통합 endpoint (MyEnrolledCourseController) — query 파라미터 없이 전체 수강 강의 반환.
+ * 수강 완료 강의는 클라이언트에서 progressRate === 100 으로 필터링한다. */
+export async function getMyCourses() {
   if (USE_MOCK) {
     return {
       success: true,
@@ -146,7 +146,6 @@ export async function getMyCourses(sort?: MyCourseSort) {
           courseId: 1,
           courseTitle: 'React 완벽 가이드',
           thumbnailUrl: '',
-          instructorName: '신노을',
           progressRate: 65,
           lastVideoId: 101,
           lastPositionSeconds: 420,
@@ -156,7 +155,6 @@ export async function getMyCourses(sort?: MyCourseSort) {
           courseId: 2,
           courseTitle: 'TypeScript 심화 학습',
           thumbnailUrl: '',
-          instructorName: '신노을',
           progressRate: 40,
           lastVideoId: 102,
           lastPositionSeconds: 250,
@@ -166,43 +164,22 @@ export async function getMyCourses(sort?: MyCourseSort) {
           courseId: 3,
           courseTitle: 'Node.js 백엔드 개발',
           thumbnailUrl: '',
-          instructorName: '신노을',
           progressRate: 25,
           lastVideoId: 103,
           lastPositionSeconds: 90,
           lastStudiedAt: '2026-05-08T09:00:00+09:00',
         },
-      ] as MyCourse[],
-    };
-  }
-  const query = sort ? `?sort=${sort}` : '';
-  return api.get<MyCourse[]>(`/api/members/me/courses${query}`);
-}
-
-/* ───── 완료 강의 목록 (GET /api/members/me/courses/completed) ───── */
-export async function getMyCompletedCourses() {
-  if (USE_MOCK) {
-    return {
-      success: true,
-      httpStatus: 200,
-      message: '완료 강의 목록을 조회했습니다.',
-      data: [
-        {
-          courseId: 1,
-          courseTitle: 'JavaScript 기초',
-          completedAt: '2026-04-15T00:00:00+09:00',
-          progressRate: 100,
-          hasReview: false,
-        },
         {
           courseId: 4,
           courseTitle: 'HTML & CSS 완벽 가이드',
-          completedAt: '2026-03-28T00:00:00+09:00',
+          thumbnailUrl: '',
           progressRate: 100,
-          hasReview: false,
+          lastVideoId: 104,
+          lastPositionSeconds: 0,
+          lastStudiedAt: '2026-03-28T00:00:00+09:00',
         },
-      ] as MyCompletedCourse[],
+      ] as MyCourse[],
     };
   }
-  return api.get<MyCompletedCourse[]>('/api/members/me/courses/completed');
+  return api.get<MyCourse[]>('/api/users/me/courses');
 }

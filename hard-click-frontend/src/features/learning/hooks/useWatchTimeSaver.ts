@@ -35,32 +35,34 @@ export function useWatchTimeSaver({
 
   const flush = async (delta: number) => {
     if (delta < 1) return;
-    /* 클라이언트 측 누적 시청 시간(localStorage) — 사이드바 진행률 폴백.
-     * lastPosition은 드래그로도 변경되므로 별도 watchedSeconds 키 사용. */
+    /* 클라이언트 측 누적 시청 시간(localStorage) — 백엔드 응답이 void이므로 progressRate는
+     * (누적 watchTime / durationSeconds)으로 클라이언트에서 계산. lastPosition은 별도 키. */
+    let totalWatchTime = delta;
     if (typeof window !== 'undefined') {
       const key = `learning:watchedSeconds:${videoId}`;
       const stored = Number(window.localStorage.getItem(key) || 0);
-      const next = (Number.isFinite(stored) ? stored : 0) + delta;
-      window.localStorage.setItem(key, String(next));
+      totalWatchTime = (Number.isFinite(stored) ? stored : 0) + delta;
+      window.localStorage.setItem(key, String(totalWatchTime));
     }
-    const res = await saveWatchTime(videoId, { watchedSecondsDelta: delta });
+    const res = await saveWatchTime(videoId, { watchTimeSeconds: delta });
     if (!res.success) return;
-    onProgress?.(res.data.progressRate);
 
-    /* 90% 이상 도달 시 1회 토스트 + 백엔드 완료 처리 호출 */
-    if (!milestoneFiredRef.current && res.data.progressRate >= 90) {
+    /* 클라이언트 측 progressRate — 백엔드 응답에 progressRate 없어서 자체 계산 */
+    const rate = durationSeconds > 0
+      ? Math.min(100, (totalWatchTime / durationSeconds) * 100)
+      : 0;
+    onProgress?.(rate);
+
+    /* 90% 이상 도달 시 1회 토스트 + 백엔드 완료 처리 호출 (body 없음).
+     * 완료 검증은 백엔드에서 watchTimeSeconds >= ceil(duration * 0.9). */
+    if (!milestoneFiredRef.current && rate >= 90) {
       milestoneFiredRef.current = true;
       toast.success('90% 이상 수강되었습니다.');
     }
-    if (!completedFiredRef.current && res.data.progressRate >= 90) {
+    if (!completedFiredRef.current && rate >= 90) {
       completedFiredRef.current = true;
-      const completeRes = await completeVideo(videoId, {
-        watchedSeconds: res.data.watchedSeconds,
-        durationSeconds,
-      });
-      if (completeRes.success && completeRes.data.isCompleted) {
-        onCompleted?.();
-      }
+      const completeRes = await completeVideo(videoId);
+      if (completeRes.success) onCompleted?.();
     }
   };
 
