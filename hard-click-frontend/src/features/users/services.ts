@@ -132,8 +132,8 @@ export async function withdrawAccount(currentPassword: string) {
   });
 }
 
-/* ───── 내 수강 강의 목록 (GET /api/users/me/courses) ─────
- * 백엔드 MyEnrolledCourseController(@RequestMapping("/api/users/me/courses")) — query 파라미터 없이 전체 수강 강의 반환.
+/* ───── 내 수강 강의 목록 (GET /api/members/me/courses) ─────
+ * 백엔드 MyEnrolledCourseController(@RequestMapping("/api/members/me/courses")) — query 파라미터 없이 전체 수강 강의 반환.
  * 수강 완료 강의는 클라이언트에서 progressRate === 100 으로 필터링한다. */
 export async function getMyCourses() {
   if (USE_MOCK) {
@@ -181,7 +181,7 @@ export async function getMyCourses() {
       ] as MyCourse[],
     };
   }
-  return api.get<MyCourse[]>('/api/users/me/courses');
+  return api.get<MyCourse[]>('/api/members/me/courses');
 }
 
 /* ───── 완료 강의 목록 (GET /api/members/me/courses/completed) ─────
