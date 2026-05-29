@@ -15,35 +15,8 @@ import {
 } from '@/features/courses/actions';
 import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
 import PreviewVideoModal from '@/features/learning/components/PreviewVideoModal';
-import { updateReview, deleteReview } from '@/features/reviews/services';
+import { getReviews, updateReview, deleteReview } from '@/features/reviews/services';
 import type { CourseDetail, Review, CurriculumLesson } from '@/features/courses/types';
-
-/* mock 리뷰 storage (mypage와 공유) */
-const REVIEW_STORAGE_KEY = 'mock_my_reviews';
-
-function loadStoredReviews(): Record<number, { courseId: number; rating: number; content: string }> {
-  if (typeof window === 'undefined') return {};
-  try {
-    const raw = window.localStorage.getItem(REVIEW_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveStoredReview(courseId: number, rating: number, content: string) {
-  if (typeof window === 'undefined') return;
-  const map = loadStoredReviews();
-  map[courseId] = { courseId, rating, content };
-  window.localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify(map));
-}
-
-function deleteStoredReview(courseId: number) {
-  if (typeof window === 'undefined') return;
-  const map = loadStoredReviews();
-  delete map[courseId];
-  window.localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify(map));
-}
 
 // TODO: 리뷰 신고 모달 — 팀원 컴포넌트 완성 후 아래 import 연결
 // import ReviewReportModal from '@/components/ui/reviewReportModal';
@@ -241,6 +214,10 @@ export default function CourseDetailPage() {
 
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewPage, setReviewPage] = useState(1);
+  const [ratingDist, setRatingDist] = useState<{ stars: number; count: number }[]>([]);
+  const [reviewTotalPages, setReviewTotalPages] = useState(1);
+  const [reviewAvg, setReviewAvg] = useState(0);
+  const [reviewTotalCount, setReviewTotalCount] = useState(0);
 
   /* 비로그인 액션 공통 가드 — 토스트만 표시, 페이지 이동 X */
   const requireLogin = (): boolean => {
@@ -264,37 +241,35 @@ export default function CourseDetailPage() {
         setIsEnrolled(data.isEnrolled);
         setIsWishlisted(data.isWishlisted);
         setIsInCart(data.isInCart);
-
-        // mock localStorage에서 사용자가 작성한 리뷰 추가 (테스트용)
-        let merged = [...data.reviews];
-        if (typeof window !== 'undefined') {
-          try {
-            const raw = window.localStorage.getItem('mock_my_reviews');
-            const storedMap = raw ? JSON.parse(raw) : {};
-            const stored = storedMap[courseId];
-            if (stored) {
-              merged = merged.filter((r) => !r.isMine);
-              merged.unshift({
-                reviewId: Date.now(),
-                studentName: '나',
-                rating: stored.rating,
-                content: stored.content,
-                createdAt: new Date().toISOString().split('T')[0] ?? '',
-                isMine: true,
-              });
-            }
-          } catch {}
-        }
-
-        // UA-P1-192: 내 리뷰 최상단 표시
-        const sorted = merged.sort((a, b) =>
-          a.isMine === b.isMine ? 0 : a.isMine ? -1 : 1
-        );
-        setReviews(sorted);
       }
       setIsLoading(false);
     });
   }, [courseId]);
+
+  /* 리뷰 목록 조회 (GET /api/courses/{courseId}/reviews) — 백엔드가 내 리뷰 최상단·별점분포·평균 조립 */
+  const loadReviews = useCallback(async (page: number) => {
+    const res = await getReviews(courseId, 'latest', page);
+    if (!res.success || !res.data) return;
+    const d = res.data;
+    setReviews(
+      d.reviews.map((r) => ({
+        reviewId: r.reviewId,
+        studentName: r.authorName,
+        rating: r.rating,
+        content: r.content,
+        createdAt: r.createdDate,
+        isMine: r.isMyReview,
+      })),
+    );
+    setRatingDist(d.ratingStats.map((s) => ({ stars: s.rating, count: s.count })));
+    setReviewAvg(d.avgRating ?? 0);
+    setReviewTotalCount(d.totalCount);
+    setReviewTotalPages(Math.max(1, d.totalPages));
+  }, [courseId]);
+
+  useEffect(() => {
+    loadReviews(reviewPage);
+  }, [loadReviews, reviewPage]);
 
   const handleScroll = useCallback(() => {
     const offset = 120;
@@ -370,13 +345,8 @@ export default function CourseDetailPage() {
       toast.error(res.message || '수강평 수정에 실패했습니다.');
       return;
     }
-    saveStoredReview(courseId, rating, content);
-    setReviews((prev) =>
-      prev.map((r) =>
-        r.reviewId === editingReview.reviewId ? { ...r, rating, content } : r,
-      ),
-    );
     setEditingReview(null);
+    await loadReviews(reviewPage);
     toast.success(res.message || '수강평이 수정되었습니다.');
   };
 
@@ -388,9 +358,8 @@ export default function CourseDetailPage() {
       toast.error(res.message || '수강평 삭제에 실패했습니다.');
       return;
     }
-    deleteStoredReview(courseId);
-    setReviews((prev) => prev.filter((r) => r.reviewId !== deletingReview.reviewId));
     setDeletingReview(null);
+    await loadReviews(reviewPage);
     toast.success(res.message || '수강평이 삭제되었습니다.');
   };
 
@@ -415,10 +384,9 @@ export default function CourseDetailPage() {
     return <CourseErrorScreen title="현재 접근할 수 없는 강의입니다." subtitle="강의 정보를 다시 확인해주세요." />;
   }
 
-  const REVIEWS_PER_PAGE = 5;
-  const maxRatingCount = Math.max(...course.ratingDistribution.map(d => d.count), 1);
-  const totalReviewPages = Math.ceil(reviews.length / REVIEWS_PER_PAGE);
-  const displayedReviews = reviews.slice((reviewPage - 1) * REVIEWS_PER_PAGE, reviewPage * REVIEWS_PER_PAGE);
+  const maxRatingCount = Math.max(...ratingDist.map(d => d.count), 1);
+  const totalReviewPages = reviewTotalPages;
+  const displayedReviews = reviews; // 서버 페이지네이션 (getReviews page 기준)
   // 공지 고정 맨 위, 나머지 최신순 정렬
   const sortedNotices = [...course.notices].sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1;
@@ -845,14 +813,14 @@ export default function CourseDetailPage() {
                           className="flex flex-col items-center justify-center gap-2 bg-[#E8EAED] rounded-2xl flex-shrink-0"
                           style={{ width: 431, height: 160 }}
                         >
-                          <span className="text-[48px] font-bold text-[#1A1F2E] leading-none">{course.averageRating}</span>
-                          <StarRow rating={course.averageRating} size={24} />
-                          <span className="text-sm text-[#1A1F2E]">총 {course.reviewCount.toLocaleString()}개 리뷰</span>
+                          <span className="text-[48px] font-bold text-[#1A1F2E] leading-none">{reviewAvg}</span>
+                          <StarRow rating={reviewAvg} size={24} />
+                          <span className="text-sm text-[#1A1F2E]">총 {reviewTotalCount.toLocaleString()}개 리뷰</span>
                         </div>
 
                         <div className="flex-1 flex flex-col gap-3">
                           {[5, 4, 3, 2, 1].map(star => {
-                            const dist = course.ratingDistribution.find(d => d.stars === star);
+                            const dist = ratingDist.find(d => d.stars === star);
                             const count = dist?.count ?? 0;
                             const pct = Math.round((count / maxRatingCount) * 100);
                             return (
