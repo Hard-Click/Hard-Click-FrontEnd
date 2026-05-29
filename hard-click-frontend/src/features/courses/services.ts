@@ -3,6 +3,7 @@ import type {
   Subject,
   CourseListQuery,
   CourseDetail,
+  CourseStatus,
 } from './types';
 import { api } from '@/services/api';
 
@@ -13,13 +14,21 @@ interface CourseDetailApiResponse {
   courseId: number;
   title: string;
   description: string;
-  instructorId: number;
   instructorName: string;
+  instructorId?: number;          // 백엔드 상세 미제공 — 옵셔널
   subjectName: string;
   price: number;
+  priceType?: 'FREE' | 'PAID';
+  priceLabel?: string;
+  status?: CourseStatus;
   thumbnailUrl: string;
   averageRating: number;
   reviewCount: number;
+  studentCount: number;
+  learningObjectives?: string[];
+  targetAudience?: string[];
+  techTags?: string[];
+  level?: string;
   sections?: Array<{
     sectionId: number;
     title: string;
@@ -31,7 +40,7 @@ interface CourseDetailApiResponse {
       isPreview?: boolean;
     }>;
   }>;
-  createdAt: string;
+  createdAt?: string;             // 백엔드 상세 미제공 — 옵셔널
 }
 
 function formatTotalDuration(totalSecs: number): string {
@@ -56,25 +65,25 @@ function toCourseDetail(api: CourseDetailApiResponse): CourseDetail {
     subjectName: api.subjectName,
     instructorName: api.instructorName,
     price: api.price,
-    isFree: api.price === 0,
+    isFree: api.priceType ? api.priceType === 'FREE' : api.price === 0,
     thumbnailUrl: api.thumbnailUrl,
     averageRating: api.averageRating,
     reviewCount: api.reviewCount,
-    studentCount: 0,                // 백엔드 미제공 — 별도 API 필요
-    status: 'PUBLISHED',            // 백엔드 미제공 — 응답 자체가 오면 publish 가정
+    studentCount: api.studentCount,
+    status: api.status ?? 'PUBLISHED',
     isEnrolled: false,              // 백엔드 미제공 — 별도 권한 확인 API 필요
     isWishlisted: false,            // 백엔드 미제공
     isInCart: false,                // 백엔드 미제공
-    learningGoals: [],              // 백엔드 미제공
-    targetAudience: [],             // 백엔드 미제공
-    techTags: [],                   // 백엔드 미제공
+    learningGoals: api.learningObjectives ?? [],
+    targetAudience: api.targetAudience ?? [],
+    techTags: api.techTags ?? [],
     materialsProvided: [],          // 백엔드 미제공
-    level: '',                      // 백엔드 미제공
+    level: api.level ?? '',
     totalLessons: allLessons.length,
     totalDuration: formatTotalDuration(totalSecs),
     notices: [],                    // 별도 API: 공지사항 목록 조회
     instructor: {
-      instructorId: api.instructorId,
+      instructorId: api.instructorId ?? 0,
       name: api.instructorName,
       subtitle: '',
       bio: '',
@@ -477,14 +486,21 @@ interface CourseListApiItem {
   instructorName: string;
   subjectName: string;
   price: number;
+  priceType?: 'FREE' | 'PAID';
+  priceLabel?: string;
   thumbnailUrl: string;
   averageRating: number;
   reviewCount: number;
+  studentCount: number;
+  status?: CourseStatus;
+  createdAt?: string;
 }
 
 interface CourseListApiResponse {
   content: CourseListApiItem[];
-  totalPages: number;
+  currentPage?: number;
+  totalPages?: number;
+  totalCount?: number;
 }
 
 function toCourseListItem(api: CourseListApiItem): CourseListItem {
@@ -497,11 +513,10 @@ function toCourseListItem(api: CourseListApiItem): CourseListItem {
     thumbnailUrl: api.thumbnailUrl,
     averageRating: api.averageRating,
     reviewCount: api.reviewCount,
-    isFree: api.price === 0,
-    // 백엔드 미제공 필드 — 기본값
-    studentCount: 0,
-    status: 'PUBLISHED',
-    createdAt: '',
+    studentCount: api.studentCount,
+    isFree: api.priceType ? api.priceType === 'FREE' : api.price === 0,
+    status: api.status ?? 'PUBLISHED',
+    createdAt: api.createdAt ?? '',
     isEnrolled: false,
     hasPreview: false,
   };
@@ -540,13 +555,14 @@ export async function getCourses(query?: CourseListQuery): Promise<CourseListIte
     return sorted;
   }
 
-  // 실제 API 호출 (노션 명세: GET /api/courses)
+  // 실제 API 호출 (백엔드: GET /api/courses, page 0-based, sort enum 대문자)
   const params = new URLSearchParams();
   params.set('page', '0');
   params.set('size', '100');
   if (query?.subjectId) params.set('subjectId', String(query.subjectId));
   if (query?.keyword) params.set('keyword', query.keyword);
-  if (query?.sort) params.set('sort', query.sort);
+  // 백엔드 CourseSortType enum은 대문자(LATEST/POPULAR/RATING) — 소문자 전송 시 500
+  params.set('sort', (query?.sort ?? 'latest').toUpperCase());
 
   const response = await api.get<CourseListApiResponse>(`/api/courses?${params.toString()}`);
 
