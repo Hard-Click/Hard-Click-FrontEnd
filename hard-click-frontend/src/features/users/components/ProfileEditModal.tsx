@@ -310,7 +310,7 @@ export default function ProfileEditModal({
                   onSelectImage={() => setStep('image')}
                   onSelectPassword={() => setStep('password')}
                   onSelectWithdraw={() => setStep('withdraw')}
-                  onBack={() => setStep('verify')}
+                  onBack={onClose}
                 />
               )}
 

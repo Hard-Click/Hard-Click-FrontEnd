@@ -12,6 +12,7 @@ interface MyCourseCardProps {
   createdAt: string;
   price: string;
   thumbnailUrl?: string;
+  onStatusChange?: (id: number, isPublic: boolean) => void;
 }
 
 import Image from 'next/image';
@@ -34,6 +35,7 @@ export default function MyCourseCard({
   price,
   thumbnailUrl,
   highlighted = false,
+  onStatusChange,
 }: MyCourseCardProps) {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -74,6 +76,7 @@ export default function MyCourseCard({
     }
 
     setPublicState(newPublicState);
+    onStatusChange?.(id, newPublicState);
     toast.success(
       newPublicState ? '강의가 공개되었습니다.' : '강의가 비공개되었습니다.',
       { duration: 2000 },
@@ -92,8 +95,9 @@ export default function MyCourseCard({
       {/* left */}
       <div className="flex gap-5">
         {/* thumbnail */}
-        <Image
-          src={thumbnailUrl || '/images/defaultThumbnail.svg'}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={thumbnailUrl || '/icons/courseThumbnailIcon.svg'}
           alt={title}
           width={160}
           height={120}

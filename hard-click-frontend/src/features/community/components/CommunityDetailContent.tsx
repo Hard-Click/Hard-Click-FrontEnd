@@ -46,6 +46,7 @@ export default function CommunityDetailContent() {
   const [post, setPost] = useState<PostDetail | null>(null);
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [isPageLoading, setIsPageLoading] = useState(true);
+  // blobUrls 제거 — fileUrls 직접 사용 (permitAll로 열려있어 auth 불필요)
 
   const [commentText, setCommentText] = useState('');
   const [replyInputId, setReplyInputId] = useState<number | null>(null);
@@ -88,6 +89,8 @@ export default function CommunityDetailContent() {
       if (commentsResult.success && commentsResult.data) {
         setComments(commentsResult.data.comments);
       }
+
+
       setIsPageLoading(false);
     };
     load();

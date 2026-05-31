@@ -32,7 +32,15 @@ export default function EditCoursePage() {
             price: data.isFree ? '' : String(data.price),
             thumbnailUrl: data.thumbnailUrl,
             thumbnailName: '',
-            curriculum: data.curriculum,
+            // API: sections[].lessons → CourseCreateForm: sections[].lectures 변환
+            curriculum: (data.curriculum ?? []).map((sec: any) => ({
+              id: sec.sectionId,
+              title: sec.title,
+              lectures: (sec.lessons ?? []).map((l: any) => ({
+                fileName: l.title,
+                duration: l.duration ?? '00:00',
+              })),
+            })),
           });
         } else {
           // 폴백: localStorage

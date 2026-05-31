@@ -17,6 +17,7 @@ interface CommunityWriteFormProps {
   initialCategory?: string;
   initialTitle?: string;
   initialContent?: string;
+  initialImages?: string[];   // 수정 시 기존 이미지 URL 목록
   postId?: number;
 }
 
@@ -25,12 +26,15 @@ export default function CommunityWriteForm({
   initialCategory = '자유게시판',
   initialTitle = '',
   initialContent = '',
+  initialImages = [],
   postId,
 }: CommunityWriteFormProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(initialCategory);
-  const [previewImages, setPreviewImages] = useState<string[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  // 기존 서버 이미지 URL (수정 시 유지 대상) 과 새로 추가한 파일을 분리 관리
+  const [existingUrls, setExistingUrls] = useState<string[]>(initialImages);
+  const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [newPreviews, setNewPreviews] = useState<string[]>([]);
   const [subjects, setSubjects] = useState<SubjectItem[]>([]);
 
   useEffect(() => {
@@ -83,8 +87,9 @@ export default function CommunityWriteForm({
     setRecruitError('');
     setDescriptionError('');
     setFocusedErrorField(null);
-    setPreviewImages([]);
-    setSelectedFiles([]);
+    setExistingUrls([]);
+    setNewFiles([]);
+    setNewPreviews([]);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,10 +112,16 @@ export default function CommunityWriteForm({
       }
     }
 
-    const newFiles = Array.from(files).slice(0, 2);
-    const imageUrls = newFiles.map((file) => URL.createObjectURL(file));
-    setPreviewImages((prev) => [...prev, ...imageUrls].slice(0, 2));
-    setSelectedFiles((prev) => [...prev, ...newFiles].slice(0, 2));
+    // 기존 + 새 이미지 합쳐 최대 2장
+    const remaining = 2 - (existingUrls.length + newFiles.length);
+    if (remaining <= 0) {
+      e.target.value = '';
+      return;
+    }
+    const picked = Array.from(files).slice(0, remaining);
+    const previews = picked.map((file) => URL.createObjectURL(file));
+    setNewFiles((prev) => [...prev, ...picked]);
+    setNewPreviews((prev) => [...prev, ...previews]);
     e.target.value = '';
   };
 
@@ -155,13 +166,14 @@ export default function CommunityWriteForm({
         ? subjects.find((s) => s.subjectName === subject)?.subjectId
         : undefined;
 
-    const filesToUpload = selectedFiles.length > 0 ? selectedFiles : undefined;
+    const filesToUpload = newFiles.length > 0 ? newFiles : undefined;
 
     if (mode === 'edit' && postId) {
       const result = await updatePostAction(postId, {
         title,
         content,
         ...(subjectId !== undefined ? { subjectId } : {}),
+        keepFileUrls: existingUrls,
       }, filesToUpload);
       setIsSubmitting(false);
       if (!result.success) {
@@ -569,7 +581,7 @@ export default function CommunityWriteForm({
             </label>
             <div
               onClick={() => {
-                if (previewImages.length >= 2) {
+                if (existingUrls.length + newPreviews.length >= 2) {
                   toast.error(COMMUNITY_ERRORS.P002);
                   return;
                 }
@@ -577,7 +589,7 @@ export default function CommunityWriteForm({
               }}
               className="flex h-[150px] cursor-pointer items-center justify-center rounded-2xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC]"
             >
-              {previewImages.length === 0 ? (
+              {existingUrls.length + newPreviews.length === 0 ? (
                 <>
                   <Image
                     src="/icons/image.svg"
@@ -591,9 +603,10 @@ export default function CommunityWriteForm({
                 </>
               ) : (
                 <div className="flex w-full items-center justify-center gap-4">
-                  {previewImages.map((image, index) => (
+                  {/* 기존 서버 이미지 */}
+                  {existingUrls.map((url, index) => (
                     <div
-                      key={index}
+                      key={`existing-${index}`}
                       className="relative h-[110px] w-[110px] overflow-hidden rounded-xl border border-[#E2E8F0]"
                     >
                       <button
@@ -601,22 +614,39 @@ export default function CommunityWriteForm({
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          setPreviewImages((prev) => prev.filter((_, i) => i !== index));
-                          setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+                          setExistingUrls((prev) => prev.filter((_, i) => i !== index));
                         }}
                         className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white transition hover:bg-black/80"
                       >
                         ✕
                       </button>
-                      <Image
-                        src={image}
-                        alt={`preview-${index}`}
-                        fill
-                        className="object-cover"
-                      />
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={url} alt={`existing-${index}`} className="h-full w-full object-cover" />
                     </div>
                   ))}
-                  {previewImages.length < 2 && (
+                  {/* 새로 추가한 이미지 */}
+                  {newPreviews.map((preview, index) => (
+                    <div
+                      key={`new-${index}`}
+                      className="relative h-[110px] w-[110px] overflow-hidden rounded-xl border border-[#E2E8F0]"
+                    >
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setNewFiles((prev) => prev.filter((_, i) => i !== index));
+                          setNewPreviews((prev) => prev.filter((_, i) => i !== index));
+                        }}
+                        className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white transition hover:bg-black/80"
+                      >
+                        ✕
+                      </button>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={preview} alt={`new-${index}`} className="h-full w-full object-cover" />
+                    </div>
+                  ))}
+                  {existingUrls.length + newPreviews.length < 2 && (
                     <span className="text-xs text-[#94A3B8]">
                       이미지를 추가하려면 다시 클릭하세요
                     </span>

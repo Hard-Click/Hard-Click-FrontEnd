@@ -32,11 +32,12 @@ export default function UserLayout({
   const [authChecked, setAuthChecked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // 라우트 이동마다 auth 재확인 (로그인 후 클라이언트 네비게이션 시 stale 방지)
   useEffect(() => {
     setRole(authStore.getRole());
     setIsAuthenticated(authStore.isLoggedIn());
     setAuthChecked(true);
-  }, []);
+  }, [pathname]);
 
   // 비로그인 + 비공개 라우트 진입 시 403 표시 (악질 URL 직접 입력 방어)
   const blocked = authChecked && !isAuthenticated && !isPublicRoute(pathname);

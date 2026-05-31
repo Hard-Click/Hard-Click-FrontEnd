@@ -326,7 +326,7 @@ export default function LearningVideoPage() {
         progressRate={displayProgress.progressRate}
         completedVideoCount={displayProgress.completedLessonCount}
         totalVideoCount={displayProgress.totalLessonCount}
-        backHref={`/courses/${displayVideo.courseId}`}
+        backHref={`/learning/${displayVideo.courseId}`}
       />
 
       <div className="flex flex-1 min-h-0">

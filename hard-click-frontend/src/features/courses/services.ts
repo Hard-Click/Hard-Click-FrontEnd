@@ -29,6 +29,9 @@ interface CourseDetailApiResponse {
   targetAudience?: string[];
   techTags?: string[];
   level?: string;
+  instructorStudentCount?: number;
+  instructorCourseCount?: number;
+  instructorRating?: number;
   sections?: Array<{
     sectionId: number;
     title: string;
@@ -89,9 +92,9 @@ function toCourseDetail(api: CourseDetailApiResponse): CourseDetail {
       bio: '',
       career: [],
       tags: [],
-      instructorStudentCount: 0,
-      instructorCourseCount: 0,
-      instructorRating: 0,
+      instructorStudentCount: api.instructorStudentCount ?? 0,
+      instructorCourseCount: api.instructorCourseCount ?? 0,
+      instructorRating: api.instructorRating ?? 0,
     },
     curriculum: (api.sections ?? []).map((sec) => ({
       sectionId: sec.sectionId,

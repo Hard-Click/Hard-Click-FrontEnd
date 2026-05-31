@@ -7,22 +7,6 @@ import { toast } from 'sonner';
 import { getNoticeDetailAction, deleteNoticeAction } from '@/features/notices/actions';
 import type { NoticeDetail } from '@/features/notices/types';
 
-const MOCK_NOTICE: NoticeDetail = {
-  noticeId: 1,
-  title: '⚠️ 서버 점검 안내 (5월 10일 02:00~04:00)',
-  content:
-    '안녕하세요.\n\n서버 점검으로 인해 아래 일정 동안 서비스 이용이 일시 중단됩니다.\n\n■ 점검 일시: 2026년 5월 10일 (일) 02:00 ~ 04:00\n■ 점검 내용: 서버 인프라 업그레이드 및 보안 패치\n\n점검 시간 동안은 모든 서비스(강의 수강, 게시판, 결제 등)를 이용하실 수 없습니다.\n\n이용에 불편을 드려 죄송합니다.\n감사합니다.',
-  authorName: '박지훈',
-  noticeType: 'GLOBAL',
-  isPinned: true,
-  createdAt: '2026-05-01T09:00:00',
-};
-
-// TODO: API 연동 시 교체
-const MOCK_COURSES = [
-  { id: 1, title: '수1 정복하기' },
-  { id: 2, title: '영어 독해 완성' },
-];
 
 function formatDate(isoString: string): string {
   const date = new Date(isoString);
@@ -63,8 +47,6 @@ export default function InstructorNoticeDetailPage() {
     getNoticeDetailAction(Number(noticeId)).then((result) => {
       if (result.success && result.data) {
         setNotice(result.data);
-      } else {
-        setNotice(MOCK_NOTICE);
       }
       setIsLoading(false);
     });
@@ -143,7 +125,7 @@ export default function InstructorNoticeDetailPage() {
   }
 
   // 대상 강의명 (TODO: API 연동 시 notice에서 받아오기)
-  const courseTitle = MOCK_COURSES[0].title;
+  const courseTitle = notice.courseName ?? '강의 공지';
 
   return (
     <>
@@ -346,7 +328,7 @@ export default function InstructorNoticeDetailPage() {
 
             {/* 작성자 · 날짜 */}
             <div className="mb-6 flex items-center gap-2 text-sm text-[#64748B]">
-              <span>{notice.authorName}</span>
+              <span>{notice.noticeType === 'GLOBAL' ? '전체 공지' : (notice.courseName ?? '강의 공지')}</span>
               <span>•</span>
               <span>{formatDate(notice.createdAt)}</span>
             </div>

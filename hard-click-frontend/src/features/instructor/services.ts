@@ -128,7 +128,7 @@ interface UploadFileResponse {
   fileUrl: string;
 }
 
-/** 썸네일 파일 업로드 (POST /api/files/upload?fileType=POST) */
+/** 썸네일 파일 업로드 (POST /api/files/upload?fileType=COURSE_THUMBNAIL) */
 export async function uploadCourseThumbnail(file: File) {
   const formData = new FormData();
   formData.append('file', file);
@@ -136,7 +136,7 @@ export async function uploadCourseThumbnail(file: File) {
   const token =
     typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
 
-  const res = await fetch('/api/files/upload?fileType=POST', {
+  const res = await fetch('/api/files/upload?fileType=COURSE_THUMBNAIL', {
     method: 'POST',
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     body: formData,

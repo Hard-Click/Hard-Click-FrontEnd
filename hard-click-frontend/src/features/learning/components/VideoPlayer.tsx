@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { useWatchTimeSaver } from '@/features/learning/hooks/useWatchTimeSaver';
-import { saveLastPosition } from '@/features/learning/services';
+import { saveLastPosition, completeVideo } from '@/features/learning/services';
 
 interface VideoPlayerProps {
   videoId: number;
@@ -69,6 +69,8 @@ export default function VideoPlayer({
    * 90% 도달 토스트는 useWatchTimeSaver(5초 heartbeat 응답 기반)에서만 fire — 중복 방지. */
   const baselineWatchedRef = useRef(0);
   const sessionWatchedRef = useRef(0);
+  /* 재생 위치 90% 도달 시 완료 처리 1회 발화용 (드래그/시청 무관) */
+  const posCompletedRef = useRef(false);
 
   useWatchTimeSaver({
     videoId,
@@ -86,7 +88,22 @@ export default function VideoPlayer({
       baselineWatchedRef.current = Number.isFinite(sec) ? sec : 0;
     }
     sessionWatchedRef.current = 0;
+    posCompletedRef.current = false;
   }, [videoId]);
+
+  /* 재생 위치가 90% 이상 도달하면 (실제 시청이든 드래그든) 완료 처리.
+   * 위치를 먼저 백엔드에 저장한 뒤 complete 호출 → 백엔드가 max(시청시간, 위치) 기준으로 완료 인정 */
+  const tryPositionComplete = async (positionSec: number, durSec: number) => {
+    if (posCompletedRef.current || durSec <= 0) return;
+    if (positionSec / durSec < 0.9) return;
+    posCompletedRef.current = true;
+    await saveLastPosition(videoId, { positionSeconds: Math.floor(positionSec) });
+    const res = await completeVideo(videoId);
+    if (res.success) {
+      onProgressChange?.(100);
+      onCompleted?.();
+    }
+  };
 
   /* 재생 중 5초마다 카운터 — 사이드바 진행률 갱신 (매초 setState로 인한 12개 영상 리렌더 막음).
    * 90% 토스트는 useWatchTimeSaver가 백엔드 응답 기반으로 1회만 fire. */
@@ -224,12 +241,15 @@ export default function VideoPlayer({
       /* 재생바 위치만 동기화 — 진행률은 시청 누적 시간 기준이므로 여기서 계산 X.
        * 사이드바 진행률은 useWatchTimeSaver가 정지/이탈 시 PATCH 응답으로 갱신. */
       setCurrentTime(video.currentTime);
+      /* 재생 위치 90% 도달 시 완료 처리 */
+      void tryPositionComplete(video.currentTime, video.duration || durationSeconds);
     };
     const onLoaded = () => setDuration(video.duration || durationSeconds);
     const onVolume = () => setVolume(video.volume);
     const onEnded = () => {
       persistLastPosition(video.duration);
       onProgressChange?.(100);
+      void tryPositionComplete(video.duration, video.duration || durationSeconds);
     };
     video.addEventListener('play', onPlay);
     video.addEventListener('pause', onPause);

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { getCourseDetail } from '@/features/courses/services';
+import { getCourseNotices } from '@/features/notices/services';
 import type { CourseNotice, CourseDetail } from '@/features/courses/types';
 
 /* ── 공지 카드 ── */
@@ -64,8 +65,11 @@ export default function CourseNoticesPage() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    getCourseDetail(courseId).then((data) => {
-      setCourse(data);
+    Promise.all([
+      getCourseDetail(courseId),
+      getCourseNotices(courseId),
+    ]).then(([data, notices]) => {
+      if (data) setCourse({ ...data, notices });
       setLoading(false);
     });
   }, [courseId]);

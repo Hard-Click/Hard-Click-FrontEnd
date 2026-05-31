@@ -10,6 +10,7 @@ import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
 import { createReview } from '@/features/reviews/services';
 import { getMyActivities } from '@/features/mypage/services';
 import { getMyProfile, getMyCourses, getMyCompletedCourses } from '@/features/users/services';
+import { api } from '@/services/api';
 import { getStreak, getStudyTimeGrass, getLessonsGrass } from '@/features/grass/services';
 import { getMyRankingSummary } from '@/features/rankings/services';
 import { getDailyStudyStats } from '@/features/studyTimers/services';
@@ -17,14 +18,17 @@ import type { MyProfile, MyCourse, CompletedCourse } from '@/features/users/type
 import type { StudyTimeGrassCell, LessonsGrassCell } from '@/features/grass/types';
 import type { MyRankingSummary } from '@/features/rankings/types';
 
-/* ─────────────────────────── 목 데이터 (UI 표시용 — 결제/퀴즈/채팅은 mock 유지) ─────────────────────────── */
+/* ─────────────────────────── 목 데이터 (UI 표시용 — 퀴즈/채팅은 mock 유지) ─────────────────────────── */
 
-const MOCK_PAYMENTS = [
-  { orderId: 'ORD-20260510-001', date: '2026.05.10 14:30', amount: 49000, status: 'PAID', item: 'React 완벽 가이드' },
-  { orderId: 'SUB-20260501-001', date: '2026.05.01 09:00', amount: 19900, status: 'PAID', item: '프리미엄 월간 플랜' },
-  { orderId: 'ORD-20260425-002', date: '2026.04.25 09:15', amount: 99000, status: 'PAID', item: 'TypeScript 심화 학습\nNode.js 백엔드 개발' },
-  { orderId: 'ORD-20260320-003', date: '2026.03.20 16:45', amount: 39000, status: 'REFUNDED', item: 'Python 기초' },
-];
+interface PaymentHistory {
+  paymentId: number;
+  orderNo: string;
+  paymentType: 'FREE' | 'PAID';
+  amount: number;
+  status: string;
+  paidAt: string;
+  displayName: string;
+}
 
 const MOCK_QUIZZES = [
   { quizId: 1, courseTitle: 'React 완벽 가이드', name: 'React 기초 개념 퀴즈', date: '2026.05.12', score: 80 },
@@ -241,6 +245,7 @@ export default function MyPage() {
   const [todayStudySeconds, setTodayStudySeconds] = useState<number>(0);
   const [studyTimeCells, setStudyTimeCells] = useState<HeatmapCell[]>([]);
   const [lessonCells, setLessonCells] = useState<HeatmapCell[]>([]);
+  const [payments, setPayments] = useState<PaymentHistory[]>([]);
 
   const refetchProfile = async () => {
     const res = await getMyProfile();
@@ -257,6 +262,10 @@ export default function MyPage() {
 
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    api.get<{ content: PaymentHistory[] }>('/api/payment/me?page=0&size=5').then((res) => {
+      if (res.success && res.data) setPayments(res.data.content);
+    });
 
     Promise.all([
       getMyProfile(),
@@ -588,27 +597,33 @@ export default function MyPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {MOCK_PAYMENTS.map((p) => (
-                        <tr key={p.orderId} className="border-b border-[#E2E8F0]">
-                          <td className="py-5 px-5 text-center text-base font-semibold text-[#1F2937]">{p.orderId}</td>
-                          <td className="py-5 px-5 text-center text-base text-[#4B5563]">{p.date}</td>
-                          <td className="py-5 px-5 text-center text-lg font-bold text-[#1F2937]">
-                            {p.amount.toLocaleString()}원
-                          </td>
-                          <td className="py-5 px-5 text-center">
-                            <span
-                              className={`inline-flex items-center justify-center min-w-[56px] h-8 px-3 rounded-2xl text-sm font-semibold ${
-                                p.status === 'PAID'
-                                  ? 'bg-[rgba(22,163,74,0.1)] text-[#16A34A]'
-                                  : 'bg-[rgba(75,85,99,0.1)] text-[#4B5563]'
-                              }`}
-                            >
-                              {p.status}
-                            </span>
-                          </td>
-                          <td className="py-5 px-5 text-center text-base text-[#4B5563] whitespace-pre-line">{p.item}</td>
+                      {payments.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-10 text-center text-sm text-[#9CA3AF]">결제 내역이 없습니다.</td>
                         </tr>
-                      ))}
+                      ) : (
+                        payments.map((p) => (
+                          <tr key={p.paymentId} className="border-b border-[#E2E8F0]">
+                            <td className="py-5 px-5 text-center text-base font-semibold text-[#1F2937]">{p.orderNo}</td>
+                            <td className="py-5 px-5 text-center text-base text-[#4B5563]">{formatDisplayDate(p.paidAt)}</td>
+                            <td className="py-5 px-5 text-center text-lg font-bold text-[#1F2937]">
+                              {p.paymentType === 'FREE' ? '무료' : `${p.amount.toLocaleString()}원`}
+                            </td>
+                            <td className="py-5 px-5 text-center">
+                              <span
+                                className={`inline-flex items-center justify-center min-w-[56px] h-8 px-3 rounded-2xl text-sm font-semibold ${
+                                  p.status === 'COMPLETED'
+                                    ? 'bg-[rgba(22,163,74,0.1)] text-[#16A34A]'
+                                    : 'bg-[rgba(75,85,99,0.1)] text-[#4B5563]'
+                                }`}
+                              >
+                                {p.status === 'COMPLETED' ? '결제완료' : p.status === 'REFUNDED' ? '환불' : p.status}
+                              </span>
+                            </td>
+                            <td className="py-5 px-5 text-center text-base text-[#4B5563]">{p.displayName}</td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>

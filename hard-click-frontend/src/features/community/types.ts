@@ -86,6 +86,7 @@ export interface UpdatePostRequest {
   title: string;
   content: string;
   subjectId?: number;
+  keepFileUrls?: string[];   // 수정 시 유지할 기존 이미지 URL 목록
 }
 
 export interface CreateCommentRequest {

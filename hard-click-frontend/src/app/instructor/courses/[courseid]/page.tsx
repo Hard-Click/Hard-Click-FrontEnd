@@ -7,7 +7,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { getCourseDetail } from '@/features/courses/services';
 import { deleteCourse, publishCourse } from '@/features/instructor/services';
+import { getCourseNotices } from '@/features/notices/services';
 import type { CourseDetail, Review } from '@/features/courses/types';
+import type { Notice } from '@/features/notices/types';
 
 /* ── 별점 아이콘 (정수 1~5) ── */
 function StarIcon({ filled, size = 20 }: { filled: boolean; size?: number }) {
@@ -220,9 +222,14 @@ export default function InstructorCourseDetailPage() {
   const [reviewPage, setReviewPage] = useState(1);
 
   useEffect(() => {
-    getCourseDetail(courseId).then((data) => {
-      setCourse(data);
-      if (data) setReviews(data.reviews);
+    Promise.all([
+      getCourseDetail(courseId),
+      getCourseNotices(courseId),
+    ]).then(([data, notices]) => {
+      if (data) {
+        setCourse({ ...data, notices });
+        setReviews(data.reviews);
+      }
       setIsLoading(false);
     });
   }, [courseId]);

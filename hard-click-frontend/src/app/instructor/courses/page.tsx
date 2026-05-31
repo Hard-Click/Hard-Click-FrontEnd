@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import CourseSearchBar from '@/features/courses/components/CourseSearchBar';
 import InstructorCourseFilterBar from '@/features/courses/components/InstructorCourseFilterBar';
@@ -8,7 +8,6 @@ import CourseList from '@/features/courses/components/CourseList';
 import {
   getCourses,
   getSubjects,
-  getInstructors,
 } from '@/features/courses/services';
 import { getInstructorCourses } from '@/features/instructor/services';
 import { getPinnedNotices } from '@/features/notices/services';
@@ -37,7 +36,10 @@ export default function InstructorCoursesPage() {
   const [sort, setSort] = useState<CourseSortType>('latest');
   const [myCoursesOnly, setMyCoursesOnly] = useState(false);
 
-  const instructors = getInstructors();
+  const instructors = useMemo(
+    () => Array.from(new Set(courses.map((c) => c.instructorName).filter(Boolean))).sort() as string[],
+    [courses]
+  );
 
   useEffect(() => {
     getSubjects().then(setSubjects);

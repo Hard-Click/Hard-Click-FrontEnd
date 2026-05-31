@@ -8,6 +8,7 @@ import { authStore } from '@/store/auth.store';
 // TODO: 수강신청 모달 — 팀원 결제 모달 확인 후 연결
 // TODO: 리뷰 삭제 확인 모달 — 팀원 모달 확인 후 연결
 import { getCourseDetail } from '@/features/courses/services';
+import { getCourseNotices } from '@/features/notices/services';
 import {
   enrollCourse,
   addToCart,
@@ -235,9 +236,12 @@ export default function CourseDetailPage() {
   };
 
   useEffect(() => {
-    getCourseDetail(courseId).then(data => {
-      setCourse(data);
+    Promise.all([
+      getCourseDetail(courseId),
+      getCourseNotices(courseId),
+    ]).then(([data, notices]) => {
       if (data) {
+        setCourse({ ...data, notices });
         setIsEnrolled(data.isEnrolled);
         setIsWishlisted(data.isWishlisted);
         setIsInCart(data.isInCart);
@@ -395,9 +399,6 @@ export default function CourseDetailPage() {
   });
   const displayedNotices = sortedNotices.slice(0, 3);
 
-  // UA-P0-140: 첫 번째 강의 lessonId (학습 시작 이동 대상)
-  const firstLessonId = course.curriculum[0]?.lessons[0]?.lessonId;
-
   return (
     <div className="min-h-screen bg-[#F0F2F5]">
 
@@ -489,8 +490,8 @@ export default function CourseDetailPage() {
               {/* Row 2: 액션 버튼 (border-top, Figma: padding 24px 0 0, gap 12px) */}
               <div className="border-t border-[#D5D8DD] pt-6 pb-8 flex items-center gap-3">
                 {isEnrolled ? (
-                  /* 수강 중 → 학습하기 (영상 페이지로 이동) */
-                  <Link href={firstLessonId ? `/learning/videos/${firstLessonId}` : '#'} className="flex-1">
+                  /* 수강 중 → 학습하기 (학습 허브로 이동, 마이페이지 수강중 강좌와 동일) */
+                  <Link href={`/learning/${courseId}`} className="flex-1">
                     <button className="w-full h-14 rounded-[10px] bg-[#2F5DAA] text-white font-semibold text-base hover:bg-[#1D3E75] transition-colors">
                       학습하기
                     </button>
@@ -966,9 +967,9 @@ export default function CourseDetailPage() {
       </div>
 
       {/* ── UA-P0-140/142: 학습 시작 플로팅 버튼 — 수강자만 표시 ── */}
-      {isEnrolled && firstLessonId && (
+      {isEnrolled && (
         <div className="fixed bottom-8 right-8 z-40">
-          <Link href={`/learning/videos/${firstLessonId}`}>
+          <Link href={`/learning/${courseId}`}>
             <button
               className="flex items-center justify-center gap-2 bg-[#F97316] hover:bg-[#EA6A10] text-white font-semibold text-lg rounded-[20px] transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]"
               style={{ width: 167, height: 60 }}

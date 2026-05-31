@@ -55,6 +55,7 @@ export default function CommunityEditPage() {
         initialCategory={BOARD_TYPE_LABEL[post.boardType]}
         initialTitle={post.title}
         initialContent={post.content}
+        initialImages={post.fileUrls ?? []}
         postId={post.postId}
       />
     </div>
