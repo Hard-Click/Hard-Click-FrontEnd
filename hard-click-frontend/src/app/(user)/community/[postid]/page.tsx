@@ -1,5 +1,3 @@
-'use client';
-
 import CommunityDetailContent from '@/features/community/components/CommunityDetailContent';
 
 export default function CommunityDetailPage() {

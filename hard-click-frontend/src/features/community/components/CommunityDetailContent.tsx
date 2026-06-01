@@ -99,7 +99,6 @@ export default function CommunityDetailContent() {
               const res = await fetch(url, {
                 headers: token ? { Authorization: `Bearer ${token}` } : {},
               });
-              if (!res.ok) return '';
               const blob = await res.blob();
               return URL.createObjectURL(blob);
             } catch {

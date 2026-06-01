@@ -13,17 +13,10 @@ const nextConfig: NextConfig = {
         source: "/api/:path*",
         destination: `${BACKEND_URL}/api/:path*`,
       },
+      // ✅ post, comment 이미지 경로 프록시 추가
       {
-        source: "/community/post/:path*",
-        destination: `${BACKEND_URL}/community/post/:path*`,
-      },
-      {
-        source: "/community/comment/:path*",
-        destination: `${BACKEND_URL}/community/comment/:path*`,
-      },
-      {
-        source: "/uploads/:path*",
-        destination: `${BACKEND_URL}/uploads/:path*`,
+        source: "/community/:path*",
+        destination: `${BACKEND_URL}/community/:path*`,
       },
     ];
   },

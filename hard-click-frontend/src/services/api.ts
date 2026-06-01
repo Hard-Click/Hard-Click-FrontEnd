@@ -63,7 +63,7 @@ async function request<T>(
       url,
       data,
       headers: data instanceof FormData
-        ? {}
+        ? { 'Content-Type': 'multipart/form-data' }
         : { 'Content-Type': 'application/json' },
     });
     return withSuccess(response.data);
