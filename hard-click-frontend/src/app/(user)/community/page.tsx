@@ -1,5 +1,3 @@
-'use client';
-
 import Image from 'next/image';
 import CommunityFilterTabs from '@/features/community/components/CommunityFilterTabs';
 import PostActionButtons from '@/features/community/components/PostActionButtons';
