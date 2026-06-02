@@ -1,0 +1,185 @@
+import axios from 'axios';
+import { api } from '@/services/api';
+import { authStore } from '@/store/auth.store';
+import type {
+  MyProfile,
+  UpdateProfileRequest,
+  UpdateProfileResponse,
+  ChangePasswordRequest,
+  MyCourse,
+} from './types';
+
+const USE_MOCK = true;
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
+
+/* ───── 내 프로필 조회 (GET /api/members/me) ───── */
+export async function getMyProfile() {
+  if (USE_MOCK) {
+    return {
+      success: true,
+      httpStatus: 200,
+      message: '내 프로필을 조회했습니다.',
+      data: {
+        userId: 7,
+        email: 'hyun030514@naver.com',
+        nickname: '안현',
+        profileImageUrl: '',
+      } as MyProfile,
+    };
+  }
+  return api.get<MyProfile>('/api/members/me');
+}
+
+/* ───── 내 프로필 수정 (PATCH /api/members/me) ─────
+ * 파일 업로드가 포함되면 multipart/form-data, 없으면 application/json.
+ * 비밀번호 변경은 별도 endpoint(`changePassword`) 사용 — 단독 변경 시 호출. */
+export async function updateMyProfile(body: UpdateProfileRequest) {
+  if (USE_MOCK) {
+    return {
+      success: true,
+      httpStatus: 200,
+      message: '회원 정보가 수정되었습니다.',
+      data: {
+        userId: 7,
+        nickname: body.nickname ?? '안현',
+        profileImageUrl: '',
+      } as UpdateProfileResponse,
+    };
+  }
+
+  // 파일 포함 시 multipart 별도 처리 (axios interceptor가 'Content-Type'을 덮어쓰지 않도록)
+  if (body.profileImage) {
+    const formData = new FormData();
+    if (body.nickname !== undefined) formData.append('nickname', body.nickname);
+    if (body.currentPassword !== undefined)
+      formData.append('currentPassword', body.currentPassword);
+    if (body.newPassword !== undefined)
+      formData.append('newPassword', body.newPassword);
+    formData.append('profileImage', body.profileImage);
+
+    try {
+      const token = authStore.getAccessToken();
+      const memberId = authStore.getMemberId();
+      const response = await axios.patch(`${BASE_URL}/api/members/me`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(memberId ? { 'X-Member-Id': String(memberId) } : {}),
+        },
+      });
+      return {
+        success: true,
+        httpStatus: response.data?.httpStatus ?? response.status,
+        message: response.data?.message ?? '회원 정보가 수정되었습니다.',
+        data: response.data?.data as UpdateProfileResponse,
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const body = error.response.data as {
+          httpStatus?: number;
+          message?: string;
+        };
+        return {
+          success: false,
+          httpStatus: body?.httpStatus ?? error.response.status,
+          message: body?.message ?? '회원 정보 수정에 실패했습니다.',
+          data: undefined as unknown as UpdateProfileResponse,
+        };
+      }
+      return {
+        success: false,
+        httpStatus: 500,
+        message: '서버와 연결할 수 없습니다',
+        data: undefined as unknown as UpdateProfileResponse,
+      };
+    }
+  }
+
+  // 파일 없으면 JSON
+  const { profileImage, ...jsonBody } = body;
+  return api.patch<UpdateProfileResponse>('/api/members/me', jsonBody);
+}
+
+/* ───── 비밀번호 변경 (PATCH /api/members/me/password) ─────
+ * body: { currentPassword, newPassword, newPasswordConfirm }
+ * 401 인증 / 409 현재 비밀번호 불일치 / 400 newPassword·newPasswordConfirm 불일치 */
+export async function changePassword(body: ChangePasswordRequest) {
+  if (USE_MOCK) {
+    return {
+      success: true,
+      httpStatus: 200,
+      message: '비밀번호가 변경되었습니다.',
+      data: {} as Record<string, never>,
+    };
+  }
+  return api.patch<Record<string, never>>('/api/members/me/password', body);
+}
+
+/* ───── 회원 탈퇴 (DELETE /api/members/me) ─────
+ * 백엔드가 body로 currentPassword 필수 요구 — 본인 확인 후 받은 비밀번호 전달.
+ * 401 인증 실패 / 404 회원 없음 / 409 이미 탈퇴한 회원 */
+export async function withdrawAccount(currentPassword: string) {
+  if (USE_MOCK) {
+    return {
+      success: true,
+      httpStatus: 200,
+      message: '회원 탈퇴가 완료되었습니다',
+      data: {} as Record<string, never>,
+    };
+  }
+  return api.delete<Record<string, never>>('/api/members/me', {
+    currentPassword,
+  });
+}
+
+/* ───── 내 수강 강의 목록 (GET /api/members/me/courses) ─────
+ * 백엔드 통합 endpoint (MyEnrolledCourseController) — query 파라미터 없이 전체 수강 강의 반환.
+ * 수강 완료 강의는 클라이언트에서 progressRate === 100 으로 필터링한다. */
+export async function getMyCourses() {
+  if (USE_MOCK) {
+    return {
+      success: true,
+      httpStatus: 200,
+      message: '내 수강 강의 목록을 조회했습니다.',
+      data: [
+        {
+          courseId: 1,
+          courseTitle: 'React 완벽 가이드',
+          thumbnailUrl: '',
+          progressRate: 65,
+          lastVideoId: 101,
+          lastPositionSeconds: 420,
+          lastStudiedAt: '2026-05-10T21:30:00+09:00',
+        },
+        {
+          courseId: 2,
+          courseTitle: 'TypeScript 심화 학습',
+          thumbnailUrl: '',
+          progressRate: 40,
+          lastVideoId: 102,
+          lastPositionSeconds: 250,
+          lastStudiedAt: '2026-05-09T18:10:00+09:00',
+        },
+        {
+          courseId: 3,
+          courseTitle: 'Node.js 백엔드 개발',
+          thumbnailUrl: '',
+          progressRate: 25,
+          lastVideoId: 103,
+          lastPositionSeconds: 90,
+          lastStudiedAt: '2026-05-08T09:00:00+09:00',
+        },
+        {
+          courseId: 4,
+          courseTitle: 'HTML & CSS 완벽 가이드',
+          thumbnailUrl: '',
+          progressRate: 100,
+          lastVideoId: 104,
+          lastPositionSeconds: 0,
+          lastStudiedAt: '2026-03-28T00:00:00+09:00',
+        },
+      ] as MyCourse[],
+    };
+  }
+  return api.get<MyCourse[]>('/api/members/me/courses');
+}

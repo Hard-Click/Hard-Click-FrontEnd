@@ -1,0 +1,114 @@
+@import 'tailwindcss';
+
+/* toaster wrapper */
+[data-sonner-toaster] {
+  position: fixed !important;
+
+  top: 88px !important;
+
+  left: 50% !important;
+  right: auto !important;
+
+  transform: translateX(-50%) !important;
+
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+
+  width: auto !important;
+
+  z-index: 9999 !important;
+}
+
+/* toast */
+[data-sonner-toast] {
+  border-radius: 16px !important;
+
+  min-width: 280px !important;
+  max-width: 420px !important;
+  width: max-content !important;
+
+  padding: 12px 20px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* content */
+[data-sonner-toast] [data-content] {
+  display: flex !important;
+  flex-direction: row !important;
+
+  align-items: center !important;
+  justify-content: center !important;
+
+  gap: 8px !important;
+}
+
+/* title */
+[data-sonner-toast] [data-title] {
+  text-align: center !important;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* 버튼 커서 통일 — Tailwind v4 preflight가 cursor:default로 reset하는 것을 덮어씀 */
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* 강의 시청 페이지 — 볼륨 슬라이더 디자인 명세 (108x4, track #374151, thumb white) */
+input[type='range'].volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: #374151;
+  border-radius: 16px;
+  outline: none;
+}
+input[type='range'].volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+input[type='range'].volume-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
