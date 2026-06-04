@@ -1,4 +1,4 @@
-import { api } from '@/services/api';
+import { serverApi as api } from '@/lib/api';
 import type {
   BoardType,
   PostListResponse,
