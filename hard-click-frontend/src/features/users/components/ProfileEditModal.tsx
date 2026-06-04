@@ -11,7 +11,6 @@ import {
   changePassword,
   withdrawAccount,
 } from '@/features/users/services';
-import { authStore } from '@/store/auth.store';
 import { clearSession } from '@/features/auth/session';
 
 interface ProfileEditModalProps {
@@ -258,7 +257,6 @@ export default function ProfileEditModal({
       toast.error(res.message || '회원 탈퇴에 실패했습니다.');
       return;
     }
-    authStore.clear();
     await clearSession();
     onClose();
     toast.success(res.message || '회원 탈퇴가 완료되었습니다.');

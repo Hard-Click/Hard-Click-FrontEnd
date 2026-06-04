@@ -133,12 +133,9 @@ export async function uploadCourseThumbnail(file: File) {
   const formData = new FormData();
   formData.append('file', file);
 
-  const token =
-    typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-
+  // 인증은 BFF 프록시(app/api/[...path])가 쿠키→Authorization 으로 주입
   const res = await fetch('/api/files/upload?fileType=POST', {
     method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     body: formData,
   });
 

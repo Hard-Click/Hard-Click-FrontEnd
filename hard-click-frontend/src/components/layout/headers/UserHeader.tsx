@@ -6,7 +6,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { getMyProfile } from '@/features/users/services';
-import { authStore } from '@/store/auth.store';
 import { logout } from '@/features/auth/services';
 import { clearSession } from '@/features/auth/session';
 import { useAuth } from '@/features/auth/AuthProvider';
@@ -62,7 +61,6 @@ export default function UserHeader() {
   const handleLogout = async () => {
     setIsDropdownOpen(false);
     await logout();
-    authStore.clear();
     await clearSession();
     router.push('/courses');
     router.refresh();

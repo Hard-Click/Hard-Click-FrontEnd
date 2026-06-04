@@ -9,7 +9,6 @@ import PasswordInput from './PasswordInput';
 import LoginErrorMessage from './LoginErrorMessage';
 import ConfirmModal from '@/components/ui/confirmModal';
 import { loginAction } from '../actions';
-import { authStore } from '@/store/auth.store';
 import { establishSession } from '../session';
 
 export default function LoginForm() {
@@ -137,13 +136,7 @@ export default function LoginForm() {
     }
 
     // 로그인 성공 → 토큰 + memberId + role 저장 후 강의 전체 조회 페이지로 이동
-    authStore.setAuth({
-      accessToken: result.data.accessToken,
-      refreshToken: result.data.refreshToken,
-      memberId: result.data.memberId,
-      role: result.data.role,
-    });
-    // dual-write: 서버(Server Component/Action)가 읽도록 httpOnly 쿠키에도 저장
+    // 토큰은 httpOnly 쿠키에 저장(서버가 읽음) — localStorage 사용 안 함
     await establishSession({
       accessToken: result.data.accessToken,
       refreshToken: result.data.refreshToken,

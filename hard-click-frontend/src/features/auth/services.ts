@@ -329,10 +329,6 @@ export async function logout() {
     };
   }
 
-  const refreshToken =
-    typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
-
-  return api.post<Record<string, never>>('/api/auth/logout', {
-    refreshToken,
-  });
+  // refreshToken은 httpOnly 쿠키에 있고 BFF 프록시가 백엔드로 전달 → 클라가 읽지 않음
+  return api.post<Record<string, never>>('/api/auth/logout', {});
 }

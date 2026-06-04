@@ -1,6 +1,4 @@
-import axios from 'axios';
 import { api } from '@/services/api';
-import { authStore } from '@/store/auth.store';
 import type {
   MyProfile,
   MyProfileApi,
@@ -11,7 +9,6 @@ import type {
 } from './types';
 
 const USE_MOCK = false;
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
 
 /* ───── 내 프로필 조회 (GET /api/members/me) ─────
  * 백엔드는 memberId 필드로 내려옴 — 프론트 타입(MyProfile)에 맞게 userId로 매핑한다. */
@@ -57,47 +54,11 @@ export async function updateProfileImage(profileImage: File) {
 
   const formData = new FormData();
   formData.append('profileImage', profileImage);
-
-  try {
-    const token = authStore.getAccessToken();
-    const memberId = authStore.getMemberId();
-    const response = await axios.patch(
-      `${BASE_URL}/api/members/me/profile-image`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          ...(memberId ? { 'X-Member-Id': String(memberId) } : {}),
-        },
-      },
-    );
-    return {
-      success: true,
-      httpStatus: response.data?.httpStatus ?? response.status,
-      message: response.data?.message ?? '프로필 이미지가 변경되었습니다.',
-      data: response.data?.data as UpdateProfileImageResponse,
-    };
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      const body = error.response.data as {
-        httpStatus?: number;
-        message?: string;
-      };
-      return {
-        success: false,
-        httpStatus: body?.httpStatus ?? error.response.status,
-        message: body?.message ?? '프로필 이미지 변경에 실패했습니다.',
-        data: undefined as unknown as UpdateProfileImageResponse,
-      };
-    }
-    return {
-      success: false,
-      httpStatus: 500,
-      message: '서버와 연결할 수 없습니다',
-      data: undefined as unknown as UpdateProfileImageResponse,
-    };
-  }
+  // 인증은 BFF 프록시가 쿠키→Authorization 주입, FormData boundary는 자동 설정
+  return api.patch<UpdateProfileImageResponse>(
+    '/api/members/me/profile-image',
+    formData,
+  );
 }
 
 /* ───── 비밀번호 변경 (PATCH /api/members/me/password) ─────

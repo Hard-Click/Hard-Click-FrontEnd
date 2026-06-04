@@ -4,7 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
-import { authStore } from '@/store/auth.store';
 import { logout } from '@/features/auth/services';
 import { clearSession } from '@/features/auth/session';
 
@@ -38,7 +37,6 @@ export default function InstructorHeader() {
   const handleLogout = async () => {
     setIsDropdownOpen(false);
     await logout();
-    authStore.clear();
     await clearSession();
     router.push('/courses');
   };
