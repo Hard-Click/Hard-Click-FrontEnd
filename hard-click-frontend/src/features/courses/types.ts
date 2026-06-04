@@ -104,3 +104,67 @@ export interface CourseDetail {
   ratingDistribution: { stars: number; count: number }[];
 }
 
+/* ───── 백엔드 응답 명세 (GET /api/courses, /api/courses/{id}, /api/subjects) ───── */
+
+export interface SubjectApiItem {
+  subjectId: number;
+  subjectName: string;
+  courseCount: number;
+}
+
+export interface CourseListApiItem {
+  courseId: number;
+  title: string;
+  instructorName: string;
+  subjectName: string;
+  price: number;
+  priceType?: 'FREE' | 'PAID';
+  priceLabel?: string;
+  thumbnailUrl: string;
+  averageRating: number;
+  reviewCount: number;
+  studentCount: number;
+  status?: CourseStatus;
+  createdAt?: string;
+}
+
+export interface CourseListApiResponse {
+  content: CourseListApiItem[];
+  currentPage?: number;
+  totalPages?: number;
+  totalCount?: number;
+}
+
+export interface CourseDetailApiResponse {
+  courseId: number;
+  title: string;
+  description: string;
+  instructorName: string;
+  instructorId?: number;
+  subjectName: string;
+  price: number;
+  priceType?: 'FREE' | 'PAID';
+  priceLabel?: string;
+  status?: CourseStatus;
+  thumbnailUrl: string;
+  averageRating: number;
+  reviewCount: number;
+  studentCount: number;
+  learningObjectives?: string[];
+  targetAudience?: string[];
+  techTags?: string[];
+  level?: string;
+  sections?: Array<{
+    sectionId: number;
+    title: string;
+    orderIndex: number;
+    lessons?: Array<{
+      lessonId: number;
+      title: string;
+      durationSeconds?: number;
+      isPreview?: boolean;
+    }>;
+  }>;
+  createdAt?: string;
+}
+
