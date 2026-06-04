@@ -1,8 +1,51 @@
 import Image from 'next/image';
-import CommunityFilterTabs from '@/features/community/components/CommunityFilterTabs';
 import PostActionButtons from '@/features/community/components/PostActionButtons';
+import CommunityListControls from '@/features/community/components/CommunityListControls';
+import CommunityPostList from '@/features/community/components/CommunityPostList';
+import { getCommunityPosts } from '@/features/community/server';
+import type { BoardType, PostListItem } from '@/features/community/types';
 
-export default function CommunityPage() {
+const TAB_TO_BOARD_TYPE: Record<string, BoardType> = {
+  전체: 'ALL',
+  자유게시판: 'FREE',
+  질문게시판: 'QUESTION',
+};
+const SORT_MAP: Record<string, string> = {
+  최신순: 'latest',
+  조회순: 'views',
+  댓글순: 'comments',
+};
+
+interface CommunityPageProps {
+  // Next.js 15+ : searchParams 는 Promise → await 필요
+  searchParams: Promise<{
+    tab?: string;
+    sort?: string;
+    keyword?: string;
+    page?: string;
+  }>;
+}
+
+// Server Component: 데이터를 서버에서 가져와 렌더한다 (useEffect 없음)
+export default async function CommunityPage({ searchParams }: CommunityPageProps) {
+  const sp = await searchParams;
+  const tab = sp.tab ?? '전체';
+  const sort = sp.sort ?? '최신순';
+  const keyword = sp.keyword ?? '';
+  const pageNum = Number(sp.page ?? '0');
+
+  const boardType = TAB_TO_BOARD_TYPE[tab] ?? 'ALL';
+  const apiSort = SORT_MAP[sort] ?? 'latest';
+
+  const result = await getCommunityPosts(
+    boardType,
+    Number.isNaN(pageNum) ? 0 : pageNum,
+    keyword || undefined,
+    apiSort,
+  );
+  const posts: PostListItem[] =
+    result.success && result.data ? (result.data.posts ?? []) : [];
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] px-8 py-10">
       <div className="mx-auto w-full max-w-[1152px]">
@@ -26,7 +69,8 @@ export default function CommunityPage() {
           <PostActionButtons />
         </div>
 
-        <CommunityFilterTabs />
+        <CommunityListControls activeTab={tab} sortType={sort} keyword={keyword} />
+        <CommunityPostList posts={posts} />
       </div>
     </div>
   );
