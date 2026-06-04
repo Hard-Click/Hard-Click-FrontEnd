@@ -1,32 +1,23 @@
 import { serverApi } from '@/lib/api';
-import type { Notice } from './types';
+import type { Notice, NoticeApiItem, NoticeApiResponse } from './types';
+import { USE_MOCK } from '@/mocks/config';
+import { mockNoticesResponse } from '@/mocks/notices.mock';
 
-interface NoticeApiItem {
-  noticeId: number;
-  noticeType: 'GLOBAL' | 'COURSE';
-  courseName: string | null;
-  title: string;
-  isPinned: boolean;
-  isRead: boolean;
-  createdAt: string;
-}
-interface NoticeApiResponse {
-  content: NoticeApiItem[];
-  totalPages: number;
-}
-
-function toNotice(api: NoticeApiItem): Notice {
+function toNotice(item: NoticeApiItem): Notice {
   return {
-    noticeId: api.noticeId,
-    title: api.title,
+    noticeId: item.noticeId,
+    title: item.title,
     content: '',
-    isPinned: api.isPinned,
-    createdAt: api.createdAt.split('T')[0] ?? api.createdAt,
+    isPinned: item.isPinned,
+    createdAt: item.createdAt.split('T')[0] ?? item.createdAt,
   };
 }
 
 /** 상단 고정 전역 공지 — 서버에서 조회 (Server Component 전용) */
 export async function getPinnedNoticesServer(): Promise<Notice[]> {
+  if (USE_MOCK) {
+    return mockNoticesResponse.content.filter((n) => n.isPinned).map(toNotice);
+  }
   const res = await serverApi.get<NoticeApiResponse>(
     '/api/notices?type=GLOBAL&page=0&size=20',
   );
@@ -39,6 +30,12 @@ export async function getGlobalNoticesServer(params: {
   page?: number;
   keyword?: string;
 }): Promise<{ notices: Notice[]; totalPages: number }> {
+  if (USE_MOCK) {
+    return {
+      notices: mockNoticesResponse.content.map(toNotice),
+      totalPages: mockNoticesResponse.totalPages,
+    };
+  }
   const q = new URLSearchParams();
   q.set('type', 'GLOBAL');
   q.set('page', String(params.page ?? 0));
