@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { authStore } from '@/store/auth.store';
+import { useAuth } from '@/features/auth/AuthProvider';
 // TODO: 수강신청 모달 — 팀원 결제 모달 확인 후 연결
 // TODO: 리뷰 삭제 확인 모달 — 팀원 모달 확인 후 연결
 import { getCourseDetail } from '@/features/courses/services';
@@ -219,9 +219,12 @@ export default function CourseDetailPage() {
   const [reviewAvg, setReviewAvg] = useState(0);
   const [reviewTotalCount, setReviewTotalCount] = useState(0);
 
+  // 인증 상태는 서버 쿠키 기반 Context에서 (localStorage 대체)
+  const { isLoggedIn } = useAuth();
+
   /* 비로그인 액션 공통 가드 — 토스트만 표시, 페이지 이동 X */
   const requireLogin = (): boolean => {
-    if (!authStore.isLoggedIn()) {
+    if (!isLoggedIn) {
       toast.error('로그인이 필요합니다');
       return false;
     }

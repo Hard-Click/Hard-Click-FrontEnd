@@ -155,6 +155,7 @@ export default function LoginForm() {
     } else {
       router.push('/courses');
     }
+    router.refresh();
   };
 
   return (

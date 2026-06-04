@@ -50,3 +50,23 @@ export async function clearSession() {
   cookieStore.delete('memberId');
   cookieStore.delete('role');
 }
+
+export interface CurrentUser {
+  memberId: number | null;
+  role: string | null;
+}
+
+/**
+ * 현재 로그인 사용자 정보 — 쿠키에서 읽는다 (서버 전용).
+ * establishSession이 role·memberId를 별도 쿠키로 저장하므로 JWT 디코드 없이 조회 가능.
+ * accessToken 쿠키가 없으면 비로그인(null).
+ */
+export async function getCurrentUser(): Promise<CurrentUser | null> {
+  const cookieStore = await cookies();
+  if (!cookieStore.get('accessToken')?.value) return null;
+  const memberId = cookieStore.get('memberId')?.value;
+  return {
+    memberId: memberId ? Number(memberId) : null,
+    role: cookieStore.get('role')?.value ?? null,
+  };
+}
