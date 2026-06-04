@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { getMyProfile } from '@/features/users/services';
 import { authStore } from '@/store/auth.store';
 import { logout } from '@/features/auth/services';
+import { clearSession } from '@/features/auth/session';
 
 const NAV_ITEMS = [
   { label: '강의', href: '/courses' },
@@ -64,6 +65,7 @@ export default function UserHeader() {
     setIsDropdownOpen(false);
     await logout();
     authStore.clear();
+    await clearSession();
     setIsLoggedIn(false);
     router.push('/courses');
   };

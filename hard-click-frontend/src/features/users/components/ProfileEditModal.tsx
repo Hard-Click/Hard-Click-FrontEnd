@@ -12,6 +12,7 @@ import {
   withdrawAccount,
 } from '@/features/users/services';
 import { authStore } from '@/store/auth.store';
+import { clearSession } from '@/features/auth/session';
 
 interface ProfileEditModalProps {
   /** 현재 프로필 이미지 (있으면 미리보기) */
@@ -258,6 +259,7 @@ export default function ProfileEditModal({
       return;
     }
     authStore.clear();
+    await clearSession();
     onClose();
     toast.success(res.message || '회원 탈퇴가 완료되었습니다.');
     router.push('/');
