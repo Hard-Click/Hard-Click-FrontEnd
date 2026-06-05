@@ -10,7 +10,7 @@ import type {
 import { USE_MOCK } from '@/mocks/config';
 import { mockSubjects, mockCourseListResponse } from '@/mocks/courses.mock';
 
-/** 백엔드 목록 응답(최소 필드) → UI CourseListItem (미제공 필드 기본값) */
+/** 백엔드 목록 응답 → UI CourseListItem */
 function toCourseListItem(item: CourseListApiItem): CourseListItem {
   return {
     courseId: item.courseId,
@@ -18,13 +18,13 @@ function toCourseListItem(item: CourseListApiItem): CourseListItem {
     instructorName: item.instructorName,
     subjectName: item.subjectName,
     price: item.price,
-    thumbnailUrl: item.thumbnailUrl, // 강의 목록 조회는 썸네일 반환
+    thumbnailUrl: item.thumbnailUrl,
     averageRating: item.averageRating,
     reviewCount: item.reviewCount,
-    studentCount: 0,
-    isFree: item.price === 0,
-    status: 'PUBLISHED',
-    createdAt: '',
+    studentCount: item.studentCount,
+    isFree: item.priceType === 'FREE',
+    status: item.status,
+    createdAt: item.createdAt,
     isEnrolled: false,
     hasPreview: false,
   };

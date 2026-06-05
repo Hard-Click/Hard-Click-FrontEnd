@@ -104,49 +104,82 @@ export interface CourseDetail {
   ratingDistribution: { stars: number; count: number }[];
 }
 
-/* ───── 백엔드 응답 명세 (노션 API 목록 기준) ───── */
+/* ───── 백엔드 응답 (실제 Hard-Click-BackEnd 코드 DTO 기준) ───── */
 
-// GET /api/subjects
+export type PriceType = 'FREE' | 'PAID';
+export type ApiCourseStatus = 'DRAFT' | 'PUBLISHED';
+
+// GET /api/subjects → List<SubjectResponse>
 export interface SubjectApiItem {
   subjectId: number;
   subjectName: string;
-  courseCount?: number;
 }
 
-// GET /api/courses (목록) — content[] 항목
+// GET /api/courses → CourseListResponse.content[] (CourseListItemResponse)
 export interface CourseListApiItem {
   courseId: number;
   title: string;
-  instructorName: string;
   subjectName: string;
+  thumbnailUrl: string;
+  priceLabel: string; // "무료" | "89,000원"
+  priceType: PriceType;
   price: number;
-  thumbnailUrl?: string; // 강의 목록 조회는 반환, ?subject= 필터 응답엔 미포함
+  instructorName: string;
   averageRating: number;
   reviewCount: number;
+  studentCount: number;
+  createdAt: string; // Instant
+  status: ApiCourseStatus;
 }
 
+// GET /api/courses → CourseListResponse
 export interface CourseListApiResponse {
   content: CourseListApiItem[];
-  totalPages?: number;
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
 }
 
-// GET /api/courses/{courseId} (상세)
+// GET /api/courses/{courseId} → CourseDetailResponse.sections[].lessons[]
+export interface CourseLessonApiItem {
+  lessonId: number;
+  title: string;
+  description: string;
+  orderIndex: number;
+  durationSeconds: number | null;
+  isPreview: boolean;
+}
+
+// GET /api/courses/{courseId} → CourseDetailResponse.sections[]
+export interface CourseSectionApiItem {
+  sectionId: number;
+  title: string;
+  orderIndex: number;
+  lessons: CourseLessonApiItem[];
+}
+
+// GET /api/courses/{courseId} → CourseDetailResponse
 export interface CourseDetailApiResponse {
   courseId: number;
   title: string;
-  description: string;
-  instructorId: number;
-  instructorName: string;
   subjectName: string;
-  price: number;
+  description: string;
   thumbnailUrl: string;
+  priceType: PriceType;
+  price: number;
+  priceLabel: string;
+  status: ApiCourseStatus;
+  instructorName: string;
   averageRating: number;
   reviewCount: number;
-  curriculum: Array<{
-    order: number;
-    title: string;
-    durationMinutes: number;
-  }>;
-  createdAt: string;
+  studentCount: number;
+  sections: CourseSectionApiItem[];
+  learningObjectives: string[];
+  targetAudience: string[];
+  techTags: string[];
+  level: string;
+  instructorStudentCount: number;
+  instructorCourseCount: number;
+  instructorRating: number;
 }
 

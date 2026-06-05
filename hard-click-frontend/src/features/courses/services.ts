@@ -26,10 +26,19 @@ function formatTotalDuration(totalSecs: number): string {
   return `${s}초`;
 }
 
-/** 백엔드 상세 응답(curriculum: 평면 챕터 배열) → UI CourseDetail */
+/** 초 → "MM:SS" */
+function formatLessonDuration(seconds: number | null): string {
+  const total = seconds ?? 0;
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+/** 백엔드 상세 응답(sections/lessons) → UI CourseDetail */
 function toCourseDetail(data: CourseDetailApiResponse): CourseDetail {
-  const curriculum = data.curriculum ?? [];
-  const totalMinutes = curriculum.reduce((sum, c) => sum + (c.durationMinutes ?? 0), 0);
+  const sections = data.sections ?? [];
+  const allLessons = sections.flatMap((s) => s.lessons);
+  const totalSeconds = allLessons.reduce((sum, l) => sum + (l.durationSeconds ?? 0), 0);
 
   return {
     courseId: data.courseId,
@@ -38,53 +47,50 @@ function toCourseDetail(data: CourseDetailApiResponse): CourseDetail {
     subjectName: data.subjectName,
     instructorName: data.instructorName,
     price: data.price,
-    isFree: data.price === 0,
+    isFree: data.priceType === 'FREE',
     thumbnailUrl: data.thumbnailUrl,
     averageRating: data.averageRating,
     reviewCount: data.reviewCount,
-    studentCount: 0, // 명세 상세 응답 미제공
-    status: 'PUBLISHED',
+    studentCount: data.studentCount,
+    status: data.status,
     isEnrolled: false, // 별도 권한 확인 API
     isWishlisted: false,
     isInCart: false,
-    learningGoals: [], // 명세 미제공
-    targetAudience: [],
-    techTags: [],
-    materialsProvided: [],
-    level: '',
-    totalLessons: curriculum.length,
-    totalDuration: formatTotalDuration(totalMinutes * 60),
+    learningGoals: data.learningObjectives ?? [],
+    targetAudience: data.targetAudience ?? [],
+    techTags: data.techTags ?? [],
+    materialsProvided: [], // 백엔드 상세 응답 미제공
+    level: data.level,
+    totalLessons: allLessons.length,
+    totalDuration: formatTotalDuration(totalSeconds),
     notices: [], // 별도 API: 강의 공지 목록
     instructor: {
-      instructorId: data.instructorId,
+      instructorId: 0, // 상세 응답에 instructorId 없음(강사명만 제공)
       name: data.instructorName,
       subtitle: '',
       bio: '',
       career: [],
-      tags: [],
-      instructorStudentCount: 0,
-      instructorCourseCount: 0,
-      instructorRating: 0,
+      tags: data.techTags ?? [],
+      instructorStudentCount: data.instructorStudentCount,
+      instructorCourseCount: data.instructorCourseCount,
+      instructorRating: data.instructorRating,
     },
-    // 평면 curriculum → 단일 섹션 + 챕터별 lesson
-    curriculum: [
-      {
-        sectionId: 1,
-        title: '커리큘럼',
-        lessons: curriculum.map((c) => ({
-          lessonId: c.order,
-          title: c.title,
-          duration: `${String(c.durationMinutes).padStart(2, '0')}:00`,
-          isPreview: false,
-        })),
-      },
-    ],
+    curriculum: sections.map((s) => ({
+      sectionId: s.sectionId,
+      title: s.title,
+      lessons: s.lessons.map((l) => ({
+        lessonId: l.lessonId,
+        title: l.title,
+        duration: formatLessonDuration(l.durationSeconds),
+        isPreview: l.isPreview,
+      })),
+    })),
     reviews: [], // 별도 API: 리뷰 목록
     ratingDistribution: [],
   };
 }
 
-/** 백엔드 목록 응답(최소 필드) → UI CourseListItem (미제공 필드는 기본값) */
+/** 백엔드 목록 응답 → UI CourseListItem */
 function toCourseListItem(item: CourseListApiItem): CourseListItem {
   return {
     courseId: item.courseId,
@@ -92,13 +98,13 @@ function toCourseListItem(item: CourseListApiItem): CourseListItem {
     instructorName: item.instructorName,
     subjectName: item.subjectName,
     price: item.price,
-    thumbnailUrl: item.thumbnailUrl, // 강의 목록 조회는 썸네일 반환
+    thumbnailUrl: item.thumbnailUrl,
     averageRating: item.averageRating,
     reviewCount: item.reviewCount,
-    studentCount: 0, // 목록 응답 미제공
-    isFree: item.price === 0,
-    status: 'PUBLISHED',
-    createdAt: '',
+    studentCount: item.studentCount,
+    isFree: item.priceType === 'FREE',
+    status: item.status,
+    createdAt: item.createdAt,
     isEnrolled: false,
     hasPreview: false,
   };
