@@ -1,19 +1,20 @@
-'use client';
-
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { getCourseDetail } from '@/features/courses/services';
-import { getNotices } from '@/features/notices/services';
-import type { CourseNotice, CourseDetail } from '@/features/courses/types';
+import { getCourseDetailServer } from '@/features/courses/server';
+import { getCourseNoticesServer } from '@/features/notices/server';
 import type { Notice } from '@/features/notices/types';
+import NoticeSearchInput from './NoticeSearchInput';
 
-/* ── 공지 카드 ── */
-function NoticeCard({ notice, instructorName }: { notice: CourseNotice; instructorName: string }) {
+/* ── 공지 카드 (순수 표시) ── */
+function NoticeCard({
+  notice,
+  instructorName,
+}: {
+  notice: Notice;
+  instructorName: string;
+}) {
   return (
     <div className="w-full box-border border border-[#E2E8F0] rounded-[20px] h-[131px] relative overflow-hidden hover:border-[#2F5DAA] transition-colors cursor-pointer">
       <div className="absolute left-[21px] top-[21px] right-[21px] bottom-[21px] flex flex-row items-start gap-4">
-
         {/* 중요 빨간 점 */}
         <div className="w-[10px] flex-shrink-0 pt-[7px]">
           {notice.isPinned && (
@@ -23,7 +24,6 @@ function NoticeCard({ notice, instructorName }: { notice: CourseNotice; instruct
 
         {/* 내용 */}
         <div className="flex flex-col gap-2 flex-1 min-w-0">
-          {/* 뱃지 */}
           <div className="flex flex-row items-center gap-2">
             {notice.isPinned && (
               <span className="flex items-center gap-1.5 px-2.5 py-1 bg-[rgba(239,68,68,0.1)] rounded-2xl flex-shrink-0">
@@ -37,12 +37,12 @@ function NoticeCard({ notice, instructorName }: { notice: CourseNotice; instruct
             </span>
           </div>
 
-          {/* 제목 */}
-          <p className={`text-lg font-semibold leading-7 tracking-[-0.44px] truncate ${notice.isPinned ? 'text-[#1F2937]' : 'text-[#4B5563]'}`}>
+          <p
+            className={`text-lg font-semibold leading-7 tracking-[-0.44px] truncate ${notice.isPinned ? 'text-[#1F2937]' : 'text-[#4B5563]'}`}
+          >
             {notice.title}
           </p>
 
-          {/* 강사 • 날짜 */}
           <div className="flex flex-row items-center gap-4">
             <span className="text-sm font-medium text-[#4B5563] tracking-[-0.15px]">{instructorName}</span>
             <span className="text-sm font-medium text-[#4B5563]">•</span>
@@ -56,55 +56,27 @@ function NoticeCard({ notice, instructorName }: { notice: CourseNotice; instruct
   );
 }
 
-/* ── 메인 페이지 ── */
-export default function CourseNoticesPage() {
-  const params = useParams();
-  const courseId = Number(params.courseId);
+export default async function CourseNoticesPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ courseId: string }>;
+  searchParams: Promise<{ page?: string; keyword?: string }>;
+}) {
+  const { courseId: courseIdStr } = await params;
+  const sp = await searchParams;
+  const courseId = Number(courseIdStr);
+  const page = Number(sp.page ?? '0') || 0;
+  const keyword = sp.keyword ?? '';
 
-  const [course, setCourse] = useState<CourseDetail | null>(null);
-  const [notices, setNotices] = useState<Notice[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-
-  useEffect(() => {
-    getCourseDetail(courseId).then((data) => {
-      setCourse(data);
-      setLoading(false);
-    });
-  }, [courseId]);
-
-  useEffect(() => {
-    // 강의 공지 목록 (GET /api/notices?type=COURSE&courseId=&page=&size=10&keyword=)
-    getNotices({ type: 'COURSE', courseId, page, size: 10, keyword: search || undefined }).then((res) => {
-      if (res.success && res.data) {
-        setNotices(
-          res.data.content.map((n) => ({
-            noticeId: n.noticeId,
-            title: n.title,
-            content: '',
-            isPinned: n.isPinned,
-            createdAt: n.createdAt.split('T')[0] ?? n.createdAt,
-          })),
-        );
-        setTotalPages(Math.max(1, res.data.totalPages ?? 1));
-      }
-    });
-  }, [courseId, page, search]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#F8FAFC]">
-      </div>
-    );
-  }
+  // 서버에서 강의 정보 + 강의 공지(검색/페이징) 동시 확보
+  const [course, { notices, totalPages }] = await Promise.all([
+    getCourseDetailServer(courseId),
+    getCourseNoticesServer(courseId, { page, keyword: keyword || undefined }),
+  ]);
 
   if (!course) {
-    return (
-      <div className="min-h-screen bg-[#F8FAFC]">
-      </div>
-    );
+    return <div className="min-h-screen bg-[#F8FAFC]" />;
   }
 
   const sortedNotices = [...notices].sort((a, b) => {
@@ -113,20 +85,20 @@ export default function CourseNoticesPage() {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
+  const pageHref = (p: number) =>
+    keyword ? `?page=${p}&keyword=${encodeURIComponent(keyword)}` : `?page=${p}`;
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-
       <div className="w-full max-w-[1440px] mx-auto px-[93.5px] pt-8 pb-16">
-
         {/* 헤더 */}
         <div className="flex flex-col gap-3 mb-8">
           <div className="flex flex-row items-center gap-3">
-            {/* 벨 아이콘 */}
             <div className="w-12 h-12 rounded-[20px] bg-[#2F5DAA] flex items-center justify-center flex-shrink-0">
               <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <path d="M14 4.67C10.32 4.67 7.33 7.65 7.33 11.33v5.25L5.25 19.83h17.5l-2.08-3.25v-5.25C20.67 7.65 17.68 4.67 14 4.67z" stroke="#FFFFFF" strokeWidth="2.33" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M11.67 19.83c0 1.29 1.04 2.34 2.33 2.34s2.33-1.05 2.33-2.34" stroke="#FFFFFF" strokeWidth="2.33" strokeLinecap="round"/>
-                <path d="M14 2.33v2.34" stroke="#FFFFFF" strokeWidth="2.33" strokeLinecap="round"/>
+                <path d="M14 4.67C10.32 4.67 7.33 7.65 7.33 11.33v5.25L5.25 19.83h17.5l-2.08-3.25v-5.25C20.67 7.65 17.68 4.67 14 4.67z" stroke="#FFFFFF" strokeWidth="2.33" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M11.67 19.83c0 1.29 1.04 2.34 2.33 2.34s2.33-1.05 2.33-2.34" stroke="#FFFFFF" strokeWidth="2.33" strokeLinecap="round" />
+                <path d="M14 2.33v2.34" stroke="#FFFFFF" strokeWidth="2.33" strokeLinecap="round" />
               </svg>
             </div>
             <h1 className="text-[30px] font-bold leading-9 tracking-[0.4px] text-[#1F2937]">
@@ -138,33 +110,20 @@ export default function CourseNoticesPage() {
             중요한 소식과 업데이트를 확인하세요.
           </p>
 
-          {/* 강의로 돌아가기 */}
           <Link
             href={`/courses/${courseId}`}
             className="flex items-center gap-1.5 text-[#4B5563] font-semibold text-base hover:text-[#1F2937] transition-colors w-fit"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M12.5 5L7.5 10l5 5" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12.5 5L7.5 10l5 5" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             강의로 돌아가기
           </Link>
         </div>
 
-        {/* 검색바 */}
+        {/* 검색바 (client 잎사귀) */}
         <div className="w-full bg-white border border-[#E2E8F0] shadow-[0px_4px_10px_rgba(0,0,0,0.06)] rounded-2xl px-[25px] py-[25px] mb-6">
-          <div className="relative">
-            <svg className="absolute left-4 top-1/2 -translate-y-1/2" width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <circle cx="8.5" cy="8.5" r="5.5" stroke="#4B5563" strokeWidth="1.67"/>
-              <path d="M14.5 14.5l3 3" stroke="#4B5563" strokeWidth="1.67" strokeLinecap="round"/>
-            </svg>
-            <input
-              type="text"
-              placeholder="공지사항 검색"
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-              className="w-full border border-[#E2E8F0] rounded-[10px] h-12 pl-12 pr-4 text-base text-[#4B5563] tracking-[-0.31px] outline-none focus:border-[#2F5DAA] transition-colors"
-            />
-          </div>
+          <NoticeSearchInput initial={keyword} />
         </div>
 
         {/* 공지 목록 */}
@@ -184,42 +143,48 @@ export default function CourseNoticesPage() {
           )}
         </div>
 
-        {/* 페이지네이션 (백엔드 totalPages 기준) */}
+        {/* 페이지네이션 (백엔드 totalPages 기준, Link 기반) */}
         {totalPages > 1 && (
           <div className="mt-6 flex items-center justify-center gap-2">
-            <button
-              type="button"
-              disabled={page === 0}
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              className="h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm text-[#4B5563] disabled:opacity-40 hover:bg-[#F1F5F9] transition-colors"
-            >
-              이전
-            </button>
+            {page > 0 ? (
+              <Link
+                href={pageHref(page - 1)}
+                className="h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm text-[#4B5563] hover:bg-[#F1F5F9] transition-colors flex items-center"
+              >
+                이전
+              </Link>
+            ) : (
+              <span className="h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm text-[#4B5563] opacity-40 flex items-center">
+                이전
+              </span>
+            )}
             {Array.from({ length: totalPages }, (_, i) => i).map((p) => (
-              <button
+              <Link
                 key={p}
-                type="button"
-                onClick={() => setPage(p)}
-                className={`h-9 w-9 rounded-lg text-sm transition-colors ${
+                href={pageHref(p)}
+                className={`h-9 w-9 rounded-lg text-sm transition-colors flex items-center justify-center ${
                   page === p
                     ? 'bg-[#2F5DAA] text-white'
                     : 'border border-[#E2E8F0] text-[#4B5563] hover:bg-[#F1F5F9]'
                 }`}
               >
                 {p + 1}
-              </button>
+              </Link>
             ))}
-            <button
-              type="button"
-              disabled={page >= totalPages - 1}
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              className="h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm text-[#4B5563] disabled:opacity-40 hover:bg-[#F1F5F9] transition-colors"
-            >
-              다음
-            </button>
+            {page < totalPages - 1 ? (
+              <Link
+                href={pageHref(page + 1)}
+                className="h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm text-[#4B5563] hover:bg-[#F1F5F9] transition-colors flex items-center"
+              >
+                다음
+              </Link>
+            ) : (
+              <span className="h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm text-[#4B5563] opacity-40 flex items-center">
+                다음
+              </span>
+            )}
           </div>
         )}
-
       </div>
     </div>
   );

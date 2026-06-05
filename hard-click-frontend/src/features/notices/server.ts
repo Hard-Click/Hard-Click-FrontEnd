@@ -58,6 +58,35 @@ export async function getGlobalNoticesServer(params: {
   };
 }
 
+/** 강의 공지 목록(COURSE) — 서버에서 검색/페이징 조회 (Server Component 전용) */
+export async function getCourseNoticesServer(
+  courseId: number,
+  params: { page?: number; keyword?: string },
+): Promise<{ notices: Notice[]; totalPages: number }> {
+  if (USE_MOCK) {
+    return {
+      notices: mockNoticesResponse.content.map(toNotice),
+      totalPages: mockNoticesResponse.totalPages,
+    };
+  }
+  const q = new URLSearchParams();
+  q.set('type', 'COURSE');
+  q.set('courseId', String(courseId));
+  q.set('page', String(params.page ?? 0));
+  q.set('size', '10');
+  if (params.keyword) q.set('keyword', params.keyword);
+
+  const res = await serverApi.get<NoticeApiResponse>(
+    `/api/notices?${q.toString()}`,
+  );
+  if (!res.success || !res.data) return { notices: [], totalPages: 1 };
+
+  return {
+    notices: res.data.content.map(toNotice),
+    totalPages: Math.max(1, res.data.totalPages ?? 1),
+  };
+}
+
 /** 공지 상세 — 서버에서 조회 (Server Component 전용) */
 export async function getNoticeDetailServer(
   noticeId: number,

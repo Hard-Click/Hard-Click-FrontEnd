@@ -2,13 +2,20 @@ import { serverApi } from '@/lib/api';
 import type {
   CourseListItem,
   CourseListQuery,
+  CourseDetail,
   Subject,
   CourseListApiItem,
   CourseListApiResponse,
+  CourseDetailApiResponse,
   SubjectApiItem,
 } from './types';
 import { USE_MOCK } from '@/mocks/config';
-import { mockSubjects, mockCourseListResponse } from '@/mocks/courses.mock';
+import {
+  mockSubjects,
+  mockCourseListResponse,
+  mockCourseDetailResponse,
+} from '@/mocks/courses.mock';
+import { toCourseDetail } from './services';
 
 /** 백엔드 목록 응답 → UI CourseListItem */
 function toCourseListItem(item: CourseListApiItem): CourseListItem {
@@ -78,4 +85,18 @@ export async function getCoursesServer(
     courses = courses.filter((c) => c.instructorName === query.instructor);
   }
   return courses;
+}
+
+/** 강의 상세 — 서버 조회 (Server Component 전용) */
+export async function getCourseDetailServer(
+  courseId: number,
+): Promise<CourseDetail | null> {
+  if (USE_MOCK) {
+    return toCourseDetail({ ...mockCourseDetailResponse, courseId });
+  }
+  const res = await serverApi.get<CourseDetailApiResponse>(
+    `/api/courses/${courseId}`,
+  );
+  if (!res.success || !res.data) return null;
+  return toCourseDetail(res.data);
 }

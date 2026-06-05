@@ -35,7 +35,7 @@ function formatLessonDuration(seconds: number | null): string {
 }
 
 /** 백엔드 상세 응답(sections/lessons) → UI CourseDetail */
-function toCourseDetail(data: CourseDetailApiResponse): CourseDetail {
+export function toCourseDetail(data: CourseDetailApiResponse): CourseDetail {
   const sections = data.sections ?? [];
   const allLessons = sections.flatMap((s) => s.lessons);
   const totalSeconds = allLessons.reduce((sum, l) => sum + (l.durationSeconds ?? 0), 0);
