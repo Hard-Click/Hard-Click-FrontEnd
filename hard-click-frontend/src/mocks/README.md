@@ -31,36 +31,44 @@ export async function getNotices(params) {
 2. `src/mocks/<도메인>.mock.ts`에 그 타입으로 목 데이터 작성.
 3. service의 `USE_MOCK` 분기에서 import해 사용.
 
-## 현재 목 파일 인덱스 (백엔드 GET 명세 기준)
+## 목 파일 인덱스
 
-| 파일 | 주요 엔드포인트 |
+> ⚠️ **기준 = 실제 백엔드 코드(Hard-Click-BackEnd)**. 노션 명세와 코드가 다른 곳은 **코드를 따랐다.**
+> (노션과 달랐던 대표: `/api/users`→`/api/members`, `/api/payments`→`/api/payment`(단수),
+> 강의 상세 `curriculum`→`sections[].lessons[]`, 결제 `paidAmount`→`amount/orderNo/displayName` 등)
+
+### ✅ A. 백엔드에 구현됨 — 실제 DTO에 정렬 완료(연동 가능)
+
+| 파일 | 엔드포인트 | 백엔드 도메인 |
+| --- | --- | --- |
+| `auth.mock.ts` | `/api/auth/login·signup·email·refresh` | identity |
+| `courses.mock.ts` | `GET /api/courses` · `/{id}` · `/api/subjects` | cource·subject |
+| `instructor.mock.ts` | `GET /api/instructor/courses` (CourseListResponse 재사용) | cource |
+| `community.mock.ts` | `GET /api/boards/{type}/posts` · `/posts/{id}` · `/posts/{id}/comments` | community |
+| `reviews.mock.ts` | `GET /api/courses/{id}/reviews` | community |
+| `enrollments.mock.ts` | `GET /api/enrollments/me` (List 직접) | enrollment |
+| `learning.mock.ts` | `GET /api/learning/courses/{id}/progress` · `/videos/{id}/play` | learning_activity |
+| `notices.mock.ts` | `GET /api/notices` · `/{id}` | notice |
+| `payments.mock.ts` | `GET /api/payment/me` (※ 단수) | payment |
+| `mypage.mock.ts` | `GET /api/members/me` · `/activities` · `/courses` · `/courses/completed` | identity·community·enrollment |
+
+### ⚠️ B. 백엔드 미구현 — 노션 명세 기준(빈 스텁/컨트롤러 없음, 연동 불가)
+
+> `report_moderation`·`evolution_report`는 빈 `class Controller {}` 스텁이고, 나머지는 컨트롤러 자체가 없음.
+> 백엔드가 구현되면 그때 실제 DTO로 재정렬 필요.
+
+| 파일 | 엔드포인트(노션) |
 | --- | --- |
-| `auth.mock.ts` | 로그인 · 회원가입 · 이메일 인증 · 토큰 재발급 |
-| `courses.mock.ts` | `GET /api/courses`(목록) · `/{id}`(상세) · `/api/subjects` |
-| `instructor.mock.ts` | `GET /api/instructor/courses` (강사 내 강의) |
-| `community.mock.ts` | `GET /api/boards/{type}/posts` · `/posts/{id}` · `/comments` |
-| `reviews.mock.ts` | `GET /api/courses/{id}/reviews` |
-| `enrollments.mock.ts` | `GET /api/enrollments/me` |
-| `learning.mock.ts` | `GET /api/learning/courses/{id}/progress` · `/videos/{id}/play` |
-| `notices.mock.ts` | `GET /api/notices` · `/{id}` |
-| `notifications.mock.ts` | `GET /api/notifications` · `/unread-count` |
-| `payments.mock.ts` | `GET /api/payments/me` |
-| `subscriptions.mock.ts` | `GET /api/subscription-plans` |
-| `cart.mock.ts` | `GET /api/cart` |
-| `study.mock.ts` | `GET /api/study` · `/{groupId}` |
-| `rankings.mock.ts` | `GET /api/rankings/me` · `/study-time` |
-| `grass.mock.ts` | `GET /api/grass/lessons` · `/streak` · `/monthly` · `/yearly` |
-| `mypage.mock.ts` | `GET /api/users/me` · `/activities` · `/courses` · `/courses/completed` |
-| `studyTimers.mock.ts` | `GET /api/study-timers/stats/daily` |
-| `stats.mock.ts` | `GET /api/stats/daily-study` |
-| `chat.mock.ts` | `GET /api/users/me/chat-rooms` |
-| `reports.mock.ts` | `GET /api/reports` (관리자) |
+| `reports.mock.ts` | `/api/reports` (report_moderation = 빈 스텁) |
+| `rankings.mock.ts` | `/api/rankings/*` |
+| `grass.mock.ts` | `/api/grass/*` |
+| `studyTimers.mock.ts` | `/api/study-timers/stats/daily` |
+| `stats.mock.ts` | `/api/stats/daily-study` |
+| `study.mock.ts` | `/api/study` · `/{groupId}` |
+| `cart.mock.ts` | `/api/cart` |
+| `subscriptions.mock.ts` | `/api/subscription-plans` |
+| `notifications.mock.ts` | `/api/notifications` · `/unread-count` |
+| `chat.mock.ts` | `/api/users/me/chat-rooms` |
 
-> 변경(POST/PATCH/DELETE) 엔드포인트는 보통 단순 성공/생성 응답이라 별도 목 데이터를 두지 않았다.
-> **추론/주의가 남아있는 목**(명세 자체의 불일치/충돌):
-> - `reports.mock.ts` — 명세의 응답 표 vs 예시 JSON 불일치 → 예시 JSON 기준 (파일 상단 주석)
-> - `payments.mock.ts` — `/api/payments/me` 명세가 **2종 충돌**(작성자 2명):
->   `결제 내역 조회`(content/paidAmount/paymentMethod, 페이징) vs
->   `내 결제 내역 조회`(data 배열/amount/orderNo/paymentType/displayName). 현재 mock은 전자 기준.
->
-> ※ 아직 목 미작성(필요 시 추가): 관리자 회원관리 `GET /api/admin/members`(목록 검색)·`/{memberId}`(상세).
+> 변경(POST/PATCH/DELETE)은 단순 성공/생성 응답이라 별도 목을 두지 않았다.
+> A그룹도 아직 service의 `USE_MOCK` 분기에 연결 안 된 파일이 있다(참조용 목). 화면 구현 시 연결.
