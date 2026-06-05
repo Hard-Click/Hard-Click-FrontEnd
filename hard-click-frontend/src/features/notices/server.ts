@@ -1,5 +1,10 @@
 import { serverApi } from '@/lib/api';
-import type { Notice, NoticeApiItem, NoticeApiResponse } from './types';
+import type {
+  Notice,
+  NoticeDetail,
+  NoticeApiItem,
+  NoticeApiResponse,
+} from './types';
 import { USE_MOCK } from '@/mocks/config';
 import { mockNoticesResponse } from '@/mocks/notices.mock';
 
@@ -51,4 +56,30 @@ export async function getGlobalNoticesServer(params: {
     notices: res.data.content.map(toNotice),
     totalPages: Math.max(1, res.data.totalPages ?? 1),
   };
+}
+
+/** 공지 상세 — 서버에서 조회 (Server Component 전용) */
+export async function getNoticeDetailServer(
+  noticeId: number,
+): Promise<NoticeDetail | null> {
+  if (USE_MOCK) {
+    const item =
+      mockNoticesResponse.content.find((n) => n.noticeId === noticeId) ??
+      mockNoticesResponse.content[0];
+    if (!item) return null;
+    return {
+      noticeId: item.noticeId,
+      noticeType: item.noticeType,
+      courseName: item.courseName,
+      title: item.title,
+      content: '공지 본문입니다. (목 데이터)',
+      isPinned: item.isPinned,
+      isRead: item.isRead,
+      createdAt: item.createdAt,
+      previousNotice: null,
+    };
+  }
+  const res = await serverApi.get<NoticeDetail>(`/api/notices/${noticeId}`);
+  if (!res.success || !res.data) return null;
+  return res.data;
 }
