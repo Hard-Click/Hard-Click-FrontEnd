@@ -1,3 +1,4 @@
+import { USE_MOCK } from '@/mocks/config';
 import axios from 'axios';
 import type {
   AuthToken,
@@ -8,8 +9,6 @@ import type {
   RegisterRequest,
 } from './types';
 import { api } from '@/services/api';
-
-const USE_MOCK = false;
 
 export async function checkUsername(username: string) {
   if (USE_MOCK) {

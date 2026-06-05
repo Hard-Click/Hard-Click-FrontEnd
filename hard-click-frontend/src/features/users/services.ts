@@ -1,3 +1,4 @@
+import { USE_MOCK } from '@/mocks/config';
 import { api } from '@/services/api';
 import type {
   MyProfile,
@@ -7,8 +8,6 @@ import type {
   MyCourse,
   CompletedCourse,
 } from './types';
-
-const USE_MOCK = false;
 
 /* ───── 내 프로필 조회 (GET /api/members/me) ─────
  * 백엔드는 memberId 필드로 내려옴 — 프론트 타입(MyProfile)에 맞게 userId로 매핑한다. */
