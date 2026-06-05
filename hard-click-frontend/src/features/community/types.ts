@@ -12,11 +12,10 @@ export const BOARD_TYPE_VALUE: Record<string, Exclude<BoardType, 'ALL'>> = {
   질문게시판: 'QUESTION',
 };
 
-// GET /api/subjects
+// GET /api/subjects → SubjectResponse { subjectId, subjectName }
 export interface SubjectItem {
   subjectId: number;
   subjectName: string;
-  courseCount?: number;
 }
 
 // GET /api/boards/{boardType}/posts
@@ -102,4 +101,58 @@ export interface CreateCommentRequest {
 
 export interface UpdateCommentRequest {
   content: string;
+}
+
+/* ───── 백엔드 응답 (실제 Hard-Click-BackEnd 코드 DTO) ─────
+ * 서비스의 toXxx 매퍼가 이 API 타입 → 위의 UI 타입으로 변환한다. */
+
+// GET /api/boards/{boardType}/posts → PostListResponse
+export interface PostItemApiResponse {
+  postId: number;
+  boardType: Exclude<BoardType, 'ALL'>;
+  title: string;
+  authorName: string;
+  createdAt: string;
+  viewCount: number;
+  commentCount: number;
+}
+
+export interface PostListApiResponse {
+  posts: PostItemApiResponse[];
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+}
+
+// GET /api/posts/{postId} → PostDetailResponse
+export interface PostDetailApiResponse {
+  postId: number;
+  boardType: Exclude<BoardType, 'ALL'>;
+  title: string;
+  authorName: string;
+  createdAt: string;
+  viewCount: number;
+  content: string;
+  isMyPost: boolean;
+  isAccepted: boolean;
+  fileUrls: string[];
+}
+
+// GET /api/posts/{postId}/comments → CommentListResponse (replies는 재귀 동일 타입)
+export interface CommentApiItem {
+  commentId: number;
+  authorName: string;
+  authorInitial: string;
+  content: string;
+  createdAt: string;
+  isAccepted: boolean;
+  isMine: boolean;
+  isDeleted: boolean;
+  imageUrl: string | null;
+  replies: CommentApiItem[];
+}
+
+export interface CommentListApiResponse {
+  totalCount: number;
+  comments: CommentApiItem[];
 }

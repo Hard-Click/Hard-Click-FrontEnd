@@ -1,8 +1,9 @@
 import { serverApi } from '@/lib/api';
 import type { ApiResponse } from '@/services/api';
-import type { BoardType, PostListResponse } from './types';
+import type { BoardType, PostListResponse, PostListApiResponse } from './types';
 import { USE_MOCK } from '@/mocks/config';
 import { mockPostListResponse } from '@/mocks/community.mock';
+import { toPostListResponse, mapOk } from './services';
 
 /**
  * 커뮤니티 게시글 목록 — **서버에서 직접 호출**(Server Component 전용).
@@ -16,7 +17,12 @@ export async function getCommunityPosts(
   sort?: string,
 ): Promise<ApiResponse<PostListResponse>> {
   if (USE_MOCK) {
-    return { success: true, httpStatus: 200, message: '', data: mockPostListResponse };
+    return {
+      success: true,
+      httpStatus: 200,
+      message: '',
+      data: toPostListResponse(mockPostListResponse),
+    };
   }
 
   const params = new URLSearchParams();
@@ -29,5 +35,5 @@ export async function getCommunityPosts(
       ? `/api/boards/posts?${params.toString()}`
       : `/api/boards/${boardType}/posts?${params.toString()}`;
 
-  return serverApi.get<PostListResponse>(url);
+  return mapOk(await serverApi.get<PostListApiResponse>(url), toPostListResponse);
 }
