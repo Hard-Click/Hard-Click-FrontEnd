@@ -120,6 +120,7 @@ export interface CourseListApiItem {
   instructorName: string;
   subjectName: string;
   price: number;
+  thumbnailUrl?: string; // 강의 목록 조회는 반환, ?subject= 필터 응답엔 미포함
   averageRating: number;
   reviewCount: number;
 }

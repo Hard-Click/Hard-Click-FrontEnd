@@ -92,7 +92,7 @@ function toCourseListItem(item: CourseListApiItem): CourseListItem {
     instructorName: item.instructorName,
     subjectName: item.subjectName,
     price: item.price,
-    thumbnailUrl: undefined, // 목록 응답엔 썸네일 미제공
+    thumbnailUrl: item.thumbnailUrl, // 강의 목록 조회는 썸네일 반환
     averageRating: item.averageRating,
     reviewCount: item.reviewCount,
     studentCount: 0, // 목록 응답 미제공
