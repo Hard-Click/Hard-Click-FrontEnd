@@ -104,67 +104,48 @@ export interface CourseDetail {
   ratingDistribution: { stars: number; count: number }[];
 }
 
-/* ───── 백엔드 응답 명세 (GET /api/courses, /api/courses/{id}, /api/subjects) ───── */
+/* ───── 백엔드 응답 명세 (노션 API 목록 기준) ───── */
 
+// GET /api/subjects
 export interface SubjectApiItem {
   subjectId: number;
   subjectName: string;
-  courseCount: number;
+  courseCount?: number;
 }
 
+// GET /api/courses (목록) — content[] 항목
 export interface CourseListApiItem {
   courseId: number;
   title: string;
   instructorName: string;
   subjectName: string;
   price: number;
-  priceType?: 'FREE' | 'PAID';
-  priceLabel?: string;
-  thumbnailUrl: string;
   averageRating: number;
   reviewCount: number;
-  studentCount: number;
-  status?: CourseStatus;
-  createdAt?: string;
 }
 
 export interface CourseListApiResponse {
   content: CourseListApiItem[];
-  currentPage?: number;
   totalPages?: number;
-  totalCount?: number;
 }
 
+// GET /api/courses/{courseId} (상세)
 export interface CourseDetailApiResponse {
   courseId: number;
   title: string;
   description: string;
+  instructorId: number;
   instructorName: string;
-  instructorId?: number;
   subjectName: string;
   price: number;
-  priceType?: 'FREE' | 'PAID';
-  priceLabel?: string;
-  status?: CourseStatus;
   thumbnailUrl: string;
   averageRating: number;
   reviewCount: number;
-  studentCount: number;
-  learningObjectives?: string[];
-  targetAudience?: string[];
-  techTags?: string[];
-  level?: string;
-  sections?: Array<{
-    sectionId: number;
+  curriculum: Array<{
+    order: number;
     title: string;
-    orderIndex: number;
-    lessons?: Array<{
-      lessonId: number;
-      title: string;
-      durationSeconds?: number;
-      isPreview?: boolean;
-    }>;
+    durationMinutes: number;
   }>;
-  createdAt?: string;
+  createdAt: string;
 }
 

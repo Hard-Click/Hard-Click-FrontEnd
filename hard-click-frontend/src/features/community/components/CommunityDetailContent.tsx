@@ -81,7 +81,7 @@ export default function CommunityDetailContent({
   };
 
   const category = BOARD_TYPE_LABEL[post.boardType];
-  const isAccepted = post.isAccepted;
+  const isAccepted = post.status === 'ADOPTED';
 
   const totalComments = comments.reduce(
     (acc, c) => acc + 1 + (c.replies?.length ?? 0),
@@ -274,7 +274,7 @@ export default function CommunityDetailContent({
             </span>
           </div>
           <div className="flex items-center gap-3">
-            {post.isMyPost ? (
+            {post.isMine ? (
               <>
                 <button
                   type="button"
@@ -389,7 +389,7 @@ export default function CommunityDetailContent({
                   </div>
                   <div className="flex items-center gap-2">
                     {category === '질문게시판' &&
-                      post.isMyPost &&
+                      post.isMine &&
                       !isAccepted &&
                       !comment.isAccepted && (
                         <button

@@ -44,7 +44,7 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
     apiSort,
   );
   const posts: PostListItem[] =
-    result.success && result.data ? (result.data.posts ?? []) : [];
+    result.success && result.data ? (result.data.content ?? []) : [];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] px-8 py-10">

@@ -26,13 +26,10 @@ function formatTotalDuration(totalSecs: number): string {
   return `${s}초`;
 }
 
-/** 백엔드 상세 응답 → UI CourseDetail */
+/** 백엔드 상세 응답(curriculum: 평면 챕터 배열) → UI CourseDetail */
 function toCourseDetail(data: CourseDetailApiResponse): CourseDetail {
-  const allLessons = (data.sections ?? []).flatMap((s) => s.lessons ?? []);
-  const totalSecs = allLessons.reduce(
-    (sum, l) => sum + (l.durationSeconds ?? 0),
-    0,
-  );
+  const curriculum = data.curriculum ?? [];
+  const totalMinutes = curriculum.reduce((sum, c) => sum + (c.durationMinutes ?? 0), 0);
 
   return {
     courseId: data.courseId,
@@ -41,25 +38,25 @@ function toCourseDetail(data: CourseDetailApiResponse): CourseDetail {
     subjectName: data.subjectName,
     instructorName: data.instructorName,
     price: data.price,
-    isFree: data.priceType ? data.priceType === 'FREE' : data.price === 0,
+    isFree: data.price === 0,
     thumbnailUrl: data.thumbnailUrl,
     averageRating: data.averageRating,
     reviewCount: data.reviewCount,
-    studentCount: data.studentCount,
-    status: data.status ?? 'PUBLISHED',
-    isEnrolled: false,
+    studentCount: 0, // 명세 상세 응답 미제공
+    status: 'PUBLISHED',
+    isEnrolled: false, // 별도 권한 확인 API
     isWishlisted: false,
     isInCart: false,
-    learningGoals: data.learningObjectives ?? [],
-    targetAudience: data.targetAudience ?? [],
-    techTags: data.techTags ?? [],
+    learningGoals: [], // 명세 미제공
+    targetAudience: [],
+    techTags: [],
     materialsProvided: [],
-    level: data.level ?? '',
-    totalLessons: allLessons.length,
-    totalDuration: formatTotalDuration(totalSecs),
-    notices: [],
+    level: '',
+    totalLessons: curriculum.length,
+    totalDuration: formatTotalDuration(totalMinutes * 60),
+    notices: [], // 별도 API: 강의 공지 목록
     instructor: {
-      instructorId: data.instructorId ?? 0,
+      instructorId: data.instructorId,
       name: data.instructorName,
       subtitle: '',
       bio: '',
@@ -69,23 +66,25 @@ function toCourseDetail(data: CourseDetailApiResponse): CourseDetail {
       instructorCourseCount: 0,
       instructorRating: 0,
     },
-    curriculum: (data.sections ?? []).map((sec) => ({
-      sectionId: sec.sectionId,
-      title: sec.title,
-      lessons: (sec.lessons ?? []).map((l) => ({
-        lessonId: l.lessonId,
-        title: l.title,
-        duration: l.durationSeconds
-          ? `${String(Math.floor(l.durationSeconds / 60)).padStart(2, '0')}:${String(l.durationSeconds % 60).padStart(2, '0')}`
-          : '00:00',
-        isPreview: l.isPreview ?? false,
-      })),
-    })),
-    reviews: [],
+    // 평면 curriculum → 단일 섹션 + 챕터별 lesson
+    curriculum: [
+      {
+        sectionId: 1,
+        title: '커리큘럼',
+        lessons: curriculum.map((c) => ({
+          lessonId: c.order,
+          title: c.title,
+          duration: `${String(c.durationMinutes).padStart(2, '0')}:00`,
+          isPreview: false,
+        })),
+      },
+    ],
+    reviews: [], // 별도 API: 리뷰 목록
     ratingDistribution: [],
   };
 }
 
+/** 백엔드 목록 응답(최소 필드) → UI CourseListItem (미제공 필드는 기본값) */
 function toCourseListItem(item: CourseListApiItem): CourseListItem {
   return {
     courseId: item.courseId,
@@ -93,47 +92,16 @@ function toCourseListItem(item: CourseListApiItem): CourseListItem {
     instructorName: item.instructorName,
     subjectName: item.subjectName,
     price: item.price,
-    thumbnailUrl: item.thumbnailUrl,
+    thumbnailUrl: undefined, // 목록 응답엔 썸네일 미제공
     averageRating: item.averageRating,
     reviewCount: item.reviewCount,
-    studentCount: item.studentCount,
-    isFree: item.priceType ? item.priceType === 'FREE' : item.price === 0,
-    status: item.status ?? 'PUBLISHED',
-    createdAt: item.createdAt ?? '',
+    studentCount: 0, // 목록 응답 미제공
+    isFree: item.price === 0,
+    status: 'PUBLISHED',
+    createdAt: '',
     isEnrolled: false,
     hasPreview: false,
   };
-}
-
-/** UI 목록에 검색·과목·강사·정렬 적용 (목 모드 / 클라 후처리용) */
-function applyCourseFilters(
-  courses: CourseListItem[],
-  query: CourseListQuery | undefined,
-  subjects: Subject[],
-): CourseListItem[] {
-  let result = courses.filter((c) => c.status === 'PUBLISHED');
-  if (query?.keyword) {
-    const kw = query.keyword.toLowerCase();
-    result = result.filter((c) => c.title.toLowerCase().includes(kw));
-  }
-  if (query?.subjectId) {
-    const subject = subjects.find((s) => s.subjectId === query.subjectId);
-    if (subject) result = result.filter((c) => c.subjectName === subject.name);
-  }
-  if (query?.instructor) {
-    result = result.filter((c) => c.instructorName === query.instructor);
-  }
-  const sort = query?.sort ?? 'latest';
-  const sorted = [...result];
-  if (sort === 'latest')
-    sorted.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
-  else if (sort === 'popular')
-    sorted.sort((a, b) => b.studentCount - a.studentCount);
-  else if (sort === 'rating')
-    sorted.sort((a, b) => b.averageRating - a.averageRating);
-  return sorted;
 }
 
 export async function getCourseDetail(
@@ -153,28 +121,28 @@ export async function getCourses(
   query?: CourseListQuery,
 ): Promise<CourseListItem[]> {
   if (USE_MOCK) {
-    const subjects = mockSubjects.map((s) => ({
-      subjectId: s.subjectId,
-      name: s.subjectName,
-    }));
-    return applyCourseFilters(
-      mockCourseListResponse.content.map(toCourseListItem),
-      query,
-      subjects,
-    );
+    let courses = mockCourseListResponse.content.map(toCourseListItem);
+    if (query?.subjectId) {
+      const name = mockSubjects.find((s) => s.subjectId === query.subjectId)?.subjectName;
+      if (name) courses = courses.filter((c) => c.subjectName === name);
+    }
+    if (query?.keyword) {
+      const kw = query.keyword.toLowerCase();
+      courses = courses.filter((c) => c.title.toLowerCase().includes(kw));
+    }
+    if (query?.instructor) {
+      courses = courses.filter((c) => c.instructorName === query.instructor);
+    }
+    return courses;
   }
 
   const params = new URLSearchParams();
   params.set('page', '0');
   params.set('size', '100');
   if (query?.keyword) params.set('keyword', query.keyword);
-  // 백엔드 sort enum은 대문자
   params.set('sort', (query?.sort ?? 'latest').toUpperCase());
-  if (query?.subjectId) {
-    const subjects = await getSubjects();
-    const matched = subjects.find((s) => s.subjectId === query.subjectId);
-    if (matched) params.set('subject', matched.name);
-  }
+  // 명세: subject 파라미터는 subjectId(숫자)
+  if (query?.subjectId) params.set('subject', String(query.subjectId));
 
   const response = await api.get<CourseListApiResponse>(
     `/api/courses?${params.toString()}`,
@@ -182,6 +150,7 @@ export async function getCourses(
   if (!response.success || !response.data) return [];
 
   let courses = response.data.content.map(toCourseListItem);
+  // 강사 필터는 백엔드 미지원 → 클라 후처리
   if (query?.instructor) {
     courses = courses.filter((c) => c.instructorName === query.instructor);
   }

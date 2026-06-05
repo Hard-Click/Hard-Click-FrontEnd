@@ -16,10 +16,10 @@ export const BOARD_TYPE_VALUE: Record<string, Exclude<BoardType, 'ALL'>> = {
 export interface SubjectItem {
   subjectId: number;
   subjectName: string;
-  courseCount: number;
+  courseCount?: number;
 }
 
-// GET /api/boards/{boardType}/posts  or  GET /api/boards/posts (ALL)
+// GET /api/boards/{boardType}/posts
 export interface PostListItem {
   postId: number;
   boardType: Exclude<BoardType, 'ALL'>;
@@ -27,14 +27,17 @@ export interface PostListItem {
   authorName: string;
   viewCount: number;
   commentCount: number;
+  /** 질문글 한정: PENDING(답변대기)/ADOPTED(채택완료), 그 외 null */
+  status?: 'PENDING' | 'ADOPTED' | null;
+  /** 스터디 모집글 한정 (없으면 null) */
+  currentCount?: number | null;
+  maxCount?: number | null;
   createdAt: string;
 }
 
 export interface PostListResponse {
-  posts: PostListItem[];
-  currentPage: number;
+  content: PostListItem[];
   totalPages: number;
-  totalCount: number;
 }
 
 // GET /api/posts/{postId}
@@ -45,8 +48,9 @@ export interface PostDetail {
   content: string;
   authorName: string;
   viewCount: number;
-  isMyPost: boolean;
-  isAccepted: boolean;
+  /** PENDING(답변대기) / ADOPTED(채택완료) */
+  status: 'PENDING' | 'ADOPTED';
+  isMine: boolean;
   fileUrls: string[];
   createdAt: string;
 }
@@ -56,6 +60,7 @@ export interface ReplyItem {
   commentId: number;
   authorName: string;
   content: string;
+  imageUrl: string | null;
   isMine: boolean;
   createdAt: string;
 }
@@ -64,6 +69,7 @@ export interface CommentItem {
   commentId: number;
   authorName: string;
   content: string;
+  imageUrl: string | null;
   isAccepted: boolean;
   isMine: boolean;
   createdAt: string;

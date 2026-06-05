@@ -10,6 +10,7 @@ import type {
 import { USE_MOCK } from '@/mocks/config';
 import { mockSubjects, mockCourseListResponse } from '@/mocks/courses.mock';
 
+/** 백엔드 목록 응답(최소 필드) → UI CourseListItem (미제공 필드 기본값) */
 function toCourseListItem(item: CourseListApiItem): CourseListItem {
   return {
     courseId: item.courseId,
@@ -17,13 +18,13 @@ function toCourseListItem(item: CourseListApiItem): CourseListItem {
     instructorName: item.instructorName,
     subjectName: item.subjectName,
     price: item.price,
-    thumbnailUrl: item.thumbnailUrl,
+    thumbnailUrl: undefined,
     averageRating: item.averageRating,
     reviewCount: item.reviewCount,
-    studentCount: item.studentCount,
-    isFree: item.priceType ? item.priceType === 'FREE' : item.price === 0,
-    status: item.status ?? 'PUBLISHED',
-    createdAt: item.createdAt ?? '',
+    studentCount: 0,
+    isFree: item.price === 0,
+    status: 'PUBLISHED',
+    createdAt: '',
     isEnrolled: false,
     hasPreview: false,
   };
@@ -45,6 +46,14 @@ export async function getCoursesServer(
 ): Promise<CourseListItem[]> {
   if (USE_MOCK) {
     let courses = mockCourseListResponse.content.map(toCourseListItem);
+    if (query?.subjectId) {
+      const name = mockSubjects.find((s) => s.subjectId === query.subjectId)?.subjectName;
+      if (name) courses = courses.filter((c) => c.subjectName === name);
+    }
+    if (query?.keyword) {
+      const kw = query.keyword.toLowerCase();
+      courses = courses.filter((c) => c.title.toLowerCase().includes(kw));
+    }
     if (query?.instructor) {
       courses = courses.filter((c) => c.instructorName === query.instructor);
     }
@@ -56,11 +65,8 @@ export async function getCoursesServer(
   params.set('size', '100');
   if (query?.keyword) params.set('keyword', query.keyword);
   params.set('sort', (query?.sort ?? 'latest').toUpperCase());
-  if (query?.subjectId) {
-    const subjects = await getSubjectsServer();
-    const matched = subjects.find((s) => s.subjectId === query.subjectId);
-    if (matched) params.set('subject', matched.name);
-  }
+  // 명세: subject 파라미터는 subjectId(숫자)
+  if (query?.subjectId) params.set('subject', String(query.subjectId));
 
   const res = await serverApi.get<CourseListApiResponse>(
     `/api/courses?${params.toString()}`,
