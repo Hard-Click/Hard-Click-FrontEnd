@@ -50,13 +50,17 @@ export async function getNotices(params) {
 | `study.mock.ts` | `GET /api/study` · `/{groupId}` |
 | `rankings.mock.ts` | `GET /api/rankings/me` · `/study-time` |
 | `grass.mock.ts` | `GET /api/grass/lessons` · `/streak` · `/monthly` · `/yearly` |
-| `mypage.mock.ts` | `GET /api/users/me` · `/activities` · `/courses` |
+| `mypage.mock.ts` | `GET /api/users/me` · `/activities` · `/courses` · `/courses/completed` |
 | `studyTimers.mock.ts` | `GET /api/study-timers/stats/daily` |
 | `stats.mock.ts` | `GET /api/stats/daily-study` |
 | `chat.mock.ts` | `GET /api/users/me/chat-rooms` |
 | `reports.mock.ts` | `GET /api/reports` (관리자) |
 
 > 변경(POST/PATCH/DELETE) 엔드포인트는 보통 단순 성공/생성 응답이라 별도 목 데이터를 두지 않았다.
-> **추론/주의가 있는 목**: `reports.mock.ts`(명세 표 vs 예시 JSON 불일치 → 예시 기준),
-> `mypage.mock.ts`(`/courses/completed`는 별도 명세 없어 같은 shape 가정),
-> `payments.mock.ts`(명세 2종 충돌 — 파일 상단 주석 참고).
+> **추론/주의가 남아있는 목**(명세 자체의 불일치/충돌):
+> - `reports.mock.ts` — 명세의 응답 표 vs 예시 JSON 불일치 → 예시 JSON 기준 (파일 상단 주석)
+> - `payments.mock.ts` — `/api/payments/me` 명세가 **2종 충돌**(작성자 2명):
+>   `결제 내역 조회`(content/paidAmount/paymentMethod, 페이징) vs
+>   `내 결제 내역 조회`(data 배열/amount/orderNo/paymentType/displayName). 현재 mock은 전자 기준.
+>
+> ※ 아직 목 미작성(필요 시 추가): 관리자 회원관리 `GET /api/admin/members`(목록 검색)·`/{memberId}`(상세).

@@ -3,6 +3,7 @@
  * GET /api/users/me (내 프로필 조회)
  * GET /api/users/me/activities (내 활동 조회)
  * GET /api/users/me/courses (내 수강 강의 목록 — 진도율·이어보기)
+ * GET /api/users/me/courses/completed (완료 강의 목록 조회)
  */
 
 export interface MyProfileApiResponse {
@@ -78,8 +79,6 @@ export const mockMyActivity: MyActivityApiResponse = {
 /**
  * GET /api/users/me/courses (내 수강 강의 목록, data는 배열 직접)
  * '이어보기'는 lastVideoId → GET /api/learning/videos/{lastVideoId}/play 로 연결.
- * 추론: /api/users/me/courses/completed(수강 완료)는 별도 명세 파일이 없어
- *       같은 item shape에 완료분만 필터된다고 가정.
  */
 export interface MyCourseApiItem {
   courseId: number;
@@ -112,5 +111,34 @@ export const mockMyCourses: MyCourseApiItem[] = [
     lastVideoId: 140,
     lastPositionSeconds: 0,
     lastStudiedAt: '2026-05-09T10:05:00+09:00',
+  },
+];
+
+/**
+ * GET /api/users/me/courses/completed (완료 강의 목록, data는 배열 직접)
+ * ※ /courses 와 shape이 다름: completedAt·hasReview 포함, 이어보기 필드 없음.
+ */
+export interface MyCompletedCourseApiItem {
+  courseId: number;
+  courseTitle: string;
+  completedAt: string;
+  progressRate: number;
+  hasReview: boolean;
+}
+
+export const mockMyCompletedCourses: MyCompletedCourseApiItem[] = [
+  {
+    courseId: 12,
+    courseTitle: '스프링 부트 실전',
+    completedAt: '2026-05-01T10:00:00+09:00',
+    progressRate: 100,
+    hasReview: true,
+  },
+  {
+    courseId: 3,
+    courseTitle: '2026 수능 수학 개념완성',
+    completedAt: '2026-04-20T09:30:00+09:00',
+    progressRate: 100,
+    hasReview: false,
   },
 ];
