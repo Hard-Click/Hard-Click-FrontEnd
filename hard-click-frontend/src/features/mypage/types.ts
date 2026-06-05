@@ -1,13 +1,12 @@
 /** 마이페이지 내 활동(activities) 도메인 타입 — 백엔드 MyActivityResponse 매칭
  *  GET /api/members/me/activities */
 
-/** 게시판 유형 (백엔드 community BoardType enum) */
-export type ActivityBoardType = 'QNA' | 'FREE' | 'INFO';
+/** 게시판 유형 (백엔드 community BoardType enum = FREE | QUESTION) */
+export type ActivityBoardType = 'FREE' | 'QUESTION';
 
 export const ACTIVITY_BOARD_LABEL: Record<ActivityBoardType, string> = {
-  QNA: '질문답변',
   FREE: '자유게시판',
-  INFO: '정보공유',
+  QUESTION: '질문답변',
 };
 
 /* 내가 작성한 게시글 (MyPostActivityResponse) */
