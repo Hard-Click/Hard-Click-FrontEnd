@@ -2,6 +2,7 @@
  * 마이페이지 도메인 목 데이터 — 백엔드 명세(노션 API 목록) 그대로.
  * GET /api/users/me (내 프로필 조회)
  * GET /api/users/me/activities (내 활동 조회)
+ * GET /api/users/me/courses (내 수강 강의 목록 — 진도율·이어보기)
  */
 
 export interface MyProfileApiResponse {
@@ -73,3 +74,43 @@ export const mockMyActivity: MyActivityApiResponse = {
     },
   ],
 };
+
+/**
+ * GET /api/users/me/courses (내 수강 강의 목록, data는 배열 직접)
+ * '이어보기'는 lastVideoId → GET /api/learning/videos/{lastVideoId}/play 로 연결.
+ * 추론: /api/users/me/courses/completed(수강 완료)는 별도 명세 파일이 없어
+ *       같은 item shape에 완료분만 필터된다고 가정.
+ */
+export interface MyCourseApiItem {
+  courseId: number;
+  courseTitle: string;
+  thumbnailUrl: string;
+  instructorName: string;
+  progressRate: number;
+  lastVideoId: number;
+  lastPositionSeconds: number;
+  lastStudiedAt: string;
+}
+
+export const mockMyCourses: MyCourseApiItem[] = [
+  {
+    courseId: 12,
+    courseTitle: 'React 완벽 가이드',
+    thumbnailUrl: 'https://cdn.example.com/courses/12.png',
+    instructorName: '홍길동',
+    progressRate: 64.2,
+    lastVideoId: 101,
+    lastPositionSeconds: 420,
+    lastStudiedAt: '2026-05-12T21:30:00+09:00',
+  },
+  {
+    courseId: 1,
+    courseTitle: '2026 수능 국어 완성반',
+    thumbnailUrl: 'https://cdn.example.com/courses/1/thumbnail.jpg',
+    instructorName: '김강사',
+    progressRate: 100,
+    lastVideoId: 140,
+    lastPositionSeconds: 0,
+    lastStudiedAt: '2026-05-09T10:05:00+09:00',
+  },
+];
