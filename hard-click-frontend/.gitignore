@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+# unlighthouse
+.unlighthouse
+
 # next.js
 /.next/
 /out/
