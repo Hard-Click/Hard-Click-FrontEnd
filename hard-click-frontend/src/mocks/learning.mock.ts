@@ -1,52 +1,55 @@
 /**
- * 영상학습/진도 도메인 목 데이터 — 백엔드 명세(노션 API 목록) 그대로.
- * GET /api/learning/courses/{courseId}/progress
- * GET /api/learning/videos/{videoId}/play
+ * 영상학습/진도 도메인 목 데이터 — 실제 백엔드 코드(learning_activity) DTO 기준.
+ * GET /api/learning/courses/{courseId}/progress → CourseProgressView
+ * GET /api/learning/videos/{videoId}/play       → VideoPlayView
+ *
+ * ⚠️ 노션 명세와 다름(videos→lessons, playUrl→streamingUrl 등) — 실제 코드 기준으로 정렬함.
  */
 
-export interface VideoProgressApiItem {
+/** GET /api/learning/courses/{courseId}/progress */
+export interface LessonProgressItem {
   videoId: number;
-  title: string;
-  progressRate: number; // 0~100
-  isCompleted: boolean;
+  completed: boolean;
+  lastPositionSeconds: number;
 }
 
 export interface CourseProgressApiResponse {
   courseId: number;
-  progressRate: number;
-  completedVideoCount: number;
-  totalVideoCount: number;
-  videos: VideoProgressApiItem[];
+  progressRate: number; // BigDecimal → number
+  completedLessonCount: number;
+  totalLessonCount: number;
+  lessons: LessonProgressItem[];
 }
 
 export const mockCourseProgressResponse: CourseProgressApiResponse = {
   courseId: 12,
   progressRate: 64.2,
-  completedVideoCount: 9,
-  totalVideoCount: 14,
-  videos: [
-    { videoId: 101, title: '1강. 스프링 입문', progressRate: 100, isCompleted: true },
-    { videoId: 102, title: '2강. 의존성 주입', progressRate: 100, isCompleted: true },
-    { videoId: 103, title: '3강. 빈 스코프', progressRate: 40, isCompleted: false },
+  completedLessonCount: 9,
+  totalLessonCount: 14,
+  lessons: [
+    { videoId: 101, completed: true, lastPositionSeconds: 1800 },
+    { videoId: 102, completed: true, lastPositionSeconds: 1500 },
+    { videoId: 103, completed: false, lastPositionSeconds: 320 },
   ],
 };
 
+/** GET /api/learning/videos/{videoId}/play */
 export interface VideoPlayApiResponse {
   videoId: number;
   courseId: number;
-  title: string;
+  streamingUrl: string;
   durationSeconds: number;
-  playUrl: string;
-  lastPositionSeconds: number;
-  isCompleted: boolean;
+  lastPositionSec: number;
+  watchTimeSec: number;
+  completed: boolean;
 }
 
 export const mockVideoPlay: VideoPlayApiResponse = {
   videoId: 101,
   courseId: 12,
-  title: '1강. 스프링 입문',
+  streamingUrl: 'https://cdn.example.com/videos/101.m3u8',
   durationSeconds: 1800,
-  playUrl: 'https://cdn.example.com/videos/101.m3u8',
-  lastPositionSeconds: 320,
-  isCompleted: false,
+  lastPositionSec: 320,
+  watchTimeSec: 280,
+  completed: false,
 };
