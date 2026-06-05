@@ -1,10 +1,6 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { getMyCourses } from '@/features/users/services';
-import type { MyCourse } from '@/features/users/types';
+import { getMyCoursesServer } from '@/features/users/server';
+import BackButton from '@/components/common/BackButton';
 
 /** ISO 날짜 → YYYY.MM.DD */
 function formatDisplayDate(iso: string | null): string {
@@ -14,18 +10,10 @@ function formatDisplayDate(iso: string | null): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export default function InProgressCoursesPage() {
-  const router = useRouter();
-  const [courses, setCourses] = useState<MyCourse[]>([]);
-
-  useEffect(() => {
-    getMyCourses().then((res) => {
-      if (res.success) {
-        // 백엔드 통합 endpoint — 진행 중 강의만 필터링
-        setCourses(res.data.filter((c) => c.progressRate < 100));
-      }
-    });
-  }, []);
+export default async function InProgressCoursesPage() {
+  // 서버에서 데이터 확보 — 진행 중(progressRate < 100) 강의만 필터링
+  const all = await getMyCoursesServer();
+  const courses = all.filter((c) => c.progressRate < 100);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -34,10 +22,8 @@ export default function InProgressCoursesPage() {
         <div className="max-w-[1280px] mx-auto px-8 pt-9 pb-32">
           {/* 페이지 히어로 */}
           <div className="flex items-center gap-4 mb-8">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              aria-label="뒤로가기"
+            <BackButton
+              ariaLabel="뒤로가기"
               className="w-6 h-6 flex items-center justify-center text-[#4B5563] hover:text-[#1F2937]"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -49,7 +35,7 @@ export default function InProgressCoursesPage() {
                   strokeLinejoin="round"
                 />
               </svg>
-            </button>
+            </BackButton>
 
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3">
