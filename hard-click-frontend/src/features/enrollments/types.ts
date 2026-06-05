@@ -1,6 +1,7 @@
 /** 백엔드 enrollment 도메인 명세 매칭 */
 
-export type EnrollmentStatus = 'IN_PROGRESS' | 'COMPLETED' | 'EXPIRED' | 'REFUNDED';
+// 백엔드 EnrollmentStatus enum 기준
+export type EnrollmentStatus = 'ENROLLED' | 'IN_PROGRESS' | 'COMPLETED' | 'EXPIRED';
 export type EnrollmentStatusFilter = EnrollmentStatus | 'ALL';
 
 export type PaymentType = 'FREE' | 'PAID';

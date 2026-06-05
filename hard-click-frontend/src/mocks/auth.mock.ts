@@ -30,7 +30,7 @@ export const mockEmailVerifyData: EmailVerifyApiData = {
   emailVerificationToken: 'mock-email-verification-token',
 };
 
-/** POST /api/token/reissue — data (Access Token 재발급) */
+/** POST /api/auth/refresh — data (Access Token 재발급) */
 export interface TokenReissueApiData {
   accessToken: string;
 }
