@@ -1,11 +1,15 @@
 import { api } from '@/services/api';
+import { USE_MOCK } from '@/mocks/config';
+import { mockInstructorCourses } from '@/mocks/instructor.mock';
+import type {
+  CourseListApiItem,
+  CourseListApiResponse,
+} from '@/features/courses/types';
 
 // TODO: Replace with auth store — current instructor's name
 export const MOCK_CURRENT_INSTRUCTOR = '박지훈';
 
-const USE_MOCK = false;
-
-/** 강사 내 강의 목록 item (노션 명세) */
+/** 강사 화면 UI 아이템 (백엔드 CourseListItemResponse의 studentCount → enrollmentCount로 매핑) */
 export interface InstructorCourseItem {
   courseId: number;
   title: string;
@@ -19,25 +23,56 @@ export interface InstructorCourseItem {
   createdAt: string;
 }
 
-interface InstructorCoursesApiResponse {
+interface InstructorCoursesUiResponse {
   content: InstructorCourseItem[];
   totalPages: number;
 }
 
-/** 강사 내 강의 목록 조회 (GET /api/instructor/courses) */
+/** 백엔드 CourseListItemResponse → 강사 화면 InstructorCourseItem */
+function toInstructorCourseItem(c: CourseListApiItem): InstructorCourseItem {
+  return {
+    courseId: c.courseId,
+    title: c.title,
+    subjectName: c.subjectName,
+    price: c.price,
+    status: c.status,
+    thumbnailUrl: c.thumbnailUrl,
+    averageRating: c.averageRating,
+    reviewCount: c.reviewCount,
+    enrollmentCount: c.studentCount,
+    createdAt: c.createdAt,
+  };
+}
+
+/** 강사 내 강의 목록 조회 (GET /api/instructor/courses → CourseListResponse) */
 export async function getInstructorCourses(page = 0, size = 20) {
   if (USE_MOCK) {
-    console.log('[MOCK] 강사 내 강의 목록');
     return {
       success: true,
       httpStatus: 200,
-      data: { content: [], totalPages: 0 },
       message: '내 강의 목록 조회 완료',
+      data: {
+        content: mockInstructorCourses.content.map(toInstructorCourseItem),
+        totalPages: mockInstructorCourses.totalPages,
+      } as InstructorCoursesUiResponse,
     };
   }
-  return api.get<InstructorCoursesApiResponse>(
+  const res = await api.get<CourseListApiResponse>(
     `/api/instructor/courses?page=${page}&size=${size}`,
   );
+  if (res.success && res.data) {
+    return {
+      ...res,
+      data: {
+        content: res.data.content.map(toInstructorCourseItem),
+        totalPages: res.data.totalPages,
+      } as InstructorCoursesUiResponse,
+    };
+  }
+  return {
+    ...res,
+    data: { content: [] as InstructorCourseItem[], totalPages: 0 },
+  };
 }
 
 /**

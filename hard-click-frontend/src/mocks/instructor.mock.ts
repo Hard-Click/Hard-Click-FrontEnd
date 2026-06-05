@@ -1,38 +1,13 @@
+import type { CourseListApiResponse } from '@/features/courses/types';
+
 /**
  * 강사 대시보드 도메인 목 데이터 — 실제 백엔드 코드 기준.
  * GET /api/instructor/courses → CourseListResponse (공개 강의 목록과 동일 shape)
  *   { content: CourseListItemResponse[], currentPage, totalPages, totalCount }
  *
- * ⚠️ 노션 기준으로 내가 만들었던 enrollmentCount/DRAFT|PUBLISHED 전용 shape은
- *    실제 코드와 달라 폐기. 실제는 일반 강의목록 DTO를 그대로 재사용한다.
+ * ⚠️ 노션 기준의 enrollmentCount/DRAFT|PUBLISHED 전용 shape은 실제와 달라 폐기.
+ *    실제는 일반 강의목록 DTO(CourseListResponse)를 그대로 재사용한다.
  */
-
-export type PriceType = 'FREE' | 'PAID';
-export type CourseStatus = 'DRAFT' | 'PUBLISHED';
-
-export interface CourseListApiItem {
-  courseId: number;
-  title: string;
-  subjectName: string;
-  thumbnailUrl: string;
-  priceLabel: string; // "무료" | "89,000원"
-  priceType: PriceType;
-  price: number;
-  instructorName: string;
-  averageRating: number;
-  reviewCount: number;
-  studentCount: number;
-  createdAt: string; // Instant
-  status: CourseStatus;
-}
-
-export interface CourseListApiResponse {
-  content: CourseListApiItem[];
-  currentPage: number;
-  totalPages: number;
-  totalCount: number;
-}
-
 export const mockInstructorCourses: CourseListApiResponse = {
   content: [
     {
