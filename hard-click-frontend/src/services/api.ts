@@ -8,40 +8,18 @@ export interface ApiResponse<T = unknown> {
   success: boolean;
   /** 백엔드 ErrorResponse.errorCode (예: USER_NOT_FOUND) — 에러 응답에만 존재 */
   errorCode?: string;
-  /** 백엔드 @Valid 실패 시 필드별 에러 (예: { email: '이메일을 입력해주세요' }) */
+  /** 백엔드 @Valid 실패 시 필드별 에러 */
   details?: Record<string, unknown>;
 }
 
 /**
- * baseURL은 빈 값 ('') → Next.js rewrites 프록시 경유
- * next.config.ts의 rewrites가 /api/* → BACKEND_URL/api/* 로 처리
- * 이렇게 하면 dev에서 CORS 우회 가능
+ * 클라이언트 axios — 동일 출처 `/api/*` 로 요청한다.
+ *
+ * 인증 토큰을 클라가 직접 붙이지 않는다(=localStorage 사용 안 함):
+ * 브라우저가 httpOnly 쿠키를 자동 전송하고, `app/api/[...path]/route.ts`(BFF 프록시)가
+ * 쿠키를 읽어 Authorization 헤더를 주입해 백엔드로 중계한다.
  */
-const axiosInstance = axios.create({
-  baseURL: '',
-  headers: {
-
-  },
-});
-
-/**
- * 요청마다 localStorage의 accessToken을 Authorization 헤더에 자동 첨부
- * memberId가 있으면 X-Member-Id 헤더도 같이 첨부 (백엔드 도메인 격리용)
- * 비로그인 API는 헤더가 없어도 무시되므로 안전
- */
-axiosInstance.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    const memberId = localStorage.getItem('memberId');
-    if (memberId) {
-      config.headers['X-Member-Id'] = memberId;
-    }
-  }
-  return config;
-});
+const axiosInstance = axios.create({ baseURL: '' });
 
 function withSuccess<T>(body: Omit<ApiResponse<T>, 'success'>): ApiResponse<T> {
   return {
@@ -62,15 +40,15 @@ async function request<T>(
       method,
       url,
       data,
-      headers: data instanceof FormData
-        ? { 'Content-Type': 'multipart/form-data' }
-        : { 'Content-Type': 'application/json' },
+      // FormData면 Content-Type을 지정하지 않는다 → 브라우저가 boundary 포함해 자동 설정
+      headers:
+        data instanceof FormData
+          ? undefined
+          : { 'Content-Type': 'application/json' },
     });
     return withSuccess(response.data);
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      // 백엔드 ErrorResponse: { errorCode, message, timestamp, path, traceId, details }
-      // 백엔드 ApiResponse: { httpStatus, message, data } — 에러 시엔 ErrorResponse 형식이 옴
       const body = error.response.data as {
         httpStatus?: number;
         message?: string;

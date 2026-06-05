@@ -6,8 +6,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { getMyProfile } from '@/features/users/services';
-import { authStore } from '@/store/auth.store';
 import { logout } from '@/features/auth/services';
+import { clearSession } from '@/features/auth/session';
+import { useAuth } from '@/features/auth/AuthProvider';
 
 const NAV_ITEMS = [
   { label: '강의', href: '/courses' },
@@ -32,7 +33,8 @@ export default function UserHeader() {
   const [profileImageUrl, setProfileImageUrl] = useState('');
 
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // 인증 상태는 서버 쿠키 기반 Context에서 (localStorage 대체)
+  const { isLoggedIn } = useAuth();
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -56,16 +58,12 @@ export default function UserHeader() {
     });
   }, []);
 
-  useEffect(() => {
-    setIsLoggedIn(authStore.isLoggedIn());
-  }, []);
-
   const handleLogout = async () => {
     setIsDropdownOpen(false);
     await logout();
-    authStore.clear();
-    setIsLoggedIn(false);
+    await clearSession();
     router.push('/courses');
+    router.refresh();
   };
 
   return (

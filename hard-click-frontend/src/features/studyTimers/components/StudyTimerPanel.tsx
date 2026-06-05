@@ -11,7 +11,7 @@ import {
 } from '../actions';
 import FocusModeOverlay from './FocusModeOverlay';
 import CurrentSessionAlert from './CurrentSessionAlert';
-import { authStore } from '@/store/auth.store';
+import { useAuth } from '@/features/auth/AuthProvider';
 
 // Heartbeat 간격: 60초마다 서버에 저장 (UA-P1-147)
 const HEARTBEAT_INTERVAL_MS = 60_000;
@@ -21,11 +21,8 @@ const AUTH_PATHS = ['/auth', '/community/new'];
 export default function StudyTimerPanel() {
   const pathname = usePathname();
   const isAuthPage = AUTH_PATHS.some((path) => pathname.startsWith(path));
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    setIsLoggedIn(authStore.isLoggedIn());
-  }, []);
+  // 인증 상태는 서버 쿠키 기반 Context에서 (localStorage 대체)
+  const { isLoggedIn } = useAuth();
 
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [isRunning, setIsRunning] = useState(false);

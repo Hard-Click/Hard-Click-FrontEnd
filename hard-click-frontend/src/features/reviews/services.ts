@@ -6,8 +6,8 @@ import type {
   UpdateReviewResponse,
   DeleteReviewResponse,
 } from './types';
-
-const USE_MOCK = false;
+import { USE_MOCK } from '@/mocks/config';
+import { mockReviewListResponse } from '@/mocks/reviews.mock';
 
 /* ───── 수강 리뷰 작성 (POST /api/courses/{courseId}/reviews) ─────
  * 권한: 수강 완료(COMPLETED) 상태인 수강생
@@ -50,7 +50,7 @@ export async function updateReview(
 }
 
 /* ───── 리뷰 목록 조회 (GET /api/courses/{courseId}/reviews) ─────
- * 비로그인 공개. sort: 'latest' | 'rating' (백엔드 enum 소문자), page 1-based
+ * 비로그인 공개. sort: 'latest' | 'rating' (백엔드 ReviewSortType 소문자), page 0-based(백엔드 기준)
  * 응답: { avgRating, totalCount, ratingStats:[{rating,count}], reviews:[...], currentPage, totalPages } */
 export interface ReviewListItemApi {
   reviewId: number;
@@ -72,8 +72,11 @@ export interface ReviewListApiResponse {
 export async function getReviews(
   courseId: number,
   sort: 'latest' | 'rating' = 'latest',
-  page = 1,
+  page = 0,
 ) {
+  if (USE_MOCK) {
+    return { success: true, httpStatus: 200, message: '', data: mockReviewListResponse };
+  }
   return api.get<ReviewListApiResponse>(
     `/api/courses/${courseId}/reviews?sort=${sort}&page=${page}`,
   );

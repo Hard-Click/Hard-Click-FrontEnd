@@ -1,11 +1,10 @@
+import { USE_MOCK } from '@/mocks/config';
 import { api } from '@/services/api';
 import type {
   MyRankingSummary,
   MyRankingDetail,
   RankingPeriod,
 } from './types';
-
-const USE_MOCK = false;
 
 /* ───── 내 랭킹 요약 조회 (GET /api/rankings/me) ─────
  * 마이페이지 랭킹 카드 (순공시간/수강량/채택수) 3개에서 사용 */

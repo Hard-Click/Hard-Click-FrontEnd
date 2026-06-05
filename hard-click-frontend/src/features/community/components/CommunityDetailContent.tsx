@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import ReportModal from '@/features/reports/components/ReportModal';
 import { toast } from 'sonner';
 import LoadingModal from '@/components/ui/loadingModal';
@@ -38,15 +38,22 @@ function formatDate(isoString: string): string {
   return date.toLocaleDateString('ko-KR');
 }
 
-export default function CommunityDetailContent() {
-  const router = useRouter();
-  const { postid } = useParams();
-  const postId = Number(postid);
+interface CommunityDetailContentProps {
+  postId: number;
+  initialPost: PostDetail;
+  initialComments: CommentItem[];
+}
 
-  const [post, setPost] = useState<PostDetail | null>(null);
-  const [comments, setComments] = useState<CommentItem[]>([]);
-  const [isPageLoading, setIsPageLoading] = useState(true);
-  const [blobUrls, setBlobUrls] = useState<string[]>([]);
+export default function CommunityDetailContent({
+  postId,
+  initialPost,
+  initialComments,
+}: CommunityDetailContentProps) {
+  const router = useRouter();
+
+  // 데이터는 서버(page.tsx)에서 받아온 초기값으로 시작. 변경(mutation) 후엔 재조회.
+  const [post, setPost] = useState<PostDetail>(initialPost);
+  const [comments, setComments] = useState<CommentItem[]>(initialComments);
 
   const [commentText, setCommentText] = useState('');
   const [replyInputId, setReplyInputId] = useState<number | null>(null);
@@ -73,66 +80,8 @@ export default function CommunityDetailContent() {
     }
   };
 
-  useEffect(() => {
-    const load = async () => {
-      setIsPageLoading(true);
-      const [postResult, commentsResult] = await Promise.all([
-        getPostDetailAction(postId),
-        getCommentsAction(postId),
-      ]);
-      if (!postResult.success || !postResult.data) {
-        toast.error('게시글을 불러오지 못했습니다.');
-        router.push('/community');
-        return;
-      }
-      setPost(postResult.data);
-      if (commentsResult.success && commentsResult.data) {
-        setComments(commentsResult.data.comments);
-      }
-
-      // ✅ 이미지를 토큰 포함 fetch로 가져와 Blob URL로 변환
-      if (postResult.data.fileUrls && postResult.data.fileUrls.length > 0) {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-        const urls = await Promise.all(
-          postResult.data.fileUrls.map(async (url) => {
-            try {
-              const res = await fetch(url, {
-                headers: token ? { Authorization: `Bearer ${token}` } : {},
-              });
-              const blob = await res.blob();
-              return URL.createObjectURL(blob);
-            } catch {
-              return '';
-            }
-          }),
-        );
-        setBlobUrls(urls);
-      }
-
-      setIsPageLoading(false);
-    };
-    load();
-  }, [postId, router]);
-
-  // Blob URL 메모리 해제
-  useEffect(() => {
-    return () => {
-      blobUrls.forEach((url) => {
-        if (url) URL.revokeObjectURL(url);
-      });
-    };
-  }, [blobUrls]);
-
-  if (isPageLoading || !post) {
-    return (
-      <div className="flex justify-center py-20 text-[#64748B]">
-        불러오는 중...
-      </div>
-    );
-  }
-
   const category = BOARD_TYPE_LABEL[post.boardType];
-  const isAccepted = post.isAccepted;
+  const isAccepted = post.status === 'ADOPTED';
 
   const totalComments = comments.reduce(
     (acc, c) => acc + 1 + (c.replies?.length ?? 0),
@@ -325,7 +274,7 @@ export default function CommunityDetailContent() {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            {post.isMyPost ? (
+            {post.isMine ? (
               <>
                 <button
                   type="button"
@@ -368,23 +317,21 @@ export default function CommunityDetailContent() {
           {post.content}
         </p>
 
-        {/* 첨부파일 */}
-        {blobUrls.length > 0 && (
+        {/* 첨부파일 — httpOnly 쿠키가 동일 출처 요청에 자동 첨부되므로 직접 렌더 */}
+        {post.fileUrls && post.fileUrls.length > 0 && (
           <div className="mt-4 flex flex-col gap-2">
             <span className="text-xs font-semibold text-[#64748B]">첨부파일</span>
             <div className="flex flex-wrap gap-3">
-              {blobUrls.map((blobUrl, i) =>
-                blobUrl ? (
-                  <a key={i} href={blobUrl} target="_blank" rel="noopener noreferrer">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={blobUrl}
-                      alt={`첨부이미지-${i + 1}`}
-                      className="max-h-[300px] max-w-full rounded-xl border border-[#E2E8F0] object-contain"
-                    />
-                  </a>
-                ) : null,
-              )}
+              {post.fileUrls.map((url, i) => (
+                <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt={`첨부이미지-${i + 1}`}
+                    className="max-h-[300px] max-w-full rounded-xl border border-[#E2E8F0] object-contain"
+                  />
+                </a>
+              ))}
             </div>
           </div>
         )}
@@ -442,7 +389,7 @@ export default function CommunityDetailContent() {
                   </div>
                   <div className="flex items-center gap-2">
                     {category === '질문게시판' &&
-                      post.isMyPost &&
+                      post.isMine &&
                       !isAccepted &&
                       !comment.isAccepted && (
                         <button

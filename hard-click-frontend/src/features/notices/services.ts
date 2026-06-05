@@ -1,48 +1,21 @@
-import type { Notice, NoticeDetail, NoticeWriteRequest } from './types';
+import type {
+  Notice,
+  NoticeDetail,
+  NoticeWriteRequest,
+  NoticeApiItem,
+  NoticeApiResponse,
+} from './types';
 import { api } from '@/services/api';
+import { USE_MOCK } from '@/mocks/config';
+import { mockNoticesResponse } from '@/mocks/notices.mock';
 
-const USE_MOCK = false;
-
-const MOCK_NOTICES: Notice[] = [
-  {
-    noticeId: 1,
-    title: '⚠️ 서버 점검 안내 (5월 10일 02:00~04:00)',
-    content: '서버 점검으로 인해 서비스 이용이 일시 중단됩니다.',
-    isPinned: true,
-    createdAt: '2026-05-01',
-  },
-  {
-    noticeId: 2,
-    title: '2027 수능 D-197 특별 할인 이벤트 안내',
-    content: '수능까지 197일! 전 강의 20% 할인 이벤트를 진행합니다.',
-    isPinned: true,
-    createdAt: '2026-05-10',
-  },
-];
-
-/** 백엔드 공지사항 응답 item (노션 명세) */
-interface NoticeApiItem {
-  noticeId: number;
-  noticeType: 'GLOBAL' | 'COURSE';
-  courseName: string | null;
-  title: string;
-  isPinned: boolean;
-  isRead: boolean;
-  createdAt: string;
-}
-
-interface NoticeApiResponse {
-  content: NoticeApiItem[];
-  totalPages: number;
-}
-
-function toNotice(api: NoticeApiItem): Notice {
+function toNotice(item: NoticeApiItem): Notice {
   return {
-    noticeId: api.noticeId,
-    title: api.title,
-    content: '',                  // 백엔드 미제공 — 상세 조회 시 받음
-    isPinned: api.isPinned,
-    createdAt: api.createdAt.split('T')[0] ?? api.createdAt,
+    noticeId: item.noticeId,
+    title: item.title,
+    content: '', // 백엔드 미제공 — 상세 조회 시 받음
+    isPinned: item.isPinned,
+    createdAt: item.createdAt.split('T')[0] ?? item.createdAt,
   };
 }
 
@@ -62,6 +35,14 @@ export async function getNotices(params: {
   page?: number;
   size?: number;
 }) {
+  if (USE_MOCK) {
+    return {
+      success: true,
+      httpStatus: 200,
+      message: '',
+      data: mockNoticesResponse,
+    };
+  }
   const q = new URLSearchParams();
   q.set('type', params.type);
   if (params.courseId != null) q.set('courseId', String(params.courseId));
@@ -79,7 +60,10 @@ export async function getCourseNotices(courseId: number): Promise<Notice[]> {
 }
 
 /** 강의 공지 작성 (POST /api/courses/{courseId}/notices) */
-export async function createCourseNotice(courseId: number, body: NoticeWriteRequest) {
+export async function createCourseNotice(
+  courseId: number,
+  body: NoticeWriteRequest,
+) {
   return api.post<{ noticeId: number }>(`/api/courses/${courseId}/notices`, body);
 }
 
@@ -95,18 +79,13 @@ export async function updateNotice(noticeId: number, body: NoticeWriteRequest) {
 
 export async function getPinnedNotices(): Promise<Notice[]> {
   if (USE_MOCK) {
-    await new Promise(resolve => setTimeout(resolve, 0));
-    return MOCK_NOTICES.filter(n => n.isPinned);
+    return mockNoticesResponse.content.filter((n) => n.isPinned).map(toNotice);
   }
 
   // 노션 명세: GET /api/notices?type=GLOBAL&page=0&size=20
-  const response = await api.get<NoticeApiResponse>('/api/notices?type=GLOBAL&page=0&size=20');
-
-  if (!response.success || !response.data) {
-    return [];
-  }
-
-  return response.data.content
-    .filter(n => n.isPinned)
-    .map(toNotice);
+  const response = await api.get<NoticeApiResponse>(
+    '/api/notices?type=GLOBAL&page=0&size=20',
+  );
+  if (!response.success || !response.data) return [];
+  return response.data.content.filter((n) => n.isPinned).map(toNotice);
 }

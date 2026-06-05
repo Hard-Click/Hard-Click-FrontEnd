@@ -1,5 +1,4 @@
-'use client';
-
+// 게시글 카드 — 표시 전용 Server Component (상호작용 없음)
 import Image from 'next/image';
 import Link from 'next/link';
 

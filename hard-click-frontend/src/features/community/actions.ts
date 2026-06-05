@@ -1,3 +1,6 @@
+'use server';
+
+import { revalidatePath } from 'next/cache';
 import {
   getPosts,
   getSubjects,
@@ -37,7 +40,9 @@ export async function getPostDetailAction(postId: number) {
 }
 
 export async function createPostAction(body: CreatePostRequest, files?: File[]) {
-  return createPost(body, files);
+  const result = await createPost(body, files);
+  if (result.success) revalidatePath('/community');
+  return result;
 }
 
 export async function updatePostAction(
@@ -45,11 +50,18 @@ export async function updatePostAction(
   body: UpdatePostRequest,
   files?: File[],
 ) {
-  return updatePost(postId, body, files);
+  const result = await updatePost(postId, body, files);
+  if (result.success) {
+    revalidatePath('/community');
+    revalidatePath(`/community/${postId}`);
+  }
+  return result;
 }
 
 export async function deletePostAction(postId: number) {
-  return deletePost(postId);
+  const result = await deletePost(postId);
+  if (result.success) revalidatePath('/community');
+  return result;
 }
 
 export async function getCommentsAction(postId: number) {

@@ -842,11 +842,7 @@ export default function CourseCreateForm({
                 const detailRes = await api.get<any>(`/api/courses/${savedCourseId}`);
                 if (detailRes.success && detailRes.data) {
                   const apiSections: any[] = detailRes.data.sections ?? [];
-                  const token = localStorage.getItem('accessToken');
-                  const memberId = localStorage.getItem('memberId');
-                  const authHeaders: Record<string, string> = {};
-                  if (token) authHeaders['Authorization'] = `Bearer ${token}`;
-                  if (memberId) authHeaders['X-Member-Id'] = memberId;
+                  // 인증은 BFF 프록시(app/api/[...path])가 쿠키→Authorization 으로 주입
                   for (let sIdx = 0; sIdx < sections.length; sIdx++) {
                     const apiSection = apiSections[sIdx];
                     if (!apiSection) continue;
@@ -861,7 +857,6 @@ export default function CourseCreateForm({
                           await axios.post(
                             `/api/courses/lessons/${apiLesson.lessonId}/video`,
                             videoForm,
-                            { headers: authHeaders },
                           );
                         } catch (err) {
                           console.error(`영상 업로드 실패 lessonId=${apiLesson.lessonId}`, err);

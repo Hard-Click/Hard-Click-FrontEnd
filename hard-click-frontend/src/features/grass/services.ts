@@ -1,3 +1,4 @@
+import { USE_MOCK } from '@/mocks/config';
 import { api } from '@/services/api';
 import type {
   StreakResponse,
@@ -6,8 +7,6 @@ import type {
   LessonsGrassCell,
   GrassDayDetail,
 } from './types';
-
-const USE_MOCK = false;
 
 /* ───── 연속 학습일 조회 (GET /api/grass/streak) ───── */
 export async function getStreak() {

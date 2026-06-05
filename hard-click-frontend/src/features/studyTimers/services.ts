@@ -1,3 +1,4 @@
+import { USE_MOCK } from '@/mocks/config';
 import { api } from '@/services/api';
 import type {
   StartSessionResponse,
@@ -9,8 +10,6 @@ import type {
   DailyStudyStats,
   DailyStatsQuery,
 } from './types';
-
-const USE_MOCK = false;
 
 // 순공시간 세션 시작 (RUNNING 상태로 생성)
 export const startStudySession = () =>

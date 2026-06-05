@@ -1,3 +1,4 @@
+import { USE_MOCK } from '@/mocks/config';
 import axios from 'axios';
 import type {
   AuthToken,
@@ -8,8 +9,6 @@ import type {
   RegisterRequest,
 } from './types';
 import { api } from '@/services/api';
-
-const USE_MOCK = false;
 
 export async function checkUsername(username: string) {
   if (USE_MOCK) {
@@ -329,10 +328,6 @@ export async function logout() {
     };
   }
 
-  const refreshToken =
-    typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
-
-  return api.post<Record<string, never>>('/api/auth/logout', {
-    refreshToken,
-  });
+  // refreshToken은 httpOnly 쿠키에 있고 BFF 프록시가 백엔드로 전달 → 클라가 읽지 않음
+  return api.post<Record<string, never>>('/api/auth/logout', {});
 }

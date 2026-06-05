@@ -24,3 +24,19 @@ export interface NoticeWriteRequest {
   content: string;
   isPinned: boolean;
 }
+
+/* ───── 백엔드 응답 명세 (GET /api/notices) ───── */
+export interface NoticeApiItem {
+  noticeId: number;
+  noticeType: 'GLOBAL' | 'COURSE';
+  courseName: string | null;
+  title: string;
+  isPinned: boolean;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface NoticeApiResponse {
+  content: NoticeApiItem[];
+  totalPages: number;
+}

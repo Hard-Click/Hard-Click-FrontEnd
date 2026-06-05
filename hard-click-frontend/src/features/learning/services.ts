@@ -1,5 +1,6 @@
 /** 영상학습/진도 도메인 API — 백엔드 controller 매칭
  *  base: /api/learning */
+import { USE_MOCK } from '@/mocks/config';
 import { api } from '@/services/api';
 import {
   getMockVideoEntry,
@@ -17,8 +18,6 @@ import type {
   LastPositionRequest,
   PositionInfo,
 } from './types';
-
-export const USE_MOCK = false;
 
 /* ───── 강의 영상 재생 정보 조회 (GET /api/learning/videos/{videoId}/play) ─────
  * 401 / 403 (수강 권한 없음) / 404 / 410 (비공개·삭제) / 500 */

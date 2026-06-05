@@ -1,5 +1,6 @@
 'use client';
 
+import { USE_MOCK } from '@/mocks/config';
 import { toast } from 'sonner';
 import {
   startStudySession,
@@ -7,8 +8,6 @@ import {
   endStudySession,
   getCurrentSession,
 } from './services';
-
-const USE_MOCK = false;
 
 // 순공시간 세션 시작
 export async function startTimerAction(): Promise<{ sessionId: number; startedAt: string } | null> {
