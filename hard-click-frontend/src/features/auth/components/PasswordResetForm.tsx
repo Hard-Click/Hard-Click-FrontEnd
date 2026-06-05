@@ -9,14 +9,15 @@ import PasswordRuleList from './PasswordRuleList';
 import PasswordValidationMessage from './PasswordValidationMessage';
 import LoadingModal from '@/components/ui/loadingModal';
 import SingleButtonModal from '@/components/ui/singleButtonModal';
-import { changeLockedAccountPasswordAction } from '../actions';
+import { changeLockedAccountPasswordAction, resetPasswordAction } from '../actions';
 
 interface PasswordResetFormProps {
-  /** 잠긴 계정 인증번호 검증으로 받은 비밀번호 변경 토큰 */
   passwordChangeToken: string;
+  email?: string;
+  mode?: 'account-lock' | 'forgot-password';
 }
 
-export default function PasswordResetForm({ passwordChangeToken }: PasswordResetFormProps) {
+export default function PasswordResetForm({ passwordChangeToken, email, mode = 'account-lock' }: PasswordResetFormProps) {
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -77,11 +78,18 @@ export default function PasswordResetForm({ passwordChangeToken }: PasswordReset
     setConfirmError('');
     setIsLoading(true);
 
-    const result = await changeLockedAccountPasswordAction({
-      passwordChangeToken,
-      newPassword: password,
-      newPasswordConfirm: passwordConfirm,
-    });
+    const result = mode === 'forgot-password'
+      ? await resetPasswordAction({
+          email: email ?? '',
+          passwordChangeToken,
+          newPassword: password,
+          newPasswordConfirm: passwordConfirm,
+        })
+      : await changeLockedAccountPasswordAction({
+          passwordChangeToken,
+          newPassword: password,
+          newPasswordConfirm: passwordConfirm,
+        });
 
     setIsLoading(false);
 

@@ -41,7 +41,11 @@ export default function ForgotPasswordForm() {
       )}
 
       {step === 'resetPassword' && (
-        <PasswordResetForm passwordChangeToken={passwordChangeToken} />
+        <PasswordResetForm
+          passwordChangeToken={passwordChangeToken}
+          email={email}
+          mode="forgot-password"
+        />
       )}
     </>
   );

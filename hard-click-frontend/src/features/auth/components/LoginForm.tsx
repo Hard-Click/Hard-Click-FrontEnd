@@ -35,13 +35,21 @@ export default function LoginForm() {
   // 수업 자료 패턴: useActionState로 Server Action 결과 관리
   const [state, formAction] = useActionState(loginAction, initialState);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [failCount, setFailCount] = useState(0);
 
   // 5회 실패 잠금(423) → 계정 보호 인증 모달
   useEffect(() => {
-    if (state.isLocked) setIsConfirmModalOpen(true);
+    if (state.isLocked) {
+      setIsConfirmModalOpen(true);
+    } else if (state.message && !state.success) {
+      setFailCount((prev) => prev + 1);
+    }
   }, [state]);
 
   const hasError = !!state.message;
+  const errorMessage = state.message && !state.isLocked && failCount > 0
+    ? `${state.message} (${failCount} / 5)`
+    : state.message;
 
   return (
     <div className="flex min-h-screen">
@@ -177,7 +185,7 @@ export default function LoginForm() {
               <PasswordInput
                 name="password"
                 value={password}
-                error={state.message}
+                error={errorMessage}
                 showErrorBorder={hasError}
                 onChange={setPassword}
               />
