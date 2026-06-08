@@ -431,7 +431,7 @@ export default function CourseDetailContent({
                   {/* 별점 */}
                   <div className="flex items-center gap-2">
                     <StarRow rating={course.averageRating} size={20} />
-                    <span className="text-lg font-semibold text-[#1A1F2E]">{course.averageRating}</span>
+                    <span className="text-lg font-semibold text-[#1A1F2E]">{course.averageRating.toFixed(1)}</span>
                     <span className="text-base text-[#1A1F2E]">
                       ({course.reviewCount.toLocaleString()}개 리뷰)
                     </span>
@@ -796,7 +796,7 @@ export default function CourseDetailContent({
                           className="flex flex-col items-center justify-center gap-2 bg-[#E8EAED] rounded-2xl flex-shrink-0"
                           style={{ width: 431, height: 160 }}
                         >
-                          <span className="text-[48px] font-bold text-[#1A1F2E] leading-none">{reviewAvg}</span>
+                          <span className="text-[48px] font-bold text-[#1A1F2E] leading-none">{reviewAvg.toFixed(1)}</span>
                           <StarRow rating={reviewAvg} size={24} />
                           <span className="text-sm text-[#1A1F2E]">총 {reviewTotalCount.toLocaleString()}개 리뷰</span>
                         </div>
