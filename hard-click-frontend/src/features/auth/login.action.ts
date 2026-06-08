@@ -3,6 +3,8 @@
 import axios from 'axios';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { USE_MOCK } from '@/mocks/config';
+import { mockLoginData } from '@/mocks/auth.mock';
 
 const BACKEND = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
 
@@ -29,6 +31,21 @@ export async function loginAction(
   if (!username || !password) {
     return { success: false, message: '아이디와 비밀번호를 모두 입력해주세요' };
   }
+
+  // ── MOCK ──────────────────────────────────────────────────────────────────
+  if (USE_MOCK) {
+    if (username !== 'test' || password !== 'test1234') {
+      return { success: false, message: '아이디 또는 비밀번호가 올바르지 않습니다' };
+    }
+    const cookieStore = await cookies();
+    const base = { httpOnly: true, sameSite: 'lax' as const, path: '/' };
+    cookieStore.set('accessToken', mockLoginData.accessToken, { ...base, maxAge: 60 * 60 });
+    cookieStore.set('refreshToken', mockLoginData.refreshToken, { ...base, maxAge: 60 * 60 * 24 * 7 });
+    cookieStore.set('memberId', String(mockLoginData.memberId), { ...base, maxAge: 60 * 60 * 24 * 7 });
+    cookieStore.set('role', mockLoginData.role, { ...base, maxAge: 60 * 60 * 24 * 7 });
+    redirect(mockLoginData.role === 'INSTRUCTOR' ? '/instructor/dashboard' : '/courses');
+  }
+  // ──────────────────────────────────────────────────────────────────────────
 
   let role = '';
   try {
