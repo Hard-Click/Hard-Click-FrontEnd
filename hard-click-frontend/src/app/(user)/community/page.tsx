@@ -4,12 +4,8 @@ import CommunityListControls from '@/features/community/components/CommunityList
 import CommunityPostList from '@/features/community/components/CommunityPostList';
 import { getCommunityPosts } from '@/features/community/server';
 import type { BoardType, PostListItem } from '@/features/community/types';
+import { TAB_TO_BOARD_TYPE } from '@/features/community/types';
 
-const TAB_TO_BOARD_TYPE: Record<string, BoardType> = {
-  전체: 'ALL',
-  자유게시판: 'FREE',
-  질문게시판: 'QUESTION',
-};
 const SORT_MAP: Record<string, string> = {
   최신순: 'latest',
   조회순: 'views',
@@ -52,7 +48,7 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
         <div className="mb-8 flex items-start justify-between">
           <div>
             <div className="mb-3 flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-[20px] bg-[#2F5DAA]">
+              <div className="flex h-12 w-12 pl-[2px] justify-center rounded-[20px] bg-[#2F5DAA]">
                 <Image
                   src="/icons/commu.svg"
                   alt="community"

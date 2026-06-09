@@ -14,12 +14,13 @@ const SORT_MAP: Record<string, string> = {
   조회순: 'views',
   댓글순: 'comments',
 };
-const FILTERS = ['전체', '자유게시판', '질문게시판'];
+const FILTERS = ['전체', '자유게시판', '질문게시판', '스터디모집'];
 
 const TAB_TO_BOARD_TYPE: Record<string, BoardType> = {
   전체: 'ALL',
   자유게시판: 'FREE',
   질문게시판: 'QUESTION',
+  스터디모집: 'STUDY'
 };
 
 function formatDate(isoString: string): string {
@@ -99,7 +100,7 @@ export default function CommunityFilterTabs() {
     <>
       {/* filter tabs */}
       <div className="overflow-hidden rounded-[16px] border border-[#E2E8F0] bg-white p-1 shadow-sm">
-        <div className="grid grid-cols-3 gap-1">
+        <div className="grid grid-cols-4 gap-1">
           {FILTERS.map((filter) => {
             const isActive = activeTab === filter;
             return (

@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
    * - CORS 회피 + 클라이언트 localStorage 불필요
    * 따라서 별도 rewrites 가 필요 없다.
    */
+  turbopack: {
+    // 상위 폴더에 package-lock.json이 있어 루트를 잘못 인식하는 문제 수정
+    root: __dirname,
+  },
 };
 
 export default nextConfig;

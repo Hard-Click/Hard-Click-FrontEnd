@@ -1,15 +1,22 @@
-export type BoardType = 'FREE' | 'QUESTION' | 'ALL';
+export type BoardType = 'FREE' | 'QUESTION' | 'STUDY' | 'ALL';
 
-// boardType → 화면 표시 레이블
 export const BOARD_TYPE_LABEL: Record<Exclude<BoardType, 'ALL'>, string> = {
   FREE: '자유게시판',
   QUESTION: '질문게시판',
+  STUDY: '스터디모집',
 };
 
-// 화면 표시 레이블 → boardType (글 작성/수정 폼용)
 export const BOARD_TYPE_VALUE: Record<string, Exclude<BoardType, 'ALL'>> = {
   자유게시판: 'FREE',
   질문게시판: 'QUESTION',
+  스터디게시판: 'STUDY',
+};
+
+export const TAB_TO_BOARD_TYPE: Record<string, BoardType> = {
+  전체: 'ALL',
+  자유게시판: 'FREE',
+  질문게시판: 'QUESTION',
+  스터디게시판: 'STUDY',
 };
 
 // GET /api/subjects → SubjectResponse { subjectId, subjectName }

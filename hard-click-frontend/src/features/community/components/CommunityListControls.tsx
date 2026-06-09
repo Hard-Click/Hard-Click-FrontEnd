@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { TAB_TO_BOARD_TYPE } from '../types';
 
-const FILTERS = ['전체', '자유게시판', '질문게시판'];
+const FILTERS = Object.keys(TAB_TO_BOARD_TYPE);
 const SORT_OPTIONS = ['최신순', '조회순', '댓글순'];
 
 interface CommunityListControlsProps {
@@ -43,7 +44,7 @@ export default function CommunityListControls({
     <>
       {/* filter tabs */}
       <div className="overflow-hidden rounded-[16px] border border-[#E2E8F0] bg-white p-1 shadow-sm">
-        <div className="grid grid-cols-3 gap-1">
+        <div className="grid grid-cols-4 gap-1">
           {FILTERS.map((filter) => {
             const isActive = activeTab === filter;
             return (
