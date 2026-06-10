@@ -9,14 +9,14 @@ export const BOARD_TYPE_LABEL: Record<Exclude<BoardType, 'ALL'>, string> = {
 export const BOARD_TYPE_VALUE: Record<string, Exclude<BoardType, 'ALL'>> = {
   자유게시판: 'FREE',
   질문게시판: 'QUESTION',
-  스터디게시판: 'STUDY',
+  스터디모집: 'STUDY',
 };
 
 export const TAB_TO_BOARD_TYPE: Record<string, BoardType> = {
   전체: 'ALL',
   자유게시판: 'FREE',
   질문게시판: 'QUESTION',
-  스터디게시판: 'STUDY',
+  스터디모집: 'STUDY',
 };
 
 // GET /api/subjects → SubjectResponse { subjectId, subjectName }
