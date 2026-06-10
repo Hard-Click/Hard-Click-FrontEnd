@@ -39,6 +39,8 @@ export interface PostListItem {
   currentCount?: number | null;
   maxCount?: number | null;
   createdAt: string;
+  subjectName?: string | null;
+  description?: string | null;
 }
 
 export interface PostListResponse {
@@ -122,6 +124,10 @@ export interface PostItemApiResponse {
   createdAt: string;
   viewCount: number;
   commentCount: number;
+  subjectName?: string | null;
+  description?: string | null;
+  currentCount?: number | null;
+  maxCount?: number | null;
 }
 
 export interface PostListApiResponse {

@@ -31,7 +31,11 @@ export async function getCommunityPosts(
     let filtered = boardType === 'ALL'
       ? mockPostListResponse.posts
       : mockPostListResponse.posts.filter((p) => p.boardType === boardType);
-    return {
+      if (subjectId) {
+        const subjectName = mockSubjects.find((s) => s.subjectId === subjectId)?.subjectName;
+        filtered = filtered.filter((p) => p.subjectName === subjectName);
+      }
+      return {
       success: true,
       httpStatus: 200,
       message: '',

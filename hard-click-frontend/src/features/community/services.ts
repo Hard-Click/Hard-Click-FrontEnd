@@ -46,9 +46,11 @@ function toPostListItem(p: PostItemApiResponse): PostListItem {
     authorName: p.authorName,
     viewCount: p.viewCount,
     commentCount: p.commentCount,
-    status: null, // 백엔드 목록 응답은 채택여부 미반환
-    currentCount: null,
-    maxCount: null,
+    status: null,
+    currentCount: p.currentCount ?? null,
+    maxCount: p.maxCount ?? null,
+    subjectName: p.subjectName ?? null,
+    description: p.description ?? null,
     createdAt: p.createdAt,
   };
 }

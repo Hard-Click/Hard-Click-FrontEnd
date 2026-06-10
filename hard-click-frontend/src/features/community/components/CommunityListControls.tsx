@@ -70,17 +70,12 @@ export default function CommunityListControls({
         </div>
       </div>
 
-      {/* toolbar: search + sort */}
+      {/* toolbar */}
 <div className="mt-6 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm">
-  {/* 윗줄: 검색 + (질문/스터디일 때 과목 필터 + 초기화) */}
+  {/* 윗줄: 검색바 + 검색버튼 + (질문게시판일 때 과목필터 + 초기화) */}
   <div className="flex items-center gap-2">
     <div className="flex h-11 flex-1 items-center rounded-xl border border-[#E2E8F0] px-4">
-      <Image
-        src="/icons/commuSearch.svg"
-        alt="search"
-        width={18}
-        height={18}
-      />
+      <Image src="/icons/commuSearch.svg" alt="search" width={18} height={18} />
       <input
         type="text"
         placeholder="게시글 검색"
@@ -98,7 +93,7 @@ export default function CommunityListControls({
       검색
     </button>
 
-    {(activeTab === '질문게시판' || activeTab === '스터디게시판') && (
+    {activeTab === '질문게시판' && (
       <>
         <select
           value={subject}
@@ -114,10 +109,7 @@ export default function CommunityListControls({
         </select>
         <button
           type="button"
-          onClick={() => {
-            setSearch('');
-            pushWith({ keyword: undefined, subject: undefined });
-          }}
+          onClick={() => { setSearch(''); pushWith({ keyword: undefined, subject: undefined }); }}
           className="flex h-11 items-center gap-1 rounded-xl border border-[#E2E8F0] bg-white px-4 text-sm text-[#4B5563] transition hover:bg-[#F8FAFC]"
         >
           초기화
@@ -126,27 +118,51 @@ export default function CommunityListControls({
     )}
   </div>
 
-  {/* 아랫줄: 정렬 */}
+  {/* 아랫줄: 스터디게시판 → 과목필터+초기화 / 나머지 → 정렬 */}
   <div className="mt-3 flex items-center gap-2">
-    {SORT_OPTIONS.map((option) => {
-      const isActive = sortType === option;
-      return (
-        <button
-          key={option}
-          type="button"
-          onClick={() => pushWith({ sort: option })}
-          className={`h-10 whitespace-nowrap rounded-xl px-3 text-sm font-semibold transition ${
-            isActive
-              ? 'bg-[#2F5DAA] text-white'
-              : 'bg-[#F8FAFC] text-[#4B5563]'
-          }`}
+    {activeTab === '스터디게시판' ? (
+      <>
+        <select
+          value={subject}
+          onChange={(e) => pushWith({ subject: e.target.value || undefined })}
+          className="h-10 rounded-xl border border-[#E2E8F0] bg-white px-3 text-sm text-[#4B5563] outline-none"
         >
-          {option}
+          <option value="">전체 과목</option>
+          {subjects.map((s) => (
+            <option key={s.subjectId} value={String(s.subjectId)}>
+              {s.subjectName}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={() => { setSearch(''); pushWith({ keyword: undefined, subject: undefined }); }}
+          className="flex h-10 items-center gap-1 rounded-xl border border-[#E2E8F0] bg-white px-4 text-sm text-[#4B5563] transition hover:bg-[#F8FAFC]"
+        >
+          초기화
         </button>
-      );
-    })}
+      </>
+    ) : (
+      SORT_OPTIONS.map((option) => {
+        const isActive = sortType === option;
+        return (
+          <button
+            key={option}
+            type="button"
+            onClick={() => pushWith({ sort: option })}
+            className={`h-10 whitespace-nowrap rounded-xl px-3 text-sm font-semibold transition ${
+              isActive ? 'bg-[#2F5DAA] text-white' : 'bg-[#F8FAFC] text-[#4B5563]'
+            }`}
+          >
+            {option}
+          </button>
+        );
+      })
+    )}
   </div>
 </div>
+
+
     </>
   );
 }
