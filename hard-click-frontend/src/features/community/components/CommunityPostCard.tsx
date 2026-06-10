@@ -5,6 +5,7 @@ import Link from 'next/link';
 interface CommunityPostCardProps {
   id: number;
   category: string;
+  subjectName?: string;
   title: string;
   author: string;
   time: string;
@@ -17,6 +18,7 @@ interface CommunityPostCardProps {
 export default function CommunityPostCard({
   id,
   category,
+  subjectName,
   title,
   author,
   time,
@@ -44,6 +46,12 @@ export default function CommunityPostCard({
         >
           {category}
         </span>
+
+        {subjectName && (
+          <span className="rounded-full bg-[#EEF2FF] px-3 py-1 text-xs font-semibold text-[#2F5DAA]">
+            {subjectName}
+          </span>
+        )}
 
         {isQuestion && status && (
           <span

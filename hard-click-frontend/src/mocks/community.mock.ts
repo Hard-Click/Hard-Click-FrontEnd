@@ -32,6 +32,7 @@ export const mockPostListResponse: PostListApiResponse = {
       viewCount: 145,
       commentCount: 12,
       subjectName: '독서·문학 (공통)',
+      status: 'ADOPTED',
     },
     {
       postId: 888,
@@ -51,6 +52,7 @@ export const mockPostListResponse: PostListApiResponse = {
       viewCount: 120,
       commentCount: 0,
       subjectName: '미적분',
+      status: 'PENDING',
     },
     {
       postId: 886,
@@ -105,7 +107,7 @@ export const mockPostListResponse: PostListApiResponse = {
       createdAt: '2026-05-12T09:00:00',
       viewCount: 42,
       commentCount: 0,
-      subjectName: '과학',
+      subjectName: '물리학Ⅰ',
       description: '함께 공부하실 분을 찾습니다',
       currentCount: 2,
       maxCount: 4,
@@ -126,6 +128,7 @@ export const mockPostDetail: PostDetailApiResponse = {
   authorName: '이*호',
   createdAt: '2026-05-18T19:00:00',
   viewCount: 145,
+  subjectName: '독서·문학 (공통)',
   content:
     'useEffect 의존성 배열에 data를 넣었더니 무한 루프가 발생합니다. 어떻게 해결하나요?',
   isMyPost: true,
