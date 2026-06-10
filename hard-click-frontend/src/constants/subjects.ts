@@ -15,16 +15,20 @@ export interface Subject {
 
 export const SUBJECTS: Subject[] = [
   // 국어
-  { code: 'KO_COMMON', name: '독서·문학 (공통)', group: '국어' },
+  { code: 'KO_READING', name: '독서', group: '국어' },
+  { code: 'KO_LITERATURE', name: '문학', group: '국어' },
   { code: 'KO_SPEECH_WRITING', name: '화법과 작문', group: '국어' },
   { code: 'KO_LANGUAGE_MEDIA', name: '언어와 매체', group: '국어' },
   // 수학
-  { code: 'MATH_COMMON', name: '수학Ⅰ·수학Ⅱ (공통)', group: '수학' },
+  { code: 'MATH_1', name: '수학Ⅰ', group: '수학' },
+  { code: 'MATH_2', name: '수학Ⅱ', group: '수학' },
   { code: 'MATH_PROB_STAT', name: '확률과 통계', group: '수학' },
   { code: 'MATH_CALCULUS', name: '미적분', group: '수학' },
   { code: 'MATH_GEOMETRY', name: '기하', group: '수학' },
-  // 영어
-  { code: 'ENG_GENERAL', name: '영어Ⅰ·영어Ⅱ', group: '영어' },
+  { code: 'MATH_GEOMETRY', name: '기하', group: '수학' },
+  /// 영어
+  { code: 'ENG_1', name: '영어Ⅰ', group: '영어' },
+  { code: 'ENG_2', name: '영어Ⅱ', group: '영어' },
   // 한국사
   { code: 'KOR_HISTORY', name: '한국사', group: '한국사' },
   // 사회탐구
