@@ -16,6 +16,7 @@ import { getDailyStudyStats } from '@/features/studyTimers/services';
 import type { MyProfile, MyCourse, CompletedCourse } from '@/features/users/types';
 import type { StudyTimeGrassCell, LessonsGrassCell } from '@/features/grass/types';
 import type { MyRankingSummary } from '@/features/rankings/types';
+import { SectionHeader } from '@/components/common/SectionHeader';
 
 /* ─────────────────────────── 목 데이터 (UI 표시용 — 결제/퀴즈/채팅은 mock 유지) ─────────────────────────── */
 
@@ -44,15 +45,6 @@ function SectionCard({ children, className = '' }: { children: React.ReactNode; 
   return (
     <div className={`bg-white border border-[#E2E8F0] rounded-2xl shadow-[0_4px_10px_rgba(0,0,0,0.06)] ${className}`}>
       {children}
-    </div>
-  );
-}
-
-function SectionHeader({ title, action }: { title: string; action?: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between mb-5">
-      <h2 className="text-2xl font-bold text-[#1F2937] leading-8">{title}</h2>
-      {action}
     </div>
   );
 }

@@ -6,128 +6,10 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { deleteCourse, publishCourse } from '@/features/instructor/services';
-import type { CourseDetail, Review } from '@/features/courses/types';
-
-/* ── 별점 아이콘 (정수 1~5) ── */
-function StarIcon({ filled, size = 20 }: { filled: boolean; size?: number }) {
-  /* eslint-disable-next-line @next/next/no-img-element */
-  return filled ? (
-    <img src="/icons/starFilledIcon.svg" width={size} height={size} alt="" />
-  ) : (
-    <img src="/icons/starEmptyIcon.svg" width={size} height={size} alt="" />
-  );
-}
-
-/* 정수 별점(1~5) StarRow */
-function StarRow({ rating, size = 20 }: { rating: number; size?: number }) {
-  const rounded = Math.floor(rating);
-  return (
-    <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <StarIcon key={i} filled={i <= rounded} size={size} />
-      ))}
-    </div>
-  );
-}
-
-/* ── 커리큘럼 아코디언 ── */
-function CurriculumAccordion({
-  section,
-  defaultOpen = false,
-}: {
-  section: CourseDetail['curriculum'][0];
-  defaultOpen?: boolean;
-}) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-  const totalMinutes = section.lessons.reduce((sum, l) => {
-    const [m, s] = l.duration.split(':').map(Number);
-    return sum + m + s / 60;
-  }, 0);
-  const totalStr = `${Math.floor(totalMinutes)}분`;
-
-  return (
-    <div className="border border-[#D5D8DD] rounded-2xl overflow-hidden">
-      <button
-        onClick={() => setIsOpen((v) => !v)}
-        className="w-full flex items-center gap-3 px-5 py-4 bg-white hover:bg-[#F8FAFC] transition-colors text-left"
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/icons/chevronDownIcon.svg"
-          width={20}
-          height={20}
-          alt=""
-          className={`flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-0' : '-rotate-90'}`}
-        />
-        <span className="flex-1 text-base font-medium text-[#1A1F2E] text-left">
-          {section.title}
-        </span>
-        <span className="text-sm text-[#4B5563] flex-shrink-0 w-[100px] text-right">
-          {section.lessons.length}강 · {totalStr}
-        </span>
-      </button>
-
-      {isOpen && (
-        <div>
-          {section.lessons.map((lesson) => {
-            const rowClass =
-              'flex items-center justify-between px-5 py-[14px] border-t border-[#D5D8DD] bg-white transition-colors';
-            const inner = (
-              <>
-                <div className="flex items-center gap-3 min-w-0">
-                  {lesson.isPreview ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src="/icons/playIcon.svg"
-                      width={16}
-                      height={16}
-                      alt=""
-                      className="flex-shrink-0"
-                    />
-                  ) : (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src="/icons/checkDarkIcon.svg"
-                      width={16}
-                      height={16}
-                      alt=""
-                      className="flex-shrink-0"
-                    />
-                  )}
-                  <span className="text-sm text-[#374151] truncate">
-                    {lesson.title}
-                  </span>
-                  {lesson.isPreview && (
-                    <span className="flex-shrink-0 px-3 py-0.5 bg-[rgba(47,93,170,0.1)] text-[#2F5DAA] text-xs font-medium rounded-[14px]">
-                      미리보기
-                    </span>
-                  )}
-                </div>
-                <span className="text-sm text-[#4B5563] flex-shrink-0 ml-4">
-                  {lesson.duration}
-                </span>
-              </>
-            );
-            return lesson.isPreview ? (
-              // TODO: /learning/preview/{lessonId} 미리보기 전용 라우트 완성 후 경로 교체
-              <Link
-                key={lesson.lessonId}
-                href={`/learning/videos/${lesson.lessonId}`}
-                className={`${rowClass} hover:bg-[#F0F4FB] cursor-pointer`}
-              >
-                {inner}
-              </Link>
-            ) : (
-              <div key={lesson.lessonId} className={rowClass}>
-                {inner}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
+import type { CourseDetail, Review, CurriculumLesson } from '@/features/courses/types';
+import { StarRow, StarIcon } from '@/components/common/RatingStars';
+import { CurriculumAccordion } from '@/features/instructor/components/InstructorCurriculumSection';
+import PreviewVideoModal from '@/features/learning/components/PreviewVideoModal';
 
 /* ── 강의 에러 화면 공통 컴포넌트 ── */
 function CourseErrorScreen({
@@ -210,6 +92,7 @@ export default function InstructorCourseDetailContent({
 
   const [course, setCourse] = useState<CourseDetail | null>(initialCourse);
   const [activeSection, setActiveSection] = useState('notices');
+  const [previewLesson, setPreviewLesson] = useState<CurriculumLesson | null>(null);
 
   /* 강사 액션 상태 */
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -556,9 +439,10 @@ export default function InstructorCourseDetailContent({
                 ) : (
                   <div className="flex flex-col gap-3">
                     {displayedNotices.map((notice) => (
-                      <div
+                      <Link
                         key={notice.noticeId}
-                        className={`rounded-[20px] h-[89px] overflow-hidden flex flex-col ${
+                        href={`/instructor/notices/${notice.noticeId}`}
+                        className={`rounded-[20px] h-[89px] overflow-hidden flex flex-col hover:opacity-80 transition-opacity ${
                           notice.isPinned
                             ? 'bg-[rgba(47,93,170,0.05)] border border-[#2F5DAA]'
                             : 'bg-white border border-[#E2E8F0]'
@@ -589,7 +473,7 @@ export default function InstructorCourseDetailContent({
                         <p className="text-sm text-[#4B5563] line-clamp-1">
                           {notice.content}
                         </p>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 )}
@@ -907,6 +791,7 @@ export default function InstructorCourseDetailContent({
                       key={section.sectionId}
                       section={section}
                       defaultOpen={idx === 0}
+                      onPreviewClick={setPreviewLesson}
                     />
                   ))}
                 </div>
@@ -1161,6 +1046,15 @@ export default function InstructorCourseDetailContent({
           onCancel={() => setIsDeleteModalOpen(false)}
           onConfirm={handleDeleteConfirm}
           disabled={isMutating}
+        />
+      )}
+
+      {/* 미리보기 영상 모달 (학생 강의상세와 동일) */}
+      {previewLesson && (
+        <PreviewVideoModal
+          lessonId={previewLesson.lessonId}
+          title={previewLesson.title}
+          onClose={() => setPreviewLesson(null)}
         />
       )}
     </div>

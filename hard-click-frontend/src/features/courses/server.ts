@@ -64,6 +64,12 @@ export async function getCoursesServer(
     if (query?.instructor) {
       courses = courses.filter((c) => c.instructorName === query.instructor);
     }
+    const sort = query?.sort ?? 'latest';
+    courses = [...courses].sort((a, b) => {
+      if (sort === 'popular') return b.studentCount - a.studentCount;
+      if (sort === 'rating') return b.averageRating - a.averageRating;
+      return b.createdAt.localeCompare(a.createdAt); // latest
+    });
     return courses;
   }
 

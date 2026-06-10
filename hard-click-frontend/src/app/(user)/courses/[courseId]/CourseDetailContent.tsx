@@ -16,113 +16,11 @@ import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
 import PreviewVideoModal from '@/features/learning/components/PreviewVideoModal';
 import { getReviews, updateReview, deleteReview } from '@/features/reviews/services';
 import type { CourseDetail, Review, CurriculumLesson } from '@/features/courses/types';
+import { StarRow, StarIcon } from '@/components/common/RatingStars';
+import { CurriculumAccordion } from '@/features/courses/components/CourseCurriculumSection';
 
 // TODO: 리뷰 신고 모달 — 팀원 컴포넌트 완성 후 아래 import 연결
 // import ReviewReportModal from '@/components/ui/reviewReportModal';
-
-/* ── 별점 아이콘 (정수 1~5) ── */
-function StarIcon({ filled, size = 20 }: { filled: boolean; size?: number }) {
-  /* eslint-disable-next-line @next/next/no-img-element */
-  return filled
-    ? <img src="/icons/starFilledIcon.svg" width={size} height={size} alt="" />
-    : <img src="/icons/starEmptyIcon.svg" width={size} height={size} alt="" />;
-}
-
-/* 정수 별점(1~5) StarRow */
-function StarRow({ rating, size = 20 }: { rating: number; size?: number }) {
-  const rounded = Math.floor(rating);
-  return (
-    <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map(i => (
-        <StarIcon key={i} filled={i <= rounded} size={size} />
-      ))}
-    </div>
-  );
-}
-
-/* ── 커리큘럼 아코디언 ── */
-function CurriculumAccordion({
-  section,
-  defaultOpen = false,
-  onPreviewClick,
-}: {
-  section: CourseDetail['curriculum'][0];
-  defaultOpen?: boolean;
-  onPreviewClick: (lesson: CurriculumLesson) => void;
-}) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-  const totalSecs = section.lessons.reduce((sum, l) => {
-    const parts = l.duration.split(':').map(Number);
-    return sum + (parts[0] || 0) * 60 + (parts[1] || 0);
-  }, 0);
-  const h = Math.floor(totalSecs / 3600);
-  const m = Math.floor((totalSecs % 3600) / 60);
-  const s = totalSecs % 60;
-  const totalStr = h > 0 ? `${h}시간 ${m}분` : m > 0 ? `${m}분` : totalSecs > 0 ? `${s}초` : '0분';
-
-  return (
-    <div className="border border-[#D5D8DD] rounded-2xl overflow-hidden">
-      <button
-        onClick={() => setIsOpen(v => !v)}
-        className="w-full flex items-center gap-3 px-5 py-4 bg-white hover:bg-[#F8FAFC] transition-colors text-left"
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/icons/chevronDownIcon.svg"
-          width={20}
-          height={20}
-          alt=""
-          className={`flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-0' : '-rotate-90'}`}
-        />
-        <span className="flex-1 text-base font-medium text-[#1A1F2E] text-left">{section.title}</span>
-        <span className="text-sm text-[#4B5563] flex-shrink-0 w-[100px] text-right">
-          {section.lessons.length}강 · {totalStr}
-        </span>
-      </button>
-
-      {isOpen && (
-        <div>
-          {section.lessons.map(lesson => {
-            const rowClass = "flex items-center justify-between px-5 py-[14px] border-t border-[#D5D8DD] bg-white transition-colors";
-            const inner = (
-              <>
-                <div className="flex items-center gap-3 min-w-0">
-                  {lesson.isPreview
-                    ? /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src="/icons/playIcon.svg" width={16} height={16} alt="" className="flex-shrink-0" />
-                    : /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src="/icons/checkDarkIcon.svg" width={16} height={16} alt="" className="flex-shrink-0" />
-                  }
-                  <span className="text-sm text-[#374151] truncate">{lesson.title}</span>
-                  {lesson.isPreview && (
-                    <span className="flex-shrink-0 px-3 py-0.5 bg-[rgba(47,93,170,0.1)] text-[#2F5DAA] text-xs font-medium rounded-[14px]">
-                      미리보기
-                    </span>
-                  )}
-                </div>
-                <span className="text-sm text-[#4B5563] flex-shrink-0 ml-4">{lesson.duration}</span>
-              </>
-            );
-            return lesson.isPreview ? (
-              <button
-                key={lesson.lessonId}
-                type="button"
-                onClick={() => onPreviewClick(lesson)}
-                className={`${rowClass} hover:bg-[#F0F4FB] cursor-pointer w-full text-left`}
-              >
-                {inner}
-              </button>
-            ) : (
-              <div key={lesson.lessonId} className={rowClass}>
-                {inner}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
 
 /* ── 강의 에러 화면 공통 컴포넌트 ── */
 function CourseErrorScreen({ title, subtitle }: { title: string; subtitle: string }) {
@@ -472,8 +370,8 @@ export default function CourseDetailContent({
               {/* Row 2: 액션 버튼 (border-top, Figma: padding 24px 0 0, gap 12px) */}
               <div className="border-t border-[#D5D8DD] pt-6 pb-8 flex items-center gap-3">
                 {isEnrolled ? (
-                  /* 수강 중 → 학습하기 (영상 페이지로 이동) */
-                  <Link href={firstLessonId ? `/learning/videos/${firstLessonId}` : '#'} className="flex-1">
+                  /* 수강 중 → 학습하기 (학습 커리큘럼/진도 홈으로 이동) */
+                  <Link href={`/learning/${courseId}`} className="flex-1">
                     <button className="w-full h-14 rounded-[10px] bg-[#2F5DAA] text-white font-semibold text-base hover:bg-[#1D3E75] transition-colors">
                       학습하기
                     </button>
@@ -571,7 +469,7 @@ export default function CourseDetailContent({
                       {displayedNotices.map((notice) => (
                           <Link
                             key={notice.noticeId}
-                            href={`/courses/${courseId}/notices/${notice.noticeId}`}
+                            href={`/notices/${notice.noticeId}`}
                             onClick={(e) => {
                               if (!requireLogin()) e.preventDefault();
                             }}
@@ -951,7 +849,7 @@ export default function CourseDetailContent({
       {/* ── UA-P0-140/142: 학습 시작 플로팅 버튼 — 수강자만 표시 ── */}
       {isEnrolled && firstLessonId && (
         <div className="fixed bottom-8 right-8 z-40">
-          <Link href={`/learning/videos/${firstLessonId}`}>
+          <Link href={`/learning/${courseId}`}>
             <button
               className="flex items-center justify-center gap-2 bg-[#F97316] hover:bg-[#EA6A10] text-white font-semibold text-lg rounded-[20px] transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]"
               style={{ width: 167, height: 60 }}
