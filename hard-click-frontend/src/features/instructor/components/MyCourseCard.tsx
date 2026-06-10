@@ -67,19 +67,19 @@ export default function MyCourseCard({
   const handleTogglePublic = async () => {
     const newPublicState = !publicState;
     const result = await publishCourse(id, newPublicState);
-
+  
     if (!result.success) {
       toast.error('상태 변경에 실패했습니다.');
       return;
     }
-
+  
     setPublicState(newPublicState);
     toast.success(
       newPublicState ? '강의가 공개되었습니다.' : '강의가 비공개되었습니다.',
       { duration: 2000 },
     );
+    router.refresh(); // 추가
   };
-  if (isDeleted) return null;
 
   return (
     <div

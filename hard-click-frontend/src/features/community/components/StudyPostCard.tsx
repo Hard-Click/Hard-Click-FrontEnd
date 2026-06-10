@@ -57,12 +57,14 @@ export default function StudyPostCard({
             </div>
           </div>
           {isFull ? (
-            <span className="font-semibold text-[#9CA3AF]">정원 마감</span>
-          ) : (
-            <Link href={`/community/${id}`} className="font-semibold text-[#2F5DAA] hover:underline">
-              참여하기
-            </Link>
-          )}
+  <button type="button" disabled className="w-20 rounded-2xl bg-[#E2E8F0] py-3 text-sm font-semibold text-[#9CA3AF]">
+    정원 마감
+  </button>
+) : (
+  <Link href={`/community/${id}`} className="block w-20 rounded-2xl bg-[#2F5DAA] py-3 text-center text-sm font-semibold text-white transition hover:opacity-90">
+    참여하기
+  </Link>
+)}
         </div>
       </div>
     );

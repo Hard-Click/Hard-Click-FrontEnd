@@ -92,7 +92,7 @@ export const mockPostDetail: PostDetailApiResponse = {
   viewCount: 145,
   content:
     'useEffect 의존성 배열에 data를 넣었더니 무한 루프가 발생합니다. 어떻게 해결하나요?',
-  isMyPost: false,
+  isMyPost: true,
   isAccepted: true,
   fileUrls: ['https://s3.ap-northeast-2.amazonaws.com/image.png'],
 };

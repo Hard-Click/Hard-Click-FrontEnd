@@ -1,5 +1,5 @@
 import { getInstructorCoursesServer } from '@/features/instructor/server';
-import MyCoursesContent, { type Course } from './MyCoursesContent';
+import MyCoursesContent, { type Course } from '@/features/instructor/components/MyCoursesContent';
 
 export default async function MyCoursesPage() {
   // 서버에서 강사 내 강의 목록 확보 → 화면 표시용 Course로 변환
