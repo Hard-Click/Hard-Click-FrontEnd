@@ -2,8 +2,8 @@ import Image from 'next/image';
 import PostActionButtons from '@/features/community/components/PostActionButtons';
 import CommunityListControls from '@/features/community/components/CommunityListControls';
 import CommunityPostList from '@/features/community/components/CommunityPostList';
-import { getCommunityPosts } from '@/features/community/server';
-import type { BoardType, PostListItem } from '@/features/community/types';
+import { getCommunityPosts, getSubjects } from '@/features/community/server';
+import type { BoardType, PostListItem, SubjectItem } from '@/features/community/types';
 import { TAB_TO_BOARD_TYPE } from '@/features/community/types';
 
 const SORT_MAP: Record<string, string> = {
@@ -19,6 +19,7 @@ interface CommunityPageProps {
     sort?: string;
     keyword?: string;
     page?: string;
+    subject?: string;
   }>;
 }
 
@@ -32,15 +33,22 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
 
   const boardType = TAB_TO_BOARD_TYPE[tab] ?? 'ALL';
   const apiSort = SORT_MAP[sort] ?? 'latest';
+  const subject = sp.subject ? Number(sp.subject) : undefined;
 
-  const result = await getCommunityPosts(
-    boardType,
-    Number.isNaN(pageNum) ? 0 : pageNum,
-    keyword || undefined,
-    apiSort,
-  );
+  const [result, subjectsResult] = await Promise.all([
+    getCommunityPosts(
+      boardType,
+      Number.isNaN(pageNum) ? 0 : pageNum,
+      keyword || undefined,
+      apiSort,
+      subject,
+    ),
+    getSubjects(),
+  ]);
   const posts: PostListItem[] =
-    result.success && result.data ? (result.data.content ?? []) : [];
+  result.success && result.data ? (result.data.content ?? []) : [];
+const subjects: SubjectItem[] =
+  subjectsResult.success && subjectsResult.data ? subjectsResult.data : [];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] px-8 py-10">
@@ -65,7 +73,13 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
           <PostActionButtons />
         </div>
 
-        <CommunityListControls activeTab={tab} sortType={sort} keyword={keyword} />
+        <CommunityListControls
+  activeTab={tab}
+  sortType={sort}
+  keyword={keyword}
+  subject={sp.subject ?? ''}
+  subjects={subjects}
+/>
         <CommunityPostList posts={posts} />
       </div>
     </div>
