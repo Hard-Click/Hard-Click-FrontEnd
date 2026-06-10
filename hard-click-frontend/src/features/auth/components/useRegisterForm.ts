@@ -636,3 +636,5 @@ export function useRegisterForm() {
     handleSubmit,
   };
 }
+
+export type UseRegisterFormReturn = ReturnType<typeof useRegisterForm>;
