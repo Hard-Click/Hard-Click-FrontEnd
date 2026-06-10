@@ -41,6 +41,8 @@ export interface PostListItem {
   createdAt: string;
   subjectName?: string | null;
   description?: string | null;
+  isMine?: boolean | null;
+  isJoined?: boolean | null;
 }
 
 export interface PostListResponse {
@@ -128,6 +130,8 @@ export interface PostItemApiResponse {
   description?: string | null;
   currentCount?: number | null;
   maxCount?: number | null;
+  isMine?: boolean | null;
+  isJoined?: boolean | null;
 }
 
 export interface PostListApiResponse {

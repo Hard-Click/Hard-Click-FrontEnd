@@ -34,17 +34,19 @@ export default function CommunityPostList({ posts }: { posts: PostListItem[] }) 
       {posts.map((post) =>
         post.boardType === 'STUDY' ? (
           <StudyPostCard
-            key={post.postId}
-            id={post.postId}
-            title={post.title}
-            subjectName={post.subjectName ?? ''}
-            description={post.description ?? '함께 공부하실 분을 찾습니다'}
-            currentCount={post.currentCount ?? 0}
-            maxCount={post.maxCount ?? 0}
-            author={post.authorName}
-            time={formatDate(post.createdAt)}
-            variant={isStudyTab ? 'grid' : 'list'}
-          />
+  key={post.postId}
+  id={post.postId}
+  title={post.title}
+  subjectName={post.subjectName ?? ''}
+  description={post.description ?? '함께 공부하실 분을 찾습니다'}
+  currentCount={post.currentCount ?? 0}
+  maxCount={post.maxCount ?? 0}
+  author={post.authorName}
+  time={formatDate(post.createdAt)}
+  isMine={post.isMine ?? false}
+  isJoined={post.isJoined ?? false}
+  variant={isStudyTab ? 'grid' : 'list'}
+/>
         ) : (
           <CommunityPostCard
             key={post.postId}
