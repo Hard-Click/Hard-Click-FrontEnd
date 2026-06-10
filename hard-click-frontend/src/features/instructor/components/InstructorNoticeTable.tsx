@@ -25,8 +25,8 @@ interface Notice {
   title: string;
   content: string;
   createdAt: string;
-  views: number;
   isPinned: boolean;
+  isPublished: boolean;
 }
 
 export default function InstructorNoticeTable() {
@@ -72,10 +72,13 @@ export default function InstructorNoticeTable() {
         courseTitle: n.courseName ?? '',
         title: n.title,
         content: '',
-        createdAt: (n.createdAt.split('T')[0] ?? n.createdAt).replace(/-/g, '/'),
-        views: 0,
+        createdAt: (n.createdAt.split('T')[0] ?? n.createdAt).replace(
+          /-/g,
+          '/'
+        ),
         isPinned: n.isPinned,
-      })),
+        isPublished: true,
+      }))
     );
   }, []);
 
@@ -83,7 +86,10 @@ export default function InstructorNoticeTable() {
   useEffect(() => {
     getInstructorCourses().then((res) => {
       if (res.success && res.data) {
-        const list = res.data.content.map((c) => ({ id: c.courseId, title: c.title }));
+        const list = res.data.content.map((c) => ({
+          id: c.courseId,
+          title: c.title,
+        }));
         setCourses(list);
         if (list.length > 0) {
           setSelectedCourseId(list[0].id);
@@ -99,7 +105,7 @@ export default function InstructorNoticeTable() {
 
   // 목록은 서버에서 이미 강의별 필터됨 — 고정 공지 우선 정렬만
   const filteredNotices = [...notices].sort(
-    (a, b) => Number(b.isPinned) - Number(a.isPinned),
+    (a, b) => Number(b.isPinned) - Number(a.isPinned)
   );
 
   const selectedCourseName =
@@ -125,7 +131,9 @@ export default function InstructorNoticeTable() {
     setFormTitle(notice.title);
     // 목록 응답엔 content가 없어 상세 조회로 본문 채움
     const detail = await getNoticeDetail(notice.id);
-    setFormContent(detail.success && detail.data ? detail.data.content : notice.content);
+    setFormContent(
+      detail.success && detail.data ? detail.data.content : notice.content
+    );
     setFormIsPinned(notice.isPinned);
     setTitleError('');
     setContentError('');
@@ -175,6 +183,18 @@ export default function InstructorNoticeTable() {
     await reloadNotices(selectedCourseId);
   };
 
+  const handleTogglePublish = (id: number) => {
+    setNotices((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, isPublished: !n.isPublished } : n))
+    );
+    const target = notices.find((n) => n.id === id);
+    toast.success(
+      target?.isPublished
+        ? '공지가 비공개되었습니다.'
+        : '공지가 게시되었습니다.'
+    );
+  };
+
   const handleDelete = async (id: number) => {
     // DELETE /api/notices/{noticeId}
     const res = await deleteNotice(id);
@@ -208,7 +228,9 @@ export default function InstructorNoticeTable() {
               alt="down"
               width={16}
               height={16}
-              className={`transition-transform ${isCourseOpen ? 'rotate-180' : ''}`}
+              className={`transition-transform ${
+                isCourseOpen ? 'rotate-180' : ''
+              }`}
             />
           </button>
           {isCourseOpen && (
@@ -254,13 +276,13 @@ export default function InstructorNoticeTable() {
               <th className="px-6 py-4 text-left text-sm font-semibold text-[#374151]">
                 작성일
               </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-[#374151]">
-                조회
+              <th className="px-6 py-4 text-center text-sm font-semibold text-[#374151]">
+                중요
               </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-[#374151]">
+              <th className="px-6 py-4 text-center text-sm font-semibold text-[#374151]">
                 상태
               </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-[#374151]">
+              <th className="px-6 py-4 text-center text-sm font-semibold text-[#374151]">
                 관리
               </th>
             </tr>
@@ -301,12 +323,9 @@ export default function InstructorNoticeTable() {
                   <td className="px-6 py-4 text-sm text-[#64748B]">
                     {notice.createdAt}
                   </td>
-                  <td className="px-6 py-4 text-sm text-[#64748B]">
-                    {notice.views}
-                  </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-center">
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                      className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
                         notice.isPinned
                           ? 'bg-[#FEE2E2] text-[#EF4444]'
                           : 'bg-[#E0F2FE] text-[#0284C7]'
@@ -315,8 +334,35 @@ export default function InstructorNoticeTable() {
                       {notice.isPinned ? '중요' : '일반'}
                     </span>
                   </td>
+                  <td className="px-6 py-4 text-center">
+                    <span
+                      className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+                        notice.isPublished
+                          ? 'bg-[#DCFCE7] text-[#16A34A]'
+                          : 'bg-[#FEF3C7] text-[#D97706]'
+                      }`}
+                    >
+                      {notice.isPublished ? '게시중' : '비공개'}
+                    </span>
+                  </td>
+
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleTogglePublish(notice.id)}
+                      >
+                        <Image
+                          src={
+                            notice.isPublished
+                              ? '/icons/openEye.svg'
+                              : '/icons/closeEye.svg'
+                          }
+                          alt={notice.isPublished ? '게시중' : '비공개'}
+                          width={18}
+                          height={18}
+                        />
+                      </button>
                       <button type="button" onClick={() => openEdit(notice)}>
                         <Image
                           src="/icons/editIcon.svg"
@@ -378,7 +424,7 @@ export default function InstructorNoticeTable() {
                   setFormTitle(val);
                   if (submitted) {
                     setTitleError(
-                      val.trim() === '' ? '제목을 입력해주세요' : '',
+                      val.trim() === '' ? '제목을 입력해주세요' : ''
                     );
                   }
                 }}
@@ -415,7 +461,7 @@ export default function InstructorNoticeTable() {
                   setFormContent(val);
                   if (submitted) {
                     setContentError(
-                      val.trim() === '' ? '내용을 입력해주세요' : '',
+                      val.trim() === '' ? '내용을 입력해주세요' : ''
                     );
                   }
                 }}

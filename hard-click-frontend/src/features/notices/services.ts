@@ -20,6 +20,24 @@ function toNotice(item: NoticeApiItem): Notice {
 }
 
 export async function getNoticeDetail(noticeId: number) {
+  if (USE_MOCK) {
+    const found = mockNoticesResponse.content.find(
+      (n) => n.noticeId === noticeId
+    );
+    return {
+      success: true,
+      httpStatus: 200,
+      message: '',
+      data: {
+        noticeId,
+        title: found?.title ?? '공지 제목',
+        content:
+          '안녕하세요. 공지사항 내용입니다.\n\n해당 일정 동안 서비스 이용에 참고 부탁드립니다.',
+        isPinned: found?.isPinned ?? false,
+        createdAt: found?.createdAt ?? '2026-05-10T09:00:00',
+      } as NoticeDetail,
+    };
+  }
   return api.get<NoticeDetail>(`/api/notices/${noticeId}`);
 }
 
@@ -62,9 +80,12 @@ export async function getCourseNotices(courseId: number): Promise<Notice[]> {
 /** 강의 공지 작성 (POST /api/courses/{courseId}/notices) */
 export async function createCourseNotice(
   courseId: number,
-  body: NoticeWriteRequest,
+  body: NoticeWriteRequest
 ) {
-  return api.post<{ noticeId: number }>(`/api/courses/${courseId}/notices`, body);
+  return api.post<{ noticeId: number }>(
+    `/api/courses/${courseId}/notices`,
+    body
+  );
 }
 
 /** 전역 공지 작성 (POST /api/notices) */
@@ -84,7 +105,7 @@ export async function getPinnedNotices(): Promise<Notice[]> {
 
   // 노션 명세: GET /api/notices?type=GLOBAL&page=0&size=20
   const response = await api.get<NoticeApiResponse>(
-    '/api/notices?type=GLOBAL&page=0&size=20',
+    '/api/notices?type=GLOBAL&page=0&size=20'
   );
   if (!response.success || !response.data) return [];
   return response.data.content.filter((n) => n.isPinned).map(toNotice);
