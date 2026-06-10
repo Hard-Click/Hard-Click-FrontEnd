@@ -49,7 +49,7 @@ function toPostListItem(p: PostItemApiResponse): PostListItem {
     authorName: p.authorName,
     viewCount: p.viewCount,
     commentCount: p.commentCount,
-    status: null,
+    status: p.status ?? null,
     currentCount: p.currentCount ?? null,
     maxCount: p.maxCount ?? null,
     subjectName: p.subjectName ?? null,
@@ -68,6 +68,7 @@ function toPostDetail(d: PostDetailApiResponse): PostDetail {
   return {
     postId: d.postId,
     boardType: d.boardType,
+    subjectName: d.subjectName ?? null,
     title: d.title,
     content: d.content,
     authorName: d.authorName,

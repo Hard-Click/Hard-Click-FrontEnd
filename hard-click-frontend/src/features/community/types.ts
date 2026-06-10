@@ -63,6 +63,7 @@ export interface PostDetail {
   isMine: boolean;
   fileUrls: string[];
   createdAt: string;
+  subjectName?: string | null;
 }
 
 // GET /api/posts/{postId}/comments
@@ -130,6 +131,7 @@ export interface PostItemApiResponse {
   description?: string | null;
   currentCount?: number | null;
   maxCount?: number | null;
+  status?: 'PENDING' | 'ADOPTED' | null;
   isMine?: boolean | null;
   isJoined?: boolean | null;
 }
@@ -153,6 +155,7 @@ export interface PostDetailApiResponse {
   isMyPost: boolean;
   isAccepted: boolean;
   fileUrls: string[];
+  subjectName?: string | null;
 }
 
 // GET /api/posts/{postId}/comments → CommentListResponse (replies는 재귀 동일 타입)

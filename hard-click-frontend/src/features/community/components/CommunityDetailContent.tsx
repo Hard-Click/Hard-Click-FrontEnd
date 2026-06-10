@@ -237,6 +237,11 @@ export default function CommunityDetailContent({
           >
             {category}
           </span>
+          {post.subjectName && (
+            <span className="rounded-full bg-[#EEF2FF] px-3 py-1 text-xs font-semibold text-[#2F5DAA]">
+              {post.subjectName}
+            </span>
+          )}
           {category === '질문게시판' && isAccepted && (
             <span className="flex items-center gap-1 rounded-full bg-[#D1FAE5] px-3 py-1 text-xs font-semibold text-[#059669]">
               <Image
