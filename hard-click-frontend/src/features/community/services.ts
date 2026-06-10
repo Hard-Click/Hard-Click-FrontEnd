@@ -108,6 +108,17 @@ function toCommentsResponse(r: CommentListApiResponse): CommentsResponse {
   return { comments: r.comments.map(toComment) };
 }
 
+export async function createComment(body: CreateCommentRequest, image?: File) {
+  if (USE_MOCK) return mockOk({ commentId: 1 });
+  const form = new FormData();
+  form.append(
+    'data',
+    new Blob([JSON.stringify(body)], { type: 'application/json' })
+  );
+  if (image) form.append('image', image);
+  return api.post<{ commentId: number }>('/api/comments', form);
+}
+
 export async function getPosts(
   boardType: BoardType = 'ALL',
   page = 0,
@@ -179,16 +190,6 @@ export async function getComments(postId: number) {
     await api.get<CommentListApiResponse>(`/api/posts/${postId}/comments`),
     toCommentsResponse
   );
-}
-
-export async function createComment(body: CreateCommentRequest) {
-  if (USE_MOCK) return mockOk({ commentId: 1 });
-  const form = new FormData();
-  form.append(
-    'data',
-    new Blob([JSON.stringify(body)], { type: 'application/json' })
-  );
-  return api.post<{ commentId: number }>('/api/comments', form);
 }
 
 export async function updateComment(

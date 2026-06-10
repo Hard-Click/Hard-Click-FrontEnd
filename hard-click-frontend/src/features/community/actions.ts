@@ -26,7 +26,7 @@ export async function getPostsAction(
   boardType: BoardType = 'ALL',
   page = 0,
   keyword?: string,
-  sort?: string,
+  sort?: string
 ) {
   return getPosts(boardType, page, keyword, sort);
 }
@@ -39,7 +39,10 @@ export async function getPostDetailAction(postId: number) {
   return getPostDetail(postId);
 }
 
-export async function createPostAction(body: CreatePostRequest, files?: File[]) {
+export async function createPostAction(
+  body: CreatePostRequest,
+  files?: File[]
+) {
   const result = await createPost(body, files);
   if (result.success) revalidatePath('/community');
   return result;
@@ -48,7 +51,7 @@ export async function createPostAction(body: CreatePostRequest, files?: File[]) 
 export async function updatePostAction(
   postId: number,
   body: UpdatePostRequest,
-  files?: File[],
+  files?: File[]
 ) {
   const result = await updatePost(postId, body, files);
   if (result.success) {
@@ -68,13 +71,18 @@ export async function getCommentsAction(postId: number) {
   return getComments(postId);
 }
 
-export async function createCommentAction(body: CreateCommentRequest) {
-  return createComment(body);
+export async function createCommentAction(formData: FormData) {
+  const postId = Number(formData.get('postId'));
+  const content = formData.get('content') as string;
+  const parentIdRaw = formData.get('parentId');
+  const parentId = parentIdRaw ? Number(parentIdRaw) : undefined;
+  const image = formData.get('image') as File | null;
+  return createComment({ postId, content, parentId }, image ?? undefined);
 }
 
 export async function updateCommentAction(
   commentId: number,
-  body: UpdateCommentRequest,
+  body: UpdateCommentRequest
 ) {
   return updateComment(commentId, body);
 }
