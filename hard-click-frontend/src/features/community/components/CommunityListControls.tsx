@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { TAB_TO_BOARD_TYPE } from '../types';
+import type { SubjectItem } from '../types';
 
 const FILTERS = Object.keys(TAB_TO_BOARD_TYPE);
 const SORT_OPTIONS = ['최신순', '조회순', '댓글순'];
@@ -12,6 +13,8 @@ interface CommunityListControlsProps {
   activeTab: string;
   sortType: string;
   keyword: string;
+  subject: string;      
+  subjects: SubjectItem[];
 }
 
 /**
@@ -24,6 +27,8 @@ export default function CommunityListControls({
   activeTab,
   sortType,
   keyword,
+  subject, 
+  subjects
 }: CommunityListControlsProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -51,7 +56,10 @@ export default function CommunityListControls({
               <button
                 key={filter}
                 type="button"
-                onClick={() => pushWith({ tab: filter })}
+                onClick={() => {
+                  setSearch('');
+                  pushWith({ tab: filter, keyword: undefined, sort: undefined, subject: undefined });
+                }}
                 className={`h-11 rounded-[20px] text-sm font-semibold transition ${
                   isActive
                     ? 'bg-[#2F5DAA] text-white shadow-sm'
@@ -65,56 +73,99 @@ export default function CommunityListControls({
         </div>
       </div>
 
-      {/* toolbar: search + sort */}
-      <div className="mt-6 flex items-center justify-between rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm">
-      <div className="flex w-full max-w-[870px] items-center gap-2">
-  <div className="flex h-11 flex-1 items-center rounded-xl border border-[#E2E8F0] px-4">
-    <Image
-      src="/icons/commuSearch.svg"
-      alt="search"
-      width={18}
-      height={18}
-    />
-    <input
-      type="text"
-      placeholder="게시글 검색"
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-      onKeyDown={(e) => e.key === 'Enter' && pushWith({ keyword: search })}
-      className="ml-3 w-full bg-transparent text-sm outline-none placeholder:text-[#9CA3AF]"
-    />
-  </div>
-  <button
-    type="button"
-    onClick={() => pushWith({ keyword: search })}
-    className="h-11 rounded-xl bg-[#2F5DAA] px-5 text-sm font-semibold text-white transition hover:opacity-90"
-  >
-    검색
-  </button>
-</div>
-<div className="mx-4 h-10 w-px bg-[#4B5563]" />
-        
+      {/* toolbar */}
+<div className="mt-6 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm">
+  {/* 윗줄: 검색바 + 검색버튼 + (질문게시판일 때 과목필터 + 초기화) */}
+  <div className="flex items-center gap-2">
+    <div className="flex h-11 flex-1 items-center rounded-xl border border-[#E2E8F0] px-4">
+      <Image src="/icons/commuSearch.svg" alt="search" width={18} height={18} />
+      <input
+        type="text"
+        placeholder="게시글 검색"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && pushWith({ keyword: search })}
+        className="ml-3 w-full bg-transparent text-sm outline-none placeholder:text-[#9CA3AF]"
+      />
+    </div>
+    <button
+      type="button"
+      onClick={() => pushWith({ keyword: search })}
+      className="h-11 rounded-xl bg-[#2F5DAA] px-5 text-sm font-semibold text-white transition hover:opacity-90"
+    >
+      검색
+    </button>
 
-        <div className="flex items-center gap-2">
-          {SORT_OPTIONS.map((option) => {
-            const isActive = sortType === option;
-            return (
-              <button
-                key={option}
-                type="button"
-                onClick={() => pushWith({ sort: option })}
-                className={`h-10 whitespace-nowrap rounded-xl px-3 text-sm font-semibold transition ${
-                  isActive
-                    ? 'bg-[#2F5DAA] text-white'
-                    : 'bg-[#F8FAFC] text-[#4B5563]'
-                }`}
-              >
-                {option}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+    {activeTab === '질문게시판' && (
+      <>
+        <select
+          value={subject}
+          onChange={(e) => pushWith({ subject: e.target.value || undefined })}
+          className="h-11 rounded-xl border border-[#E2E8F0] bg-white px-3 text-sm text-[#4B5563] outline-none"
+        >
+          <option value="">전체 과목</option>
+          {subjects.map((s) => (
+            <option key={s.subjectId} value={String(s.subjectId)}>
+              {s.subjectName}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={() => { setSearch(''); pushWith({ keyword: undefined, subject: undefined }); }}
+          className="flex h-11 items-center gap-1 rounded-xl border border-[#E2E8F0] bg-white px-4 text-sm text-[#4B5563] transition hover:bg-[#F8FAFC]"
+        >
+          초기화
+        </button>
+      </>
+    )}
+  </div>
+
+  {/* 아랫줄: 스터디게시판 → 과목필터+초기화 / 나머지 → 정렬 */}
+  <div className="mt-3 flex items-center gap-2">
+    {activeTab === '스터디게시판' ? (
+      <>
+        <select
+          value={subject}
+          onChange={(e) => pushWith({ subject: e.target.value || undefined })}
+          className="h-10 rounded-xl border border-[#E2E8F0] bg-white px-3 text-sm text-[#4B5563] outline-none"
+        >
+          <option value="">전체 과목</option>
+          {subjects.map((s) => (
+            <option key={s.subjectId} value={String(s.subjectId)}>
+              {s.subjectName}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={() => { setSearch(''); pushWith({ keyword: undefined, subject: undefined }); }}
+          className="flex h-10 items-center gap-1 rounded-xl border border-[#E2E8F0] bg-white px-4 text-sm text-[#4B5563] transition hover:bg-[#F8FAFC]"
+        >
+          초기화
+        </button>
+      </>
+    ) : (
+      SORT_OPTIONS.map((option) => {
+        const isActive = sortType === option;
+        return (
+          <button
+            key={option}
+            type="button"
+            onClick={() => pushWith({ sort: option })}
+            className={`h-10 whitespace-nowrap rounded-xl px-3 text-sm font-semibold transition ${
+              isActive ? 'bg-[#2F5DAA] text-white' : 'bg-[#F8FAFC] text-[#4B5563]'
+            }`}
+          >
+            {option}
+          </button>
+        );
+      })
+    )}
+  </div>
+</div>
+
+
     </>
   );
 }

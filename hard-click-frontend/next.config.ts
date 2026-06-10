@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
     // 상위 폴더에 package-lock.json이 있어 루트를 잘못 인식하는 문제 수정
     root: __dirname,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'cdn.example.com',
+      },
+    ],
+  },
 };
 
 export default nextConfig;

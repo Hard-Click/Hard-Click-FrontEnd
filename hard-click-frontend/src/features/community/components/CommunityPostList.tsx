@@ -1,5 +1,6 @@
 import CommunityPostCard from './CommunityPostCard';
 import PostEmptyState from './PostEmptyState';
+import StudyPostCard from './StudyPostCard';
 import { BOARD_TYPE_LABEL, type PostListItem } from '../types';
 
 // 상대 시간 표시 (서버에서 렌더)
@@ -26,20 +27,37 @@ export default function CommunityPostList({ posts }: { posts: PostListItem[] }) 
     return <PostEmptyState />;
   }
 
+  const isStudyTab = posts.every((p) => p.boardType === 'STUDY');
+
   return (
-    <div className="mt-6 flex flex-col gap-4">
-      {posts.map((post) => (
-        <CommunityPostCard
-          key={post.postId}
-          id={post.postId}
-          category={BOARD_TYPE_LABEL[post.boardType]}
-          title={post.title}
-          author={post.authorName}
-          time={formatDate(post.createdAt)}
-          views={post.viewCount}
-          comments={post.commentCount}
-        />
-      ))}
+    <div className={`mt-6 ${isStudyTab ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-4'}`}>
+      {posts.map((post) =>
+        post.boardType === 'STUDY' ? (
+          <StudyPostCard
+            key={post.postId}
+            id={post.postId}
+            title={post.title}
+            subjectName={post.subjectName ?? ''}
+            description={post.description ?? '함께 공부하실 분을 찾습니다'}
+            currentCount={post.currentCount ?? 0}
+            maxCount={post.maxCount ?? 0}
+            author={post.authorName}
+            time={formatDate(post.createdAt)}
+            variant={isStudyTab ? 'grid' : 'list'}
+          />
+        ) : (
+          <CommunityPostCard
+            key={post.postId}
+            id={post.postId}
+            category={BOARD_TYPE_LABEL[post.boardType]}
+            title={post.title}
+            author={post.authorName}
+            time={formatDate(post.createdAt)}
+            views={post.viewCount}
+            comments={post.commentCount}
+          />
+        )
+      )}
     </div>
   );
 }
