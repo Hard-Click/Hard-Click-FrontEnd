@@ -17,6 +17,7 @@ import {
 } from '../actions';
 import type { PostDetail, CommentItem } from '../types';
 import { BOARD_TYPE_LABEL } from '../types';
+import { useRef } from 'react';
 
 const CATEGORY_STYLE: Record<string, string> = {
   질문게시판: 'bg-[#FEF3C7] text-[#D97706]',
@@ -73,6 +74,17 @@ export default function CommunityDetailContent({
     replyId: number;
   } | null>(null);
 
+  const [commentImage, setCommentImage] = useState<File | null>(null);
+  const [commentImagePreview, setCommentImagePreview] = useState<string | null>(
+    null
+  );
+  const [replyImage, setReplyImage] = useState<File | null>(null);
+  const [replyImagePreview, setReplyImagePreview] = useState<string | null>(
+    null
+  );
+  const commentFileRef = useRef<HTMLInputElement>(null);
+  const replyFileRef = useRef<HTMLInputElement>(null);
+
   const fetchComments = async () => {
     const result = await getCommentsAction(postId);
     if (result.success && result.data) {
@@ -104,31 +116,72 @@ export default function CommunityDetailContent({
     toast.success('답변이 채택되었습니다.');
   };
 
+  const handleImageSelect = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: 'comment' | 'reply'
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const ALLOWED = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!ALLOWED.includes(file.type)) {
+      toast.error('jpg, png 형식만 업로드할 수 있습니다.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('이미지는 5MB 이하만 업로드할 수 있습니다.');
+      e.target.value = '';
+      return;
+    }
+    const preview = URL.createObjectURL(file);
+    if (type === 'comment') {
+      setCommentImage(file);
+      setCommentImagePreview(preview);
+    } else {
+      setReplyImage(file);
+      setReplyImagePreview(preview);
+    }
+    e.target.value = '';
+  };
+
   const handleCommentSubmit = async () => {
     if (!commentText.trim()) return;
-    const result = await createCommentAction({ postId, content: commentText });
+    const fd = new FormData();
+    fd.append('postId', String(postId));
+    fd.append('content', commentText);
+    if (commentImage) fd.append('image', commentImage);
+
+    const result = await createCommentAction(fd);
     if (!result.success) {
       toast.error(result.message || '댓글 등록에 실패했습니다.');
       return;
     }
     setCommentText('');
+    setCommentImage(null);
+    setCommentImagePreview(null);
     await fetchComments();
+    toast.success('댓글 등록이 완료되었습니다.');
   };
 
   const handleReplySubmit = async (parentCommentId: number) => {
     if (!replyText.trim()) return;
-    const result = await createCommentAction({
-      postId,
-      content: replyText,
-      parentId: parentCommentId,
-    });
+    const fd = new FormData();
+    fd.append('postId', String(postId));
+    fd.append('content', replyText);
+    fd.append('parentId', String(parentCommentId));
+    if (replyImage) fd.append('image', replyImage);
+
+    const result = await createCommentAction(fd);
     if (!result.success) {
       toast.error(result.message || '답글 등록에 실패했습니다.');
       return;
     }
     setReplyText('');
+    setReplyImage(null);
+    setReplyImagePreview(null);
     setReplyInputId(null);
     await fetchComments();
+    toast.success('답글 등록이 완료되었습니다.');
   };
 
   const handleDeletePost = async () => {
@@ -508,25 +561,66 @@ export default function CommunityDetailContent({
                 </button>
 
                 {replyInputId === comment.commentId && (
-                  <div className="mt-3 flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="답글을 입력하세요"
-                      value={replyText}
-                      onChange={(e) => setReplyText(e.target.value)}
-                      className="flex-1 rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none placeholder:text-[#9CA3AF]"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleReplySubmit(comment.commentId)}
-                      className={`rounded-xl px-4 py-2 text-sm font-semibold text-white transition ${
-                        replyText.trim()
-                          ? 'bg-[#2F5DAA]'
-                          : 'bg-[#2F5DAA] opacity-50'
-                      }`}
-                    >
-                      등록
-                    </button>
+                  <div className="mt-3 flex flex-col gap-2">
+                    {replyImagePreview && (
+                      <div className="relative h-[70px] w-[70px] overflow-hidden rounded-xl border border-[#E2E8F0]">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReplyImage(null);
+                            setReplyImagePreview(null);
+                          }}
+                          className="absolute right-1 top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs text-white"
+                        >
+                          ✕
+                        </button>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={replyImagePreview}
+                          alt="첨부 미리보기"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => replyFileRef.current?.click()}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#E2E8F0] hover:bg-[#F8FAFC]"
+                      >
+                        <Image
+                          src="/icons/image.svg"
+                          alt="이미지 첨부"
+                          width={18}
+                          height={18}
+                        />
+                      </button>
+                      <input
+                        ref={replyFileRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageSelect(e, 'reply')}
+                        className="hidden"
+                      />
+                      <input
+                        type="text"
+                        placeholder="답글을 입력하세요"
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        className="flex-1 rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none placeholder:text-[#9CA3AF]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleReplySubmit(comment.commentId)}
+                        className={`rounded-xl px-4 py-2 text-sm font-semibold text-white transition ${
+                          replyText.trim()
+                            ? 'bg-[#2F5DAA]'
+                            : 'bg-[#2F5DAA] opacity-50'
+                        }`}
+                      >
+                        등록
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -657,27 +751,64 @@ export default function CommunityDetailContent({
         <div className="my-6 h-px bg-[#E2E8F0]" />
 
         {/* comment input */}
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="댓글을 입력하세요"
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            className="flex-1 rounded-xl border border-[#E2E8F0] px-4 py-3 text-sm outline-none placeholder:text-[#9CA3AF]"
-          />
-          <button
-            type="button"
-            onClick={handleCommentSubmit}
-            className={`rounded-xl px-5 py-3 text-sm font-semibold text-white transition ${
-              commentText.trim() ? 'bg-[#2F5DAA]' : 'bg-[#2F5DAA] opacity-50'
-            }`}
-          >
-            등록
-          </button>
-
-          {isReportOpen && (
-            <ReportModal onClose={() => setIsReportOpen(false)} />
+        <div className="flex flex-col gap-2">
+          {commentImagePreview && (
+            <div className="relative h-[80px] w-[80px] overflow-hidden rounded-xl border border-[#E2E8F0]">
+              <button
+                type="button"
+                onClick={() => {
+                  setCommentImage(null);
+                  setCommentImagePreview(null);
+                }}
+                className="absolute right-1 top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs text-white"
+              >
+                ✕
+              </button>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={commentImagePreview}
+                alt="첨부 미리보기"
+                className="h-full w-full object-cover"
+              />
+            </div>
           )}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => commentFileRef.current?.click()}
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#E2E8F0] hover:bg-[#F8FAFC]"
+            >
+              <Image
+                src="/icons/image.svg"
+                alt="이미지 첨부"
+                width={20}
+                height={20}
+              />
+            </button>
+            <input
+              ref={commentFileRef}
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleImageSelect(e, 'comment')}
+              className="hidden"
+            />
+            <input
+              type="text"
+              placeholder="댓글을 입력하세요"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              className="flex-1 rounded-xl border border-[#E2E8F0] px-4 py-3 text-sm outline-none placeholder:text-[#9CA3AF]"
+            />
+            <button
+              type="button"
+              onClick={handleCommentSubmit}
+              className={`rounded-xl px-5 py-3 text-sm font-semibold text-white transition ${
+                commentText.trim() ? 'bg-[#2F5DAA]' : 'bg-[#2F5DAA] opacity-50'
+              }`}
+            >
+              등록
+            </button>
+          </div>
         </div>
       </div>
 
