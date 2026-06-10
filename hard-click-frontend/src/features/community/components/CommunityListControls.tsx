@@ -56,7 +56,10 @@ export default function CommunityListControls({
               <button
                 key={filter}
                 type="button"
-                onClick={() => pushWith({ tab: filter })}
+                onClick={() => {
+                  setSearch('');
+                  pushWith({ tab: filter, keyword: undefined, sort: undefined, subject: undefined });
+                }}
                 className={`h-11 rounded-[20px] text-sm font-semibold transition ${
                   isActive
                     ? 'bg-[#2F5DAA] text-white shadow-sm'
