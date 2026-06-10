@@ -1,0 +1,125 @@
+language: "ko-KR"
+
+tone_instructions: >
+  간결하고 단호하게 리뷰한다.
+  런타임 에러 가능성, 성능(불필요한 리렌더·N+1성 요청), 보안 리스크, 타입 안정성을 우선 지적한다.
+  단순 스타일 지적보다 Server/Client 경계 위반, 데이터 페칭 패턴, 상태 관리 문제를 우선한다.
+  지적 시 반드시 사유와 권장 대안을 함께 제시한다.
+
+reviews:
+  profile: "assertive"
+  high_level_summary: true
+  poem: false
+
+  finishing_touches:
+    docstrings:
+      enabled: false
+
+  auto_review:
+    enabled: true
+    drafts: false
+    ignore_title_keywords:
+      - "WIP"
+      - "draft"
+
+  path_filters:
+    - "!.next/**"
+    - "!out/**"
+    - "!build/**"
+    - "!node_modules/**"
+    - "!**/*.lock"
+    - "!package-lock.json"
+    - "!**/*.mock.ts"
+    - "src/**"
+
+  path_instructions:
+    - path: "src/app/**/page.tsx"
+      instructions: |
+        - 기본은 Server Component인지 확인한다. 불필요하게 'use client'를 page에 붙이지 않았는지 확인한다.
+        - 데이터 조회는 server.ts(serverApi)에서 async/await로 하는지 확인한다. useEffect 페칭을 지적한다.
+        - Next 15+ params/searchParams는 Promise이므로 await 했는지 확인한다.
+        - 서버 → 클라 props가 JSON 직렬화 가능한 값(함수·클래스·Date 인스턴스 ❌)인지 확인한다.
+
+    - path: "src/app/**/route.ts"
+      instructions: |
+        - BFF 프록시가 쿠키 토큰을 Authorization 헤더로 주입하는 흐름을 깨지 않는지 확인한다.
+        - 인증/인가 누락, 민감 정보 로깅을 확인한다.
+
+    - path: "src/features/**/server.ts"
+      instructions: |
+        - serverApi(lib/api)를 사용하는 Server 전용 모듈인지 확인한다. 클라이언트에서 import되지 않는지 확인한다.
+        - 백엔드 응답(XxxApiResponse)을 toXxx 매퍼로 UI 타입으로 변환하는지 확인한다.
+        - USE_MOCK 분기가 있는지, 페이징/정렬/필터 파라미터 처리가 적절한지 확인한다.
+
+    - path: "src/features/**/services.ts"
+      instructions: |
+        - Client Component용 호출은 api(services/api, 동일 출처 /api/*)를 쓰는지 확인한다.
+        - 브라우저에서 백엔드를 직접 호출(절대 URL)하지 않는지 확인한다.
+        - toXxx 매퍼로 응답을 UI 타입으로 변환하는지 확인한다.
+
+    - path: "src/features/**/actions.ts"
+      instructions: |
+        - 'use server' 선언과 데이터 변경 흐름(검증 → 변환 → 전송 → 에러 처리 → revalidatePath)을 확인한다.
+        - File 업로드는 FormData로 받는지 확인한다(File 직렬화 이슈 방지).
+        - redirect()는 try/catch 밖에서 호출하는지 확인한다.
+        - 입력 검증 누락, 에러 메시지 누락을 지적한다.
+
+    - path: "src/features/**/types.ts"
+      instructions: |
+        - any 사용을 지적하고 unknown + 타입 가드를 권장한다.
+        - 백엔드 응답 타입(XxxApiResponse)과 UI 타입(XxxDetail)이 분리되어 있는지 확인한다.
+        - enum/유니언은 백엔드 명세와 일치하는지 확인한다.
+
+    - path: "src/features/**/components/**"
+      instructions: |
+        - 'use client'는 상호작용(useState·onClick·이벤트)이 있는 잎사귀에만 붙였는지 확인한다.
+        - 단순 표시용 버튼/배지 때문에 불필요하게 'use client'를 선언하지 않았는지 확인한다.
+        - useEffect + useState 데이터 페칭을 지적한다(서버 조회 권장).
+        - 이벤트 핸들러 useCallback 메모이제이션, key 누락, 불필요한 리렌더를 확인한다.
+        - 이미지에 alt, 버튼에 type 명시 등 접근성을 확인한다.
+
+    - path: "src/components/**"
+      instructions: |
+        - 공통/UI 컴포넌트의 재사용성과 props 타입(interface) 정의를 확인한다.
+        - 도메인 의존성이 공통 컴포넌트로 새어 들어가지 않는지 확인한다.
+        - 중복 컴포넌트(특히 모달) 신규 생성 전 기존 것 재사용 가능성을 지적한다.
+
+    - path: "src/lib/api.ts"
+      instructions: |
+        - serverApi는 cookies()로 accessToken을 읽어 Authorization을 주입하는 Server 전용인지 확인한다.
+        - 클라이언트 번들에 포함되지 않도록 import 경로를 확인한다.
+
+    - path: "src/services/api.ts"
+      instructions: |
+        - 동일 출처 /api/* 로 요청하는 클라이언트 axios인지 확인한다.
+        - ApiResponse<T> 응답 형식을 유지하는지 확인한다.
+        - 인증 토큰을 클라이언트에서 직접 헤더에 붙이지 않는지 확인한다(httpOnly 쿠키 사용).
+
+    - path: "src/store/**"
+      instructions: |
+        - 토큰 등 민감 정보를 클라이언트 상태/localStorage에 저장하지 않는지 확인한다(XSS 방지).
+        - 전역 상태로 둘 필요가 있는 값인지(과도한 전역화) 확인한다.
+
+    - path: "src/**/*.{ts,tsx}"
+      instructions: |
+        - any 타입, 미사용 변수/import, console.log 잔존을 지적한다.
+        - 경로 별칭(@/*) 대신 깊은 상대경로(../../) 사용을 지적한다.
+        - 인증 토큰을 localStorage에 저장하거나 클라이언트에서 직접 다루는 코드를 지적한다.
+        - Tailwind 외 인라인 스타일/신규 CSS 모듈 추가를 지적한다(동적 색상 예외).
+
+    - path: "**/*.config.{ts,js,mjs}"
+      instructions: |
+        - next.config의 images.remotePatterns, serverActions.bodySizeLimit 등 변경이 보안/운영에 안전한지 확인한다.
+        - 빌드/번들 설정 변경의 영향 범위를 확인한다.
+
+    - path: "**/.env*"
+      instructions: |
+        - .env 파일이 .gitignore에 포함되어 있는지 반드시 확인한다.
+        - NEXT_PUBLIC_ prefix에 토큰·시크릿이 노출되지 않는지 확인한다.
+        - 실제 credentials가 커밋된 경우 즉시 지적한다.
+
+    - path: "package.json"
+      instructions: |
+        - 의존성 추가 시 보안 취약점, 라이선스, 번들 크기 영향을 확인한다.
+        - Next/React 버전과 호환성을 확인한다.
+        - 불필요하게 무거운 라이브러리 추가를 지적한다.
