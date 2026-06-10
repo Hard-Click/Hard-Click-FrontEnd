@@ -32,7 +32,10 @@ function mockOk<T>(data: T): ApiResponse<T> {
 }
 
 /** ApiResponse<A> → ApiResponse<B> (성공+데이터만 매핑, 에러는 그대로 전파) */
-export function mapOk<A, B>(res: ApiResponse<A>, fn: (a: A) => B): ApiResponse<B> {
+export function mapOk<A, B>(
+  res: ApiResponse<A>,
+  fn: (a: A) => B
+): ApiResponse<B> {
   if (res.success && res.data != null) return { ...res, data: fn(res.data) };
   return { ...res, data: undefined } as ApiResponse<B>;
 }
@@ -52,6 +55,8 @@ function toPostListItem(p: PostItemApiResponse): PostListItem {
     subjectName: p.subjectName ?? null,
     description: p.description ?? null,
     createdAt: p.createdAt,
+    isMine: p.isMine ?? null,
+    isJoined: p.isJoined ?? null,
   };
 }
 
@@ -106,7 +111,7 @@ export async function getPosts(
   boardType: BoardType = 'ALL',
   page = 0,
   keyword?: string,
-  sort?: string,
+  sort?: string
 ) {
   if (USE_MOCK) return mockOk(toPostListResponse(mockPostListResponse));
 
@@ -130,13 +135,19 @@ export async function getSubjects() {
 
 export async function getPostDetail(postId: number) {
   if (USE_MOCK) return mockOk(toPostDetail({ ...mockPostDetail, postId }));
-  return mapOk(await api.get<PostDetailApiResponse>(`/api/posts/${postId}`), toPostDetail);
+  return mapOk(
+    await api.get<PostDetailApiResponse>(`/api/posts/${postId}`),
+    toPostDetail
+  );
 }
 
 export async function createPost(body: CreatePostRequest, files?: File[]) {
   if (USE_MOCK) return mockOk({ postId: 1 });
   const form = new FormData();
-  form.append('data', new Blob([JSON.stringify(body)], { type: 'application/json' }));
+  form.append(
+    'data',
+    new Blob([JSON.stringify(body)], { type: 'application/json' })
+  );
   if (files) files.forEach((f) => form.append('files', f));
   return api.post<{ postId: number }>('/api/posts', form);
 }
@@ -144,11 +155,14 @@ export async function createPost(body: CreatePostRequest, files?: File[]) {
 export async function updatePost(
   postId: number,
   body: UpdatePostRequest,
-  files?: File[],
+  files?: File[]
 ) {
   if (USE_MOCK) return mockOk({ postId });
   const form = new FormData();
-  form.append('data', new Blob([JSON.stringify(body)], { type: 'application/json' }));
+  form.append(
+    'data',
+    new Blob([JSON.stringify(body)], { type: 'application/json' })
+  );
   if (files) files.forEach((f) => form.append('files', f));
   return api.patch<{ postId: number }>(`/api/posts/${postId}`, form);
 }
@@ -162,24 +176,30 @@ export async function getComments(postId: number) {
   if (USE_MOCK) return mockOk(toCommentsResponse(mockCommentsResponse));
   return mapOk(
     await api.get<CommentListApiResponse>(`/api/posts/${postId}/comments`),
-    toCommentsResponse,
+    toCommentsResponse
   );
 }
 
 export async function createComment(body: CreateCommentRequest) {
   if (USE_MOCK) return mockOk({ commentId: 1 });
   const form = new FormData();
-  form.append('data', new Blob([JSON.stringify(body)], { type: 'application/json' }));
+  form.append(
+    'data',
+    new Blob([JSON.stringify(body)], { type: 'application/json' })
+  );
   return api.post<{ commentId: number }>('/api/comments', form);
 }
 
 export async function updateComment(
   commentId: number,
-  body: UpdateCommentRequest,
+  body: UpdateCommentRequest
 ) {
   if (USE_MOCK) return mockOk({ commentId });
   const form = new FormData();
-  form.append('data', new Blob([JSON.stringify(body)], { type: 'application/json' }));
+  form.append(
+    'data',
+    new Blob([JSON.stringify(body)], { type: 'application/json' })
+  );
   return api.patch<{ commentId: number }>(`/api/comments/${commentId}`, form);
 }
 
@@ -192,6 +212,6 @@ export async function acceptComment(commentId: number) {
   if (USE_MOCK) return mockOk({ isAccepted: true });
   return api.post<{ isAccepted: boolean }>(
     `/api/comments/${commentId}/accept`,
-    {},
+    {}
   );
 }
