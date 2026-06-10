@@ -64,7 +64,7 @@ export default function CommunityDetailContent({
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
   const [deletingCommentId, setDeletingCommentId] = useState<number | null>(
-    null,
+    null
   );
   const [editingReplyId, setEditingReplyId] = useState<number | null>(null);
   const [editingReplyText, setEditingReplyText] = useState('');
@@ -80,12 +80,14 @@ export default function CommunityDetailContent({
     }
   };
 
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
   const category = BOARD_TYPE_LABEL[post.boardType];
   const isAccepted = post.status === 'ADOPTED';
 
   const totalComments = comments.reduce(
     (acc, c) => acc + 1 + (c.replies?.length ?? 0),
-    0,
+    0
   );
 
   const handleAccept = async (commentId: number) => {
@@ -317,20 +319,27 @@ export default function CommunityDetailContent({
           {post.content}
         </p>
 
-        {/* 첨부파일 — httpOnly 쿠키가 동일 출처 요청에 자동 첨부되므로 직접 렌더 */}
+        {/* 첨부파일 — 썸네일 클릭 시 모달 확대 */}
         {post.fileUrls && post.fileUrls.length > 0 && (
           <div className="mt-4 flex flex-col gap-2">
-            <span className="text-xs font-semibold text-[#64748B]">첨부파일</span>
+            <span className="text-xs font-semibold text-[#64748B]">
+              첨부파일
+            </span>
             <div className="flex flex-wrap gap-3">
               {post.fileUrls.map((url, i) => (
-                <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setPreviewImage(url)}
+                  className="overflow-hidden rounded-xl border border-[#E2E8F0]"
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={url}
                     alt={`첨부이미지-${i + 1}`}
-                    className="max-h-[300px] max-w-full rounded-xl border border-[#E2E8F0] object-contain"
+                    className="h-[180px] w-[240px] cursor-pointer object-cover transition hover:opacity-90"
                   />
-                </a>
+                </button>
               ))}
             </div>
           </div>
@@ -407,7 +416,7 @@ export default function CommunityDetailContent({
                           onClick={() =>
                             handleCommentEditStart(
                               comment.commentId,
-                              comment.content,
+                              comment.content
                             )
                           }
                         >
@@ -485,7 +494,7 @@ export default function CommunityDetailContent({
                     setReplyInputId(
                       replyInputId === comment.commentId
                         ? null
-                        : comment.commentId,
+                        : comment.commentId
                     )
                   }
                   className="flex items-center gap-1 text-xs text-[#64748B] hover:text-[#2F5DAA]"
@@ -553,7 +562,7 @@ export default function CommunityDetailContent({
                                   onClick={() =>
                                     handleReplyEditStart(
                                       reply.commentId,
-                                      reply.content,
+                                      reply.content
                                     )
                                   }
                                 >
@@ -666,6 +675,29 @@ export default function CommunityDetailContent({
           )}
         </div>
       </div>
+
+      {/* 이미지 미리보기 모달 */}
+      {previewImage && (
+        <div
+          onClick={() => setPreviewImage(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+        >
+          <button
+            type="button"
+            onClick={() => setPreviewImage(null)}
+            className="absolute right-6 top-6 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-lg text-[#1E293B] transition hover:bg-white"
+          >
+            ✕
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={previewImage}
+            alt="첨부 이미지 원본"
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[85vh] max-w-[85vw] rounded-xl object-contain"
+          />
+        </div>
+      )}
 
       {/* 게시글 삭제 확인 모달 */}
       {isDeleteConfirmOpen && (
