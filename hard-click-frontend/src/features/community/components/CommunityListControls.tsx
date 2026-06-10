@@ -67,26 +67,35 @@ export default function CommunityListControls({
 
       {/* toolbar: search + sort */}
       <div className="mt-6 flex items-center justify-between rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm">
-        <div className="flex h-11 w-full max-w-[870px] items-center rounded-xl border border-[#E2E8F0] px-4">
-          <button type="button" onClick={() => pushWith({ keyword: search })}>
-            <Image
-              src="/icons/commuSearch.svg"
-              alt="search"
-              width={18}
-              height={18}
-            />
-          </button>
-          <input
-            type="text"
-            placeholder="게시글 검색"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && pushWith({ keyword: search })}
-            className="ml-3 w-full bg-transparent text-sm outline-none placeholder:text-[#9CA3AF]"
-          />
-        </div>
+      <div className="flex w-full max-w-[870px] items-center gap-2">
+  <div className="flex h-11 flex-1 items-center rounded-xl border border-[#E2E8F0] px-4">
+    <Image
+      src="/icons/commuSearch.svg"
+      alt="search"
+      width={18}
+      height={18}
+    />
+    <input
+      type="text"
+      placeholder="게시글 검색"
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      onKeyDown={(e) => e.key === 'Enter' && pushWith({ keyword: search })}
+      className="ml-3 w-full bg-transparent text-sm outline-none placeholder:text-[#9CA3AF]"
+    />
+  </div>
+  <button
+    type="button"
+    onClick={() => pushWith({ keyword: search })}
+    className="h-11 rounded-xl bg-[#2F5DAA] px-5 text-sm font-semibold text-white transition hover:opacity-90"
+  >
+    검색
+  </button>
+</div>
+<div className="mx-4 h-10 w-px bg-[#4B5563]" />
+        
 
-        <div className="ml-4 flex items-center gap-2">
+        <div className="flex items-center gap-2">
           {SORT_OPTIONS.map((option) => {
             const isActive = sortType === option;
             return (
@@ -94,7 +103,7 @@ export default function CommunityListControls({
                 key={option}
                 type="button"
                 onClick={() => pushWith({ sort: option })}
-                className={`h-10 rounded-xl px-4 text-sm font-semibold transition ${
+                className={`h-10 whitespace-nowrap rounded-xl px-3 text-sm font-semibold transition ${
                   isActive
                     ? 'bg-[#2F5DAA] text-white'
                     : 'bg-[#F8FAFC] text-[#4B5563]'
