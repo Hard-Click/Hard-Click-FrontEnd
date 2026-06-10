@@ -3,7 +3,11 @@ import PostActionButtons from '@/features/community/components/PostActionButtons
 import CommunityListControls from '@/features/community/components/CommunityListControls';
 import CommunityPostList from '@/features/community/components/CommunityPostList';
 import { getCommunityPosts, getSubjects } from '@/features/community/server';
-import type { BoardType, PostListItem, SubjectItem } from '@/features/community/types';
+import type {
+  BoardType,
+  PostListItem,
+  SubjectItem,
+} from '@/features/community/types';
 import { TAB_TO_BOARD_TYPE } from '@/features/community/types';
 
 const SORT_MAP: Record<string, string> = {
@@ -24,7 +28,9 @@ interface CommunityPageProps {
 }
 
 // Server Component: 데이터를 서버에서 가져와 렌더한다 (useEffect 없음)
-export default async function CommunityPage({ searchParams }: CommunityPageProps) {
+export default async function CommunityPage({
+  searchParams,
+}: CommunityPageProps) {
   const sp = await searchParams;
   const tab = sp.tab ?? '전체';
   const sort = sp.sort ?? '최신순';
@@ -33,7 +39,7 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
 
   const boardType = TAB_TO_BOARD_TYPE[tab] ?? 'ALL';
   const apiSort = SORT_MAP[sort] ?? 'latest';
-  const subject = sp.subject ? Number(sp.subject) : undefined;
+  const subject = sp.subject || undefined;
 
   const [result, subjectsResult] = await Promise.all([
     getCommunityPosts(
@@ -41,14 +47,14 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
       Number.isNaN(pageNum) ? 0 : pageNum,
       keyword || undefined,
       apiSort,
-      subject,
+      subject
     ),
     getSubjects(),
   ]);
   const posts: PostListItem[] =
-  result.success && result.data ? (result.data.content ?? []) : [];
-const subjects: SubjectItem[] =
-  subjectsResult.success && subjectsResult.data ? subjectsResult.data : [];
+    result.success && result.data ? result.data.content ?? [] : [];
+  const subjects: SubjectItem[] =
+    subjectsResult.success && subjectsResult.data ? subjectsResult.data : [];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] px-8 py-10">
@@ -74,12 +80,12 @@ const subjects: SubjectItem[] =
         </div>
 
         <CommunityListControls
-  activeTab={tab}
-  sortType={sort}
-  keyword={keyword}
-  subject={sp.subject ?? ''}
-  subjects={subjects}
-/>
+          activeTab={tab}
+          sortType={sort}
+          keyword={keyword}
+          subject={sp.subject ?? ''}
+          subjects={subjects}
+        />
         <CommunityPostList posts={posts} />
       </div>
     </div>
