@@ -19,10 +19,10 @@ export const TAB_TO_BOARD_TYPE: Record<string, BoardType> = {
   스터디모집: 'STUDY',
 };
 
-// GET /api/subjects → SubjectResponse { subjectId, subjectName }
+// GET /api/subjects → enum 기반
 export interface SubjectItem {
-  subjectId: number;
-  subjectName: string;
+  code: string;
+  name: string;
 }
 
 // GET /api/boards/{boardType}/posts
@@ -95,13 +95,13 @@ export interface CreatePostRequest {
   boardType: Exclude<BoardType, 'ALL'>;
   title: string;
   content: string;
-  subjectId?: number;
+  subjectCode?: string;
 }
 
 export interface UpdatePostRequest {
   title: string;
   content: string;
-  subjectId?: number;
+  subjectCode?: string;
 }
 
 export interface CreateCommentRequest {

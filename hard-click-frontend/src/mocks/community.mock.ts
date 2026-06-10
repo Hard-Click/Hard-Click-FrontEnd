@@ -5,6 +5,8 @@ import type {
   SubjectItem,
 } from '@/features/community/types';
 
+import { SUBJECTS } from '@/constants/subjects';
+
 /**
  * 커뮤니티 도메인 목 데이터 — 실제 백엔드 코드(community) DTO 기준.
  * 서비스의 toXxx 매퍼가 이 백엔드 shape → UI 타입으로 변환한다.
@@ -13,12 +15,10 @@ import type {
  *    실제는 posts 래퍼 + isMyPost/isAccepted, 댓글은 authorInitial/isDeleted 포함 재귀.
  */
 
-/** GET /api/subjects → SubjectResponse[] */
-export const mockSubjects: SubjectItem[] = [
-  { subjectId: 1, subjectName: '국어' },
-  { subjectId: 2, subjectName: '수학' },
-  { subjectId: 8, subjectName: '생명과학Ⅰ' },
-];
+export const mockSubjects: SubjectItem[] = SUBJECTS.map((s) => ({
+  code: s.code,
+  name: s.name,
+}));
 
 /** GET /api/boards/{boardType}/posts → PostListResponse */
 export const mockPostListResponse: PostListApiResponse = {
@@ -31,6 +31,7 @@ export const mockPostListResponse: PostListApiResponse = {
       createdAt: '2026-05-18T19:00:00',
       viewCount: 145,
       commentCount: 12,
+      subjectName: '독서·문학 (공통)',
     },
     {
       postId: 888,
@@ -49,6 +50,7 @@ export const mockPostListResponse: PostListApiResponse = {
       createdAt: '2026-05-16T09:00:00',
       viewCount: 120,
       commentCount: 0,
+      subjectName: '미적분',
     },
     {
       postId: 886,
@@ -58,7 +60,7 @@ export const mockPostListResponse: PostListApiResponse = {
       createdAt: '2026-05-15T14:00:00',
       viewCount: 89,
       commentCount: 5,
-      subjectName: '수학',
+      subjectName: '수학Ⅰ·수학Ⅱ (공통)',
       description: '함께 공부하실 분을 찾습니다',
       currentCount: 3,
       maxCount: 6,
@@ -88,7 +90,7 @@ export const mockPostListResponse: PostListApiResponse = {
       createdAt: '2026-05-13T10:00:00',
       viewCount: 30,
       commentCount: 1,
-      subjectName: '영어',
+      subjectName: '영어Ⅰ·영어Ⅱ',
       description: '함께 공부하실 분을 찾습니다',
       currentCount: 4,
       maxCount: 6,

@@ -178,16 +178,20 @@ export default function CommunityWriteForm({
     setIsConfirmOpen(false);
     setIsSubmitting(true);
     const boardType = BOARD_TYPE_VALUE[activeTab];
-    const subjectId =
+    const subjectCode =
       (activeTab === '질문게시판' || activeTab === '스터디모집') && subject
-        ? subjects.find((s) => s.subjectName === subject)?.subjectId
+        ? subjects.find((s) => s.name === subject)?.code
         : undefined;
     const filesToUpload = selectedFiles.length > 0 ? selectedFiles : undefined;
 
     if (mode === 'edit' && postId) {
       const result = await updatePostAction(
         postId,
-        { title, content, ...(subjectId !== undefined ? { subjectId } : {}) },
+        {
+          title,
+          content,
+          ...(subjectCode !== undefined ? { subjectCode } : {}),
+        },
         filesToUpload
       );
       setIsSubmitting(false);
@@ -203,7 +207,7 @@ export default function CommunityWriteForm({
           boardType,
           title,
           content,
-          ...(subjectId !== undefined ? { subjectId } : {}),
+          ...(subjectCode !== undefined ? { subjectCode } : {}),
         },
         filesToUpload
       );
@@ -376,21 +380,21 @@ export default function CommunityWriteForm({
                   <div className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-[#E2E8F0] bg-white shadow-lg">
                     {subjects.map((s) => (
                       <button
-                        key={s.subjectId}
+                        key={s.code}
                         type="button"
                         onClick={() => {
-                          setSubject(s.subjectName);
+                          setSubject(s.name);
                           setSubjectError('');
                           setFocusedErrorField(null);
                           setIsSubjectOpen(false);
                         }}
                         className={`w-full px-4 py-2.5 text-left text-sm hover:bg-[#F8FAFC] ${
-                          subject === s.subjectName
+                          subject === s.name
                             ? 'bg-[#EFF6FF] font-semibold text-[#2F5DAA]'
                             : 'text-[#374151]'
                         }`}
                       >
-                        {s.subjectName}
+                        {s.name}
                       </button>
                     ))}
                   </div>
