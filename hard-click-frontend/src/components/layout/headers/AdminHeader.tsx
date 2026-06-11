@@ -20,7 +20,10 @@ export default function AdminHeader() {
       <div className="mx-auto flex h-full w-full max-w-[1440px] items-center px-8">
         {/* 로고 */}
         <div className="flex-1">
-          <Link href="/admin/dashboard" className="flex w-fit items-center gap-3">
+          <Link
+            href="/admin/dashboard"
+            className="flex w-fit items-center gap-3"
+          >
             <Image src="/logos/logo.svg" alt="logo" width={28} height={28} />
             <span className="text-xl font-bold text-white">FLOWN</span>
           </Link>
@@ -45,7 +48,18 @@ export default function AdminHeader() {
         </nav>
 
         {/* 우측 — 관리자 뱃지 */}
-        <div className="flex flex-1 items-center justify-end">
+        <div className="flex flex-1 items-center justify-end gap-6">
+          <Link
+            href="/notifications"
+            className="relative w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-colors"
+          >
+            <Image
+              src="/icons/bellIcon.svg"
+              alt="알림"
+              width={20}
+              height={20}
+            />
+          </Link>
           <span className="rounded-full bg-white/20 px-5 py-2 text-sm font-semibold text-white">
             관리자
           </span>
