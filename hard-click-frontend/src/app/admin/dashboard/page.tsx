@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import AdminDashboardStats from '@/features/admin/components/AdminDashboardStats';
+import AdminQuickActions from '@/features/admin/components/AdminQuickActions';
 
 export default function AdminDashboardPage() {
   return (
@@ -31,7 +32,9 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* 빠른 관리 영역 */}
-        {/* <AdminQuickActions /> */}
+        <div className="mb-8">
+          <AdminQuickActions />
+        </div>
 
         {/* 최근 신고 / 최근 공지 */}
         {/* <AdminRecentReports /> */}
