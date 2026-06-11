@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import AdminDashboardStats from '@/features/admin/components/AdminDashboardStats';
 
 export default function AdminDashboardPage() {
   return (
@@ -25,7 +26,9 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* 통계 카드 영역 */}
-        {/* <AdminStatsCards /> */}
+        <div className="mb-8">
+          <AdminDashboardStats />
+        </div>
 
         {/* 빠른 관리 영역 */}
         {/* <AdminQuickActions /> */}
