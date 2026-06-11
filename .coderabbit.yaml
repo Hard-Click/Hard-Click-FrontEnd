@@ -30,7 +30,6 @@ reviews:
     - "!**/*.lock"
     - "!package-lock.json"
     - "!**/*.mock.ts"
-    - "hard-click-frontend/src/**"
 
   path_instructions:
     - path: "hard-click-frontend/src/app/**/page.tsx"
