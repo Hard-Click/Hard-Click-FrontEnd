@@ -7,12 +7,12 @@ export default function InstructorDashboardContent() {
     <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
       {/* 헤더 */}
       <div className="mb-8 flex items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-[20px] bg-[#2F5DAA]">
+        <div className="flex h-16 w-16 items-center justify-center rounded-[26px] bg-[#2F5DAA]">
           <Image
             src="/icons/dashboardIcon.svg"
             alt="dashboard"
-            width={32}
-            height={32}
+            width={36}
+            height={36}
           />
         </div>
         <div>
