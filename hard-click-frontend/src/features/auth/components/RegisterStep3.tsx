@@ -243,7 +243,7 @@ export function RegisterStep3({
           <StatusText
             type={verificationStatus.type}
             text={verificationStatus.text}
-            className="absolute left-[23px] top-[134px]"
+            className="absolute left-[23px] top-[123px]"
           />
         )}
       </div>
