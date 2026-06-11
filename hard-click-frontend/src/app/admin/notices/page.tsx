@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import AdminNoticeTabs from '@/features/admin/components/AdminNoticeTabs';
+import AdminNoticeFilterBar from '@/features/admin/components/AdminNoticeFilterBar';
 
 export default function AdminNoticesPage() {
   return (
@@ -29,6 +30,7 @@ export default function AdminNoticesPage() {
         </div>
 
         <AdminNoticeTabs />
+        <AdminNoticeFilterBar />
       </div>
     </div>
   );
