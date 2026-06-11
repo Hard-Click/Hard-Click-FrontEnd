@@ -46,7 +46,7 @@ export default function AdminNoticeFilterBar() {
                 key={f.key}
                 type="button"
                 onClick={() => setFilter(f.key)}
-                className={`h-9 w-18 whitespace-nowrap rounded-[30px] px-4 text-sm font-semibold transition hover:opacity-90 ${
+                className={`h-9 w-18 whitespace-nowrap rounded-[30px] px-4 text-sm font-semibold transition ${
                   isActive
                     ? 'bg-[#2F5DAA] text-white'
                     : 'bg-[#F1F5F9] text-[#475569]'
