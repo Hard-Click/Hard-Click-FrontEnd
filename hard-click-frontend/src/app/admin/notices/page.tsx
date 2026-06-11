@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import AdminNoticeTabs from '@/features/admin/components/AdminNoticeTabs';
 
 export default function AdminNoticesPage() {
   return (
@@ -27,8 +28,7 @@ export default function AdminNoticesPage() {
           {/* <AdminNoticeWriteButton /> */}
         </div>
 
-        {/* 탭 + 검색/필터 + 테이블 (컴포넌트) */}
-        {/* <AdminNoticeManage /> */}
+        <AdminNoticeTabs />
       </div>
     </div>
   );
