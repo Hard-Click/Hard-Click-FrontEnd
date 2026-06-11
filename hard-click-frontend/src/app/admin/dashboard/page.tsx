@@ -1,6 +1,9 @@
 import Image from 'next/image';
 import AdminDashboardStats from '@/features/admin/components/AdminDashboardStats';
 import AdminQuickActions from '@/features/admin/components/AdminQuickActions';
+import AdminRecentReports from '@/features/admin/components/AdminRecentReports';
+import AdminRecentNotices from '@/features/admin/components/AdminRecentNotices';
+import { mockRecentReports, mockRecentNotices } from '@/mocks/admin.mock';
 
 export default function AdminDashboardPage() {
   return (
@@ -37,8 +40,10 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* 최근 신고 / 최근 공지 */}
-        {/* <AdminRecentReports /> */}
-        {/* <AdminRecentNotices /> */}
+        <div className="grid grid-cols-2 gap-5">
+          <AdminRecentReports reports={mockRecentReports} />
+          <AdminRecentNotices notices={mockRecentNotices} />
+        </div>
       </div>
     </div>
   );
