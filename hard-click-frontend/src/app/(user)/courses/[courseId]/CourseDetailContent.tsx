@@ -276,6 +276,9 @@ export default function CourseDetailContent({
   });
   const displayedNotices = sortedNotices.slice(0, 3);
 
+  // UA-P0-140: 첫 번째 강의 lessonId (학습 시작 이동 대상)
+  const firstLessonId = course.curriculum[0]?.lessons[0]?.lessonId;
+
   return (
     <div className="min-h-screen bg-[#F0F2F5]">
 
@@ -844,7 +847,7 @@ export default function CourseDetailContent({
       </div>
 
       {/* ── UA-P0-140/142: 학습 시작 플로팅 버튼 — 수강자만 표시 ── */}
-      {isEnrolled && (
+      {isEnrolled && firstLessonId && (
         <div className="fixed bottom-8 right-8 z-40">
           <Link href={`/learning/${courseId}`}>
             <button
