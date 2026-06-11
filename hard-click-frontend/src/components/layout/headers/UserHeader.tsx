@@ -68,7 +68,7 @@ export default function UserHeader() {
 
   return (
     <header className="sticky top-0 z-50 w-full h-16 bg-[#2F5DAA] shadow-[0_2px_8px_rgba(0,0,0,0.15),0_1px_2px_rgba(0,0,0,0.08)] flex-shrink-0">
-      <div className="w-full max-w-[1440px] mx-auto px-8 h-full grid grid-cols-3 items-center">
+      <div className="w-full max-w-[1440px] mx-auto px-8 h-full grid grid-cols-[1fr_auto_1fr] items-center">
         {/* 로고 */}
         <Link href="/courses" className="flex items-center gap-3">
           <Image src="/logos/logo.svg" alt="logo" width={28} height={28} />

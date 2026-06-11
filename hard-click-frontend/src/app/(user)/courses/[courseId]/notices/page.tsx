@@ -13,7 +13,10 @@ function NoticeCard({
   instructorName: string;
 }) {
   return (
-    <div className="w-full box-border border border-[#E2E8F0] rounded-[20px] h-[131px] relative overflow-hidden hover:border-[#2F5DAA] transition-colors cursor-pointer">
+    <Link
+      href={`/notices/${notice.noticeId}`}
+      className="block w-full box-border border border-[#E2E8F0] rounded-[20px] h-[131px] relative overflow-hidden hover:border-[#2F5DAA] transition-colors"
+    >
       <div className="absolute left-[21px] top-[21px] right-[21px] bottom-[21px] flex flex-row items-start gap-4">
         {/* 중요 빨간 점 */}
         <div className="w-[10px] flex-shrink-0 pt-[7px]">
@@ -52,7 +55,7 @@ function NoticeCard({
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 

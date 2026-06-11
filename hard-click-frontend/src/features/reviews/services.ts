@@ -75,10 +75,29 @@ export async function getReviews(
   page = 0,
 ) {
   if (USE_MOCK) {
-    return { success: true, httpStatus: 200, message: '', data: mockReviewListResponse };
+    const PER_PAGE = 5;
+    const sorted = [...mockReviewListResponse.reviews].sort((a, b) =>
+      sort === 'rating'
+        ? b.rating - a.rating
+        : b.createdDate.localeCompare(a.createdDate),
+    );
+    const start = Math.max(0, page - 1) * PER_PAGE; // 컴포넌트가 1-based page 전달
+    return {
+      success: true,
+      httpStatus: 200,
+      message: '',
+      data: {
+        ...mockReviewListResponse,
+        reviews: sorted.slice(start, start + PER_PAGE),
+        totalCount: sorted.length,
+        currentPage: page,
+        totalPages: Math.max(1, Math.ceil(sorted.length / PER_PAGE)),
+      },
+    };
   }
+  // 컴포넌트가 1-based page 전달 → 백엔드는 0-based이므로 변환 (mock 슬라이싱의 page-1과 동일)
   return api.get<ReviewListApiResponse>(
-    `/api/courses/${courseId}/reviews?sort=${sort}&page=${page}`,
+    `/api/courses/${courseId}/reviews?sort=${sort}&page=${page - 1}`,
   );
 }
 
