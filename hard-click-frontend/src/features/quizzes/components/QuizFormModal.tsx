@@ -83,6 +83,9 @@ export default function QuizFormModal({
       : Array.from({ length: WEEK_COUNT }, (_, i) => i + 1)
           .filter((w) => !(takenWeeksByCourse[courseId] ?? []).includes(w))
           .map((w) => ({ label: `${w}주`, value: String(w) }));
+  // 강의 선택했는데 모든 주차가 이미 차 있으면 → 등록 가능한 주차 없음
+  const noWeeksAvailable =
+    mode === 'create' && courseId > 0 && weekOptions.length === 0;
 
   const isFormValid =
     title.trim() !== '' &&
@@ -312,10 +315,16 @@ export default function QuizFormModal({
                 value={week > 0 ? String(week) : ''}
                 options={weekOptions}
                 onChange={(v) => setWeek(Number(v))}
-                disabled={mode === 'edit' || courseId === 0}
+                disabled={mode === 'edit' || courseId === 0 || noWeeksAvailable}
                 fullWidth
               />
-              <FieldError message={errors?.week} />
+              {noWeeksAvailable ? (
+                <p className="mt-1.5 text-sm text-[#B91C1C]">
+                  이 강의는 모든 주차에 퀴즈가 있어 등록할 수 없습니다.
+                </p>
+              ) : (
+                <FieldError message={errors?.week} />
+              )}
             </div>
           </div>
 
