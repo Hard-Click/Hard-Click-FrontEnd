@@ -55,15 +55,19 @@ export const mockRecentNotices: AdminRecentNotice[] = [
 
 export interface AdminNoticeRow {
   id: number;
+  type: 'SYSTEM' | 'COURSE';
   title: string;
   createdAt: string;
   isPinned: boolean;
   isPublished: boolean;
+  courseTitle?: string;
 }
 
 export const mockAdminNotices: AdminNoticeRow[] = [
+  // 시스템 공지
   {
     id: 1,
+    type: 'SYSTEM',
     title: '시스템 점검 안내 (2026년 5월 15일)',
     createdAt: '2026.05.10',
     isPinned: true,
@@ -71,6 +75,7 @@ export const mockAdminNotices: AdminNoticeRow[] = [
   },
   {
     id: 2,
+    type: 'SYSTEM',
     title: '신규 강의 오픈 이벤트 안내',
     createdAt: '2026.05.08',
     isPinned: true,
@@ -78,9 +83,57 @@ export const mockAdminNotices: AdminNoticeRow[] = [
   },
   {
     id: 3,
+    type: 'SYSTEM',
     title: '개인정보 처리방침 변경 안내',
     createdAt: '2026.05.05',
     isPinned: false,
     isPublished: false,
+  },
+  // 강의 공지
+  {
+    id: 4,
+    type: 'COURSE',
+    title: '수1 뿌시기 - 5주차 과제 안내',
+    createdAt: '2026.05.11',
+    isPinned: true,
+    isPublished: true,
+    courseTitle: '수1 뿌시기',
+  },
+  {
+    id: 5,
+    type: 'COURSE',
+    title: '국어 머시기 - 보강 일정 공지',
+    createdAt: '2026.05.09',
+    isPinned: false,
+    isPublished: true,
+    courseTitle: '국어 머시기',
+  },
+  {
+    id: 6,
+    type: 'COURSE',
+    title: '미적분 머시기 - 자료 업로드',
+    createdAt: '2026.05.07',
+    isPinned: false,
+    isPublished: false,
+    courseTitle: '미적분 머시기',
+  },
+];
+
+export interface AdminCourseRow {
+  id: number;
+  title: string;
+  subject: string;
+  instructor: string;
+}
+
+export const mockAdminCourses: AdminCourseRow[] = [
+  { id: 1, title: '수1 뿌시기', subject: '수학Ⅰ', instructor: '김강사' },
+  { id: 2, title: '국어 머시기', subject: '독서', instructor: '안강사' },
+  { id: 3, title: '미적분 머시기', subject: '미적분', instructor: '김강사' },
+  {
+    id: 4,
+    title: '사회문화 머시기',
+    subject: '사회·문화',
+    instructor: '박강사',
   },
 ];
