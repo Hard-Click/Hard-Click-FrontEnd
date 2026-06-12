@@ -46,7 +46,7 @@ export default async function AdminCoursesPage({
       <CourseNoticeBanner notices={notices} />
 
       {/* 히어로 */}
-      <div className="w-full" style={{ backgroundColor: '#2F5DAA' }}>
+      <div className="w-full bg-[#2F5DAA]">
         <div className="w-full max-w-[1440px] mx-auto px-8 py-20">
           <h1 className="text-white font-semibold text-5xl leading-[60px] tracking-wide mb-6">
             2027 수능
