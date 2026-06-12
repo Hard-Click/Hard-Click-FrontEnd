@@ -48,7 +48,7 @@ export default function AdminNoticeManage({
       <div className="flex flex-col gap-6">
         <AdminNoticeTabs activeTab={activeTab} onTabChange={setActiveTab} />
         <AdminNoticeFilterBar />
-        <AdminNoticeTable key={activeTab} notices={filteredNotices} />
+        <AdminNoticeTable notices={filteredNotices} />
       </div>
     </>
   );

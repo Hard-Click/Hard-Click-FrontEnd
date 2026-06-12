@@ -170,10 +170,11 @@ export default function AdminNoticeFormModal({
           <button
             type="button"
             onClick={handleSubmit}
+            disabled={!isFormValid}
             className={`h-12 flex-1 rounded-xl text-sm font-semibold text-white transition ${
               isFormValid
                 ? 'bg-[#2F5DAA] hover:bg-[#1D3E75]'
-                : 'bg-[#2F5DAA] opacity-50'
+                : 'bg-[#2F5DAA] opacity-50 cursor-not-allowed'
             }`}
           >
             {mode === 'edit' ? '수정' : '등록'}

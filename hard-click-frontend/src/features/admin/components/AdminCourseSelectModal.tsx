@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import type { AdminCourseRow } from '@/mocks/admin.mock';
 
 interface AdminCourseSelectModalProps {
@@ -113,7 +112,7 @@ export default function AdminCourseSelectModal({
             className={`h-12 flex-1 rounded-xl text-sm font-semibold text-white transition ${
               selectedId !== null
                 ? 'bg-[#2F5DAA] hover:bg-[#1D3E75]'
-                : 'bg-[#2F5DAA] opacity-50'
+                : 'bg-[#2F5DAA] opacity-50 cursor-not-allowed'
             }`}
           >
             확인
