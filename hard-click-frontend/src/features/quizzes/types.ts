@@ -57,3 +57,15 @@ export interface QuizScoreBoard {
   title: string;
   rows: QuizScoreRow[];
 }
+
+/** 수강생 퀴즈 목록 — 주차별 항목 (본인 응시 상태 포함) */
+export interface StudentQuizItem {
+  quizId: number;
+  courseId: number;
+  week: number;
+  title: string;
+  questionCount: number;
+  attempted: boolean; // 응시 여부
+  score: number | null; // 점수 0~100 (미응시 null)
+  attemptedDate: string | null; // 응시일 YYYY-MM-DD (미응시 null)
+}
