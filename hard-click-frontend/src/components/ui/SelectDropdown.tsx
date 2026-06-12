@@ -92,7 +92,7 @@ export default function SelectDropdown({
         </svg>
       </button>
 
-      {isOpen && (
+      {isOpen && !disabled && (
         <div className="absolute left-0 top-[calc(100%+6px)] z-50 max-h-52 min-w-full overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-white py-2 shadow-lg">
           {options.map((opt) => (
             <button
