@@ -52,3 +52,35 @@ export const mockRecentNotices: AdminRecentNotice[] = [
     date: '2026.05.08 10:30',
   },
 ];
+
+export interface AdminNoticeRow {
+  id: number;
+  title: string;
+  createdAt: string;
+  isPinned: boolean;
+  isPublished: boolean;
+}
+
+export const mockAdminNotices: AdminNoticeRow[] = [
+  {
+    id: 1,
+    title: '시스템 점검 안내 (2026년 5월 15일)',
+    createdAt: '2026.05.10',
+    isPinned: true,
+    isPublished: true,
+  },
+  {
+    id: 2,
+    title: '신규 강의 오픈 이벤트 안내',
+    createdAt: '2026.05.08',
+    isPinned: true,
+    isPublished: true,
+  },
+  {
+    id: 3,
+    title: '개인정보 처리방침 변경 안내',
+    createdAt: '2026.05.05',
+    isPinned: false,
+    isPublished: false,
+  },
+];
