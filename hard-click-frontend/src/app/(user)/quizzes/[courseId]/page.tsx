@@ -44,6 +44,7 @@ export default async function StudentQuizzesPage({
 }) {
   const { courseId: courseIdStr } = await params;
   const courseId = Number(courseIdStr);
+  if (!Number.isInteger(courseId)) notFound(); // 잘못된 courseId(NaN 등) → 404
 
   const [courses, quizzes] = await Promise.all([
     getEnrolledCoursesServer(),
