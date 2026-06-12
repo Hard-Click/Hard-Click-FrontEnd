@@ -39,3 +39,21 @@ export interface QuizFormPayload {
   week: number;
   questions: QuizQuestionInput[];
 }
+
+/** 점수 현황 — 수강생 1명 행 (강사 화면 — 실명 표시, 마스킹 X) */
+export interface QuizScoreRow {
+  studentId: string; // 표시용 아이디 (@choiyea2026 — 실명 로마자 기반)
+  name: string; // 수강생 실명 (강사가 본인 학생 식별)
+  attended: boolean; // 응시 여부
+  score: number | null; // 점수 0~100 (미응시 null)
+  submittedDate: string | null; // 제출일 YYYY-MM-DD (미응시 null)
+}
+
+/** 점수 현황 — 퀴즈 1개 전체 (헤더 브레드크럼용 week/title 포함) */
+export interface QuizScoreBoard {
+  quizId: number;
+  courseId: number;
+  week: number;
+  title: string;
+  rows: QuizScoreRow[];
+}
