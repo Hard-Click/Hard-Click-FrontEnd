@@ -47,6 +47,9 @@ export default function SelectDropdown({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // disabled로 바뀌면 열림 상태 즉시 정리 — 열린 채 비활성→재활성 시 메뉴가 갑자기 뜨는 것 방지
+  if (disabled && isOpen) setIsOpen(false);
+
   const displayText = value
     ? (options.find((o) => o.value === value)?.label ?? placeholder)
     : placeholder;
