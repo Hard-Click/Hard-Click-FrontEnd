@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { deleteCourse, publishCourse } from '@/features/instructor/services';
 import type {
@@ -87,12 +87,12 @@ function SideNav({
 /* ── 메인 페이지 ── */
 export default function AdminCourseDetailContent({
   initialCourse,
+  courseId,
 }: {
   initialCourse: CourseDetail | null;
+  courseId: number;
 }) {
-  const params = useParams();
   const router = useRouter();
-  const courseId = Number(params.courseid);
 
   const [course, setCourse] = useState<CourseDetail | null>(initialCourse);
   const [activeSection, setActiveSection] = useState('notices');
@@ -107,7 +107,9 @@ export default function AdminCourseDetailContent({
   const [isMutating, setIsMutating] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const [reviews, setReviews] = useState<Review[]>(initialCourse?.reviews ?? []);
+  const [reviews, setReviews] = useState<Review[]>(
+    initialCourse?.reviews ?? []
+  );
   const [deletingReviewId, setDeletingReviewId] = useState<number | null>(null);
 
   const handleDeleteReview = (reviewId: number) => {
@@ -438,7 +440,7 @@ export default function AdminCourseDetailContent({
                     </h2>
                   </div>
                   <Link
-                    href={`/courses/${courseId}/notices`}
+                    href={`/admin/courses/${courseId}/notices`}
                     className="w-20 h-10 border border-[#E2E8F0] rounded-2xl text-sm font-medium text-[#4B5563] hover:bg-[#F8FAFC] transition-colors flex items-center justify-center"
                   >
                     전체보기
@@ -904,7 +906,9 @@ export default function AdminCourseDetailContent({
                               {/* 관리자는 리뷰 삭제 가능 */}
                               <button
                                 type="button"
-                                onClick={() => setDeletingReviewId(review.reviewId)}
+                                onClick={() =>
+                                  setDeletingReviewId(review.reviewId)
+                                }
                                 className="w-7 h-7 flex items-center justify-center rounded-2xl hover:bg-red-50 transition-colors"
                                 title="삭제"
                               >
