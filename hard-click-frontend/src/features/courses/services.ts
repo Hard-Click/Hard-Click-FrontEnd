@@ -38,7 +38,10 @@ function formatLessonDuration(seconds: number | null): string {
 export function toCourseDetail(data: CourseDetailApiResponse): CourseDetail {
   const sections = data.sections ?? [];
   const allLessons = sections.flatMap((s) => s.lessons);
-  const totalSeconds = allLessons.reduce((sum, l) => sum + (l.durationSeconds ?? 0), 0);
+  const totalSeconds = allLessons.reduce(
+    (sum, l) => sum + (l.durationSeconds ?? 0),
+    0
+  );
 
   return {
     courseId: data.courseId,
@@ -111,25 +114,27 @@ function toCourseListItem(item: CourseListApiItem): CourseListItem {
 }
 
 export async function getCourseDetail(
-  courseId: number,
+  courseId: number
 ): Promise<CourseDetail | null> {
   if (USE_MOCK) {
     return toCourseDetail({ ...mockCourseDetailResponse, courseId });
   }
   const response = await api.get<CourseDetailApiResponse>(
-    `/api/courses/${courseId}`,
+    `/api/courses/${courseId}`
   );
   if (!response.success || !response.data) return null;
   return toCourseDetail(response.data);
 }
 
 export async function getCourses(
-  query?: CourseListQuery,
+  query?: CourseListQuery
 ): Promise<CourseListItem[]> {
   if (USE_MOCK) {
     let courses = mockCourseListResponse.content.map(toCourseListItem);
     if (query?.subjectId) {
-      const name = mockSubjects.find((s) => s.subjectId === query.subjectId)?.subjectName;
+      const name = mockSubjects.find(
+        (s) => s.subjectId === query.subjectId
+      )?.subjectName;
       if (name) courses = courses.filter((c) => c.subjectName === name);
     }
     if (query?.keyword) {
@@ -151,7 +156,7 @@ export async function getCourses(
   if (query?.subjectId) params.set('subject', String(query.subjectId));
 
   const response = await api.get<CourseListApiResponse>(
-    `/api/courses?${params.toString()}`,
+    `/api/courses?${params.toString()}`
   );
   if (!response.success || !response.data) return [];
 
@@ -165,18 +170,27 @@ export async function getCourses(
 
 export async function getSubjects(): Promise<Subject[]> {
   if (USE_MOCK) {
-    return mockSubjects.map((s) => ({ subjectId: s.subjectId, name: s.subjectName }));
+    return mockSubjects.map((s) => ({
+      subjectId: s.subjectId,
+      name: s.subjectName,
+    }));
   }
   const response = await api.get<SubjectApiItem[]>('/api/subjects');
   if (!response.success || !response.data) {
-    return mockSubjects.map((s) => ({ subjectId: s.subjectId, name: s.subjectName }));
+    return mockSubjects.map((s) => ({
+      subjectId: s.subjectId,
+      name: s.subjectName,
+    }));
   }
-  return response.data.map((s) => ({ subjectId: s.subjectId, name: s.subjectName }));
+  return response.data.map((s) => ({
+    subjectId: s.subjectId,
+    name: s.subjectName,
+  }));
 }
 
 /** 강사 목록 — 백엔드 미지원, 목 강의 데이터에서 파생 */
 export function getInstructors(): string[] {
   return Array.from(
-    new Set(mockCourseListResponse.content.map((c) => c.instructorName)),
+    new Set(mockCourseListResponse.content.map((c) => c.instructorName))
   ).sort();
 }

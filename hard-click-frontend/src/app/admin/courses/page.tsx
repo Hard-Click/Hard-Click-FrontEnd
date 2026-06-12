@@ -80,7 +80,11 @@ export default async function AdminCoursesPage({
         />
 
         {/* 강의 목록 (server) */}
-        <CourseList courses={courses} status={status} />
+        <CourseList
+          courses={courses}
+          status={status}
+          hrefPrefix="/admin/courses"
+        />
       </div>
     </div>
   );

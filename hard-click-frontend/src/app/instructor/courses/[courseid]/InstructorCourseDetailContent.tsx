@@ -6,7 +6,11 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { deleteCourse, publishCourse } from '@/features/instructor/services';
-import type { CourseDetail, Review, CurriculumLesson } from '@/features/courses/types';
+import type {
+  CourseDetail,
+  Review,
+  CurriculumLesson,
+} from '@/features/courses/types';
 import { StarRow, StarIcon } from '@/components/common/RatingStars';
 import { CurriculumAccordion } from '@/features/instructor/components/InstructorCurriculumSection';
 import PreviewVideoModal from '@/features/learning/components/PreviewVideoModal';
@@ -92,7 +96,9 @@ export default function InstructorCourseDetailContent({
 
   const [course, setCourse] = useState<CourseDetail | null>(initialCourse);
   const [activeSection, setActiveSection] = useState('notices');
-  const [previewLesson, setPreviewLesson] = useState<CurriculumLesson | null>(null);
+  const [previewLesson, setPreviewLesson] = useState<CurriculumLesson | null>(
+    null
+  );
 
   /* 강사 액션 상태 */
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -198,12 +204,12 @@ export default function InstructorCourseDetailContent({
   const REVIEWS_PER_PAGE = 5;
   const maxRatingCount = Math.max(
     ...course.ratingDistribution.map((d) => d.count),
-    1,
+    1
   );
   const totalReviewPages = Math.ceil(reviews.length / REVIEWS_PER_PAGE);
   const displayedReviews = reviews.slice(
     (reviewPage - 1) * REVIEWS_PER_PAGE,
-    reviewPage * REVIEWS_PER_PAGE,
+    reviewPage * REVIEWS_PER_PAGE
   );
   // 공지 고정 맨 위, 나머지 최신순 정렬
   const sortedNotices = [...course.notices].sort((a, b) => {
@@ -695,11 +701,6 @@ export default function InstructorCourseDetailContent({
                         label: '난이도',
                         value: course.level,
                       },
-                      {
-                        icon: '/icons/documentIcon.svg',
-                        label: '제공 자료',
-                        value: `${course.materialsProvided.length}개`,
-                      },
                     ].map((stat) => (
                       <div
                         key={stat.label}
@@ -735,18 +736,6 @@ export default function InstructorCourseDetailContent({
                   </div>
 
                   <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src="/icons/documentIcon.svg"
-                        width={20}
-                        height={20}
-                        alt=""
-                      />
-                      <h3 className="text-lg font-semibold text-[#1A1F2E]">
-                        제공자료
-                      </h3>
-                    </div>
                     <div className="grid grid-cols-2 gap-3">
                       {course.materialsProvided.map((item, i) => (
                         <div
@@ -844,11 +833,11 @@ export default function InstructorCourseDetailContent({
                       <div className="flex-1 flex flex-col gap-3">
                         {[5, 4, 3, 2, 1].map((star) => {
                           const dist = course.ratingDistribution.find(
-                            (d) => d.stars === star,
+                            (d) => d.stars === star
                           );
                           const count = dist?.count ?? 0;
                           const pct = Math.round(
-                            (count / maxRatingCount) * 100,
+                            (count / maxRatingCount) * 100
                           );
                           return (
                             <div key={star} className="flex items-center gap-3">
@@ -957,7 +946,7 @@ export default function InstructorCourseDetailContent({
                         {/* 페이지 번호 */}
                         {Array.from(
                           { length: totalReviewPages },
-                          (_, i) => i + 1,
+                          (_, i) => i + 1
                         ).map((page) => (
                           <button
                             key={page}
@@ -976,7 +965,7 @@ export default function InstructorCourseDetailContent({
                         <button
                           onClick={() =>
                             setReviewPage((p) =>
-                              Math.min(totalReviewPages, p + 1),
+                              Math.min(totalReviewPages, p + 1)
                             )
                           }
                           disabled={reviewPage === totalReviewPages}

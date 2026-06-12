@@ -1,34 +1,19 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useAuth } from '@/features/auth/AuthProvider';
-// TODO: 수강신청 모달 — 팀원 결제 모달 확인 후 연결
-// TODO: 리뷰 삭제 확인 모달 — 팀원 모달 확인 후 연결
-import {
-  enrollCourse,
-  addToCart,
-  removeFromCart,
-} from '@/features/courses/actions';
-import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
-import PreviewVideoModal from '@/features/learning/components/PreviewVideoModal';
-import {
-  getReviews,
-  updateReview,
-  deleteReview,
-} from '@/features/reviews/services';
+import { deleteCourse, publishCourse } from '@/features/instructor/services';
 import type {
   CourseDetail,
   Review,
   CurriculumLesson,
 } from '@/features/courses/types';
 import { StarRow, StarIcon } from '@/components/common/RatingStars';
-import { CurriculumAccordion } from '@/features/courses/components/CourseCurriculumSection';
-
-// TODO: 리뷰 신고 모달 — 팀원 컴포넌트 완성 후 아래 import 연결
-// import ReviewReportModal from '@/components/ui/reviewReportModal';
+import { CurriculumAccordion } from '@/features/instructor/components/InstructorCurriculumSection';
+import PreviewVideoModal from '@/features/learning/components/PreviewVideoModal';
 
 /* ── 강의 에러 화면 공통 컴포넌트 ── */
 function CourseErrorScreen({
@@ -39,31 +24,14 @@ function CourseErrorScreen({
   subtitle: string;
 }) {
   return (
-    <div className="min-h-screen bg-[#F0F2F5]">
-      <div className="w-full max-w-[1440px] mx-auto px-[157.5px] py-6">
-        <Link
-          href="/courses"
-          className="flex items-center gap-1.5 text-[#6B7280] text-sm hover:text-[#374151] transition-colors mb-8"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M10 4L6 8l4 4"
-              stroke="currentColor"
-              strokeWidth="1.3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          목록으로 돌아가기
-        </Link>
-        <div className="bg-white border border-[#D5D8DD] rounded-2xl flex flex-col items-center justify-center py-32">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icons/emptyStateIcon.svg" width={80} height={80} alt="" />
-          <p className="text-[#1A1F2E] font-bold text-xl mt-[41px] mb-[26.5px]">
-            {title}
-          </p>
-          <p className="text-[#6B7280] text-sm">{subtitle}</p>
-        </div>
+    <div className="w-full max-w-[1440px] mx-auto px-[157.5px] py-6">
+      <div className="bg-white border border-[#D5D8DD] rounded-2xl flex flex-col items-center justify-center py-32">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/icons/emptyStateIcon.svg" width={80} height={80} alt="" />
+        <p className="text-[#1A1F2E] font-bold text-xl mt-[41px] mb-[26.5px]">
+          {title}
+        </p>
+        <p className="text-[#6B7280] text-sm">{subtitle}</p>
       </div>
     </div>
   );
@@ -117,93 +85,51 @@ function SideNav({
 }
 
 /* ── 메인 페이지 ── */
-export default function CourseDetailContent({
+export default function AdminCourseDetailContent({
   initialCourse,
 }: {
   initialCourse: CourseDetail | null;
 }) {
   const params = useParams();
-  const courseId = Number(params.courseId);
+  const router = useRouter();
+  const courseId = Number(params.courseid);
 
-  const [course] = useState<CourseDetail | null>(initialCourse);
+  const [course, setCourse] = useState<CourseDetail | null>(initialCourse);
   const [activeSection, setActiveSection] = useState('notices');
-
-  const [isEnrolled, setIsEnrolled] = useState(
-    initialCourse?.isEnrolled ?? false
-  );
-  const [isWishlisted, setIsWishlisted] = useState(
-    initialCourse?.isWishlisted ?? false
-  );
-  const [isInCart, setIsInCart] = useState(initialCourse?.isInCart ?? false);
-  const [cartItemId, setCartItemId] = useState<number | null>(null);
-
-  // 모달 상태
-  const [editingReview, setEditingReview] = useState<Review | null>(null);
-  const [deletingReview, setDeletingReview] = useState<Review | null>(null);
   const [previewLesson, setPreviewLesson] = useState<CurriculumLesson | null>(
     null
   );
-  // TODO: reportingReview — 팀원 ReviewReportModal 완성 후 활성화
-  // const [reportingReview, setReportingReview] = useState<Review | null>(null);
 
-  const [reviews, setReviews] = useState<Review[]>([]);
+  /* 강사 액션 상태 */
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const [reviews, setReviews] = useState<Review[]>(initialCourse?.reviews ?? []);
+  const [deletingReviewId, setDeletingReviewId] = useState<number | null>(null);
+
+  const handleDeleteReview = (reviewId: number) => {
+    setReviews((prev) => prev.filter((r) => r.reviewId !== reviewId));
+    setDeletingReviewId(null);
+    toast.success('수강평이 삭제되었습니다.');
+  };
   const [reviewPage, setReviewPage] = useState(1);
-  const [ratingDist, setRatingDist] = useState<
-    { stars: number; count: number }[]
-  >([]);
-  const [reviewTotalPages, setReviewTotalPages] = useState(1);
-  const [reviewAvg, setReviewAvg] = useState(0);
-  const [reviewTotalCount, setReviewTotalCount] = useState(0);
 
-  // 인증 상태는 서버 쿠키 기반 Context에서 (localStorage 대체)
-  const { isLoggedIn } = useAuth();
-
-  /* 비로그인 액션 공통 가드 — 토스트만 표시, 페이지 이동 X */
-  const requireLogin = (): boolean => {
-    if (!isLoggedIn) {
-      toast.error('로그인이 필요합니다');
-      return false;
-    }
-    return true;
-  };
-
-  /* 미리보기 클릭 가드 — 비로그인 시 차단 (영상 API가 JWT 필수, 401 응답 방지) */
-  const handlePreviewClick = (lesson: CurriculumLesson) => {
-    if (!requireLogin()) return;
-    setPreviewLesson(lesson);
-  };
-
-  /* 리뷰 목록 조회 (GET /api/courses/{courseId}/reviews) — 백엔드가 내 리뷰 최상단·별점분포·평균 조립 */
-  const loadReviews = useCallback(
-    async (page: number) => {
-      const res = await getReviews(courseId, 'latest', page);
-      if (!res.success || !res.data) return;
-      const d = res.data;
-      setReviews(
-        d.reviews.map((r) => ({
-          reviewId: r.reviewId,
-          studentName: r.authorName,
-          rating: r.rating,
-          content: r.content,
-          createdAt: r.createdDate,
-          isMine: r.isMyReview,
-        }))
-      );
-      setRatingDist(
-        d.ratingStats.map((s) => ({ stars: s.rating, count: s.count }))
-      );
-      setReviewAvg(d.avgRating ?? 0);
-      setReviewTotalCount(d.totalCount);
-      setReviewTotalPages(Math.max(1, d.totalPages));
-    },
-    [courseId]
-  );
-
+  /* 케밥 메뉴 외부 클릭 닫기 */
   useEffect(() => {
-    loadReviews(reviewPage);
-  }, [loadReviews, reviewPage]);
+    if (!isMenuOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [isMenuOpen]);
 
-  const handleScroll = useCallback(() => {
+  const handleScroll = () => {
     const offset = 120;
     for (const { id } of [...NAV_ITEMS].reverse()) {
       const el = document.getElementById(id);
@@ -213,90 +139,48 @@ export default function CourseDetailContent({
       }
     }
     setActiveSection('notices');
-  }, []);
+  };
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
+  }, []);
 
-  // UA-P0-120: 무료 → POST /api/enrollments 즉시 처리
-  // UA-P0-121: 유료 → 결제 모달 → POST /api/payments → enrollments 자동 생성
-  const handleEnrollClick = async () => {
-    if (!requireLogin()) return;
-    if (course?.isFree) {
-      const result = await enrollCourse(courseId, 'FREE');
-      if (result.success) {
-        setIsEnrolled(true);
-        toast.success(result.message);
-      } else {
-        toast.error(result.message);
-      }
-    } else {
-      // TODO: 유료 수강신청 — 팀원 결제 모달 확인 후 연결 (UA-P0-121)
-      // 결제 모달 완성 전까지는 mock에서 결제 우회하여 즉시 수강 처리
-      const result = await enrollCourse(courseId, 'PAID');
-      if (result.success) {
-        setIsEnrolled(true);
-        toast.success(result.message);
-      } else {
-        toast.error(result.message);
-      }
-    }
+  /* ── 강사 액션 ── */
+  const handleEditClick = () => {
+    setIsMenuOpen(false);
+    router.push(`/instructor/courses/${courseId}/edit`);
   };
 
-  // UA-P0-130: POST /api/cart / DELETE /api/cart/{cartItemId}
-  const handleCartClick = async () => {
-    if (!requireLogin()) return;
-    if (isInCart && cartItemId) {
-      const result = await removeFromCart(cartItemId);
-      if (result.success) {
-        setIsInCart(false);
-        setCartItemId(null);
-        toast.success(result.message);
-      } else {
-        toast.error(result.message);
-      }
-    } else {
-      const result = await addToCart(courseId);
-      if (result.success) {
-        setIsInCart(true);
-        if (result.cartItemId) setCartItemId(result.cartItemId);
-        toast.success(result.message);
-      } else {
-        toast.error(result.message);
-      }
-    }
-  };
-
-  /* ── 리뷰 수정 (PATCH /api/courses/{courseId}/reviews/{reviewId}) ── */
-  const handleReviewEditSubmit = async (rating: number, content: string) => {
-    if (!editingReview) return;
-    const res = await updateReview(courseId, editingReview.reviewId, {
-      rating,
-      content,
-    });
+  const handleToggleStatusConfirm = async () => {
+    if (!course) return;
+    setIsMutating(true);
+    const nextPublished = course.status !== 'PUBLISHED';
+    const res = await publishCourse(courseId, nextPublished);
+    setIsMutating(false);
     if (!res.success) {
-      toast.error(res.message || '수강평 수정에 실패했습니다.');
+      toast.error(res.message || '상태 전환에 실패했습니다.');
       return;
     }
-    setEditingReview(null);
-    await loadReviews(reviewPage);
-    toast.success(res.message || '수강평이 수정되었습니다.');
+    setCourse({ ...course, status: nextPublished ? 'PUBLISHED' : 'DRAFT' });
+    setIsStatusModalOpen(false);
+    toast.success(res.message);
   };
 
-  /* ── 리뷰 삭제 (DELETE /api/courses/{courseId}/reviews/{reviewId}) ── */
-  const handleReviewDeleteConfirm = async () => {
-    if (!deletingReview) return;
-    const res = await deleteReview(courseId, deletingReview.reviewId);
+  const handleDeleteConfirm = async () => {
+    setIsMutating(true);
+    const res = await deleteCourse(courseId);
+    setIsMutating(false);
     if (!res.success) {
-      toast.error(res.message || '수강평 삭제에 실패했습니다.');
+      toast.error(res.message || '강의 삭제에 실패했습니다.');
       return;
     }
-    setDeletingReview(null);
-    await loadReviews(reviewPage);
-    toast.success(res.message || '수강평이 삭제되었습니다.');
+    setIsDeleteModalOpen(false);
+    toast.success(res.message || '강의가 삭제되었습니다.');
+    router.push('/instructor/courses');
   };
+
+  const isPublished = course?.status === 'PUBLISHED';
 
   // UA-P0-104: 강의 없음 / 삭제 / 접근불가 에러 처리
   if (!course) {
@@ -324,9 +208,16 @@ export default function CourseDetailContent({
     );
   }
 
-  const maxRatingCount = Math.max(...ratingDist.map((d) => d.count), 1);
-  const totalReviewPages = reviewTotalPages;
-  const displayedReviews = reviews; // 서버 페이지네이션 (getReviews page 기준)
+  const REVIEWS_PER_PAGE = 5;
+  const maxRatingCount = Math.max(
+    ...course.ratingDistribution.map((d) => d.count),
+    1
+  );
+  const totalReviewPages = Math.ceil(reviews.length / REVIEWS_PER_PAGE);
+  const displayedReviews = reviews.slice(
+    (reviewPage - 1) * REVIEWS_PER_PAGE,
+    reviewPage * REVIEWS_PER_PAGE
+  );
   // 공지 고정 맨 위, 나머지 최신순 정렬
   const sortedNotices = [...course.notices].sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1;
@@ -334,9 +225,6 @@ export default function CourseDetailContent({
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
   const displayedNotices = sortedNotices.slice(0, 3);
-
-  // UA-P0-140: 첫 번째 강의 lessonId (학습 시작 이동 대상)
-  const firstLessonId = course.curriculum[0]?.lessons[0]?.lessonId;
 
   return (
     <div className="min-h-screen bg-[#F0F2F5]">
@@ -348,7 +236,7 @@ export default function CourseDetailContent({
         <div className="pt-10 px-8 pb-0 flex flex-col gap-8">
           {/* ── 히어로 카드 ── */}
           <div
-            className="bg-white border border-[#D5D8DD]"
+            className="bg-white border border-[#D5D8DD] relative"
             style={{ padding: '33px 33px 1px' }}
           >
             <div className="flex flex-col gap-6">
@@ -357,11 +245,11 @@ export default function CourseDetailContent({
                 {/* 썸네일 */}
                 <div className="flex-shrink-0 self-start w-[282px] h-[262px] bg-[#1A1F2E] rounded-2xl overflow-hidden relative">
                   {course.thumbnailUrl ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
+                    <Image
                       src={course.thumbnailUrl}
                       alt={course.title}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -404,7 +292,7 @@ export default function CourseDetailContent({
                   <div className="flex items-center gap-2">
                     <StarRow rating={course.averageRating} size={20} />
                     <span className="text-lg font-semibold text-[#1A1F2E]">
-                      {course.averageRating.toFixed(1)}
+                      {course.averageRating}
                     </span>
                     <span className="text-base text-[#1A1F2E]">
                       ({course.reviewCount.toLocaleString()}개 리뷰)
@@ -466,90 +354,64 @@ export default function CourseDetailContent({
                 </div>
               </div>
 
-              {/* Row 2: 액션 버튼 (border-top, Figma: padding 24px 0 0, gap 12px) */}
-              <div className="border-t border-[#D5D8DD] pt-6 pb-8 flex items-center gap-3">
-                {isEnrolled ? (
-                  /* 수강 중 → 학습하기 (학습 커리큘럼/진도 홈으로 이동) */
-                  <Link href={`/learning/${courseId}`} className="flex-1">
-                    <button className="w-full h-14 rounded-[10px] bg-[#2F5DAA] text-white font-semibold text-base hover:bg-[#1D3E75] transition-colors">
-                      학습하기
-                    </button>
-                  </Link>
-                ) : (
-                  <>
-                    {/* UA-P0-120: 무료 → "수강하기" / UA-P0-121: 유료 → "수강신청" */}
-                    <button
-                      onClick={handleEnrollClick}
-                      className="flex-1 h-14 rounded-[10px] bg-[#2F5DAA] text-white font-semibold text-base hover:bg-[#1D3E75] transition-colors"
-                    >
-                      {course.isFree ? '수강하기' : '수강신청'}
-                    </button>
-                    {/* UA-P0-130: 무료 강의는 장바구니 버튼 표시 안 함 */}
-                    {!course.isFree &&
-                      (isInCart ? (
-                        <Link
-                          href="/cart"
-                          className="h-14 rounded-[10px] font-semibold text-base transition-colors flex items-center justify-center gap-2 bg-[rgba(47,93,170,0.08)] text-[#2F5DAA] border-2 border-[#2F5DAA]"
-                          style={{ width: '166.98px' }}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src="/icons/cartIcon.svg"
-                            width={20}
-                            height={20}
-                            alt=""
-                          />
-                          장바구니로 가기
-                        </Link>
-                      ) : (
-                        <button
-                          onClick={handleCartClick}
-                          className="h-14 rounded-[10px] font-semibold text-base transition-colors flex items-center justify-center gap-2 bg-white text-[#4B5563] border-2 border-[#E2E8F0] hover:border-[#CBD5E1]"
-                          style={{ width: '166.98px' }}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src="/icons/cartIcon.svg"
-                            width={20}
-                            height={20}
-                            alt=""
-                          />
-                          장바구니 담기
-                        </button>
-                      ))}
-                  </>
-                )}
-                {/* TODO: 찜 API 엔드포인트 명세에 없음 — 백엔드 확인 후 연결 */}
+              {/* 강사 케밥 메뉴 (우측 상단) */}
+              <div ref={menuRef} className="absolute top-[33px] right-[33px]">
                 <button
-                  onClick={() => {
-                    if (!requireLogin()) return;
-                    setIsWishlisted((v) => !v);
-                    toast.success(
-                      isWishlisted
-                        ? '찜이 해제되었습니다.'
-                        : '찜 목록에 추가되었습니다.'
-                    );
-                  }}
-                  className={`h-14 rounded-[10px] font-medium text-base transition-colors flex items-center justify-center gap-2 border-2 ${
-                    isWishlisted
-                      ? 'bg-[#FEF2F2] text-[#EF4444] border-[#EF4444]'
-                      : 'bg-white text-[#4B5563] border-[#E2E8F0] hover:border-[#CBD5E1]'
-                  }`}
-                  style={{ width: '121.52px' }}
+                  type="button"
+                  onClick={() => setIsMenuOpen((v) => !v)}
+                  aria-label="강의 관리 메뉴"
+                  className="w-6 h-6 flex items-center justify-center text-[#1A1F2E] hover:bg-[#F3F4F6] rounded transition-colors"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={
-                      isWishlisted
-                        ? '/icons/heartFilledIcon.svg'
-                        : '/icons/heartOutlineIcon.svg'
-                    }
-                    width={20}
-                    height={20}
-                    alt=""
-                  />
-                  찜하기
+                  <svg width="5" height="19" viewBox="0 0 5 19" fill="none">
+                    <circle cx="2.5" cy="2.5" r="2.5" fill="#1A1F2E" />
+                    <circle cx="2.5" cy="9.5" r="2.5" fill="#1A1F2E" />
+                    <circle cx="2.5" cy="16.5" r="2.5" fill="#1A1F2E" />
+                  </svg>
                 </button>
+                {isMenuOpen && (
+                  <div className="absolute right-0 mt-1 w-[136px] bg-white border border-[#E2E8F0] rounded-[14px] shadow-md overflow-hidden z-20">
+                    <button
+                      type="button"
+                      onClick={handleEditClick}
+                      className="w-full h-[34px] text-base text-[#67798D] hover:bg-[#F8FAFC] border-b border-[#E2E8F0] transition-colors"
+                    >
+                      강의 수정
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        setIsDeleteModalOpen(true);
+                      }}
+                      className="w-full h-[34px] text-base text-[#67798D] hover:bg-[#F8FAFC] border-b border-[#E2E8F0] transition-colors"
+                    >
+                      강의 삭제
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        setIsStatusModalOpen(true);
+                      }}
+                      className="w-full h-[34px] text-base text-[#67798D] hover:bg-[#F8FAFC] transition-colors"
+                    >
+                      {isPublished ? '강의 비공개' : '강의 공개'}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Row 2: 강의 상태 표시 (읽기 전용 — 변경은 케밥 메뉴에서) */}
+              <div className="border-t border-[#D5D8DD] pt-6 pb-8">
+                <div
+                  className={`w-full h-14 rounded-[10px] font-semibold text-base border flex items-center justify-center cursor-default ${
+                    isPublished
+                      ? 'bg-[rgba(22,163,74,0.1)] border-[rgba(22,163,74,0.2)] text-[#1F2937]'
+                      : 'bg-[rgba(245,158,11,0.1)] border-[rgba(245,158,11,0.2)] text-[#1F2937]'
+                  }`}
+                >
+                  {isPublished ? '공개' : '비공개'}
+                </div>
               </div>
             </div>
           </div>
@@ -577,9 +439,6 @@ export default function CourseDetailContent({
                   </div>
                   <Link
                     href={`/courses/${courseId}/notices`}
-                    onClick={(e) => {
-                      if (!requireLogin()) e.preventDefault();
-                    }}
                     className="w-20 h-10 border border-[#E2E8F0] rounded-2xl text-sm font-medium text-[#4B5563] hover:bg-[#F8FAFC] transition-colors flex items-center justify-center"
                   >
                     전체보기
@@ -595,10 +454,7 @@ export default function CourseDetailContent({
                     {displayedNotices.map((notice) => (
                       <Link
                         key={notice.noticeId}
-                        href={`/notices/${notice.noticeId}`}
-                        onClick={(e) => {
-                          if (!requireLogin()) e.preventDefault();
-                        }}
+                        href={`/instructor/notices/${notice.noticeId}`}
                         className={`rounded-[20px] h-[89px] overflow-hidden flex flex-col hover:opacity-80 transition-opacity ${
                           notice.isPinned
                             ? 'bg-[rgba(47,93,170,0.05)] border border-[#2F5DAA]'
@@ -931,7 +787,7 @@ export default function CourseDetailContent({
                       key={section.sectionId}
                       section={section}
                       defaultOpen={idx === 0}
-                      onPreviewClick={handlePreviewClick}
+                      onPreviewClick={setPreviewLesson}
                     />
                   ))}
                 </div>
@@ -973,17 +829,19 @@ export default function CourseDetailContent({
                         style={{ width: 431, height: 160 }}
                       >
                         <span className="text-[48px] font-bold text-[#1A1F2E] leading-none">
-                          {reviewAvg.toFixed(1)}
+                          {course.averageRating}
                         </span>
-                        <StarRow rating={reviewAvg} size={24} />
+                        <StarRow rating={course.averageRating} size={24} />
                         <span className="text-sm text-[#1A1F2E]">
-                          총 {reviewTotalCount.toLocaleString()}개 리뷰
+                          총 {course.reviewCount.toLocaleString()}개 리뷰
                         </span>
                       </div>
 
                       <div className="flex-1 flex flex-col gap-3">
                         {[5, 4, 3, 2, 1].map((star) => {
-                          const dist = ratingDist.find((d) => d.stars === star);
+                          const dist = course.ratingDistribution.find(
+                            (d) => d.stars === star
+                          );
                           const count = dist?.count ?? 0;
                           const pct = Math.round(
                             (count / maxRatingCount) * 100
@@ -1043,58 +901,21 @@ export default function CourseDetailContent({
                                   {review.rating}
                                 </span>
                               </div>
-                              {/* UA-P1-192: 내 리뷰 수정/삭제 버튼 */}
-                              {review.isMine && (
-                                <>
-                                  <button
-                                    onClick={() => {
-                                      if (requireLogin())
-                                        setEditingReview(review);
-                                    }}
-                                    className="w-7 h-7 flex items-center justify-center rounded-2xl hover:bg-[#EEF3FB] transition-colors"
-                                    title="수정"
-                                  >
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      src="/icons/editIcon.svg"
-                                      width={14}
-                                      height={14}
-                                      alt=""
-                                    />
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      if (requireLogin())
-                                        setDeletingReview(review);
-                                    }}
-                                    className="w-7 h-7 flex items-center justify-center rounded-2xl hover:bg-red-50 transition-colors"
-                                    title="삭제"
-                                  >
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      src="/icons/trashIcon.svg"
-                                      width={14}
-                                      height={14}
-                                      alt=""
-                                    />
-                                  </button>
-                                </>
-                              )}
-                              {/* UA-P1-197: 타인 리뷰 신고 버튼 — TODO: onClick={() => setReportingReview(review)} 팀원 ReviewReportModal 완성 후 연결 */}
-                              {!review.isMine && (
-                                <button
-                                  className="w-7 h-7 flex items-center justify-center rounded-2xl hover:bg-red-50 transition-colors"
-                                  title="신고"
-                                >
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
-                                    src="/icons/reportFlagIcon.svg"
-                                    width={14}
-                                    height={14}
-                                    alt=""
-                                  />
-                                </button>
-                              )}
+                              {/* 관리자는 리뷰 삭제 가능 */}
+                              <button
+                                type="button"
+                                onClick={() => setDeletingReviewId(review.reviewId)}
+                                className="w-7 h-7 flex items-center justify-center rounded-2xl hover:bg-red-50 transition-colors"
+                                title="삭제"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src="/icons/trashIcon.svg"
+                                  width={14}
+                                  height={14}
+                                  alt="삭제"
+                                />
+                              </button>
                             </div>
                           </div>
                           <p className="text-sm leading-[23px] text-[#1A1F2E] pb-5">
@@ -1196,27 +1017,49 @@ export default function CourseDetailContent({
         <SideNav activeId={activeSection} onNav={setActiveSection} />
       </div>
 
-      {/* ── UA-P0-140/142: 학습 시작 플로팅 버튼 — 수강자만 표시 ── */}
-      {isEnrolled && firstLessonId && (
-        <div className="fixed bottom-8 right-8 z-40">
-          <Link href={`/learning/${courseId}`}>
-            <button
-              className="flex items-center justify-center gap-2 bg-[#F97316] hover:bg-[#EA6A10] text-white font-semibold text-lg rounded-[20px] transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]"
-              style={{ width: 167, height: 60 }}
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M6 4L16 10L6 16V4Z" fill="white" />
-              </svg>
-              학습 시작
-            </button>
-          </Link>
-        </div>
+      {/* 공개/비공개 전환 확인 모달 */}
+      {isStatusModalOpen && (
+        <ConfirmModal
+          icon={isPublished ? 'check' : 'warning'}
+          title={isPublished ? '강의 비공개' : '강의 공개'}
+          description={
+            isPublished
+              ? '해당 강의를 비공개로 전환하시겠습니까?'
+              : '해당 강의를 공개로 전환하시겠습니까?'
+          }
+          confirmText={isMutating ? '처리 중...' : '확인'}
+          onCancel={() => setIsStatusModalOpen(false)}
+          onConfirm={handleToggleStatusConfirm}
+          disabled={isMutating}
+        />
       )}
 
-      {/* TODO: 수강신청 모달 — 팀원 결제 모달 확인 후 연결 */}
-      {/* TODO: 리뷰 신고 모달 — import ReviewReportModal from '@/components/ui/reviewReportModal' 팀원 확인 후 연결 */}
+      {/* 강의 삭제 확인 모달 */}
+      {isDeleteModalOpen && (
+        <ConfirmModal
+          icon="warning"
+          title="삭제하기"
+          description="해당 강의를 삭제하시겠습니까?"
+          confirmText={isMutating ? '처리 중...' : '확인'}
+          onCancel={() => setIsDeleteModalOpen(false)}
+          onConfirm={handleDeleteConfirm}
+          disabled={isMutating}
+        />
+      )}
 
-      {/* 미리보기 영상 모달 */}
+      {/* 수강평 삭제 확인 모달 */}
+      {deletingReviewId !== null && (
+        <ConfirmModal
+          icon="warning"
+          title="수강평 삭제"
+          description="해당 수강평을 삭제하시겠습니까?"
+          confirmText="삭제"
+          onCancel={() => setDeletingReviewId(null)}
+          onConfirm={() => handleDeleteReview(deletingReviewId)}
+        />
+      )}
+
+      {/* 미리보기 영상 모달 (학생 강의상세와 동일) */}
       {previewLesson && (
         <PreviewVideoModal
           lessonId={previewLesson.lessonId}
@@ -1224,56 +1067,100 @@ export default function CourseDetailContent({
           onClose={() => setPreviewLesson(null)}
         />
       )}
+    </div>
+  );
+}
 
-      {/* 리뷰 수정 모달 */}
-      {editingReview && (
-        <ReviewFormModal
-          mode="edit"
-          initialRating={editingReview.rating}
-          initialContent={editingReview.content}
-          onCancel={() => setEditingReview(null)}
-          onSubmit={handleReviewEditSubmit}
-        />
-      )}
-
-      {/* 리뷰 삭제 확인 모달 */}
-      {deletingReview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div
-            className="w-full max-w-[448px] bg-white rounded-2xl"
-            style={{
-              padding: '32px',
-              boxShadow:
-                '0px 20px 25px -5px rgba(0, 0, 0, 0.1), 0px 8px 10px -6px rgba(0, 0, 0, 0.1)',
-            }}
-          >
-            <h2 className="text-center text-2xl font-bold leading-8 text-[#1F2937]">
-              리뷰 삭제
-            </h2>
-            <p className="mt-3 text-center text-base leading-6 text-[#4B5563]">
-              해당 리뷰를 삭제하시겠습니까?
-              <br />
-              삭제한 리뷰는 복구할 수 없습니다.
-            </p>
-            <div className="mt-8 flex gap-3">
-              <button
-                type="button"
-                onClick={() => setDeletingReview(null)}
-                className="h-12 flex-1 rounded-[10px] border border-[#E2E8F0] bg-white text-base font-semibold text-[#4B5563] hover:bg-[#F8FAFC] transition-colors"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                onClick={handleReviewDeleteConfirm}
-                className="h-12 flex-1 rounded-[10px] bg-[#DC2626] text-base font-semibold text-white hover:bg-[#B91C1C] transition-colors"
-              >
-                삭제
-              </button>
+/* ── 공통 컨펌 모달 ── */
+function ConfirmModal({
+  icon,
+  title,
+  description,
+  confirmText,
+  onCancel,
+  onConfirm,
+  disabled,
+}: {
+  icon: 'check' | 'warning';
+  title: string;
+  description: string;
+  confirmText: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div
+        className="w-full max-w-[400px] bg-white rounded-2xl"
+        style={{ padding: '32px' }}
+      >
+        {/* 아이콘 */}
+        <div className="mb-4 flex justify-center">
+          {icon === 'check' ? (
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(22,163,74,0.1)]">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="#16A34A"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M8 12l3 3 5-6"
+                  stroke="#16A34A"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </div>
-          </div>
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(220,38,38,0.1)]">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="#DC2626"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M12 8v4M12 16h.01"
+                  stroke="#DC2626"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </div>
+          )}
         </div>
-      )}
+        <h2 className="text-center text-xl font-bold leading-8 text-[#1F2937]">
+          {title}
+        </h2>
+        <p className="mt-2 text-center text-sm leading-5 text-[#6B7280]">
+          {description}
+        </p>
+        <div className="mt-6 flex gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={disabled}
+            className="h-12 flex-1 rounded-[10px] border border-[#E2E8F0] bg-white text-base font-semibold text-[#4B5563] hover:bg-[#F8FAFC] transition-colors disabled:opacity-50"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={disabled}
+            className="h-12 flex-1 rounded-[10px] bg-[#2F5DAA] text-base font-semibold text-white hover:bg-[#1D3E75] transition-colors disabled:opacity-50"
+          >
+            {confirmText}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
