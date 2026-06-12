@@ -23,3 +23,19 @@ export interface Quiz {
   createdDate: string; // 등록일 (YYYY-MM-DD)
   questions: QuizQuestion[];
 }
+
+/** 등록/수정 폼 입력 — 문제 1개 (서버 생성 필드 없음) */
+export interface QuizQuestionInput {
+  content: string;
+  options: string[]; // 보기 4개
+  answerIndex: number; // 정답 0~3 (미선택 -1)
+  explanation: string; // 해설 (필수 — 빈 문자열 불가)
+}
+
+/** 등록/수정 폼 전체 payload */
+export interface QuizFormPayload {
+  title: string;
+  courseId: number;
+  week: number;
+  questions: QuizQuestionInput[];
+}

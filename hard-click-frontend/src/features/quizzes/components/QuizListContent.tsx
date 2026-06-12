@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import DoubleBtnModal from '@/components/ui/doubleButtonModal';
+import ConfirmModal from '@/components/ui/confirmModal';
 import SelectDropdown from '@/components/ui/SelectDropdown';
 import QuizListItem from './QuizListItem';
 import QuizEmptyState from './QuizEmptyState';
+import QuizFormModal from './QuizFormModal';
 import { deleteQuizAction } from '../actions';
 import type { Quiz } from '../types';
 
@@ -17,14 +18,19 @@ export default function QuizListContent({
   quizzes: initialQuizzes,
   courseId,
   courseName,
+  courses,
+  takenWeeksByCourse,
 }: {
   quizzes: Quiz[];
   courseId: number;
   courseName: string;
+  courses: { courseId: number; title: string }[];
+  takenWeeksByCourse: Record<number, number[]>;
 }) {
   const [quizzes, setQuizzes] = useState<Quiz[]>(initialQuizzes);
   const [selectedWeek, setSelectedWeek] = useState<'all' | number>('all');
   const [deleting, setDeleting] = useState<Quiz | null>(null);
+  const [editing, setEditing] = useState<Quiz | null>(null);
 
   // 주차는 동적 — 실제 퀴즈에 존재하는 주차만 옵션으로
   const weeks = [...new Set(quizzes.map((q) => q.week))].sort((a, b) => a - b);
@@ -87,7 +93,7 @@ export default function QuizListContent({
                 key={quiz.quizId}
                 quiz={quiz}
                 onView={() => toast('점수 현황은 준비 중입니다.')}
-                onEdit={() => toast('퀴즈 수정은 준비 중입니다.')}
+                onEdit={() => setEditing(quiz)}
                 onDelete={() => setDeleting(quiz)}
               />
             ))}
@@ -97,13 +103,27 @@ export default function QuizListContent({
 
       {/* 삭제 확인 — 공용 모달 재사용 */}
       {deleting && (
-        <DoubleBtnModal
-          title="퀴즈 삭제"
-          description={`'${deleting.title}' 퀴즈를 삭제하시겠습니까?`}
-          leftText="취소"
-          rightText="삭제"
-          onLeftClick={() => setDeleting(null)}
-          onRightClick={handleDelete}
+        <ConfirmModal
+          title="퀴즈를 삭제하시겠습니까?"
+          description={
+            '삭제된 퀴즈는 복구할 수 없습니다.\n학생들의 응시 기록도 함께 삭제됩니다.'
+          }
+          cancelText="취소"
+          confirmText="삭제"
+          confirmVariant="danger"
+          onCancel={() => setDeleting(null)}
+          onConfirm={handleDelete}
+        />
+      )}
+
+      {/* 수정 — 등록 모달 재사용 (기존 값 채움) */}
+      {editing && (
+        <QuizFormModal
+          mode="edit"
+          courses={courses}
+          takenWeeksByCourse={takenWeeksByCourse}
+          initialData={editing}
+          onClose={() => setEditing(null)}
         />
       )}
     </>

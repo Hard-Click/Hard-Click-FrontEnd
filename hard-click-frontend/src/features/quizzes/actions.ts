@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { serverApi } from '@/lib/api';
 import { USE_MOCK } from '@/mocks/config';
+import type { QuizFormPayload } from './types';
 
 export interface QuizActionState {
   success: boolean;
@@ -43,5 +44,102 @@ export async function deleteQuizAction(
     return { success: true, message: '퀴즈가 삭제되었습니다.' };
   } catch {
     return { success: false, message: '삭제에 실패했습니다.' };
+  }
+}
+
+/** 등록/수정 폼 payload 공통 검증 (서버측 방어). */
+function validatePayload(payload: QuizFormPayload): string | null {
+  // Server Action 경계 — 런타임 타입 보장 안 되므로 typeof로 먼저 방어 (.trim() throw 방지)
+  if (typeof payload?.title !== 'string' || !payload.title.trim()) {
+    return '퀴즈 제목을 입력해주세요.';
+  }
+  if (!Number.isInteger(payload.courseId) || payload.courseId <= 0) {
+    return '연결 강의를 선택해주세요.';
+  }
+  if (!Number.isInteger(payload.week) || payload.week <= 0) {
+    return '연결 주차를 선택해주세요.';
+  }
+  if (!Array.isArray(payload.questions) || payload.questions.length === 0) {
+    return '문제를 1개 이상 추가해주세요.';
+  }
+  for (const q of payload.questions) {
+    if (!q || typeof q !== 'object') return '문제 형식이 올바르지 않습니다.';
+    if (typeof q.content !== 'string' || !q.content.trim()) {
+      return '문제 내용을 입력해주세요.';
+    }
+    if (
+      !Array.isArray(q.options) ||
+      q.options.length !== 4 ||
+      q.options.some((o) => typeof o !== 'string' || !o.trim())
+    ) {
+      return '보기 4개를 모두 입력해주세요.';
+    }
+    if (
+      !Number.isInteger(q.answerIndex) ||
+      q.answerIndex < 0 ||
+      q.answerIndex > 3
+    ) {
+      return '정답을 선택해주세요.';
+    }
+    if (typeof q.explanation !== 'string' || !q.explanation.trim()) {
+      return '해설을 입력해주세요.';
+    }
+  }
+  return null;
+}
+
+/** 퀴즈 등록 (Server Action · BFF). */
+export async function createQuizAction(
+  payload: QuizFormPayload,
+): Promise<QuizActionState> {
+  const invalid = validatePayload(payload);
+  if (invalid) return { success: false, message: invalid };
+
+  if (USE_MOCK) {
+    return { success: true, message: '퀴즈가 등록되었습니다.' };
+  }
+
+  try {
+    const res = await serverApi.post<null>(
+      `/api/instructor/courses/${payload.courseId}/quizzes`,
+      payload,
+    );
+    if (!res.success) {
+      return { success: false, message: res.message ?? '등록에 실패했습니다.' };
+    }
+    revalidatePath(`/instructor/quizzes/${payload.courseId}`);
+    return { success: true, message: '퀴즈가 등록되었습니다.' };
+  } catch {
+    return { success: false, message: '등록에 실패했습니다.' };
+  }
+}
+
+/** 퀴즈 수정 (Server Action · BFF). */
+export async function updateQuizAction(
+  quizId: number,
+  payload: QuizFormPayload,
+): Promise<QuizActionState> {
+  if (!Number.isInteger(quizId) || quizId <= 0) {
+    return { success: false, message: '잘못된 요청입니다.' };
+  }
+  const invalid = validatePayload(payload);
+  if (invalid) return { success: false, message: invalid };
+
+  if (USE_MOCK) {
+    return { success: true, message: '퀴즈가 수정되었습니다.' };
+  }
+
+  try {
+    const res = await serverApi.put<null>(
+      `/api/instructor/quizzes/${quizId}`,
+      payload,
+    );
+    if (!res.success) {
+      return { success: false, message: res.message ?? '수정에 실패했습니다.' };
+    }
+    revalidatePath(`/instructor/quizzes/${payload.courseId}`);
+    return { success: true, message: '퀴즈가 수정되었습니다.' };
+  } catch {
+    return { success: false, message: '수정에 실패했습니다.' };
   }
 }

@@ -1,8 +1,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { getQuizzesServer } from '@/features/quizzes/server';
+import {
+  getQuizzesServer,
+  getTakenWeeksByCourseServer,
+} from '@/features/quizzes/server';
 import { getInstructorCoursesServer } from '@/features/instructor/server';
 import QuizListContent from '@/features/quizzes/components/QuizListContent';
+import QuizCreateButton from '@/features/quizzes/components/QuizCreateButton';
 
 /**
  * 강사 퀴즈 관리 — 강의별 퀴즈 목록 (Server Component).
@@ -16,14 +20,21 @@ export default async function CourseQuizzesPage({
   const { courseId: courseIdStr } = await params;
   const courseId = Number(courseIdStr);
 
-  const [quizzes, coursesRes] = await Promise.all([
+  const [quizzes, coursesRes, takenWeeksByCourse] = await Promise.all([
     getQuizzesServer(courseId),
     getInstructorCoursesServer(),
+    getTakenWeeksByCourseServer(),
   ]);
 
   // 강의명은 하드코딩 X — 선택한 강의의 실제 제목
   const courseName =
     coursesRes.content.find((c) => c.courseId === courseId)?.title ?? '강의';
+
+  // 클라이언트(모달 셀렉트)엔 필요한 필드만 — 서버 DTO 누수 방지 + RSC payload 축소
+  const quizFormCourses = coursesRes.content.map((c) => ({
+    courseId: c.courseId,
+    title: c.title,
+  }));
 
   return (
     <div className="mx-auto max-w-[1253px] px-8 py-8">
@@ -56,13 +67,11 @@ export default async function CourseQuizzesPage({
           </div>
         </div>
 
-        {/* TODO: 등록 모달 연결 — 후속 이슈(퀴즈 등록) */}
-        <button
-          type="button"
-          className="flex h-12 items-center gap-1.5 rounded-[10px] bg-[#2F5DAA] px-5 text-base font-semibold text-white transition hover:bg-[#274C8B]"
-        >
-          <span className="text-lg leading-none">+</span> 퀴즈 등록
-        </button>
+        <QuizCreateButton
+          courses={quizFormCourses}
+          takenWeeksByCourse={takenWeeksByCourse}
+          presetCourseId={courseId}
+        />
       </header>
 
       {/* 이전으로 돌아가기 → 강의 목록(Screen 1) */}
@@ -78,6 +87,8 @@ export default async function CourseQuizzesPage({
         quizzes={quizzes}
         courseId={courseId}
         courseName={courseName}
+        courses={quizFormCourses}
+        takenWeeksByCourse={takenWeeksByCourse}
       />
     </div>
   );

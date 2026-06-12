@@ -16,6 +16,8 @@ interface SelectDropdownProps {
   fullWidth?: boolean;
   /** 루트 컨테이너 추가 클래스 (예: 'w-[499px]') */
   className?: string;
+  /** 비활성 — 열기/선택 불가 (값 표시만) */
+  disabled?: boolean;
 }
 
 /**
@@ -30,6 +32,7 @@ export default function SelectDropdown({
   onChange,
   fullWidth = false,
   className,
+  disabled = false,
 }: SelectDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -58,10 +61,13 @@ export default function SelectDropdown({
     <div ref={ref} className={`relative ${className ?? ''}`}>
       <button
         type="button"
+        disabled={disabled}
         onClick={() => setIsOpen((v) => !v)}
-        className={`relative flex h-10 items-center whitespace-nowrap rounded-2xl border border-[#E2E8F0] bg-white pl-4 pr-3 text-base transition-colors hover:border-[#CBD5E1] ${
-          fullWidth ? 'w-full justify-between' : 'gap-1.5'
-        }`}
+        className={`relative flex h-10 items-center whitespace-nowrap rounded-2xl border border-[#E2E8F0] pl-4 pr-3 text-base transition-colors ${
+          disabled
+            ? 'cursor-not-allowed bg-[#F1F5F9]'
+            : 'bg-white hover:border-[#CBD5E1]'
+        } ${fullWidth ? 'w-full justify-between' : 'gap-1.5'}`}
       >
         <span className="invisible select-none" aria-hidden>
           {longestLabel}
