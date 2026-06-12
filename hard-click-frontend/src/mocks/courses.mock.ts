@@ -219,7 +219,10 @@ export const mockCourseDetailResponse: CourseDetailApiResponse = {
       ],
     },
   ],
-  learningObjectives: ['수능 국어 전 영역 출제 유형을 파악한다', '실전 시간 배분 전략을 익힌다'],
+  learningObjectives: [
+    '수능 국어 전 영역 출제 유형을 파악한다',
+    '실전 시간 배분 전략을 익힌다',
+  ],
   targetAudience: ['수능 국어 3~4등급 수험생', '내신 국어를 보완하려는 학생'],
   techTags: ['문학', '비문학', '화법과작문'],
   level: '중급~고급',
