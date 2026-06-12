@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import ConfirmModal from '@/components/ui/confirmModal';
 import SelectDropdown from '@/components/ui/SelectDropdown';
@@ -31,6 +32,7 @@ export default function QuizListContent({
   const [selectedWeek, setSelectedWeek] = useState<'all' | number>('all');
   const [deleting, setDeleting] = useState<Quiz | null>(null);
   const [editing, setEditing] = useState<Quiz | null>(null);
+  const router = useRouter();
 
   // 주차는 동적 — 실제 퀴즈에 존재하는 주차만 옵션으로
   const weeks = [...new Set(quizzes.map((q) => q.week))].sort((a, b) => a - b);
@@ -92,7 +94,9 @@ export default function QuizListContent({
               <QuizListItem
                 key={quiz.quizId}
                 quiz={quiz}
-                onView={() => toast('점수 현황은 준비 중입니다.')}
+                onView={() =>
+                  router.push(`/instructor/quizzes/${courseId}/${quiz.quizId}`)
+                }
                 onEdit={() => setEditing(quiz)}
                 onDelete={() => setDeleting(quiz)}
               />
