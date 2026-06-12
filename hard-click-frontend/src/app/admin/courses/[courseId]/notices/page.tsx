@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import AdminNoticeTable from '@/features/admin/components/AdminNoticeTable';
+import AdminCourseNoticeWriteButton from '@/features/admin/components/AdminCourseNoticeWriteButton';
 import { getCourseDetailServer } from '@/features/courses/server';
 import { mockAdminNotices } from '@/mocks/admin.mock';
 
@@ -39,14 +40,17 @@ export default async function AdminCourseNoticesPage({
           </div>
         </div>
 
-        {/* 강의로 돌아가기 */}
-        <Link
-          href={`/admin/courses/${courseId}`}
-          className="mb-6 inline-flex items-center gap-1 text-sm font-medium text-[#4B5563] hover:text-[#2F5DAA]"
-        >
-          <Image src="/icons/back.svg" alt="back" width={16} height={16} />
-          강의로 돌아가기
-        </Link>
+        {/* 강의로 돌아가기 + 공지 작성 */}
+        <div className="mb-6 flex items-center justify-between">
+          <Link
+            href={`/admin/courses/${courseId}`}
+            className="inline-flex items-center gap-1 text-sm font-medium text-[#4B5563] hover:text-[#2F5DAA]"
+          >
+            <Image src="/icons/back.svg" alt="back" width={16} height={16} />
+            강의로 돌아가기
+          </Link>
+          <AdminCourseNoticeWriteButton courseTitle={courseTitle} />
+        </div>
 
         {/* 공지 목록 테이블 */}
         <AdminNoticeTable notices={notices} />
