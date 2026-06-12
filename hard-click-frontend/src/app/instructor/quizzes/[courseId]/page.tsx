@@ -26,6 +26,12 @@ export default async function CourseQuizzesPage({
   const courseName =
     coursesRes.content.find((c) => c.courseId === courseId)?.title ?? '강의';
 
+  // 클라이언트(모달 셀렉트)엔 필요한 필드만 — 서버 DTO 누수 방지 + RSC payload 축소
+  const quizFormCourses = coursesRes.content.map((c) => ({
+    courseId: c.courseId,
+    title: c.title,
+  }));
+
   return (
     <div className="mx-auto max-w-[1253px] px-8 py-8">
       {/* 헤더 */}
@@ -57,7 +63,7 @@ export default async function CourseQuizzesPage({
           </div>
         </div>
 
-        <QuizCreateButton courses={coursesRes.content} />
+        <QuizCreateButton courses={quizFormCourses} />
       </header>
 
       {/* 이전으로 돌아가기 → 강의 목록(Screen 1) */}
@@ -73,7 +79,7 @@ export default async function CourseQuizzesPage({
         quizzes={quizzes}
         courseId={courseId}
         courseName={courseName}
-        courses={coursesRes.content}
+        courses={quizFormCourses}
       />
     </div>
   );

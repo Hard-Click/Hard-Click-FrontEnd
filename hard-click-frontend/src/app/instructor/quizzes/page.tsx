@@ -19,6 +19,12 @@ export default async function InstructorQuizzesPage() {
     createdAt: c.createdAt.split('T')[0].replaceAll('-', '.'),
   }));
 
+  // 모달 셀렉트엔 필요한 필드만 (서버 DTO 누수 방지)
+  const quizFormCourses = content.map((c) => ({
+    courseId: c.courseId,
+    title: c.title,
+  }));
+
   return (
     <div className="mx-auto max-w-[1253px] px-8 py-8">
       {/* 헤더 */}
@@ -50,7 +56,7 @@ export default async function InstructorQuizzesPage() {
           </div>
         </div>
 
-        <QuizCreateButton courses={content} />
+        <QuizCreateButton courses={quizFormCourses} />
       </header>
 
       {/* 내 강의 목록 */}

@@ -39,12 +39,13 @@ export default function QuizFormModal({
   onClose,
   onSuccess,
 }: {
-  mode: 'create' | 'edit';
   courses: { courseId: number; title: string }[];
-  initialData?: Quiz;
   onClose: () => void;
   onSuccess?: () => void;
-}) {
+} & (
+  | { mode: 'create'; initialData?: undefined }
+  | { mode: 'edit'; initialData: Quiz }
+)) {
   const [title, setTitle] = useState(initialData?.title ?? '');
   const [courseId, setCourseId] = useState<number>(
     initialData?.courseId ?? 0,
@@ -139,27 +140,43 @@ export default function QuizFormModal({
 
   const handleConfirm = async () => {
     setIsConfirmOpen(false);
+    // edit인데 initialData 없으면 create로 새지 않게 차단
+    if (mode === 'edit' && !initialData) {
+      toast.error('수정할 퀴즈 정보가 없습니다.');
+      return;
+    }
     setIsLoading(true);
-    const payload: QuizFormPayload = { title, courseId, week, questions };
-    const res =
-      mode === 'edit' && initialData
-        ? await updateQuizAction(initialData.quizId, payload)
-        : await createQuizAction(payload);
-    setIsLoading(false);
-    if (res.success) {
-      toast.success(res.message ?? '저장되었습니다.');
-      onSuccess?.();
-      onClose();
-    } else {
-      toast.error(res.message ?? '저장에 실패했습니다.');
+    try {
+      const payload: QuizFormPayload = { title, courseId, week, questions };
+      const res =
+        mode === 'edit' && initialData
+          ? await updateQuizAction(initialData.quizId, payload)
+          : await createQuizAction(payload);
+      if (res.success) {
+        toast.success(res.message ?? '저장되었습니다.');
+        onSuccess?.();
+        onClose();
+      } else {
+        toast.error(res.message ?? '저장에 실패했습니다.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="flex max-h-[90vh] w-full max-w-[896px] flex-col rounded-2xl bg-white shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1)]">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quiz-modal-title"
+        className="flex max-h-[90vh] w-full max-w-[896px] flex-col rounded-2xl bg-white shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1)]"
+      >
         {/* 헤더 */}
-        <h2 className="shrink-0 px-8 pb-6 pt-8 text-center text-2xl font-bold text-[#1F2937]">
+        <h2
+          id="quiz-modal-title"
+          className="shrink-0 px-8 pb-6 pt-8 text-center text-2xl font-bold text-[#1F2937]"
+        >
           {mode === 'edit' ? '퀴즈 수정' : '퀴즈 등록'}
         </h2>
 
@@ -167,10 +184,14 @@ export default function QuizFormModal({
         <div id="quiz-form-body" className="flex-1 overflow-y-auto px-8">
           {/* 퀴즈 제목 */}
           <div id="quiz-field-title">
-            <label className="mb-2 block text-sm font-semibold text-[#1F2937]">
+            <label
+              htmlFor="quiz-title-input"
+              className="mb-2 block text-sm font-semibold text-[#1F2937]"
+            >
               퀴즈 제목
             </label>
             <input
+              id="quiz-title-input"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}

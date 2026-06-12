@@ -53,10 +53,14 @@ export default function QuizQuestionFields({
 
       {/* 문제 (내용 길어지면 자동으로 늘어남) */}
       <div>
-        <label className="mb-2 block text-sm font-semibold text-[#1F2937]">
+        <label
+          htmlFor={`q${index}-content`}
+          className="mb-2 block text-sm font-semibold text-[#1F2937]"
+        >
           문제
         </label>
         <textarea
+          id={`q${index}-content`}
           value={question.content}
           rows={1}
           onChange={(e) => update({ content: e.target.value })}
@@ -97,6 +101,7 @@ export default function QuizQuestionFields({
                     update({ options: next });
                   }}
                   placeholder={`보기 ${i + 1}`}
+                  aria-label={`보기 ${i + 1}`}
                   className="w-full bg-transparent text-base outline-none"
                 />
               </div>
@@ -117,6 +122,8 @@ export default function QuizQuestionFields({
               key={i}
               type="button"
               onClick={() => update({ answerIndex: i })}
+              aria-pressed={question.answerIndex === i}
+              aria-label={`정답: 보기 ${i + 1}`}
               className={`h-10 rounded-[10px] border text-base font-semibold transition ${
                 question.answerIndex === i
                   ? 'border-[#16A34A] bg-[#16A34A] text-white'
@@ -132,10 +139,14 @@ export default function QuizQuestionFields({
 
       {/* 해설 (필수) */}
       <div className="mt-2">
-        <label className="mb-2 block text-sm font-semibold text-[#1F2937]">
+        <label
+          htmlFor={`q${index}-explanation`}
+          className="mb-2 block text-sm font-semibold text-[#1F2937]"
+        >
           해설
         </label>
         <textarea
+          id={`q${index}-explanation`}
           value={question.explanation}
           onChange={(e) => update({ explanation: e.target.value })}
           placeholder="해설을 입력하세요"
