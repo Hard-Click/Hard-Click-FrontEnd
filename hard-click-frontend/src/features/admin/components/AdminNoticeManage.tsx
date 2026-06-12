@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import AdminNoticeTabs, { type NoticeTab } from './AdminNoticeTabs';
 import AdminNoticeFilterBar from './AdminNoticeFilterBar';
@@ -17,6 +18,8 @@ export default function AdminNoticeManage({
   notices,
   courses,
 }: AdminNoticeManageProps) {
+  const searchParams = useSearchParams();
+  const autoOpen = searchParams.get('openWrite') === 'true';
   const [activeTab, setActiveTab] = useState<NoticeTab>('SYSTEM');
   const filteredNotices = notices.filter((n) =>
     activeTab === 'SYSTEM' ? n.type === 'SYSTEM' : n.type === 'COURSE'
@@ -42,7 +45,7 @@ export default function AdminNoticeManage({
           </div>
         </div>
 
-        <AdminNoticeWriteButton activeTab={activeTab} courses={courses} />
+        <AdminNoticeWriteButton activeTab={activeTab} courses={courses} autoOpen={autoOpen} />
       </div>
 
       <div className="flex flex-col gap-6">

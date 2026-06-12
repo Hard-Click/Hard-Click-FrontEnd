@@ -9,13 +9,17 @@ import AdminNoticeFormModal from './AdminNoticeFormModal';
 interface AdminNoticeWriteButtonProps {
   activeTab: NoticeTab;
   courses: AdminCourseRow[];
+  autoOpen?: boolean;
 }
 
 export default function AdminNoticeWriteButton({
   activeTab,
   courses,
+  autoOpen = false,
 }: AdminNoticeWriteButtonProps) {
-  const [step, setStep] = useState<'none' | 'selectCourse' | 'form'>('none');
+  const [step, setStep] = useState<'none' | 'selectCourse' | 'form'>(
+    autoOpen ? 'form' : 'none'
+  );
   const [selectedCourse, setSelectedCourse] = useState<AdminCourseRow | null>(
     null
   );
