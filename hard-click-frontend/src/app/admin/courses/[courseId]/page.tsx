@@ -1,6 +1,6 @@
 import { getCourseDetailServer } from '@/features/courses/server';
 import { getCourseNoticesServer } from '@/features/notices/server';
-import AdminCourseDetailContent from './AdminCourseDetailContent';
+import AdminCourseDetailContent from '@/features/admin/components/AdminCourseDetailContent';
 
 export default async function AdminCourseDetailPage({
   params,
@@ -18,5 +18,5 @@ export default async function AdminCourseDetailPage({
     ? { ...course, notices: courseNotices.notices }
     : course;
 
-  return <AdminCourseDetailContent initialCourse={initialCourse} />;
+  return <AdminCourseDetailContent initialCourse={initialCourse} courseId={Number(courseId)} />;
 }
