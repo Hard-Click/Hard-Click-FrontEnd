@@ -24,7 +24,7 @@ export default async function QuizScoresPage({
     getQuizScoresServer(courseId, quizId),
     getInstructorCoursesServer(),
   ]);
-  if (!board) notFound();
+  if (!board) return notFound();
 
   // 강의명은 하드코딩 X — 선택한 강의의 실제 제목
   const courseName =

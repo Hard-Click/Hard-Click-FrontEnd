@@ -43,10 +43,10 @@ export default function QuizScoreOverview({
   summary: ScoreSummary;
 }) {
   const cards = [
-    { label: '전체 인원', value: `${summary.totalCount}명`, bg: 'rgba(71,85,105,0.094)', icon: CARD_ICONS.total },
-    { label: '응시 인원', value: `${summary.attendedCount}명`, bg: 'rgba(47,93,170,0.094)', icon: CARD_ICONS.attended },
-    { label: '미응시 인원', value: `${summary.notAttendedCount}명`, bg: 'rgba(185,28,28,0.094)', icon: CARD_ICONS.notAttended },
-    { label: '평균 점수', value: `${summary.average}점`, bg: 'rgba(22,163,74,0.094)', icon: CARD_ICONS.average },
+    { label: '전체 인원', value: `${summary.totalCount}명`, bgClass: 'bg-[#47556918]', icon: CARD_ICONS.total },
+    { label: '응시 인원', value: `${summary.attendedCount}명`, bgClass: 'bg-[#2F5DAA18]', icon: CARD_ICONS.attended },
+    { label: '미응시 인원', value: `${summary.notAttendedCount}명`, bgClass: 'bg-[#B91C1C18]', icon: CARD_ICONS.notAttended },
+    { label: '평균 점수', value: `${summary.average}점`, bgClass: 'bg-[#16A34A18]', icon: CARD_ICONS.average },
   ];
 
   return (
@@ -60,8 +60,7 @@ export default function QuizScoreOverview({
           >
             <div className="flex items-center gap-3">
               <span
-                className="flex h-9 w-9 items-center justify-center rounded-2xl"
-                style={{ background: c.bg }}
+                className={`flex h-9 w-9 items-center justify-center rounded-2xl ${c.bgClass}`}
               >
                 {c.icon}
               </span>
