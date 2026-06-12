@@ -3,6 +3,7 @@ import AdminNoticeTabs from '@/features/admin/components/AdminNoticeTabs';
 import AdminNoticeFilterBar from '@/features/admin/components/AdminNoticeFilterBar';
 import AdminNoticeTable from '@/features/admin/components/AdminNoticeTable';
 import { mockAdminNotices } from '@/mocks/admin.mock';
+import AdminNoticeWriteButton from '@/features/admin/components/AdminNoticeWriteButton';
 
 export default function AdminNoticesPage() {
   return (
@@ -27,8 +28,7 @@ export default function AdminNoticesPage() {
             </div>
           </div>
 
-          {/* 공지 작성 버튼 (모달 여는 동작은 컴포넌트에서) */}
-          {/* <AdminNoticeWriteButton /> */}
+          <AdminNoticeWriteButton />
         </div>
 
         <AdminNoticeTabs />
