@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { getQuizzesServer } from '@/features/quizzes/server';
 import { getInstructorCoursesServer } from '@/features/instructor/server';
 import QuizListContent from '@/features/quizzes/components/QuizListContent';
+import QuizCreateButton from '@/features/quizzes/components/QuizCreateButton';
 
 /**
  * 강사 퀴즈 관리 — 강의별 퀴즈 목록 (Server Component).
@@ -56,13 +57,7 @@ export default async function CourseQuizzesPage({
           </div>
         </div>
 
-        {/* TODO: 등록 모달 연결 — 후속 이슈(퀴즈 등록) */}
-        <button
-          type="button"
-          className="flex h-12 items-center gap-1.5 rounded-[10px] bg-[#2F5DAA] px-5 text-base font-semibold text-white transition hover:bg-[#274C8B]"
-        >
-          <span className="text-lg leading-none">+</span> 퀴즈 등록
-        </button>
+        <QuizCreateButton courses={coursesRes.content} />
       </header>
 
       {/* 이전으로 돌아가기 → 강의 목록(Screen 1) */}
@@ -78,6 +73,7 @@ export default async function CourseQuizzesPage({
         quizzes={quizzes}
         courseId={courseId}
         courseName={courseName}
+        courses={coursesRes.content}
       />
     </div>
   );

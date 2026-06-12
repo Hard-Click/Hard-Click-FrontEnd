@@ -1,5 +1,6 @@
 import RecentCourseCard from '@/features/instructor/components/RecentCourseCard';
 import { getInstructorCoursesServer } from '@/features/instructor/server';
+import QuizCreateButton from '@/features/quizzes/components/QuizCreateButton';
 
 /**
  * 강사 퀴즈 관리 — 강의 목록 페이지 (Server Component).
@@ -49,13 +50,7 @@ export default async function InstructorQuizzesPage() {
           </div>
         </div>
 
-        {/* TODO: 등록 모달 연결 — 후속 이슈(퀴즈 등록) */}
-        <button
-          type="button"
-          className="flex h-12 items-center gap-1.5 rounded-[10px] bg-[#2F5DAA] px-5 text-base font-semibold text-white transition hover:bg-[#274C8B]"
-        >
-          <span className="text-lg leading-none">+</span> 퀴즈 등록
-        </button>
+        <QuizCreateButton courses={content} />
       </header>
 
       {/* 내 강의 목록 */}

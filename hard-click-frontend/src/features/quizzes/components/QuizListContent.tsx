@@ -6,6 +6,7 @@ import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import SelectDropdown from '@/components/ui/SelectDropdown';
 import QuizListItem from './QuizListItem';
 import QuizEmptyState from './QuizEmptyState';
+import QuizFormModal from './QuizFormModal';
 import { deleteQuizAction } from '../actions';
 import type { Quiz } from '../types';
 
@@ -17,14 +18,17 @@ export default function QuizListContent({
   quizzes: initialQuizzes,
   courseId,
   courseName,
+  courses,
 }: {
   quizzes: Quiz[];
   courseId: number;
   courseName: string;
+  courses: { courseId: number; title: string }[];
 }) {
   const [quizzes, setQuizzes] = useState<Quiz[]>(initialQuizzes);
   const [selectedWeek, setSelectedWeek] = useState<'all' | number>('all');
   const [deleting, setDeleting] = useState<Quiz | null>(null);
+  const [editing, setEditing] = useState<Quiz | null>(null);
 
   // 주차는 동적 — 실제 퀴즈에 존재하는 주차만 옵션으로
   const weeks = [...new Set(quizzes.map((q) => q.week))].sort((a, b) => a - b);
@@ -87,7 +91,7 @@ export default function QuizListContent({
                 key={quiz.quizId}
                 quiz={quiz}
                 onView={() => toast('점수 현황은 준비 중입니다.')}
-                onEdit={() => toast('퀴즈 수정은 준비 중입니다.')}
+                onEdit={() => setEditing(quiz)}
                 onDelete={() => setDeleting(quiz)}
               />
             ))}
@@ -104,6 +108,16 @@ export default function QuizListContent({
           rightText="삭제"
           onLeftClick={() => setDeleting(null)}
           onRightClick={handleDelete}
+        />
+      )}
+
+      {/* 수정 — 등록 모달 재사용 (기존 값 채움) */}
+      {editing && (
+        <QuizFormModal
+          mode="edit"
+          courses={courses}
+          initialData={editing}
+          onClose={() => setEditing(null)}
         />
       )}
     </>
