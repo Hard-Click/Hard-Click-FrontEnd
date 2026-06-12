@@ -58,17 +58,19 @@ export interface AdminNoticeRow {
   type: 'SYSTEM' | 'COURSE';
   title: string;
   createdAt: string;
+  content: string;
   isPinned: boolean;
   isPublished: boolean;
   courseTitle?: string;
 }
 
 export const mockAdminNotices: AdminNoticeRow[] = [
-  // 시스템 공지
   {
     id: 1,
     type: 'SYSTEM',
     title: '시스템 점검 안내 (2026년 5월 15일)',
+    content:
+      '5월 15일 02:00~04:00 시스템 점검이 진행됩니다. 해당 시간 동안 서비스 이용이 제한됩니다.',
     createdAt: '2026.05.10',
     isPinned: true,
     isPublished: true,
@@ -77,6 +79,8 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     id: 2,
     type: 'SYSTEM',
     title: '신규 강의 오픈 이벤트 안내',
+    content:
+      '신규 강의 오픈 기념 할인 이벤트를 진행합니다. 자세한 내용은 이벤트 페이지를 확인해주세요.',
     createdAt: '2026.05.08',
     isPinned: true,
     isPublished: true,
@@ -85,15 +89,18 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     id: 3,
     type: 'SYSTEM',
     title: '개인정보 처리방침 변경 안내',
+    content:
+      '개인정보 처리방침이 일부 변경되었습니다. 변경 사항을 확인해주시기 바랍니다.',
     createdAt: '2026.05.05',
     isPinned: false,
     isPublished: false,
   },
-  // 강의 공지
   {
     id: 4,
     type: 'COURSE',
     title: '수1 뿌시기 - 5주차 과제 안내',
+    content:
+      '5주차 과제를 업로드했습니다. 제출 기한은 다음 주 일요일까지입니다.',
     createdAt: '2026.05.11',
     isPinned: true,
     isPublished: true,
@@ -103,6 +110,7 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     id: 5,
     type: 'COURSE',
     title: '국어 머시기 - 보강 일정 공지',
+    content: '이번 주 보강은 토요일 오후 2시에 진행됩니다. 참고 부탁드립니다.',
     createdAt: '2026.05.09',
     isPinned: false,
     isPublished: true,
@@ -112,6 +120,7 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     id: 6,
     type: 'COURSE',
     title: '미적분 머시기 - 자료 업로드',
+    content: '강의 자료를 업로드했습니다. 학습 자료실에서 다운로드 가능합니다.',
     createdAt: '2026.05.07',
     isPinned: false,
     isPublished: false,

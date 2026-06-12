@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import type { AdminNoticeRow } from '@/mocks/admin.mock';
+import AdminNoticeFormModal from './AdminNoticeFormModal';
 
 export default function AdminNoticeTable({
   notices,
@@ -18,6 +19,9 @@ export default function AdminNoticeTable({
   }, [notices]);
 
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [editingNotice, setEditingNotice] = useState<AdminNoticeRow | null>(
+    null
+  );
 
   const handleTogglePublish = (id: number) => {
     const target = rows.find((n) => n.id === id);
@@ -134,14 +138,17 @@ export default function AdminNoticeTable({
                         height={18}
                       />
                     </button>
-                    <Link href={`/admin/notices/${notice.id}/edit`}>
+                    <button
+                      type="button"
+                      onClick={() => setEditingNotice(notice)}
+                    >
                       <Image
                         src="/icons/editIcon.svg"
                         alt="수정"
                         width={18}
                         height={18}
                       />
-                    </Link>
+                    </button>
                     <button
                       type="button"
                       onClick={() => setDeletingId(notice.id)}
@@ -170,6 +177,17 @@ export default function AdminNoticeTable({
           rightText="삭제"
           onLeftClick={() => setDeletingId(null)}
           onRightClick={() => handleDelete(deletingId)}
+        />
+      )}
+
+      {editingNotice && (
+        <AdminNoticeFormModal
+          mode="edit"
+          courseTitle={editingNotice.courseTitle}
+          initialTitle={editingNotice.title}
+          initialContent={editingNotice.content}
+          initialIsPinned={editingNotice.isPinned}
+          onClose={() => setEditingNotice(null)}
         />
       )}
     </div>
