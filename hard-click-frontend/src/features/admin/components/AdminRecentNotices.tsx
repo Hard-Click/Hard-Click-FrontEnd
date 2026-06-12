@@ -1,11 +1,19 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import type { AdminRecentNotice } from '@/mocks/admin.mock';
+import AdminNoticeFormModal from './AdminNoticeFormModal';
 
 export default function AdminRecentNotices({
   notices,
 }: {
   notices: AdminRecentNotice[];
 }) {
+  const [editingNotice, setEditingNotice] = useState<AdminRecentNotice | null>(
+    null
+  );
+
   return (
     <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
       <div className="mb-5 flex items-center justify-between">
@@ -34,16 +42,26 @@ export default function AdminRecentNotices({
             </div>
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-[#1E293B]">{n.title}</p>
-              <Link
-                href={`/admin/notices/${n.id}`}
-                className="text-xs text-[#2F5DAA] rounded-xl px-2 py-0.5  border border-[#E2E8F0]"
+              <button
+                type="button"
+                onClick={() => setEditingNotice(n)}
+                className="text-xs text-[#2F5DAA] rounded-xl px-2 py-0.5 border border-[#E2E8F0]"
               >
                 수정하기
-              </Link>
+              </button>
             </div>
           </div>
         ))}
       </div>
+
+      {editingNotice && (
+        <AdminNoticeFormModal
+          mode="edit"
+          initialTitle={editingNotice.title}
+          initialIsPinned={editingNotice.badge === '중요'}
+          onClose={() => setEditingNotice(null)}
+        />
+      )}
     </div>
   );
 }

@@ -5,7 +5,7 @@ const QUICK_ACTIONS = [
     title: '전체 공지 작성',
     desc: '공지 관리',
     icon: '/icons/plus.svg',
-    href: '/admin/notices',
+    href: '/admin/notices?openWrite=true',
   },
   {
     title: '신고 관리',
