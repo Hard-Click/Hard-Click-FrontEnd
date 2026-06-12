@@ -85,11 +85,11 @@ export default function QuizScoresTable({ rows }: { rows: QuizScoreRow[] }) {
         </colgroup>
         <thead>
           <tr className="border-b border-[#E2E8F0] bg-[#F8FAFC] text-sm font-semibold text-[#64748B]">
-            <th className="py-4">아이디</th>
-            <th className="py-4">이름</th>
-            <th className="py-4">응시 여부</th>
-            <th className="py-4">점수</th>
-            <th className="py-4">제출일</th>
+            <th scope="col" className="py-4">아이디</th>
+            <th scope="col" className="py-4">이름</th>
+            <th scope="col" className="py-4">응시 여부</th>
+            <th scope="col" className="py-4">점수</th>
+            <th scope="col" className="py-4">제출일</th>
           </tr>
         </thead>
         <tbody>
