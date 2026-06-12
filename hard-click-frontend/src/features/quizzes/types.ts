@@ -29,7 +29,7 @@ export interface QuizQuestionInput {
   content: string;
   options: string[]; // 보기 4개
   answerIndex: number; // 정답 0~3 (미선택 -1)
-  explanation: string; // 해설 (선택, 빈 문자열 허용)
+  explanation: string; // 해설 (필수 — 빈 문자열 불가)
 }
 
 /** 등록/수정 폼 전체 payload */

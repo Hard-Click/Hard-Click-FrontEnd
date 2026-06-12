@@ -49,7 +49,10 @@ export async function deleteQuizAction(
 
 /** 등록/수정 폼 payload 공통 검증 (서버측 방어). */
 function validatePayload(payload: QuizFormPayload): string | null {
-  if (!payload.title?.trim()) return '퀴즈 제목을 입력해주세요.';
+  // Server Action 경계 — 런타임 타입 보장 안 되므로 typeof로 먼저 방어 (.trim() throw 방지)
+  if (typeof payload?.title !== 'string' || !payload.title.trim()) {
+    return '퀴즈 제목을 입력해주세요.';
+  }
   if (!Number.isInteger(payload.courseId) || payload.courseId <= 0) {
     return '연결 강의를 선택해주세요.';
   }
@@ -59,13 +62,15 @@ function validatePayload(payload: QuizFormPayload): string | null {
   if (!Array.isArray(payload.questions) || payload.questions.length === 0) {
     return '문제를 1개 이상 추가해주세요.';
   }
-  // 문항 단위 방어 (클라 검증을 신뢰하지 않음)
   for (const q of payload.questions) {
-    if (!q.content?.trim()) return '문제 내용을 입력해주세요.';
+    if (!q || typeof q !== 'object') return '문제 형식이 올바르지 않습니다.';
+    if (typeof q.content !== 'string' || !q.content.trim()) {
+      return '문제 내용을 입력해주세요.';
+    }
     if (
       !Array.isArray(q.options) ||
       q.options.length !== 4 ||
-      q.options.some((o) => !o?.trim())
+      q.options.some((o) => typeof o !== 'string' || !o.trim())
     ) {
       return '보기 4개를 모두 입력해주세요.';
     }
@@ -76,7 +81,9 @@ function validatePayload(payload: QuizFormPayload): string | null {
     ) {
       return '정답을 선택해주세요.';
     }
-    if (!q.explanation?.trim()) return '해설을 입력해주세요.';
+    if (typeof q.explanation !== 'string' || !q.explanation.trim()) {
+      return '해설을 입력해주세요.';
+    }
   }
   return null;
 }

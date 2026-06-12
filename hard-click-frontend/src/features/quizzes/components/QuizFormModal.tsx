@@ -159,6 +159,9 @@ export default function QuizFormModal({
       } else {
         toast.error(res.message ?? '저장에 실패했습니다.');
       }
+    } catch {
+      // 액션이 인프라 레벨에서 reject되어도 사용자 피드백 보장
+      toast.error('저장에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
