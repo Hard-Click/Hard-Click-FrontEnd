@@ -1,5 +1,6 @@
 import RecentCourseCard from '@/features/instructor/components/RecentCourseCard';
 import { getInstructorCoursesServer } from '@/features/instructor/server';
+import { getTakenWeeksByCourseServer } from '@/features/quizzes/server';
 import QuizCreateButton from '@/features/quizzes/components/QuizCreateButton';
 
 /**
@@ -9,7 +10,10 @@ import QuizCreateButton from '@/features/quizzes/components/QuizCreateButton';
  * 데이터는 서버에서 조회(Server-First) — useEffect 페칭 X.
  */
 export default async function InstructorQuizzesPage() {
-  const { content } = await getInstructorCoursesServer();
+  const [{ content }, takenWeeksByCourse] = await Promise.all([
+    getInstructorCoursesServer(),
+    getTakenWeeksByCourseServer(),
+  ]);
 
   const courses = content.map((c) => ({
     courseId: c.courseId,
@@ -56,7 +60,10 @@ export default async function InstructorQuizzesPage() {
           </div>
         </div>
 
-        <QuizCreateButton courses={quizFormCourses} />
+        <QuizCreateButton
+          courses={quizFormCourses}
+          takenWeeksByCourse={takenWeeksByCourse}
+        />
       </header>
 
       {/* 내 강의 목록 */}

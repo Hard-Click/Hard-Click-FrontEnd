@@ -10,8 +10,12 @@ import QuizFormModal from './QuizFormModal';
  */
 export default function QuizCreateButton({
   courses,
+  takenWeeksByCourse,
+  presetCourseId,
 }: {
   courses: { courseId: number; title: string }[];
+  takenWeeksByCourse: Record<number, number[]>;
+  presetCourseId?: number;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -30,6 +34,8 @@ export default function QuizCreateButton({
         <QuizFormModal
           mode="create"
           courses={courses}
+          takenWeeksByCourse={takenWeeksByCourse}
+          presetCourseId={presetCourseId}
           onClose={() => setOpen(false)}
         />
       )}

@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { getQuizzesServer } from '@/features/quizzes/server';
+import {
+  getQuizzesServer,
+  getTakenWeeksByCourseServer,
+} from '@/features/quizzes/server';
 import { getInstructorCoursesServer } from '@/features/instructor/server';
 import QuizListContent from '@/features/quizzes/components/QuizListContent';
 import QuizCreateButton from '@/features/quizzes/components/QuizCreateButton';
@@ -17,9 +20,10 @@ export default async function CourseQuizzesPage({
   const { courseId: courseIdStr } = await params;
   const courseId = Number(courseIdStr);
 
-  const [quizzes, coursesRes] = await Promise.all([
+  const [quizzes, coursesRes, takenWeeksByCourse] = await Promise.all([
     getQuizzesServer(courseId),
     getInstructorCoursesServer(),
+    getTakenWeeksByCourseServer(),
   ]);
 
   // 강의명은 하드코딩 X — 선택한 강의의 실제 제목
@@ -63,7 +67,11 @@ export default async function CourseQuizzesPage({
           </div>
         </div>
 
-        <QuizCreateButton courses={quizFormCourses} />
+        <QuizCreateButton
+          courses={quizFormCourses}
+          takenWeeksByCourse={takenWeeksByCourse}
+          presetCourseId={courseId}
+        />
       </header>
 
       {/* 이전으로 돌아가기 → 강의 목록(Screen 1) */}
@@ -80,6 +88,7 @@ export default async function CourseQuizzesPage({
         courseId={courseId}
         courseName={courseName}
         courses={quizFormCourses}
+        takenWeeksByCourse={takenWeeksByCourse}
       />
     </div>
   );

@@ -47,3 +47,22 @@ export async function getQuizzesServer(courseId: number): Promise<Quiz[]> {
   if (!res.success || !res.data) return [];
   return res.data.map(toQuiz).sort(byWeekAsc); // mock과 동일 정렬 유지
 }
+
+/**
+ * 강의별 "이미 퀴즈가 있는 주차" 맵 — 1주 1퀴즈 규칙용 (등록 시 중복 주차 제외).
+ * { courseId: [사용된 주차들] }
+ */
+export async function getTakenWeeksByCourseServer(): Promise<
+  Record<number, number[]>
+> {
+  if (USE_MOCK) {
+    const map: Record<number, number[]> = {};
+    for (const q of mockQuizzes) {
+      (map[q.courseId] ??= []).push(q.week);
+    }
+    return map;
+  }
+
+  // TODO(API 연동): 강사 강의별 사용 주차 집계 (전용 엔드포인트 or 전체 퀴즈 집계)
+  return {};
+}

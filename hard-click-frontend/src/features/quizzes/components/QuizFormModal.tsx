@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import SelectDropdown from '@/components/ui/SelectDropdown';
-import DoubleBtnModal from '@/components/ui/doubleButtonModal';
+import ConfirmModal from '@/components/ui/confirmModal';
 import LoadingModal from '@/components/ui/loadingModal';
 import QuizQuestionFields, { type QuestionErrors } from './QuizQuestionFields';
 import FieldError from './FieldError';
@@ -35,20 +35,23 @@ const blankQuestion = (): QuizQuestionInput => ({
 export default function QuizFormModal({
   mode,
   courses,
+  takenWeeksByCourse,
   initialData,
+  presetCourseId,
   onClose,
   onSuccess,
 }: {
   courses: { courseId: number; title: string }[];
+  takenWeeksByCourse: Record<number, number[]>;
   onClose: () => void;
   onSuccess?: () => void;
 } & (
-  | { mode: 'create'; initialData?: undefined }
-  | { mode: 'edit'; initialData: Quiz }
+  | { mode: 'create'; initialData?: undefined; presetCourseId?: number }
+  | { mode: 'edit'; initialData: Quiz; presetCourseId?: undefined }
 )) {
   const [title, setTitle] = useState(initialData?.title ?? '');
   const [courseId, setCourseId] = useState<number>(
-    initialData?.courseId ?? 0,
+    initialData?.courseId ?? presetCourseId ?? 0,
   );
   const [week, setWeek] = useState<number>(initialData?.week ?? 0);
   const [questions, setQuestions] = useState<QuizQuestionInput[]>(
@@ -63,16 +66,23 @@ export default function QuizFormModal({
   );
   const [submitted, setSubmitted] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [deletingQuestionIdx, setDeletingQuestionIdx] = useState<number | null>(
+    null,
+  );
 
   const courseOptions = courses.map((c) => ({
     label: c.title,
     value: String(c.courseId),
   }));
-  const weekOptions = Array.from({ length: WEEK_COUNT }, (_, i) => ({
-    label: `${i + 1}주`,
-    value: String(i + 1),
-  }));
+  // 등록: 1주 1퀴즈 — 이미 퀴즈 있는 주차 제외 / 수정: 자기 주차 고정(변경 불가)
+  const weekOptions =
+    mode === 'edit' && initialData
+      ? [{ label: `${initialData.week}주`, value: String(initialData.week) }]
+      : Array.from({ length: WEEK_COUNT }, (_, i) => i + 1)
+          .filter((w) => !(takenWeeksByCourse[courseId] ?? []).includes(w))
+          .map((w) => ({ label: `${w}주`, value: String(w) }));
 
   const isFormValid =
     title.trim() !== '' &&
@@ -167,6 +177,72 @@ export default function QuizFormModal({
     }
   };
 
+  // 모달 겹침 방지 — 로딩/확인 모달이 뜨면 폼 대신 그것만 렌더(뒤 폼 숨김).
+  // 확인에서 취소하면 상태가 false로 돌아가 폼이 다시 렌더됨 (state는 유지).
+  if (isLoading) {
+    return (
+      <LoadingModal
+        title={
+          mode === 'edit'
+            ? '퀴즈를 수정하고 있습니다'
+            : '퀴즈를 등록하고 있습니다'
+        }
+        description="잠시만 기다려주세요."
+      />
+    );
+  }
+  if (isConfirmOpen) {
+    return (
+      <ConfirmModal
+        icon="/icons/checkCircleIcon.svg"
+        iconBgColor="rgba(22, 163, 74, 0.1)"
+        title={mode === 'edit' ? '퀴즈 수정' : '퀴즈 등록'}
+        description={
+          mode === 'edit'
+            ? '해당 퀴즈를 수정하시겠습니까?'
+            : '해당 퀴즈를 등록하시겠습니까?'
+        }
+        cancelText="취소"
+        confirmText="확인"
+        onCancel={() => setIsConfirmOpen(false)}
+        onConfirm={handleConfirm}
+      />
+    );
+  }
+  if (cancelConfirmOpen) {
+    return (
+      <ConfirmModal
+        title={mode === 'edit' ? '퀴즈 수정 취소' : '퀴즈 등록 취소'}
+        description={
+          mode === 'edit'
+            ? '정말 퀴즈 수정을 취소하시겠습니까?'
+            : '정말 퀴즈 등록을 취소하시겠습니까?'
+        }
+        cancelText="취소"
+        confirmText="확인"
+        onCancel={() => setCancelConfirmOpen(false)}
+        onConfirm={onClose}
+      />
+    );
+  }
+  if (deletingQuestionIdx !== null) {
+    return (
+      <ConfirmModal
+        icon="/icons/trashIcon.svg"
+        iconBgColor="rgba(185, 28, 28, 0.1)"
+        title="문제 삭제"
+        description="해당 문제를 삭제하시겠습니까?"
+        cancelText="취소"
+        confirmText="삭제"
+        onCancel={() => setDeletingQuestionIdx(null)}
+        onConfirm={() => {
+          removeQuestion(deletingQuestionIdx);
+          setDeletingQuestionIdx(null);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div
@@ -218,7 +294,11 @@ export default function QuizFormModal({
                 placeholder="강의 선택"
                 value={courseId > 0 ? String(courseId) : ''}
                 options={courseOptions}
-                onChange={(v) => setCourseId(Number(v))}
+                onChange={(v) => {
+                  setCourseId(Number(v));
+                  setWeek(0); // 강의 바뀌면 주차 다시 선택
+                }}
+                disabled={mode === 'edit' || presetCourseId !== undefined}
                 fullWidth
               />
               <FieldError message={errors?.course} />
@@ -232,6 +312,7 @@ export default function QuizFormModal({
                 value={week > 0 ? String(week) : ''}
                 options={weekOptions}
                 onChange={(v) => setWeek(Number(v))}
+                disabled={mode === 'edit' || courseId === 0}
                 fullWidth
               />
               <FieldError message={errors?.week} />
@@ -261,7 +342,7 @@ export default function QuizFormModal({
                   errors={errors?.questions[i]}
                   canRemove={questions.length > 1}
                   onChange={(updated) => updateQuestion(i, updated)}
-                  onRemove={() => removeQuestion(i)}
+                  onRemove={() => setDeletingQuestionIdx(i)}
                 />
               </div>
             ))}
@@ -272,7 +353,7 @@ export default function QuizFormModal({
         <div className="flex shrink-0 gap-3 px-8 pb-8 pt-6">
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => setCancelConfirmOpen(true)}
             className="h-12 flex-1 rounded-[10px] border border-[#E2E8F0] text-base font-semibold text-[#4B5563] transition hover:bg-[#F8FAFC]"
           >
             취소
@@ -289,31 +370,6 @@ export default function QuizFormModal({
           </button>
         </div>
       </div>
-
-      {isConfirmOpen && (
-        <DoubleBtnModal
-          title={mode === 'edit' ? '퀴즈 수정' : '퀴즈 등록'}
-          description={
-            mode === 'edit'
-              ? '이 퀴즈를 수정하시겠습니까?'
-              : '이 퀴즈를 등록하시겠습니까?'
-          }
-          leftText="취소"
-          rightText="확인"
-          onLeftClick={() => setIsConfirmOpen(false)}
-          onRightClick={handleConfirm}
-        />
-      )}
-      {isLoading && (
-        <LoadingModal
-          title={
-            mode === 'edit'
-              ? '퀴즈를 수정하고 있습니다'
-              : '퀴즈를 등록하고 있습니다'
-          }
-          description="잠시만 기다려주세요."
-        />
-      )}
     </div>
   );
 }
