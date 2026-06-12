@@ -1,6 +1,8 @@
 import Image from 'next/image';
 import AdminNoticeTabs from '@/features/admin/components/AdminNoticeTabs';
 import AdminNoticeFilterBar from '@/features/admin/components/AdminNoticeFilterBar';
+import AdminNoticeTable from '@/features/admin/components/AdminNoticeTable';
+import { mockAdminNotices } from '@/mocks/admin.mock';
 
 export default function AdminNoticesPage() {
   return (
@@ -31,6 +33,8 @@ export default function AdminNoticesPage() {
 
         <AdminNoticeTabs />
         <AdminNoticeFilterBar />
+
+        <AdminNoticeTable notices={mockAdminNotices} />
       </div>
     </div>
   );
