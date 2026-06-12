@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -13,6 +13,10 @@ export default function AdminNoticeTable({
   notices: AdminNoticeRow[];
 }) {
   const [rows, setRows] = useState<AdminNoticeRow[]>(notices);
+  useEffect(() => {
+    setRows(notices);
+  }, [notices]);
+
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const handleTogglePublish = (id: number) => {
