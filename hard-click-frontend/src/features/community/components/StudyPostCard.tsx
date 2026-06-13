@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -69,6 +71,9 @@ export default function StudyPostCard({
     return null;
   };
 
+  // 함수를 한 번만 호출 (variant당 한 번 렌더)
+  const ownerActions = renderOwnerActions();
+
   // 버튼 우선순위: 내 글 > 참여함 > 정원마감 > 참여하기
   const renderButton = (full: boolean) => {
     const widthClass = variant === 'list' ? 'w-24' : 'w-full';
@@ -117,9 +122,9 @@ export default function StudyPostCard({
     return (
       <div className="relative rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
         {/* 우측 상단: 내 글 수정/삭제 (관리자는 삭제만) */}
-        {renderOwnerActions() && (
+        {ownerActions && (
           <div className="absolute right-6 top-6 flex items-center gap-2">
-            {renderOwnerActions()}
+            {ownerActions}
           </div>
         )}
 
@@ -186,8 +191,8 @@ export default function StudyPostCard({
         <span className="inline-block rounded-full bg-[#EEF2FF] px-3 py-1 text-xs font-semibold text-[#2F5DAA]">
           {subjectName}
         </span>
-        {renderOwnerActions() && (
-          <div className="flex items-center gap-2">{renderOwnerActions()}</div>
+        {ownerActions && (
+          <div className="flex items-center gap-2">{ownerActions}</div>
         )}
       </div>
 

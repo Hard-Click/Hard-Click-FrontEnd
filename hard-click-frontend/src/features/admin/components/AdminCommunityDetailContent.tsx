@@ -12,26 +12,14 @@ import {
 } from '@/features/community/actions';
 import type { PostDetail, CommentItem } from '@/features/community/types';
 import { BOARD_TYPE_LABEL } from '@/features/community/types';
+import { formatDate } from '@/features/community/utils';
+import DeleteConfirmModal from './DeleteConfirmModal';
 
 const CATEGORY_STYLE: Record<string, string> = {
   질문게시판: 'bg-[#FEF3C7] text-[#D97706]',
   자유게시판: 'bg-[#EFF6FF] text-[#3B82F6]',
   스터디모집: 'bg-[#F3E8FF] text-[#9333EA]',
 };
-
-function formatDate(isoString: string): string {
-  const date = new Date(isoString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-  if (diffMins < 1) return '방금 전';
-  if (diffMins < 60) return `${diffMins}분 전`;
-  if (diffHours < 24) return `${diffHours}시간 전`;
-  if (diffDays < 7) return `${diffDays}일 전`;
-  return date.toLocaleDateString('ko-KR');
-}
 
 interface AdminCommunityDetailContentProps {
   postId: number;
@@ -46,7 +34,7 @@ export default function AdminCommunityDetailContent({
 }: AdminCommunityDetailContentProps) {
   const router = useRouter();
 
-  const [post] = useState<PostDetail>(initialPost);
+  const post = initialPost;
   const [comments, setComments] = useState<CommentItem[]>(initialComments);
 
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -358,42 +346,12 @@ export default function AdminCommunityDetailContent({
 
       {/* 게시글 삭제 확인 모달 */}
       {isDeleteConfirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div
-            className="w-full max-w-[448px] bg-white rounded-2xl p-8"
-            style={{
-              boxShadow:
-                '0px 20px 25px -5px rgba(0,0,0,0.1), 0px 8px 10px -6px rgba(0,0,0,0.1)',
-            }}
-          >
-            <h2 className="text-center text-2xl font-bold text-[#1F2937]">
-              게시글 삭제
-            </h2>
-            <p className="mt-3 text-center text-base text-[#4B5563]">
-              게시글을 삭제하시겠습니까?
-              <br />
-              <span className="text-sm text-[#DC2626]">
-                삭제 후 복구가 불가능합니다.
-              </span>
-            </p>
-            <div className="mt-8 flex gap-3">
-              <button
-                type="button"
-                onClick={() => setIsDeleteConfirmOpen(false)}
-                className="h-12 flex-1 rounded-[10px] border border-[#E2E8F0] bg-white text-base font-semibold text-[#4B5563] hover:bg-[#F8FAFC] transition-colors"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                onClick={handleDeletePost}
-                className="h-12 flex-1 rounded-[10px] bg-[#DC2626] text-base font-semibold text-white hover:bg-[#B91C1C] transition-colors"
-              >
-                삭제
-              </button>
-            </div>
-          </div>
-        </div>
+        <DeleteConfirmModal
+          title="게시글 삭제"
+          message="게시글을 삭제하시겠습니까?"
+          onCancel={() => setIsDeleteConfirmOpen(false)}
+          onConfirm={handleDeletePost}
+        />
       )}
 
       {/* 삭제 로딩 */}
@@ -403,82 +361,22 @@ export default function AdminCommunityDetailContent({
 
       {/* 댓글 삭제 확인 모달 */}
       {deletingCommentId !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div
-            className="w-full max-w-[448px] bg-white rounded-2xl p-8"
-            style={{
-              boxShadow:
-                '0px 20px 25px -5px rgba(0,0,0,0.1), 0px 8px 10px -6px rgba(0,0,0,0.1)',
-            }}
-          >
-            <h2 className="text-center text-2xl font-bold text-[#1F2937]">
-              댓글 삭제
-            </h2>
-            <p className="mt-3 text-center text-base text-[#4B5563]">
-              댓글을 삭제하시겠습니까?
-              <br />
-              <span className="text-sm text-[#DC2626]">
-                삭제 후 복구가 불가능합니다.
-              </span>
-            </p>
-            <div className="mt-8 flex gap-3">
-              <button
-                type="button"
-                onClick={() => setDeletingCommentId(null)}
-                className="h-12 flex-1 rounded-[10px] border border-[#E2E8F0] bg-white text-base font-semibold text-[#4B5563] hover:bg-[#F8FAFC] transition-colors"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                onClick={() => handleCommentDelete(deletingCommentId)}
-                className="h-12 flex-1 rounded-[10px] bg-[#DC2626] text-base font-semibold text-white hover:bg-[#B91C1C] transition-colors"
-              >
-                삭제
-              </button>
-            </div>
-          </div>
-        </div>
+        <DeleteConfirmModal
+          title="댓글 삭제"
+          message="댓글을 삭제하시겠습니까?"
+          onCancel={() => setDeletingCommentId(null)}
+          onConfirm={() => handleCommentDelete(deletingCommentId)}
+        />
       )}
 
       {/* 대댓글 삭제 확인 모달 */}
       {deletingReplyInfo !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div
-            className="w-full max-w-[448px] bg-white rounded-2xl p-8"
-            style={{
-              boxShadow:
-                '0px 20px 25px -5px rgba(0,0,0,0.1), 0px 8px 10px -6px rgba(0,0,0,0.1)',
-            }}
-          >
-            <h2 className="text-center text-2xl font-bold text-[#1F2937]">
-              답글 삭제
-            </h2>
-            <p className="mt-3 text-center text-base text-[#4B5563]">
-              답글을 삭제하시겠습니까?
-              <br />
-              <span className="text-sm text-[#DC2626]">
-                삭제 후 복구가 불가능합니다.
-              </span>
-            </p>
-            <div className="mt-8 flex gap-3">
-              <button
-                type="button"
-                onClick={() => setDeletingReplyInfo(null)}
-                className="h-12 flex-1 rounded-[10px] border border-[#E2E8F0] bg-white text-base font-semibold text-[#4B5563] hover:bg-[#F8FAFC] transition-colors"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                onClick={() => handleReplyDelete(deletingReplyInfo.replyId)}
-                className="h-12 flex-1 rounded-[10px] bg-[#DC2626] text-base font-semibold text-white hover:bg-[#B91C1C] transition-colors"
-              >
-                삭제
-              </button>
-            </div>
-          </div>
-        </div>
+        <DeleteConfirmModal
+          title="답글 삭제"
+          message="답글을 삭제하시겠습니까?"
+          onCancel={() => setDeletingReplyInfo(null)}
+          onConfirm={() => handleReplyDelete(deletingReplyInfo.replyId)}
+        />
       )}
     </div>
   );

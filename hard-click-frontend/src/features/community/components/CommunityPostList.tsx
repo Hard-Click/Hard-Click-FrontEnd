@@ -57,7 +57,6 @@ export default function CommunityPostList({
             isJoined={post.isJoined ?? false}
             variant={isStudyTab ? 'grid' : 'list'}
             hrefPrefix={hrefPrefix}
-            readOnly={hrefPrefix.startsWith('/admin')}
           />
         ) : (
           <CommunityPostCard

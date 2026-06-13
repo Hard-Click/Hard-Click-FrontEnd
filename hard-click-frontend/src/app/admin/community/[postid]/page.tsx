@@ -13,6 +13,10 @@ export default async function AdminCommunityDetailPage({
   const { postid } = await params;
   const postId = Number(postid);
 
+  if (Number.isNaN(postId)) {
+    notFound();
+  }
+
   const [postRes, commentsRes] = await Promise.all([
     getPostDetail(postId),
     getComments(postId),
