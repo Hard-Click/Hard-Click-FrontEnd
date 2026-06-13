@@ -25,7 +25,7 @@ export default async function AdminCourseEditPage({ params }: Props) {
         title: course.title,
         subject: course.subject,
         instructor: course.instructor,
-        description: '',
+        description: course.description ?? '',
         priceType: course.isFree ? 'FREE' : 'PAID',
         price: String(course.price),
       }}

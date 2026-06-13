@@ -268,8 +268,8 @@ export default function AdminCourseCreateForm({
       newErrors.description = '강의 설명을 입력해주세요';
       if (!firstError) firstError = 'description';
     }
-    if (priceType === 'PAID' && !price.trim()) {
-      newErrors.price = '가격을 입력해주세요';
+    if (priceType === 'PAID' && (!price.trim() || Number(price) <= 0)) {
+      newErrors.price = '1원 이상의 가격을 입력해주세요';
       if (!firstError) firstError = 'price';
     }
     if (!thumbnail && !thumbnailPreview) {
@@ -520,6 +520,9 @@ export default function AdminCourseCreateForm({
                     e.target.value = '';
                     return;
                   }
+                  if (thumbnailPreview.startsWith('blob:')) {
+                    URL.revokeObjectURL(thumbnailPreview);
+                  }
                   setThumbnail(file);
                   setThumbnailPreview(URL.createObjectURL(file));
                   setErrors((prev) => ({ ...prev, thumbnail: '' }));
@@ -535,6 +538,9 @@ export default function AdminCourseCreateForm({
                 <button
                   type="button"
                   onClick={() => {
+                    if (thumbnailPreview.startsWith('blob:')) {
+                      URL.revokeObjectURL(thumbnailPreview);
+                    }
                     setThumbnail(null);
                     setThumbnailPreview('');
                   }}
@@ -608,6 +614,7 @@ export default function AdminCourseCreateForm({
                 <input
                   ref={priceRef}
                   type="number"
+                  min={1}
                   value={price}
                   disabled={mode === 'edit'}
                   onChange={(e) => {
