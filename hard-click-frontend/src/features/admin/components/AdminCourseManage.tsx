@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import AdminNoticeFilterBar from './AdminNoticeFilterBar';
 import AdminCourseCard from './AdminCourseCard';
 import SelectDropdown from '@/components/ui/SelectDropdown';
@@ -51,13 +51,9 @@ export default function AdminCourseManage({ initialCourses }: Props) {
     );
   };
 
-  const handleDelete = (id: number) => {
-    setCourses((prev) =>
-      prev.map((c) =>
-        c.id === id ? { ...c, status: 'DELETED' as AdminCourseStatus } : c
-      )
-    );
-  };
+  const handleDelete = useCallback((id: number) => {
+    setCourses((prev) => prev.filter((c) => c.id !== id));
+  }, []);
 
   return (
     <div className="flex flex-col gap-4">
