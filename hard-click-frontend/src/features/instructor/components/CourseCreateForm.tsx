@@ -89,10 +89,10 @@ function SortableSectionItem({
   section: Section;
   sectionIndex: number;
   mode: 'create' | 'edit';
-  onTitleChange: (id: number, title: string) => void;
-  onRemove: (id: number) => void;
-  onAddLecture: (sectionId: number, file: File, duration: string) => void;
-  onRemoveLecture: (sectionId: number, index: number) => void;
+  onTitleChange: (id: string, title: string) => void;
+  onRemove: (id: string) => void;
+  onAddLecture: (sectionId: string, file: File, duration: string) => void;
+  onRemoveLecture: (sectionId: string, index: number) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: section.id });
@@ -138,7 +138,7 @@ function SortableSectionItem({
         <div className="mb-4 mt-3 space-y-2">
           {section.lectures.map((lecture, index) => (
             <div
-              key={index}
+              key={lecture.id}
               className="grid grid-cols-[1fr_auto_auto] items-center rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3"
             >
               <div className="min-w-0">
@@ -172,6 +172,10 @@ function SortableSectionItem({
               if (!file) return;
               const video = document.createElement('video');
               video.preload = 'metadata';
+              video.onerror = () => {
+                URL.revokeObjectURL(video.src);
+                toast.error('영상 파일을 불러올 수 없습니다.');
+              };
               video.onloadedmetadata = () => {
                 window.URL.revokeObjectURL(video.src);
                 onAddLecture(section.id, file, formatDuration(video.duration));
@@ -567,116 +571,51 @@ export default function CourseCreateForm({
                       sectionIndex={sectionIndex}
                       mode={mode}
                       onTitleChange={(id, title) =>
-                        setSections((prev) => prev.map((item) => item.id === id ? { ...item, title } : item))
+                        setSections((prev) =>
+                          prev.map((item) =>
+                            item.id === id ? { ...item, title } : item,
+                          ),
+                        )
                       }
                       onRemove={(id) =>
                         setSections((prev) => prev.filter((item) => item.id !== id))
                       }
-                      className="text-[#B91C1C]"
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  {/* lectures */}
-                  <div className="pl-8">
-                    <div className="mb-4 mt-3 space-y-2">
-                      {section.lectures.map((lecture, index) => (
-                        <div
-                          key={lecture.id}
-                          className="grid grid-cols-[1fr_auto_auto] items-center rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3"
-                        >
-                          {/* 영상 제목 */}
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-[#334155]">
-                              {lecture.file?.name || lecture.fileName}
-                            </p>
-                          </div>
-
-                          {/* 영상 길이 */}
-                          <div className="mx-6">
-                            <p className="text-sm text-[#64748B]">
-                              {lecture.duration}
-                            </p>
-                          </div>
-
-                          {/* 삭제 */}
-                          <div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSections((prev) =>
-                                  prev.map((item) =>
-                                    item.id === section.id
-                                      ? {
-                                          ...item,
-                                          lectures: item.lectures.filter(
-                                            (_, lectureIndex) =>
-                                              lectureIndex !== index,
-                                          ),
-                                        }
-                                      : item,
+                      onAddLecture={(sectionId, file, duration) =>
+                        setSections((prev) =>
+                          prev.map((item) =>
+                            item.id === sectionId
+                              ? {
+                                  ...item,
+                                  lectures: [
+                                    ...item.lectures,
+                                    {
+                                      id: crypto.randomUUID(),
+                                      file,
+                                      fileName: file.name,
+                                      duration,
+                                    },
+                                  ],
+                                }
+                              : item,
+                          ),
+                        )
+                      }
+                      onRemoveLecture={(sectionId, index) =>
+                        setSections((prev) =>
+                          prev.map((item) =>
+                            item.id === sectionId
+                              ? {
+                                  ...item,
+                                  lectures: item.lectures.filter(
+                                    (_, i) => i !== index,
                                   ),
-                                );
-                              }}
-                              className="text-sm font-medium text-[#B91C1C]"
-                            >
-                              삭제
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <label className="flex h-12 w-full cursor-pointer items-center justify-center rounded-2xl border border-[#E2E8F0] bg-white text-sm font-medium text-[#475569] transition hover:bg-[#F8FAFC]">
-                      + 강의 영상 추가
-                      <input
-                        type="file"
-                        accept="video/mp4,video/quicktime,video/x-msvideo"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-
-                          if (!file) return;
-
-                          const video = document.createElement('video');
-
-                          video.preload = 'metadata';
-                          video.onerror = () => {
-                            URL.revokeObjectURL(video.src);
-                            toast.error('영상 파일을 불러올 수 없습니다.');
-                          };
-
-                          video.onloadedmetadata = () => {
-                            window.URL.revokeObjectURL(video.src);
-
-                            const duration = formatDuration(video.duration);
-
-                            setSections((prev) =>
-                              prev.map((item) =>
-                                item.id === section.id
-                                  ? {
-                                      ...item,
-                                      lectures: [
-                                        ...item.lectures,
-                                        {
-                                          id: crypto.randomUUID(),
-                                          file,
-                                          fileName: file.name,
-                                          duration,
-                                        },
-                                      ],
-                                    }
-                                  : item,
-                              ),
-                            );
-                          };
-
-                          video.src = URL.createObjectURL(file);
-                        }}
-                      />
-                    </label>
-                  </div>
+                                }
+                              : item,
+                          ),
+                        )
+                      }
+                    />
+                  ))}
                 </div>
               </SortableContext>
             </DndContext>
