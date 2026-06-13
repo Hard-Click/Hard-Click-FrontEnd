@@ -170,6 +170,7 @@ export interface AdminCourseManageRow {
   isFree: boolean;
   status: AdminCourseStatus;
   createdAt: string;
+  description?: string;
 }
 
 export const mockAdminCourseManage: AdminCourseManageRow[] = [

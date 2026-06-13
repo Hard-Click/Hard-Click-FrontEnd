@@ -41,13 +41,14 @@ const SUBJECT_OPTIONS = [
 ];
 
 interface Lecture {
+  id: string;
   file?: File;
   fileName: string;
   duration: string;
 }
 
 interface Section {
-  id: number;
+  id: string;
   title: string;
   lectures: Lecture[];
 }
@@ -426,6 +427,11 @@ export default function CourseCreateForm({
                     e.target.value = '';
                     return;
                   }
+
+                  // 성공
+                  if (thumbnailPreview.startsWith('blob:')) {
+                    URL.revokeObjectURL(thumbnailPreview);
+                  }
                   setThumbnail(file);
                   setThumbnailPreview(URL.createObjectURL(file));
                   setErrors((prev) => ({ ...prev, thumbnail: '' }));
@@ -440,7 +446,13 @@ export default function CourseCreateForm({
                 </p>
                 <button
                   type="button"
-                  onClick={() => { setThumbnail(null); setThumbnailPreview(''); }}
+                  onClick={() => {
+                    if (thumbnailPreview.startsWith('blob:')) {
+                      URL.revokeObjectURL(thumbnailPreview);
+                    }
+                    setThumbnail(null);
+                    setThumbnailPreview('');
+                  }}
                   className="text-[#64748B] transition hover:text-[#1E293B]"
                 >
                   ✕
@@ -523,7 +535,16 @@ export default function CourseCreateForm({
             <h2 className="text-xl font-bold text-[#1E293B]">커리큘럼</h2>
             <button
               type="button"
-              onClick={() => setSections((prev) => [...prev, { id: Date.now(), title: '', lectures: [] }])}
+              onClick={() =>
+                setSections((prev) => [
+                  ...prev,
+                  {
+                    id: crypto.randomUUID(),
+                    title: '',
+                    lectures: [],
+                  },
+                ])
+              }
               className="rounded-xl border border-[#2F5DAA] px-4 py-2 text-sm font-semibold text-[#2F5DAA] transition hover:bg-[#EEF4FF]"
             >
               + 섹션 추가
@@ -551,22 +572,111 @@ export default function CourseCreateForm({
                       onRemove={(id) =>
                         setSections((prev) => prev.filter((item) => item.id !== id))
                       }
-                      onAddLecture={(sectionId, file, duration) =>
-                        setSections((prev) => prev.map((item) =>
-                          item.id === sectionId
-                            ? { ...item, lectures: [...item.lectures, { file, fileName: file.name, duration }] }
-                            : item
-                        ))
-                      }
-                      onRemoveLecture={(sectionId, index) =>
-                        setSections((prev) => prev.map((item) =>
-                          item.id === sectionId
-                            ? { ...item, lectures: item.lectures.filter((_, i) => i !== index) }
-                            : item
-                        ))
-                      }
-                    />
-                  ))}
+                      className="text-[#B91C1C]"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  {/* lectures */}
+                  <div className="pl-8">
+                    <div className="mb-4 mt-3 space-y-2">
+                      {section.lectures.map((lecture, index) => (
+                        <div
+                          key={lecture.id}
+                          className="grid grid-cols-[1fr_auto_auto] items-center rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3"
+                        >
+                          {/* 영상 제목 */}
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-[#334155]">
+                              {lecture.file?.name || lecture.fileName}
+                            </p>
+                          </div>
+
+                          {/* 영상 길이 */}
+                          <div className="mx-6">
+                            <p className="text-sm text-[#64748B]">
+                              {lecture.duration}
+                            </p>
+                          </div>
+
+                          {/* 삭제 */}
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSections((prev) =>
+                                  prev.map((item) =>
+                                    item.id === section.id
+                                      ? {
+                                          ...item,
+                                          lectures: item.lectures.filter(
+                                            (_, lectureIndex) =>
+                                              lectureIndex !== index,
+                                          ),
+                                        }
+                                      : item,
+                                  ),
+                                );
+                              }}
+                              className="text-sm font-medium text-[#B91C1C]"
+                            >
+                              삭제
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <label className="flex h-12 w-full cursor-pointer items-center justify-center rounded-2xl border border-[#E2E8F0] bg-white text-sm font-medium text-[#475569] transition hover:bg-[#F8FAFC]">
+                      + 강의 영상 추가
+                      <input
+                        type="file"
+                        accept="video/mp4,video/quicktime,video/x-msvideo"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+
+                          if (!file) return;
+
+                          const video = document.createElement('video');
+
+                          video.preload = 'metadata';
+                          video.onerror = () => {
+                            URL.revokeObjectURL(video.src);
+                            toast.error('영상 파일을 불러올 수 없습니다.');
+                          };
+
+                          video.onloadedmetadata = () => {
+                            window.URL.revokeObjectURL(video.src);
+
+                            const duration = formatDuration(video.duration);
+
+                            setSections((prev) =>
+                              prev.map((item) =>
+                                item.id === section.id
+                                  ? {
+                                      ...item,
+                                      lectures: [
+                                        ...item.lectures,
+                                        {
+                                          id: crypto.randomUUID(),
+                                          file,
+                                          fileName: file.name,
+                                          duration,
+                                        },
+                                      ],
+                                    }
+                                  : item,
+                              ),
+                            );
+                          };
+
+                          video.src = URL.createObjectURL(file);
+                        }}
+                      />
+                    </label>
+                  </div>
                 </div>
               </SortableContext>
             </DndContext>

@@ -55,13 +55,14 @@ interface AdminCourseCreateFormProps {
 }
 
 interface Lecture {
+  id: string;
   file?: File;
   fileName: string;
   duration: string;
 }
 
 interface Section {
-  id: number;
+  id: string;
   title: string;
   lectures: Lecture[];
 }
@@ -83,10 +84,10 @@ function SortableSectionItem({
 }: {
   section: Section;
   sectionIndex: number;
-  onTitleChange: (id: number, title: string) => void;
-  onRemove: (id: number) => void;
-  onAddLecture: (sectionId: number, file: File, duration: string) => void;
-  onRemoveLecture: (sectionId: number, index: number) => void;
+  onTitleChange: (id: string, title: string) => void;
+  onRemove: (id: string) => void;
+  onAddLecture: (sectionId: string, file: File, duration: string) => void;
+  onRemoveLecture: (sectionId: string, index: number) => void;
 }) {
   const {
     attributes,
@@ -138,7 +139,7 @@ function SortableSectionItem({
         <div className="mb-4 mt-3 space-y-2">
           {section.lectures.map((lecture, index) => (
             <div
-              key={index}
+              key={lecture.id}
               className="grid grid-cols-[1fr_auto_auto] items-center rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3"
             >
               <p className="truncate text-sm font-medium text-[#334155]">
@@ -166,6 +167,10 @@ function SortableSectionItem({
               if (!file) return;
               const video = document.createElement('video');
               video.preload = 'metadata';
+              video.onerror = () => {
+                URL.revokeObjectURL(video.src);
+                toast.error('영상 파일을 불러올 수 없습니다.');
+              };
               video.onloadedmetadata = () => {
                 window.URL.revokeObjectURL(video.src);
                 onAddLecture(section.id, file, formatDuration(video.duration));
@@ -268,8 +273,8 @@ export default function AdminCourseCreateForm({
       newErrors.description = '강의 설명을 입력해주세요';
       if (!firstError) firstError = 'description';
     }
-    if (priceType === 'PAID' && !price.trim()) {
-      newErrors.price = '가격을 입력해주세요';
+    if (priceType === 'PAID' && (!price.trim() || Number(price) <= 0)) {
+      newErrors.price = '1원 이상의 가격을 입력해주세요';
       if (!firstError) firstError = 'price';
     }
     if (!thumbnail && !thumbnailPreview) {
@@ -520,6 +525,9 @@ export default function AdminCourseCreateForm({
                     e.target.value = '';
                     return;
                   }
+                  if (thumbnailPreview.startsWith('blob:')) {
+                    URL.revokeObjectURL(thumbnailPreview);
+                  }
                   setThumbnail(file);
                   setThumbnailPreview(URL.createObjectURL(file));
                   setErrors((prev) => ({ ...prev, thumbnail: '' }));
@@ -535,6 +543,9 @@ export default function AdminCourseCreateForm({
                 <button
                   type="button"
                   onClick={() => {
+                    if (thumbnailPreview.startsWith('blob:')) {
+                      URL.revokeObjectURL(thumbnailPreview);
+                    }
                     setThumbnail(null);
                     setThumbnailPreview('');
                   }}
@@ -608,6 +619,7 @@ export default function AdminCourseCreateForm({
                 <input
                   ref={priceRef}
                   type="number"
+                  min={1}
                   value={price}
                   disabled={mode === 'edit'}
                   onChange={(e) => {
@@ -651,7 +663,7 @@ export default function AdminCourseCreateForm({
               onClick={() =>
                 setSections((prev) => [
                   ...prev,
-                  { id: Date.now(), title: '', lectures: [] },
+                  { id: crypto.randomUUID(), title: '', lectures: [] },
                 ])
               }
               className="rounded-xl border border-[#2F5DAA] px-4 py-2 text-sm font-semibold text-[#2F5DAA] transition hover:bg-[#EEF4FF]"
@@ -709,7 +721,7 @@ export default function AdminCourseCreateForm({
                                   ...item,
                                   lectures: [
                                     ...item.lectures,
-                                    { file, fileName: file.name, duration },
+                                    { id: crypto.randomUUID(), file, fileName: file.name, duration },
                                   ],
                                 }
                               : item
