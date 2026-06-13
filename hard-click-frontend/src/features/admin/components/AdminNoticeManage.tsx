@@ -7,7 +7,12 @@ import AdminNoticeTabs, { type NoticeTab } from './AdminNoticeTabs';
 import AdminNoticeFilterBar from './AdminNoticeFilterBar';
 import AdminNoticeTable from './AdminNoticeTable';
 import AdminNoticeWriteButton from './AdminNoticeWriteButton';
+import SelectDropdown from '@/components/ui/SelectDropdown';
 import type { AdminNoticeRow, AdminCourseRow } from '@/mocks/admin.mock';
+import {
+  mockAdminSubjectOptions,
+  mockAdminInstructorOptions,
+} from '@/mocks/admin.mock';
 
 type NoticeFilter = 'ALL' | 'PINNED' | 'NORMAL';
 
@@ -29,6 +34,8 @@ export default function AdminNoticeManage({ notices, courses }: Props) {
   const [activeTab, setActiveTab] = useState<NoticeTab>('SYSTEM');
   const [keyword, setKeyword] = useState('');
   const [filter, setFilter] = useState<NoticeFilter>('ALL');
+  const [subject, setSubject] = useState('');
+  const [instructor, setInstructor] = useState('');
 
   const filtered = notices.filter((n) => {
     const matchTab =
@@ -36,7 +43,13 @@ export default function AdminNoticeManage({ notices, courses }: Props) {
     const matchFilter =
       filter === 'ALL' || (filter === 'PINNED' ? n.isPinned : !n.isPinned);
     const matchKeyword = keyword ? n.title.includes(keyword) : true;
-    return matchTab && matchFilter && matchKeyword;
+    const matchSubject = subject ? n.courseSubject === subject : true;
+    const matchInstructor = instructor
+      ? n.courseInstructor === instructor
+      : true;
+    return (
+      matchTab && matchFilter && matchKeyword && matchSubject && matchInstructor
+    );
   });
 
   return (
@@ -77,30 +90,18 @@ export default function AdminNoticeManage({ notices, courses }: Props) {
         >
           {activeTab === 'COURSE' && (
             <>
-              <button
-                type="button"
-                className="flex h-9 items-center gap-2 rounded-xl border border-[#E2E8F0] px-4 text-sm text-[#475569]"
-              >
-                과목
-                <Image
-                  src="/icons/AdminDropDown.svg"
-                  alt=""
-                  width={14}
-                  height={14}
-                />
-              </button>
-              <button
-                type="button"
-                className="flex h-9 items-center gap-2 rounded-xl border border-[#E2E8F0] px-4 text-sm text-[#475569]"
-              >
-                강사
-                <Image
-                  src="/icons/AdminDropDown.svg"
-                  alt=""
-                  width={14}
-                  height={14}
-                />
-              </button>
+              <SelectDropdown
+                placeholder="과목"
+                value={subject}
+                options={mockAdminSubjectOptions}
+                onChange={setSubject}
+              />
+              <SelectDropdown
+                placeholder="강사"
+                value={instructor}
+                options={mockAdminInstructorOptions}
+                onChange={setInstructor}
+              />
             </>
           )}
         </AdminNoticeFilterBar>
