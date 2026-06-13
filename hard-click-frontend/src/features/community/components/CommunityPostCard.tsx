@@ -13,6 +13,7 @@ interface CommunityPostCardProps {
   comments: number;
   status?: string;
   recruit?: string;
+  hrefPrefix?: string;
 }
 
 export default function CommunityPostCard({
@@ -25,12 +26,13 @@ export default function CommunityPostCard({
   views,
   comments,
   status,
+  hrefPrefix = '/community',
 }: CommunityPostCardProps) {
   const isQuestion = category === '질문게시판';
 
   return (
     <Link
-      href={`/community/${id}`}
+      href={`${hrefPrefix}/${id}`}
       className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm block"
     >
       {/* top badges */}

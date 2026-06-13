@@ -24,8 +24,10 @@ function formatDate(isoString: string): string {
  */
 export default function CommunityPostList({
   posts,
+  hrefPrefix = '/community',
 }: {
   posts: PostListItem[];
+  hrefPrefix?: string;
 }) {
   if (posts.length === 0) {
     return <PostEmptyState />;
@@ -54,6 +56,7 @@ export default function CommunityPostList({
             isMine={post.isMine ?? false}
             isJoined={post.isJoined ?? false}
             variant={isStudyTab ? 'grid' : 'list'}
+            hrefPrefix={hrefPrefix}
           />
         ) : (
           <CommunityPostCard
@@ -73,6 +76,7 @@ export default function CommunityPostList({
                   : '답변 대기'
                 : undefined
             }
+            hrefPrefix={hrefPrefix}
           />
         )
       )}
