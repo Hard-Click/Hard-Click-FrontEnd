@@ -108,7 +108,7 @@ export default function CommunityListControls({
             검색
           </button>
 
-          {activeTab === '질문게시판' && (
+          {(activeTab === '질문게시판' || activeTab === '스터디모집') && (
             <>
               <select
                 value={subject}
@@ -138,54 +138,25 @@ export default function CommunityListControls({
           )}
         </div>
 
-        {/* 아랫줄: 스터디게시판 → 과목필터+초기화 / 나머지 → 정렬 */}
+        {/* 아랫줄: 정렬 */}
         <div className="mt-3 flex items-center gap-2">
-          {activeTab === '스터디게시판' ? (
-            <>
-              <select
-                value={subject}
-                onChange={(e) =>
-                  pushWith({ subject: e.target.value || undefined })
-                }
-                className="h-10 rounded-xl border border-[#E2E8F0] bg-white px-3 text-sm text-[#4B5563] outline-none"
-              >
-                <option value="">전체 과목</option>
-                {subjects.map((s) => (
-                  <option key={s.code} value={s.code}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+          {SORT_OPTIONS.map((option) => {
+            const isActive = sortType === option;
+            return (
               <button
+                key={option}
                 type="button"
-                onClick={() => {
-                  setSearch('');
-                  pushWith({ keyword: undefined, subject: undefined });
-                }}
-                className="flex h-10 items-center gap-1 rounded-xl border border-[#E2E8F0] bg-white px-4 text-sm text-[#4B5563] transition hover:bg-[#F8FAFC]"
+                onClick={() => pushWith({ sort: option })}
+                className={`h-10 whitespace-nowrap rounded-xl px-3 text-sm font-semibold transition ${
+                  isActive
+                    ? 'bg-[#2F5DAA] text-white'
+                    : 'bg-[#F8FAFC] text-[#4B5563]'
+                }`}
               >
-                초기화
+                {option}
               </button>
-            </>
-          ) : (
-            SORT_OPTIONS.map((option) => {
-              const isActive = sortType === option;
-              return (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => pushWith({ sort: option })}
-                  className={`h-10 whitespace-nowrap rounded-xl px-3 text-sm font-semibold transition ${
-                    isActive
-                      ? 'bg-[#2F5DAA] text-white'
-                      : 'bg-[#F8FAFC] text-[#4B5563]'
-                  }`}
-                >
-                  {option}
-                </button>
-              );
-            })
-          )}
+            );
+          })}
         </div>
       </div>
     </>

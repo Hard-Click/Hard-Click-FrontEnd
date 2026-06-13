@@ -13,6 +13,13 @@ interface StudyPostCardProps {
   isMine?: boolean;
   isJoined?: boolean;
   variant?: 'list' | 'grid';
+  hrefPrefix?: string;
+  /** true면 소유자 수정/삭제 버튼 숨김 (관리자 조회용) */
+  readOnly?: boolean;
+  /** 제공되면 수정 버튼 없이 삭제 버튼만 표시 (관리자 삭제용) */
+  onDelete?: (id: number) => void;
+  /** 제공되면 입장/참여/마감 대신 이 라벨로 고정 표시 (관리자 조회용) */
+  actionLabel?: string;
 }
 
 export default function StudyPostCard({
@@ -27,16 +34,58 @@ export default function StudyPostCard({
   isMine = false,
   isJoined = false,
   variant = 'grid',
+  hrefPrefix = '/community',
+  readOnly = false,
+  onDelete,
+  actionLabel,
 }: StudyPostCardProps) {
   const isFull = currentCount >= maxCount;
+
+  // 소유자 액션 영역: 관리자(onDelete)면 삭제만, 본인 글이면 수정+삭제
+  const renderOwnerActions = () => {
+    if (onDelete) {
+      return (
+        <button
+          type="button"
+          onClick={() => onDelete(id)}
+          className="text-[#EF4444]"
+        >
+          <Image src="/icons/trashIcon.svg" alt="delete" width={18} height={18} />
+        </button>
+      );
+    }
+    if (isMine && !readOnly) {
+      return (
+        <>
+          <Link href={`${hrefPrefix}/${id}/edit`} className="text-[#2F5DAA]">
+            <Image src="/icons/editIcon.svg" alt="edit" width={18} height={18} />
+          </Link>
+          <button type="button" className="text-[#EF4444]">
+            <Image src="/icons/trashIcon.svg" alt="delete" width={18} height={18} />
+          </button>
+        </>
+      );
+    }
+    return null;
+  };
 
   // 버튼 우선순위: 내 글 > 참여함 > 정원마감 > 참여하기
   const renderButton = (full: boolean) => {
     const widthClass = variant === 'list' ? 'w-24' : 'w-full';
+    if (actionLabel) {
+      return (
+        <Link
+          href={`${hrefPrefix}/${id}`}
+          className={`block ${widthClass} rounded-2xl bg-[#2F5DAA] py-3 text-center text-sm font-semibold text-white transition hover:opacity-90`}
+        >
+          {actionLabel}
+        </Link>
+      );
+    }
     if (isMine || isJoined) {
       return (
         <Link
-          href={`/community/${id}`}
+          href={`${hrefPrefix}/${id}`}
           className={`block ${widthClass} rounded-2xl bg-[#2F5DAA] py-3 text-center text-sm font-semibold text-white transition hover:opacity-90`}
         >
           입장하기
@@ -56,7 +105,7 @@ export default function StudyPostCard({
     }
     return (
       <Link
-        href={`/community/${id}`}
+        href={`${hrefPrefix}/${id}`}
         className={`block ${widthClass} rounded-2xl bg-[#2F5DAA] py-3 text-center text-sm font-semibold text-white transition hover:opacity-90`}
       >
         참여하기
@@ -67,25 +116,10 @@ export default function StudyPostCard({
   if (variant === 'list') {
     return (
       <div className="relative rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
-        {/* 우측 상단: 내 글 수정/삭제 */}
-        {isMine && (
+        {/* 우측 상단: 내 글 수정/삭제 (관리자는 삭제만) */}
+        {renderOwnerActions() && (
           <div className="absolute right-6 top-6 flex items-center gap-2">
-            <Link href={`/community/${id}/edit`} className="text-[#2F5DAA]">
-              <Image
-                src="/icons/editIcon.svg"
-                alt="edit"
-                width={18}
-                height={18}
-              />
-            </Link>
-            <button type="button" className="text-[#EF4444]">
-              <Image
-                src="/icons/trashIcon.svg"
-                alt="delete"
-                width={18}
-                height={18}
-              />
-            </button>
+            {renderOwnerActions()}
           </div>
         )}
 
@@ -152,25 +186,8 @@ export default function StudyPostCard({
         <span className="inline-block rounded-full bg-[#EEF2FF] px-3 py-1 text-xs font-semibold text-[#2F5DAA]">
           {subjectName}
         </span>
-        {isMine && (
-          <div className="flex items-center gap-2">
-            <Link href={`/community/${id}/edit`} className="text-[#2F5DAA]">
-              <Image
-                src="/icons/editIcon.svg"
-                alt="edit"
-                width={18}
-                height={18}
-              />
-            </Link>
-            <button type="button" className="text-[#EF4444]">
-              <Image
-                src="/icons/trashIcon.svg"
-                alt="delete"
-                width={18}
-                height={18}
-              />
-            </button>
-          </div>
+        {renderOwnerActions() && (
+          <div className="flex items-center gap-2">{renderOwnerActions()}</div>
         )}
       </div>
 
