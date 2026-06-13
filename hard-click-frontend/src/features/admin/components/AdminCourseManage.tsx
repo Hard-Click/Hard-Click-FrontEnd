@@ -30,8 +30,6 @@ export default function AdminCourseManage({ initialCourses }: Props) {
     useState<AdminCourseManageRow[]>(initialCourses);
   const [keyword, setKeyword] = useState('');
   const [tab, setTab] = useState<FilterTab>('ALL');
-  const [subject, setSubject] = useState('');
-  const [instructor, setInstructor] = useState('');
 
   const filtered = useMemo(() => {
     return courses.filter((c) => {
@@ -39,17 +37,18 @@ export default function AdminCourseManage({ initialCourses }: Props) {
       const matchKeyword = keyword
         ? c.title.includes(keyword) || c.instructor.includes(keyword)
         : true;
-      const matchSubject = subject ? c.subject === subject : true;
-      const matchInstructor = instructor ? c.instructor === instructor : true;
-      return matchTab && matchKeyword && matchSubject && matchInstructor;
+      return matchTab && matchKeyword;
     });
-  }, [courses, keyword, tab, subject, instructor]);
+  }, [courses, keyword, tab]);
 
-  const handleStatusChange = (id: number, next: AdminCourseStatus) => {
-    setCourses((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, status: next } : c))
-    );
-  };
+  const handleStatusChange = useCallback(
+    (id: number, next: AdminCourseStatus) => {
+      setCourses((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, status: next } : c))
+      );
+    },
+    []
+  );
 
   const handleDelete = useCallback((id: number) => {
     setCourses((prev) => prev.filter((c) => c.id !== id));
@@ -67,15 +66,15 @@ export default function AdminCourseManage({ initialCourses }: Props) {
       >
         <SelectDropdown
           placeholder="과목"
-          value={subject}
+          value=""
           options={mockAdminSubjectOptions}
-          onChange={setSubject}
+          onChange={() => {}}
         />
         <SelectDropdown
           placeholder="강사"
-          value={instructor}
+          value=""
           options={mockAdminInstructorOptions}
-          onChange={setInstructor}
+          onChange={() => {}}
         />
       </AdminNoticeFilterBar>
 

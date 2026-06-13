@@ -18,6 +18,8 @@ interface SelectDropdownProps {
   className?: string;
   /** 비활성 — 열기/선택 불가 (값 표시만) */
   disabled?: boolean;
+  /** 버튼 추가 클래스 (예: 'h-14') */
+  buttonClassName?: string;
 }
 
 /**
@@ -33,6 +35,7 @@ export default function SelectDropdown({
   fullWidth = false,
   className,
   disabled = false,
+  buttonClassName,
 }: SelectDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -63,7 +66,7 @@ export default function SelectDropdown({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen((v) => !v)}
-        className={`relative flex h-10 items-center whitespace-nowrap border border-[#E2E8F0] pl-6 pr-3 text-base transition-colors ${
+        className={`relative flex h-10 items-center whitespace-nowrap border border-[#E2E8F0] pl-6 pr-3 text-base transition-colors ${buttonClassName ?? ''} ${
           disabled
             ? 'cursor-not-allowed bg-[#F1F5F9]'
             : 'bg-white hover:border-[#CBD5E1]'
