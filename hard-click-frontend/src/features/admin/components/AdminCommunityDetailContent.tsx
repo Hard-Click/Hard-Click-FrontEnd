@@ -60,6 +60,8 @@ export default function AdminCommunityDetailContent({
     const result = await getCommentsAction(postId);
     if (result.success && result.data) {
       setComments(result.data.comments);
+    } else {
+      toast.error('댓글을 불러오지 못했습니다.');
     }
   };
 

@@ -20,9 +20,23 @@ export default function DeleteConfirmModal({
 }: DeleteConfirmModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-[448px] rounded-2xl bg-white p-8 shadow-xl">
-        <h2 className="text-center text-2xl font-bold text-[#1F2937]">{title}</h2>
-        <p className="mt-3 text-center text-base text-[#4B5563]">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-confirm-title"
+        aria-describedby="delete-confirm-message"
+        className="w-full max-w-[448px] rounded-2xl bg-white p-8 shadow-xl"
+      >
+        <h2
+          id="delete-confirm-title"
+          className="text-center text-2xl font-bold text-[#1F2937]"
+        >
+          {title}
+        </h2>
+        <p
+          id="delete-confirm-message"
+          className="mt-3 text-center text-base text-[#4B5563]"
+        >
           {message}
           <br />
           <span className="text-sm text-[#DC2626]">

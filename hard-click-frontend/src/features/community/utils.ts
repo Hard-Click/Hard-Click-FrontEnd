@@ -1,6 +1,7 @@
 /** ISO 문자열을 상대 시간(방금 전 / N분 전 / N시간 전 / N일 전)으로 포맷한다. */
 export function formatDate(isoString: string): string {
   const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return '-';
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
