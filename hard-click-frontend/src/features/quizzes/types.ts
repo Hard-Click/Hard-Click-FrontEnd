@@ -10,7 +10,7 @@ export interface QuizQuestion {
   content: string; // 문제
   options: string[]; // 보기 (4개)
   answerIndex: number; // 정답 인덱스 (0~3)
-  explanation: string | null; // 해설 (선택)
+  explanation: string; // 해설 (필수 — 모든 문제가 해설 보유)
 }
 
 /** 강사 퀴즈 — 강의 + 주차(week)별 */
@@ -91,4 +91,31 @@ export interface QuizSubmitResult {
   score: number; // 0~100
   correctCount: number;
   totalCount: number;
+}
+
+/** 리뷰(해설) 화면 문항 — 정답·내 답·해설 모두 공개 */
+export interface QuizReviewQuestion {
+  questionId: number;
+  content: string;
+  options: string[];
+  answerIndex: number; // 정답 인덱스 (0~3)
+  selectedIndex: number | null; // 내가 고른 답 (null = 미응시)
+  explanation: string; // 해설 (필수)
+  correct: boolean; // 정답 여부
+}
+
+/** 리뷰(해설) 화면 전체 — 점수 + 향상도(직전 주차 대비) + 문항별 결과 */
+export interface StudentQuizReview {
+  quizId: number;
+  courseId: number;
+  week: number;
+  title: string;
+  courseTitle: string;
+  attemptedAt: string; // 응시일시 'YYYY-MM-DD HH:mm'
+  score: number; // 0~100
+  correctCount: number;
+  totalCount: number;
+  previousScore: number | null; // 직전 주차 점수 (없으면 null)
+  improvement: number | null; // score - previousScore (직전 주차 없으면 null)
+  questions: QuizReviewQuestion[];
 }

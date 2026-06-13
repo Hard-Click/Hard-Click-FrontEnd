@@ -4,8 +4,14 @@ import { mockQuizzes } from '@/mocks/quizzes.mock';
 import {
   mockEnrolledCourses,
   getStudentAttempt,
+  getQuizSubmission,
 } from '@/mocks/studentQuizzes.mock';
-import type { StudentQuizItem, StudentQuizDetail } from './types';
+import type {
+  StudentQuizItem,
+  StudentQuizDetail,
+  StudentQuizReview,
+  QuizReviewQuestion,
+} from './types';
 
 const byWeekAsc = (a: StudentQuizItem, b: StudentQuizItem) => a.week - b.week;
 
@@ -140,4 +146,121 @@ export async function getStudentQuizDetailServer(
   );
   if (!res.success || !res.data) return null;
   return toStudentQuizDetail(res.data);
+}
+
+/** 백엔드 리뷰(결과) 응답(가정) — 격리막. */
+interface ApiQuizReview {
+  quizId: number;
+  courseId: number;
+  week: number;
+  title: string;
+  courseTitle: string;
+  attemptedAt: string; // ISO
+  score: number;
+  correctCount: number;
+  totalCount: number;
+  previousScore: number | null;
+  questions: {
+    questionId: number;
+    content: string;
+    options: string[];
+    answerIndex: number;
+    selectedIndex: number | null;
+    explanation: string;
+  }[];
+}
+
+function toQuizReview(api: ApiQuizReview): StudentQuizReview {
+  return {
+    quizId: api.quizId,
+    courseId: api.courseId,
+    week: api.week,
+    title: api.title,
+    courseTitle: api.courseTitle,
+    attemptedAt: api.attemptedAt.replace('T', ' ').slice(0, 16),
+    score: api.score,
+    correctCount: api.correctCount,
+    totalCount: api.totalCount,
+    previousScore: api.previousScore,
+    improvement:
+      api.previousScore !== null ? api.score - api.previousScore : null,
+    questions: api.questions.map((q) => ({
+      questionId: q.questionId,
+      content: q.content,
+      options: q.options,
+      answerIndex: q.answerIndex,
+      selectedIndex: q.selectedIndex,
+      explanation: q.explanation,
+      correct: q.selectedIndex === q.answerIndex,
+    })),
+  };
+}
+
+/**
+ * 리뷰(해설) 화면 — 점수·향상도(직전 주차 대비)·문항별 결과 조회 (Server Component 전용).
+ * 응시(제출) 기록 없으면 null(리뷰 불가). 향상도 = 같은 강의 직전 주차 점수와의 차.
+ * API 연동 시: 엔드포인트 + ApiQuizReview/toQuizReview만 맞추면 됨.
+ */
+export async function getStudentQuizReviewServer(
+  courseId: number,
+  quizId: number,
+): Promise<StudentQuizReview | null> {
+  if (USE_MOCK) {
+    const quiz = mockQuizzes.find(
+      (q) => q.courseId === courseId && q.quizId === quizId,
+    );
+    const sub = getQuizSubmission(quizId);
+    if (!quiz || !sub) return null; // 미응시면 리뷰 없음
+
+    const questions: QuizReviewQuestion[] = quiz.questions.map((q) => {
+      const sel = sub.selected[q.questionId];
+      const selectedIndex = sel !== undefined ? sel : null;
+      return {
+        questionId: q.questionId,
+        content: q.content,
+        options: q.options,
+        answerIndex: q.answerIndex,
+        selectedIndex,
+        explanation: q.explanation,
+        correct: selectedIndex === q.answerIndex,
+      };
+    });
+    const totalCount = questions.length;
+    const correctCount = questions.filter((q) => q.correct).length;
+    const score = totalCount
+      ? Math.round((correctCount / totalCount) * 100)
+      : 0;
+
+    // 직전 주차(같은 강의) 점수 → 향상도
+    const prevQuiz = mockQuizzes.find(
+      (q) => q.courseId === courseId && q.week === quiz.week - 1,
+    );
+    const prevAttempt = prevQuiz ? getStudentAttempt(prevQuiz.quizId) : null;
+    const previousScore = prevAttempt ? prevAttempt.score : null;
+    const improvement = previousScore !== null ? score - previousScore : null;
+
+    const courseTitle =
+      mockEnrolledCourses.find((c) => c.courseId === courseId)?.title ?? '';
+
+    return {
+      quizId: quiz.quizId,
+      courseId,
+      week: quiz.week,
+      title: quiz.title,
+      courseTitle,
+      attemptedAt: sub.attemptedAt,
+      score,
+      correctCount,
+      totalCount,
+      previousScore,
+      improvement,
+      questions,
+    };
+  }
+
+  const res = await serverApi.get<ApiQuizReview>(
+    `/api/student/courses/${courseId}/quizzes/${quizId}/result`,
+  );
+  if (!res.success || !res.data) return null;
+  return toQuizReview(res.data);
 }

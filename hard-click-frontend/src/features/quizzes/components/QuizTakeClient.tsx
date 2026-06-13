@@ -119,8 +119,8 @@ export default function QuizTakeClient({
     }
     setShowModal(false);
     toast.success(`제출 완료! 점수 ${res.result.score}점`);
-    // 해설 화면으로 이동 (후속 PR에서 구현 예정)
-    router.push(`/quizzes/${detail.courseId}/${detail.quizId}/review`);
+    // 제출 후 퀴즈 목록으로 이동 (목록에서 완료 상태·해설 보기 확인)
+    router.push(`/quizzes/${detail.courseId}`);
   };
 
   return (
