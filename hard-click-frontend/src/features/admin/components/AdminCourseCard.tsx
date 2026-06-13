@@ -78,10 +78,18 @@ export default function AdminCourseCard({
             {course.title}
           </p>
           <p className="text-sm text-[#64748B]">
+            <span>강사: {course.instructor}</span>
+            <span className="mx-2 text-[#CBD5E1]">|</span>
             <span>수강생 {course.studentCount}명</span>
             <span className="mx-2 text-[#CBD5E1]">|</span>
-            <span>
-              ⭐ {course.rating} ({course.reviewCount})
+            <span className="inline-flex items-center gap-1">
+              <Image
+                src="/icons/AdminStar.svg"
+                alt="별점"
+                width={14}
+                height={14}
+              />
+              {course.rating} ({course.reviewCount})
             </span>
             <span className="mx-2 text-[#CBD5E1]">|</span>
             <span>등록일: {course.createdAt}</span>

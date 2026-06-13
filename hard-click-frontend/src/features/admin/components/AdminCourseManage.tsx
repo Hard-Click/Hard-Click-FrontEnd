@@ -1,12 +1,16 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import Image from 'next/image';
 import AdminNoticeFilterBar from './AdminNoticeFilterBar';
 import AdminCourseCard from './AdminCourseCard';
+import SelectDropdown from '@/components/ui/SelectDropdown';
 import type {
   AdminCourseManageRow,
   AdminCourseStatus,
+} from '@/mocks/admin.mock';
+import {
+  mockAdminSubjectOptions,
+  mockAdminInstructorOptions,
 } from '@/mocks/admin.mock';
 
 type FilterTab = 'ALL' | 'PUBLISHED' | 'HIDDEN';
@@ -26,6 +30,8 @@ export default function AdminCourseManage({ initialCourses }: Props) {
     useState<AdminCourseManageRow[]>(initialCourses);
   const [keyword, setKeyword] = useState('');
   const [tab, setTab] = useState<FilterTab>('ALL');
+  const [subject, setSubject] = useState('');
+  const [instructor, setInstructor] = useState('');
 
   const filtered = useMemo(() => {
     return courses.filter((c) => {
@@ -33,9 +39,11 @@ export default function AdminCourseManage({ initialCourses }: Props) {
       const matchKeyword = keyword
         ? c.title.includes(keyword) || c.instructor.includes(keyword)
         : true;
-      return matchTab && matchKeyword;
+      const matchSubject = subject ? c.subject === subject : true;
+      const matchInstructor = instructor ? c.instructor === instructor : true;
+      return matchTab && matchKeyword && matchSubject && matchInstructor;
     });
-  }, [courses, keyword, tab]);
+  }, [courses, keyword, tab, subject, instructor]);
 
   const handleStatusChange = (id: number, next: AdminCourseStatus) => {
     setCourses((prev) =>
@@ -61,20 +69,18 @@ export default function AdminCourseManage({ initialCourses }: Props) {
         activeTab={tab}
         onTabChange={(key) => setTab(key as FilterTab)}
       >
-        <button
-          type="button"
-          className="flex h-9 items-center gap-2 rounded-xl border border-[#E2E8F0] px-4 text-sm text-[#475569]"
-        >
-          과목
-          <Image src="/icons/AdminDropDown.svg" alt="" width={14} height={14} />
-        </button>
-        <button
-          type="button"
-          className="flex h-9 items-center gap-2 rounded-xl border border-[#E2E8F0] px-4 text-sm text-[#475569]"
-        >
-          강사
-          <Image src="/icons/AdminDropDown.svg" alt="" width={14} height={14} />
-        </button>
+        <SelectDropdown
+          placeholder="과목"
+          value={subject}
+          options={mockAdminSubjectOptions}
+          onChange={setSubject}
+        />
+        <SelectDropdown
+          placeholder="강사"
+          value={instructor}
+          options={mockAdminInstructorOptions}
+          onChange={setInstructor}
+        />
       </AdminNoticeFilterBar>
 
       <div className="flex flex-col gap-3">

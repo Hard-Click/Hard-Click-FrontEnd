@@ -62,6 +62,8 @@ export interface AdminNoticeRow {
   isPinned: boolean;
   isPublished: boolean;
   courseTitle?: string;
+  courseSubject?: string;
+  courseInstructor?: string;
 }
 
 export const mockAdminNotices: AdminNoticeRow[] = [
@@ -105,6 +107,8 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     isPinned: true,
     isPublished: true,
     courseTitle: '수1 뿌시기',
+    courseSubject: '수학Ⅰ',
+    courseInstructor: '김강사',
   },
   {
     id: 5,
@@ -115,6 +119,8 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     isPinned: false,
     isPublished: true,
     courseTitle: '국어 머시기',
+    courseSubject: '독서',
+    courseInstructor: '안강사',
   },
   {
     id: 6,
@@ -125,6 +131,8 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     isPinned: false,
     isPublished: false,
     courseTitle: '미적분 머시기',
+    courseSubject: '미적분',
+    courseInstructor: '김강사',
   },
 ];
 
@@ -204,4 +212,20 @@ export const mockAdminCourseManage: AdminCourseManageRow[] = [
     status: 'HIDDEN',
     createdAt: '2026.05.05',
   },
+];
+
+import { SUBJECTS } from '@/constants/subjects';
+
+export const mockAdminSubjectOptions = [
+  { label: '전체', value: '' },
+  ...SUBJECTS.map((s) => ({ label: s.name, value: s.name })),
+];
+
+export const mockAdminInstructorOptions = [
+  { label: '전체', value: '' },
+  { label: '김강사', value: '김강사' },
+  { label: '안강사', value: '안강사' },
+  { label: '이강사', value: '이강사' },
+  { label: '박강사', value: '박강사' },
+  { label: '최강사', value: '최강사' },
 ];
