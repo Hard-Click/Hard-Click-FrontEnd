@@ -8,6 +8,7 @@ import type {
   AdminCourseManageRow,
   AdminCourseStatus,
 } from '@/mocks/admin.mock';
+import Link from 'next/link';
 
 const STATUS_LABEL: Record<Exclude<AdminCourseStatus, 'DELETED'>, string> = {
   PUBLISHED: '공개',
@@ -94,8 +95,8 @@ export default function AdminCourseCard({
             <span>등록일: {course.createdAt}</span>
           </p>
           <div className="mt-1 flex items-center gap-2">
-            <button
-              type="button"
+            <Link
+              href={`/admin/courses/manage/${course.id}/edit`}
               className="flex h-8 items-center gap-1 rounded-full border border-[#E2E8F0] px-4 text-xs font-semibold text-[#475569] hover:bg-[#F8FAFC]"
             >
               <Image
@@ -105,7 +106,7 @@ export default function AdminCourseCard({
                 height={14}
               />
               수정
-            </button>
+            </Link>
             <button
               type="button"
               onClick={handleToggle}

@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import AdminCourseManage from '@/features/admin/components/AdminCourseManage';
 import { mockAdminCourseManage } from '@/mocks/admin.mock';
 
@@ -23,15 +24,14 @@ export default function AdminCourseManagePage() {
               </p>
             </div>
           </div>
-          <button
-            type="button"
+          <Link
+            href="/admin/courses/manage/new"
             className="flex h-11 items-center gap-2 rounded-xl bg-[#2F5DAA] px-5 text-sm font-semibold text-white hover:opacity-90"
           >
             <span className="text-lg leading-none">+</span>
             강의 등록
-          </button>
+          </Link>
         </div>
-
         <AdminCourseManage initialCourses={mockAdminCourseManage} />
       </div>
     </div>

@@ -2,13 +2,11 @@
 
 import Image from 'next/image';
 import { useRef, useState } from 'react';
-import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import { useRouter } from 'next/navigation';
-import LoadingModal from '@/components/ui/loadingModal';
-import { createCourse, updateCourse, uploadCourseThumbnail } from '../services';
-import { api } from '@/services/api';
-import axios from 'axios';
 import { toast } from 'sonner';
+import DoubleBtnModal from '@/components/ui/doubleButtonModal';
+import SelectDropdown from '@/components/ui/SelectDropdown';
+import { mockAdminInstructorOptions } from '@/mocks/admin.mock';
 import {
   DndContext,
   closestCenter,
@@ -40,6 +38,22 @@ const SUBJECT_OPTIONS = [
   '미적분',
 ];
 
+interface AdminCourseFormData {
+  courseId?: number;
+  title: string;
+  subject: string;
+  instructor: string;
+  description: string;
+  priceType: 'FREE' | 'PAID';
+  price: string;
+  thumbnailUrl?: string;
+}
+
+interface AdminCourseCreateFormProps {
+  mode?: 'create' | 'edit';
+  initialData?: AdminCourseFormData;
+}
+
 interface Lecture {
   file?: File;
   fileName: string;
@@ -52,23 +66,6 @@ interface Section {
   lectures: Lecture[];
 }
 
-interface CourseDetail {
-  courseId?: number;
-  title: string;
-  subject: string;
-  description: string;
-  priceType: 'FREE' | 'PAID';
-  price: string;
-  thumbnailUrl?: string;
-  thumbnailName?: string;
-  curriculum?: Section[];
-}
-
-interface CourseCreateFormProps {
-  mode?: 'create' | 'edit';
-  initialData?: CourseDetail;
-}
-
 const formatDuration = (seconds: number) => {
   const hrs = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
@@ -79,7 +76,6 @@ const formatDuration = (seconds: number) => {
 function SortableSectionItem({
   section,
   sectionIndex,
-  mode,
   onTitleChange,
   onRemove,
   onAddLecture,
@@ -87,14 +83,19 @@ function SortableSectionItem({
 }: {
   section: Section;
   sectionIndex: number;
-  mode: 'create' | 'edit';
   onTitleChange: (id: number, title: string) => void;
   onRemove: (id: number) => void;
   onAddLecture: (sectionId: number, file: File, duration: string) => void;
   onRemoveLecture: (sectionId: number, index: number) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: section.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: section.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -140,23 +141,17 @@ function SortableSectionItem({
               key={index}
               className="grid grid-cols-[1fr_auto_auto] items-center rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3"
             >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-[#334155]">
-                  {lecture.file?.name || lecture.fileName}
-                </p>
-              </div>
-              <div className="mx-6">
-                <p className="text-sm text-[#64748B]">{lecture.duration}</p>
-              </div>
-              <div>
-                <button
-                  type="button"
-                  onClick={() => onRemoveLecture(section.id, index)}
-                  className="text-sm font-medium text-[#B91C1C]"
-                >
-                  삭제
-                </button>
-              </div>
+              <p className="truncate text-sm font-medium text-[#334155]">
+                {lecture.file?.name || lecture.fileName}
+              </p>
+              <p className="mx-6 text-sm text-[#64748B]">{lecture.duration}</p>
+              <button
+                type="button"
+                onClick={() => onRemoveLecture(section.id, index)}
+                className="text-sm font-medium text-[#B91C1C]"
+              >
+                삭제
+              </button>
             </div>
           ))}
         </div>
@@ -184,23 +179,34 @@ function SortableSectionItem({
   );
 }
 
-export default function CourseCreateForm({
+export default function AdminCourseCreateForm({
   mode = 'create',
   initialData,
-}: CourseCreateFormProps) {
+}: AdminCourseCreateFormProps) {
+  const router = useRouter();
+
   const [title, setTitle] = useState(initialData?.title ?? '');
   const [subject, setSubject] = useState(initialData?.subject ?? '');
-  const [description, setDescription] = useState(initialData?.description ?? '');
-  const [priceType, setPriceType] = useState<'FREE' | 'PAID'>(initialData?.priceType ?? 'FREE');
+  const [instructor, setInstructor] = useState(initialData?.instructor ?? '');
+  const [description, setDescription] = useState(
+    initialData?.description ?? ''
+  );
+  const [priceType, setPriceType] = useState<'FREE' | 'PAID'>(
+    initialData?.priceType ?? 'FREE'
+  );
   const [price, setPrice] = useState(initialData?.price ?? '');
-  const [thumbnailPreview, setThumbnailPreview] = useState(initialData?.thumbnailUrl ?? '');
   const [thumbnail, setThumbnail] = useState<File | null>(null);
-  const [sections, setSections] = useState<Section[]>(initialData?.curriculum ?? []);
-  const router = useRouter();
+  const [thumbnailPreview, setThumbnailPreview] = useState(
+    initialData?.thumbnailUrl ?? ''
+  );
+  const [sections, setSections] = useState<Section[]>([]);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isCancelOpen, setIsCancelOpen] = useState(false);
 
   const [errors, setErrors] = useState({
     title: '',
     subject: '',
+    instructor: '',
     description: '',
     price: '',
     thumbnail: '',
@@ -211,10 +217,6 @@ export default function CourseCreateForm({
   const subjectRef = useRef<HTMLSelectElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
-
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isCancelOpen, setIsCancelOpen] = useState(false);
 
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
   const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -234,6 +236,7 @@ export default function CourseCreateForm({
   const isFormValid =
     title.trim() &&
     subject &&
+    instructor &&
     description.trim() &&
     (thumbnail || thumbnailPreview) &&
     (priceType === 'FREE' || price.trim());
@@ -242,11 +245,11 @@ export default function CourseCreateForm({
     const newErrors = {
       title: '',
       subject: '',
+      instructor: '',
       description: '',
       price: '',
       thumbnail: '',
     };
-
     let firstError = '';
 
     if (!title.trim()) {
@@ -256,6 +259,10 @@ export default function CourseCreateForm({
     if (!subject) {
       newErrors.subject = '과목을 선택해주세요';
       if (!firstError) firstError = 'subject';
+    }
+    if (!instructor) {
+      newErrors.instructor = '강사를 선택해주세요';
+      if (!firstError) firstError = 'instructor';
     }
     if (!description.trim()) {
       newErrors.description = '강의 설명을 입력해주세요';
@@ -280,9 +287,11 @@ export default function CourseCreateForm({
         description: descriptionRef,
         price: priceRef,
       };
-
       const targetRef = refMap[firstError as keyof typeof refMap];
-      targetRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      targetRef?.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
       targetRef?.current?.focus();
       return;
     }
@@ -290,15 +299,23 @@ export default function CourseCreateForm({
     setIsConfirmOpen(true);
   };
 
+  const handleConfirm = () => {
+    // TODO: admin 강의 수정/등록 API 연동
+    setIsConfirmOpen(false);
+    toast.success(
+      mode === 'edit' ? '강의가 수정되었습니다.' : '강의가 등록되었습니다.'
+    );
+    router.push('/admin/courses/manage');
+  };
+
   return (
     <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
       <div className="mb-8">
-        <div className="mb-3 flex items-center gap-3">
-          <h1 className="text-3xl font-bold text-[#1E293B]">
-            {mode === 'edit' ? '강의 수정' : '강의 등록'}
-          </h1>
-        </div>
-        <p className="text-base text-[#64748B]">
+        <h1 className="text-3xl font-bold text-[#1E293B]">
+          {mode === 'edit' ? '강의 수정' : '강의 등록'}
+        </h1>
+
+        <p className="mt-1 text-base text-[#64748B]">
           새로운 강의를 등록하고 수강생들과 공유하세요.
         </p>
       </div>
@@ -317,19 +334,29 @@ export default function CourseCreateForm({
             placeholder="강의명을 입력하세요"
             value={title}
             onChange={(e) => {
-              const value = e.target.value;
-              setTitle(value);
-              setErrors((prev) => ({ ...prev, title: value.trim() ? '' : '강의명을 입력해주세요' }));
-              if (firstErrorField === 'title' && value.trim()) setFirstErrorField('');
+              setTitle(e.target.value);
+              setErrors((prev) => ({
+                ...prev,
+                title: e.target.value.trim() ? '' : '강의명을 입력해주세요',
+              }));
+              if (firstErrorField === 'title' && e.target.value.trim())
+                setFirstErrorField('');
             }}
             className={`h-14 w-full rounded-2xl border px-5 text-base outline-none transition ${
-              firstErrorField === 'title' ? 'border-[#B91C1C]' : 'border-[#E2E8F0] focus:border-[#2F5DAA]'
+              firstErrorField === 'title'
+                ? 'border-[#B91C1C]'
+                : 'border-[#E2E8F0] focus:border-[#2F5DAA]'
             }`}
           />
           <div className="mt-2 min-h-[20px]">
             {errors.title && (
               <div className="flex items-center gap-1">
-                <Image src="/icons/error.svg" alt="error" width={14} height={14} />
+                <Image
+                  src="/icons/error.svg"
+                  alt="error"
+                  width={14}
+                  height={14}
+                />
                 <p className="text-sm text-[#B91C1C]">{errors.title}</p>
               </div>
             )}
@@ -341,35 +368,79 @@ export default function CourseCreateForm({
           <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
             과목 <span className="text-[#DC2626]">*</span>
           </label>
-          <select
-            ref={subjectRef}
+          <SelectDropdown
+            placeholder="과목 선택"
             value={subject}
-            onChange={(e) => {
-              const value = e.target.value;
-              setSubject(value);
-              setErrors((prev) => ({ ...prev, subject: value ? '' : '과목을 선택해주세요' }));
-              if (firstErrorField === 'subject' && value) setFirstErrorField('');
+            options={SUBJECT_OPTIONS.map((item) => ({
+              label: item,
+              value: item,
+            }))}
+            onChange={(v) => {
+              setSubject(v);
+              setErrors((prev) => ({
+                ...prev,
+                subject: v ? '' : '과목을 선택해주세요',
+              }));
+              if (firstErrorField === 'subject' && v) setFirstErrorField('');
             }}
-            className={`h-14 w-full rounded-2xl border px-5 text-base outline-none transition ${
-              firstErrorField === 'subject' ? 'border-[#B91C1C]' : 'border-[#E2E8F0] focus:border-[#2F5DAA]'
-            }`}
-          >
-            <option value="">과목 선택</option>
-            {SUBJECT_OPTIONS.map((item) => (
-              <option key={item} value={item}>{item}</option>
-            ))}
-          </select>
+            fullWidth
+            buttonClassName="h-14 rounded-2xl"
+            className={firstErrorField === 'subject' ? 'border-[#B91C1C]' : ''}
+          />
           <div className="mt-2 min-h-[20px]">
             {errors.subject && (
               <div className="flex items-center gap-1">
-                <Image src="/icons/error.svg" alt="error" width={14} height={14} />
+                <Image
+                  src="/icons/error.svg"
+                  alt="error"
+                  width={14}
+                  height={14}
+                />
                 <p className="text-sm text-[#B91C1C]">{errors.subject}</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* 설명 */}
+        {/* 강사 선택 */}
+        <div className="mb-8">
+          <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
+            강사 <span className="text-[#DC2626]">*</span>
+          </label>
+          <SelectDropdown
+            placeholder="강사 선택"
+            value={instructor}
+            options={mockAdminInstructorOptions.filter((o) => o.value !== '')}
+            onChange={(v) => {
+              setInstructor(v);
+              setErrors((prev) => ({
+                ...prev,
+                instructor: v ? '' : '강사를 선택해주세요',
+              }));
+              if (firstErrorField === 'instructor' && v) setFirstErrorField('');
+            }}
+            fullWidth
+            buttonClassName="h-14 rounded-2xl"
+            className={
+              firstErrorField === 'instructor' ? 'border-[#B91C1C]' : ''
+            }
+          />
+          <div className="mt-2 min-h-[20px]">
+            {errors.instructor && (
+              <div className="flex items-center gap-1">
+                <Image
+                  src="/icons/error.svg"
+                  alt="error"
+                  width={14}
+                  height={14}
+                />
+                <p className="text-sm text-[#B91C1C]">{errors.instructor}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 강의 설명 */}
         <div className="mb-8">
           <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
             강의 설명 <span className="text-[#DC2626]">*</span>
@@ -379,19 +450,31 @@ export default function CourseCreateForm({
             placeholder="강의 내용을 상세히 설명해주세요"
             value={description}
             onChange={(e) => {
-              const value = e.target.value;
-              setDescription(value);
-              setErrors((prev) => ({ ...prev, description: value.trim() ? '' : '강의 설명을 입력해주세요' }));
-              if (firstErrorField === 'description' && value.trim()) setFirstErrorField('');
+              setDescription(e.target.value);
+              setErrors((prev) => ({
+                ...prev,
+                description: e.target.value.trim()
+                  ? ''
+                  : '강의 설명을 입력해주세요',
+              }));
+              if (firstErrorField === 'description' && e.target.value.trim())
+                setFirstErrorField('');
             }}
             className={`min-h-[180px] w-full rounded-2xl border p-5 text-base outline-none transition ${
-              firstErrorField === 'description' ? 'border-[#B91C1C]' : 'border-[#E2E8F0] focus:border-[#2F5DAA]'
+              firstErrorField === 'description'
+                ? 'border-[#B91C1C]'
+                : 'border-[#E2E8F0] focus:border-[#2F5DAA]'
             }`}
           />
           <div className="mt-2 min-h-[20px]">
             {errors.description && (
               <div className="flex items-center gap-1">
-                <Image src="/icons/error.svg" alt="error" width={14} height={14} />
+                <Image
+                  src="/icons/error.svg"
+                  alt="error"
+                  width={14}
+                  height={14}
+                />
                 <p className="text-sm text-[#B91C1C]">{errors.description}</p>
               </div>
             )}
@@ -405,8 +488,15 @@ export default function CourseCreateForm({
           </label>
           <div className="flex items-center gap-4">
             <label className="flex h-14 w-fit cursor-pointer items-center gap-2 rounded-2xl border border-[#E2E8F0] px-5 transition hover:bg-[#F8FAFC]">
-              <Image src="/icons/upload.svg" alt="upload" width={18} height={18} />
-              <span className="text-sm font-medium text-[#334155]">이미지 업로드</span>
+              <Image
+                src="/icons/upload.svg"
+                alt="upload"
+                width={18}
+                height={18}
+              />
+              <span className="text-sm font-medium text-[#334155]">
+                이미지 업로드
+              </span>
               <input
                 type="file"
                 accept="image/*"
@@ -415,14 +505,18 @@ export default function CourseCreateForm({
                   const file = e.target.files?.[0];
                   if (!file) return;
                   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-                    setThumbnail(null);
-                    setErrors((prev) => ({ ...prev, thumbnail: 'jpg, jpeg, png 형식만 업로드 가능합니다' }));
+                    setErrors((prev) => ({
+                      ...prev,
+                      thumbnail: 'jpg, jpeg, png 형식만 업로드 가능합니다',
+                    }));
                     e.target.value = '';
                     return;
                   }
                   if (file.size > MAX_FILE_SIZE) {
-                    setThumbnail(null);
-                    setErrors((prev) => ({ ...prev, thumbnail: '이미지는 5MB 이하만 업로드 가능합니다' }));
+                    setErrors((prev) => ({
+                      ...prev,
+                      thumbnail: '이미지는 5MB 이하만 업로드 가능합니다',
+                    }));
                     e.target.value = '';
                     return;
                   }
@@ -433,26 +527,36 @@ export default function CourseCreateForm({
                 }}
               />
             </label>
-            {(thumbnail || thumbnailPreview) && (
+            {thumbnailPreview && (
               <div className="flex h-12 items-center gap-3 rounded-full bg-[#F8FAFC] px-5">
                 <p className="max-w-[240px] truncate text-sm text-[#334155]">
-                  {thumbnail ? thumbnail.name : initialData?.thumbnailName || '썸네일 이미지'}
+                  {thumbnail?.name ?? '썸네일 이미지'}
                 </p>
                 <button
                   type="button"
-                  onClick={() => { setThumbnail(null); setThumbnailPreview(''); }}
-                  className="text-[#64748B] transition hover:text-[#1E293B]"
+                  onClick={() => {
+                    setThumbnail(null);
+                    setThumbnailPreview('');
+                  }}
+                  className="text-[#64748B] hover:text-[#1E293B]"
                 >
                   ✕
                 </button>
               </div>
             )}
           </div>
-          <p className="mt-3 text-sm text-[#94A3B8]">jpg, jpeg, png 형식 / 최대 5MB</p>
+          <p className="mt-3 text-sm text-[#94A3B8]">
+            jpg, jpeg, png 형식 / 최대 5MB
+          </p>
           <div className="mt-2 min-h-[20px]">
             {errors.thumbnail && (
               <div className="flex items-center gap-1">
-                <Image src="/icons/error.svg" alt="error" width={14} height={14} />
+                <Image
+                  src="/icons/error.svg"
+                  alt="error"
+                  width={14}
+                  height={14}
+                />
                 <p className="text-sm text-[#B91C1C]">{errors.thumbnail}</p>
               </div>
             )}
@@ -468,36 +572,52 @@ export default function CourseCreateForm({
             <label className="flex cursor-pointer items-center gap-2">
               <input
                 type="radio"
-                disabled={mode === 'edit'}
                 checked={priceType === 'FREE'}
                 onChange={() => setPriceType('FREE')}
+                disabled={mode === 'edit'}
               />
-              <span className="text-sm font-medium text-[#1E293B]">무료 강의</span>
+              <span className="text-sm font-medium text-[#1E293B]">
+                무료 강의
+              </span>
             </label>
             <label className="flex cursor-pointer items-center gap-2">
               <input
                 type="radio"
-                disabled={mode === 'edit'}
                 checked={priceType === 'PAID'}
                 onChange={() => setPriceType('PAID')}
+                disabled={mode === 'edit'}
               />
-              <span className="text-sm font-medium text-[#1E293B]">유료 강의</span>
+
+              <span className="text-sm font-medium text-[#1E293B]">
+                유료 강의
+              </span>
             </label>
           </div>
           {priceType === 'PAID' && (
             <div>
-              <label className="mb-3 block text-sm font-semibold text-[#1E293B]">가격</label>
-              <div className={`flex h-14 w-[220px] items-center rounded-2xl border px-5 ${firstErrorField === 'price' ? 'border-[#B91C1C]' : 'border-[#E2E8F0]'}`}>
+              <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
+                가격
+              </label>
+              <div
+                className={`flex h-14 w-[220px] items-center rounded-2xl border px-5 ${
+                  firstErrorField === 'price'
+                    ? 'border-[#B91C1C]'
+                    : 'border-[#E2E8F0]'
+                }`}
+              >
                 <input
                   ref={priceRef}
-                  disabled={mode === 'edit'}
                   type="number"
                   value={price}
+                  disabled={mode === 'edit'}
                   onChange={(e) => {
-                    const value = e.target.value;
-                    setPrice(value);
-                    setErrors((prev) => ({ ...prev, price: value.trim() ? '' : '가격을 입력해주세요' }));
-                    if (firstErrorField === 'price' && value.trim()) setFirstErrorField('');
+                    setPrice(e.target.value);
+                    setErrors((prev) => ({
+                      ...prev,
+                      price: e.target.value.trim() ? '' : '가격을 입력해주세요',
+                    }));
+                    if (firstErrorField === 'price' && e.target.value.trim())
+                      setFirstErrorField('');
                   }}
                   className="w-full bg-transparent text-base outline-none"
                 />
@@ -508,7 +628,12 @@ export default function CourseCreateForm({
           <div className="mt-2 min-h-[20px]">
             {errors.price && (
               <div className="flex items-center gap-1">
-                <Image src="/icons/error.svg" alt="error" width={14} height={14} />
+                <Image
+                  src="/icons/error.svg"
+                  alt="error"
+                  width={14}
+                  height={14}
+                />
                 <p className="text-sm text-[#B91C1C]">{errors.price}</p>
               </div>
             )}
@@ -523,7 +648,12 @@ export default function CourseCreateForm({
             <h2 className="text-xl font-bold text-[#1E293B]">커리큘럼</h2>
             <button
               type="button"
-              onClick={() => setSections((prev) => [...prev, { id: Date.now(), title: '', lectures: [] }])}
+              onClick={() =>
+                setSections((prev) => [
+                  ...prev,
+                  { id: Date.now(), title: '', lectures: [] },
+                ])
+              }
               className="rounded-xl border border-[#2F5DAA] px-4 py-2 text-sm font-semibold text-[#2F5DAA] transition hover:bg-[#EEF4FF]"
             >
               + 섹션 추가
@@ -532,38 +662,73 @@ export default function CourseCreateForm({
 
           {sections.length === 0 ? (
             <div className="flex h-[220px] flex-col items-center justify-center rounded-3xl border border-[#E2E8F0] bg-[#F8FAFC]">
-              <Image src="/icons/curri.svg" alt="empty curriculum" width={48} height={48} className="mb-4 opacity-40" />
-              <p className="text-sm text-[#64748B]">섹션을 추가하여 커리큘럼을 구성하세요</p>
+              <Image
+                src="/icons/curri.svg"
+                alt="empty curriculum"
+                width={48}
+                height={48}
+                className="mb-4 opacity-40"
+              />
+              <p className="text-sm text-[#64748B]">
+                섹션을 추가하여 커리큘럼을 구성하세요
+              </p>
             </div>
           ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={sections.map((s) => s.id)}
+                strategy={verticalListSortingStrategy}
+              >
                 <div className="space-y-5">
                   {sections.map((section, sectionIndex) => (
                     <SortableSectionItem
                       key={section.id}
                       section={section}
                       sectionIndex={sectionIndex}
-                      mode={mode}
                       onTitleChange={(id, title) =>
-                        setSections((prev) => prev.map((item) => item.id === id ? { ...item, title } : item))
+                        setSections((prev) =>
+                          prev.map((item) =>
+                            item.id === id ? { ...item, title } : item
+                          )
+                        )
                       }
                       onRemove={(id) =>
-                        setSections((prev) => prev.filter((item) => item.id !== id))
+                        setSections((prev) =>
+                          prev.filter((item) => item.id !== id)
+                        )
                       }
                       onAddLecture={(sectionId, file, duration) =>
-                        setSections((prev) => prev.map((item) =>
-                          item.id === sectionId
-                            ? { ...item, lectures: [...item.lectures, { file, fileName: file.name, duration }] }
-                            : item
-                        ))
+                        setSections((prev) =>
+                          prev.map((item) =>
+                            item.id === sectionId
+                              ? {
+                                  ...item,
+                                  lectures: [
+                                    ...item.lectures,
+                                    { file, fileName: file.name, duration },
+                                  ],
+                                }
+                              : item
+                          )
+                        )
                       }
                       onRemoveLecture={(sectionId, index) =>
-                        setSections((prev) => prev.map((item) =>
-                          item.id === sectionId
-                            ? { ...item, lectures: item.lectures.filter((_, i) => i !== index) }
-                            : item
-                        ))
+                        setSections((prev) =>
+                          prev.map((item) =>
+                            item.id === sectionId
+                              ? {
+                                  ...item,
+                                  lectures: item.lectures.filter(
+                                    (_, i) => i !== index
+                                  ),
+                                }
+                              : item
+                          )
+                        )
                       }
                     />
                   ))}
@@ -574,7 +739,7 @@ export default function CourseCreateForm({
         </div>
       </div>
 
-      {/* 버튼 */}
+      {/* 하단 버튼 */}
       <div className="mt-8 flex items-center gap-5">
         <button
           type="button"
@@ -587,7 +752,9 @@ export default function CourseCreateForm({
           type="button"
           onClick={handleSubmit}
           className={`h-14 flex-1 rounded-2xl text-base font-semibold text-white transition ${
-            isFormValid ? 'bg-[#2F5DAA] opacity-100 hover:bg-[#1D3E75]' : 'bg-[#2F5DAA] opacity-50'
+            isFormValid
+              ? 'bg-[#2F5DAA] hover:bg-[#1D3E75]'
+              : 'bg-[#2F5DAA] opacity-50'
           }`}
         >
           {mode === 'edit' ? '강의 수정' : '강의 등록'}
@@ -597,122 +764,29 @@ export default function CourseCreateForm({
       {isConfirmOpen && (
         <DoubleBtnModal
           title={mode === 'edit' ? '강의 수정' : '강의 등록'}
-          description={mode === 'edit' ? '정말 이 강의를 수정하시겠습니까?' : '정말 이 강의를 등록하시겠습니까?'}
+          description={
+            mode === 'edit'
+              ? '정말 이 강의를 수정하시겠습니까?'
+              : '정말 이 강의를 등록하시겠습니까?'
+          }
           leftText="취소"
           rightText="확인"
           onLeftClick={() => setIsConfirmOpen(false)}
-          onRightClick={async () => {
-            setIsConfirmOpen(false);
-            setIsLoading(true);
-
-            try {
-              let thumbnailUrl = thumbnailPreview;
-              if (thumbnail) {
-                const uploadResult = await uploadCourseThumbnail(thumbnail);
-                if (!uploadResult.success || !uploadResult.data?.fileUrl) {
-                  setErrors((prev) => ({ ...prev, thumbnail: '썸네일 업로드에 실패했습니다.' }));
-                  setIsLoading(false);
-                  return;
-                }
-                thumbnailUrl = uploadResult.data.fileUrl;
-              }
-
-              const payload = {
-                title,
-                subject,
-                description,
-                thumbnailUrl,
-                priceType,
-                price: priceType === 'FREE' ? 0 : Number(price),
-                sections: sections.map((sec, sIdx) => ({
-                  title: sec.title,
-                  orderIndex: sIdx,
-                  lessons: sec.lectures.map((lec, lIdx) => ({
-                    title: lec.fileName,
-                    description: '',
-                    orderIndex: lIdx,
-                    durationSeconds: lec.duration
-                      ? (() => {
-                          const parts = lec.duration.split(':').map(Number);
-                          if (parts.length === 3) return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
-                          if (parts.length === 2) return (parts[0] || 0) * 60 + (parts[1] || 0);
-                          return undefined;
-                        })()
-                      : undefined,
-                  })),
-                })),
-              };
-
-              const result =
-                mode === 'edit' && initialData
-                  ? await updateCourse(initialData.courseId ?? 0, payload)
-                  : await createCourse(payload);
-
-              if (!result.success) {
-                setIsLoading(false);
-                toast.error(result.message || '강의 저장에 실패했습니다.');
-                return;
-              }
-
-              const savedCourseId: number =
-                result.data?.courseId ?? (mode === 'edit' ? (initialData?.courseId ?? 0) : 0);
-
-              const hasFiles = sections.some((sec) => sec.lectures.some((lec) => lec.file));
-
-              if (hasFiles && savedCourseId) {
-                const detailRes = await api.get<any>(`/api/courses/${savedCourseId}`);
-                if (detailRes.success && detailRes.data) {
-                  const apiSections: any[] = detailRes.data.sections ?? [];
-                  for (let sIdx = 0; sIdx < sections.length; sIdx++) {
-                    const apiSection = apiSections[sIdx];
-                    if (!apiSection) continue;
-                    const apiLessons: any[] = apiSection.lessons ?? [];
-                    for (let lIdx = 0; lIdx < sections[sIdx].lectures.length; lIdx++) {
-                      const lecture = sections[sIdx].lectures[lIdx];
-                      const apiLesson = apiLessons[lIdx];
-                      if (lecture.file && apiLesson?.lessonId) {
-                        const videoForm = new FormData();
-                        videoForm.append('file', lecture.file);
-                        try {
-                          await axios.post(`/api/courses/lessons/${apiLesson.lessonId}/video`, videoForm);
-                        } catch (err) {
-                          console.error(`영상 업로드 실패 lessonId=${apiLesson.lessonId}`, err);
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-
-              sessionStorage.setItem('courseToastType', mode === 'edit' ? 'edit' : 'create');
-              setIsLoading(false);
-              router.push('/instructor/myCourses');
-            } catch (error) {
-              setIsLoading(false);
-              console.error(error);
-            }
-          }}
+          onRightClick={handleConfirm}
         />
       )}
-
-      {isLoading && (
-        <LoadingModal
-          title={mode === 'edit' ? '강의를 수정하고 있습니다' : '강의를 등록하고 있습니다'}
-          description="잠시만 기다려주세요."
-        />
-      )}
-
       {isCancelOpen && (
         <DoubleBtnModal
           title={mode === 'edit' ? '강의 수정 취소' : '강의 등록 취소'}
-          description={mode === 'edit' ? '정말 강의 수정을 취소하시겠습니까?' : '정말 강의 등록을 취소하시겠습니까?'}
+          description={
+            mode === 'edit'
+              ? '정말 강의 수정을 취소하시겠습니까?'
+              : '정말 강의 등록을 취소하시겠습니까?'
+          }
           leftText="취소"
           rightText="확인"
           onLeftClick={() => setIsCancelOpen(false)}
-          onRightClick={() => {
-            setIsCancelOpen(false);
-            router.push('/instructor/myCourses');
-          }}
+          onRightClick={() => router.push('/admin/courses/manage')}
         />
       )}
     </div>
