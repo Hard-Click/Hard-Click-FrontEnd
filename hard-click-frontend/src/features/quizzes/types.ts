@@ -69,3 +69,26 @@ export interface StudentQuizItem {
   score: number | null; // 점수 0~100 (미응시 null)
   attemptedDate: string | null; // 응시일 YYYY-MM-DD (미응시 null)
 }
+
+/** 응시 화면용 문항 — 정답 없는 표현 (격리막: 정답은 서버 채점 전용) */
+export interface StudentQuizQuestion {
+  questionId: number;
+  content: string; // 문제
+  options: string[]; // 보기 4개
+}
+
+/** 응시 화면 — 퀴즈 1개 상세 (정답·해설 미포함) */
+export interface StudentQuizDetail {
+  quizId: number;
+  courseId: number;
+  week: number;
+  title: string;
+  questions: StudentQuizQuestion[];
+}
+
+/** 퀴즈 제출 채점 결과 (서버에서 채점) */
+export interface QuizSubmitResult {
+  score: number; // 0~100
+  correctCount: number;
+  totalCount: number;
+}

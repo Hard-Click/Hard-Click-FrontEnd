@@ -52,15 +52,59 @@ export const mockQuizzes: Quiz[] = [
     courseId: 1,
     week: 3,
     title: '컴포넌트 합성',
-    questionCount: 1,
+    questionCount: 6,
     createdDate: '2026-05-12',
     questions: [
       {
-        questionId: 4,
+        questionId: 10,
         content: 'props.children의 용도는 무엇인가요?',
         options: ['자식 요소 전달', '상태 관리', '이벤트 처리', '스타일링'],
         answerIndex: 0,
-        explanation: null,
+        explanation:
+          '컴포넌트 태그 사이에 넣은 자식 요소를 props.children으로 전달받아 합성합니다.',
+      },
+      {
+        questionId: 11,
+        content: 'React에서 key prop이 필요한 이유는 무엇인가요?',
+        options: [
+          '스타일을 적용하기 위해',
+          '리스트의 각 항목을 고유하게 식별하기 위해',
+          '이벤트를 처리하기 위해',
+          '라우팅을 위해',
+        ],
+        answerIndex: 1,
+        explanation:
+          'key는 리스트 항목을 고유하게 식별해 React가 변경을 효율적으로 추적하게 합니다.',
+      },
+      {
+        questionId: 12,
+        content: 'React의 생명주기(부수 효과)와 가장 관련 있는 Hook은?',
+        options: ['useState', 'useEffect', 'useMemo', 'useRef'],
+        answerIndex: 1,
+        explanation:
+          'useEffect로 마운트·업데이트·언마운트 시점의 부수 효과를 처리합니다.',
+      },
+      {
+        questionId: 13,
+        content: '불필요한 리렌더링을 막기 위해 컴포넌트를 메모이제이션하는 API는?',
+        options: ['React.memo', 'useReducer', 'useContext', 'forwardRef'],
+        answerIndex: 0,
+        explanation: 'React.memo는 props가 같으면 리렌더링을 건너뜁니다.',
+      },
+      {
+        questionId: 14,
+        content: '여러 컴포넌트에 전역적으로 값을 전달할 때 적합한 것은?',
+        options: ['props drilling', 'Context API', 'inline style', 'key prop'],
+        answerIndex: 1,
+        explanation: 'Context API로 중간 컴포넌트를 거치지 않고 값을 공유합니다.',
+      },
+      {
+        questionId: 15,
+        content: 'JSX 내 조건부 렌더링에 직접 사용할 수 없는 것은?',
+        options: ['삼항 연산자', '&& 연산자', '즉시실행 함수', 'for 문'],
+        answerIndex: 3,
+        explanation:
+          'for 문은 표현식이 아니라 JSX 안에서 직접 조건부 렌더링에 쓰지 않습니다.',
       },
     ],
   },

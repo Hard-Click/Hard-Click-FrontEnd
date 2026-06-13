@@ -5,7 +5,7 @@ import {
   mockEnrolledCourses,
   getStudentAttempt,
 } from '@/mocks/studentQuizzes.mock';
-import type { StudentQuizItem } from './types';
+import type { StudentQuizItem, StudentQuizDetail } from './types';
 
 const byWeekAsc = (a: StudentQuizItem, b: StudentQuizItem) => a.week - b.week;
 
@@ -82,4 +82,62 @@ export async function getStudentQuizzesServer(
   );
   if (!res.success || !res.data) return [];
   return res.data.map(toStudentQuizItem).sort(byWeekAsc);
+}
+
+/** 백엔드 응시 화면 응답(가정) — 정답 미포함(격리막). */
+interface ApiStudentQuizDetail {
+  quizId: number;
+  courseId: number;
+  week: number;
+  title: string;
+  questions: { questionId: number; content: string; options: string[] }[];
+}
+
+function toStudentQuizDetail(api: ApiStudentQuizDetail): StudentQuizDetail {
+  return {
+    quizId: api.quizId,
+    courseId: api.courseId,
+    week: api.week,
+    title: api.title,
+    questions: api.questions.map((q) => ({
+      questionId: q.questionId,
+      content: q.content,
+      options: q.options,
+    })),
+  };
+}
+
+/**
+ * 응시 화면 — 퀴즈 1개 상세(정답·해설 제외) 서버 조회 (Server Component 전용).
+ * 격리막: 정답(answerIndex)·해설은 빼고 문제+보기만 내려준다(채점은 제출 시 서버에서).
+ * API 연동 시: 엔드포인트 + ApiStudentQuizDetail/toStudentQuizDetail만 맞추면 됨.
+ */
+export async function getStudentQuizDetailServer(
+  courseId: number,
+  quizId: number,
+): Promise<StudentQuizDetail | null> {
+  if (USE_MOCK) {
+    const quiz = mockQuizzes.find(
+      (q) => q.courseId === courseId && q.quizId === quizId,
+    );
+    if (!quiz) return null;
+    return {
+      quizId: quiz.quizId,
+      courseId: quiz.courseId,
+      week: quiz.week,
+      title: quiz.title,
+      // 정답·해설 제거 — 문제/보기만 노출
+      questions: quiz.questions.map((q) => ({
+        questionId: q.questionId,
+        content: q.content,
+        options: q.options,
+      })),
+    };
+  }
+
+  const res = await serverApi.get<ApiStudentQuizDetail>(
+    `/api/student/courses/${courseId}/quizzes/${quizId}`,
+  );
+  if (!res.success || !res.data) return null;
+  return toStudentQuizDetail(res.data);
 }
