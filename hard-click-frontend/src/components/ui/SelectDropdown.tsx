@@ -63,16 +63,22 @@ export default function SelectDropdown({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen((v) => !v)}
-        className={`relative flex h-10 items-center whitespace-nowrap rounded-2xl border border-[#E2E8F0] pl-4 pr-3 text-base transition-colors ${
+        className={`relative flex h-10 items-center whitespace-nowrap border border-[#E2E8F0] pl-6 pr-3 text-base transition-colors ${
           disabled
             ? 'cursor-not-allowed bg-[#F1F5F9]'
             : 'bg-white hover:border-[#CBD5E1]'
-        } ${fullWidth ? 'w-full justify-between' : 'gap-1.5'}`}
+        } ${fullWidth ? 'w-full justify-between' : 'gap-1.5'} ${
+          isOpen && !disabled ? 'rounded-t-2xl' : 'rounded-2xl'
+        }`}
       >
         <span className="invisible select-none" aria-hidden>
           {longestLabel}
         </span>
-        <span className="absolute left-4 whitespace-nowrap text-[rgba(26,31,46,0.5)]">
+        <span
+          className={`absolute left-6 whitespace-nowrap ${
+            value ? 'text-[#1F2937]' : 'text-[rgba(26,31,46,0.5)]'
+          }`}
+        >
           {displayText}
         </span>
         <svg
@@ -93,7 +99,7 @@ export default function SelectDropdown({
       </button>
 
       {isOpen && !disabled && (
-        <div className="absolute left-0 top-[calc(100%+6px)] z-50 max-h-52 min-w-full overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-white py-2 shadow-lg">
+        <div className="absolute left-0 top-full z-50 max-h-72 min-w-full overflow-y-auto rounded-b-2xl border border-t-0 border-[#E2E8F0] bg-white shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)]">
           {options.map((opt) => (
             <button
               key={opt.value}
@@ -102,10 +108,10 @@ export default function SelectDropdown({
                 onChange(opt.value);
                 setIsOpen(false);
               }}
-              className={`w-full px-5 py-2.5 text-left text-base transition-colors hover:bg-gray-50 ${
+              className={`w-full border-b border-[#E2E8F0] px-6 py-2 text-left text-base transition-colors last:border-b-0 ${
                 value === opt.value
-                  ? 'font-semibold text-[#2F5DAA]'
-                  : 'text-[rgba(26,31,46,0.8)]'
+                  ? 'bg-[rgba(47,93,170,0.05)] font-bold text-[#2F5DAA]'
+                  : 'font-medium text-[#1F2937] hover:bg-gray-50'
               }`}
             >
               {opt.label}

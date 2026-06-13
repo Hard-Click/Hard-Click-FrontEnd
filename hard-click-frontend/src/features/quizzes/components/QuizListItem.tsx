@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import WeekBadge from './WeekBadge';
 import type { Quiz } from '../types';
 
 /**
@@ -20,9 +21,7 @@ export default function QuizListItem({
     <div className="flex items-center justify-between rounded-[20px] border border-[#E2E8F0] px-6 py-5">
       {/* 좌: 주차 badge + 정보 */}
       <div className="flex items-center gap-6">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[20px] bg-[rgba(47,93,170,0.1)]">
-          <span className="text-2xl font-bold text-[#2F5DAA]">{quiz.week}주</span>
-        </div>
+        <WeekBadge week={quiz.week} size="lg" />
         <div>
           <h3 className="text-lg font-bold text-[#1F2937]">{quiz.title}</h3>
           <div className="mt-2 flex items-center gap-4 text-sm text-[#4B5563]">
