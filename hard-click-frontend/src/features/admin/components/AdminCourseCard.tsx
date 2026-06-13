@@ -9,16 +9,14 @@ import type {
   AdminCourseStatus,
 } from '@/mocks/admin.mock';
 
-const STATUS_LABEL: Record<AdminCourseStatus, string> = {
+const STATUS_LABEL: Record<Exclude<AdminCourseStatus, 'DELETED'>, string> = {
   PUBLISHED: '공개',
   HIDDEN: '비공개',
-  DELETED: '삭제됨',
 };
 
-const STATUS_STYLE: Record<AdminCourseStatus, string> = {
+const STATUS_STYLE: Record<Exclude<AdminCourseStatus, 'DELETED'>, string> = {
   PUBLISHED: 'bg-[#DCFCE7] text-[#16A34A]',
   HIDDEN: 'bg-[#FFF7ED] text-[#F97316]',
-  DELETED: 'bg-[#FEE2E2] text-[#B91C1C]',
 };
 
 interface Props {
@@ -35,7 +33,6 @@ export default function AdminCourseCard({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const handleToggle = () => {
-    if (course.status === 'DELETED') return;
     const next: AdminCourseStatus =
       course.status === 'PUBLISHED' ? 'HIDDEN' : 'PUBLISHED';
     onStatusChange(course.id, next);
@@ -52,15 +49,11 @@ export default function AdminCourseCard({
     toast.success('강의가 삭제되었습니다.');
   };
 
-  const isDeleted = course.status === 'DELETED';
-
   return (
     <>
       <div className="flex items-center gap-5 rounded-2xl border border-[#E2E8F0] bg-white px-6 py-5">
-        {/* 썸네일 */}
         <div className="h-[72px] w-[120px] flex-shrink-0 rounded-xl bg-[#E2E8F0]" />
 
-        {/* 정보 */}
         <div className="flex flex-1 flex-col gap-1">
           <div className="flex items-center gap-2">
             <span className="rounded-full bg-[#EFF6FF] px-2.5 py-0.5 text-xs font-semibold text-[#2F5DAA]">
@@ -68,10 +61,16 @@ export default function AdminCourseCard({
             </span>
             <span
               className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                STATUS_STYLE[course.status]
+                STATUS_STYLE[
+                  course.status as Exclude<AdminCourseStatus, 'DELETED'>
+                ]
               }`}
             >
-              {STATUS_LABEL[course.status]}
+              {
+                STATUS_LABEL[
+                  course.status as Exclude<AdminCourseStatus, 'DELETED'>
+                ]
+              }
             </span>
           </div>
           <p className="text-base font-semibold text-[#1E293B]">
@@ -94,7 +93,6 @@ export default function AdminCourseCard({
             <span className="mx-2 text-[#CBD5E1]">|</span>
             <span>등록일: {course.createdAt}</span>
           </p>
-          {/* 액션 버튼 */}
           <div className="mt-1 flex items-center gap-2">
             <button
               type="button"
@@ -108,48 +106,43 @@ export default function AdminCourseCard({
               />
               수정
             </button>
-            {!isDeleted && (
-              <button
-                type="button"
-                onClick={handleToggle}
-                className={`flex h-8 items-center gap-1 rounded-full border px-4 text-xs font-semibold transition ${
+            <button
+              type="button"
+              onClick={handleToggle}
+              className={`flex h-8 items-center gap-1 rounded-full border px-4 text-xs font-semibold transition ${
+                course.status === 'PUBLISHED'
+                  ? 'border-[#FCA5A5] text-[#EF4444] hover:bg-[#FEF2F2]'
+                  : 'border-[#86EFAC] text-[#16A34A] hover:bg-[#F0FDF4]'
+              }`}
+            >
+              <Image
+                src={
                   course.status === 'PUBLISHED'
-                    ? 'border-[#FCA5A5] text-[#EF4444] hover:bg-[#FEF2F2]'
-                    : 'border-[#86EFAC] text-[#16A34A] hover:bg-[#F0FDF4]'
-                }`}
-              >
-                <Image
-                  src={
-                    course.status === 'PUBLISHED'
-                      ? '/icons/closeEye.svg'
-                      : '/icons/openEye.svg'
-                  }
-                  alt={course.status === 'PUBLISHED' ? '비공개' : '공개'}
-                  width={14}
-                  height={14}
-                />
-                {course.status === 'PUBLISHED' ? '비공개' : '공개'}
-              </button>
-            )}
-            {!isDeleted && (
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(true)}
-                className="flex h-8 items-center gap-1 rounded-full border border-[#FCA5A5] px-4 text-xs font-semibold text-[#EF4444] hover:bg-[#FEF2F2]"
-              >
-                <Image
-                  src="/icons/trashIcon.svg"
-                  alt="삭제"
-                  width={14}
-                  height={14}
-                />
-                삭제
-              </button>
-            )}
+                    ? '/icons/closeEye.svg'
+                    : '/icons/openEye.svg'
+                }
+                alt={course.status === 'PUBLISHED' ? '비공개' : '공개'}
+                width={14}
+                height={14}
+              />
+              {course.status === 'PUBLISHED' ? '비공개' : '공개'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="flex h-8 items-center gap-1 rounded-full border border-[#FCA5A5] px-4 text-xs font-semibold text-[#EF4444] hover:bg-[#FEF2F2]"
+            >
+              <Image
+                src="/icons/trashIcon.svg"
+                alt="삭제"
+                width={14}
+                height={14}
+              />
+              삭제
+            </button>
           </div>
         </div>
 
-        {/* 가격 */}
         <div className="flex-shrink-0 text-right">
           <p
             className={`text-xl font-bold ${
