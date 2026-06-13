@@ -26,13 +26,14 @@ const SUBJECT_OPTIONS = [
 ];
 
 interface Lecture {
+  id: string;
   file?: File;
   fileName: string;
   duration: string;
 }
 
 interface Section {
-  id: number;
+  id: string;
   title: string;
   lectures: Lecture[];
 }
@@ -412,6 +413,9 @@ export default function CourseCreateForm({
                   }
 
                   // 성공
+                  if (thumbnailPreview.startsWith('blob:')) {
+                    URL.revokeObjectURL(thumbnailPreview);
+                  }
                   setThumbnail(file);
                   setThumbnailPreview(URL.createObjectURL(file));
                   setErrors((prev) => ({
@@ -437,6 +441,9 @@ export default function CourseCreateForm({
                 <button
                   type="button"
                   onClick={() => {
+                    if (thumbnailPreview.startsWith('blob:')) {
+                      URL.revokeObjectURL(thumbnailPreview);
+                    }
                     setThumbnail(null);
                     setThumbnailPreview('');
                   }}
@@ -570,7 +577,7 @@ export default function CourseCreateForm({
                 setSections((prev) => [
                   ...prev,
                   {
-                    id: Date.now(),
+                    id: crypto.randomUUID(),
                     title: '',
                     lectures: [],
                   },
@@ -646,7 +653,7 @@ export default function CourseCreateForm({
                     <div className="mb-4 mt-3 space-y-2">
                       {section.lectures.map((lecture, index) => (
                         <div
-                          key={index}
+                          key={lecture.id}
                           className="grid grid-cols-[1fr_auto_auto] items-center rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3"
                         >
                           {/* 영상 제목 */}
@@ -705,6 +712,10 @@ export default function CourseCreateForm({
                           const video = document.createElement('video');
 
                           video.preload = 'metadata';
+                          video.onerror = () => {
+                            URL.revokeObjectURL(video.src);
+                            toast.error('영상 파일을 불러올 수 없습니다.');
+                          };
 
                           video.onloadedmetadata = () => {
                             window.URL.revokeObjectURL(video.src);
@@ -719,6 +730,7 @@ export default function CourseCreateForm({
                                       lectures: [
                                         ...item.lectures,
                                         {
+                                          id: crypto.randomUUID(),
                                           file,
                                           fileName: file.name,
                                           duration,
