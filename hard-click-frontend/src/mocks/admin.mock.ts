@@ -146,3 +146,62 @@ export const mockAdminCourses: AdminCourseRow[] = [
     instructor: '박강사',
   },
 ];
+
+// --- 강의 관리 ---
+export type AdminCourseStatus = 'PUBLISHED' | 'HIDDEN' | 'DELETED';
+
+export interface AdminCourseManageRow {
+  id: number;
+  title: string;
+  subject: string;
+  instructor: string;
+  studentCount: number;
+  rating: number;
+  reviewCount: number;
+  price: number;
+  isFree: boolean;
+  status: AdminCourseStatus;
+  createdAt: string;
+}
+
+export const mockAdminCourseManage: AdminCourseManageRow[] = [
+  {
+    id: 1,
+    title: 'React 완벽 가이드',
+    subject: 'React',
+    instructor: '김강사',
+    studentCount: 89,
+    rating: 4.8,
+    reviewCount: 45,
+    price: 99000,
+    isFree: false,
+    status: 'PUBLISHED',
+    createdAt: '2026.05.10',
+  },
+  {
+    id: 2,
+    title: 'TypeScript 심화',
+    subject: 'TypeScript',
+    instructor: '이강사',
+    studentCount: 67,
+    rating: 4.7,
+    reviewCount: 32,
+    price: 89000,
+    isFree: false,
+    status: 'PUBLISHED',
+    createdAt: '2026.05.08',
+  },
+  {
+    id: 3,
+    title: 'Node.js 백엔드 개발',
+    subject: 'Node.js',
+    instructor: '박강사',
+    studentCount: 45,
+    rating: 4.6,
+    reviewCount: 28,
+    price: 0,
+    isFree: true,
+    status: 'HIDDEN',
+    createdAt: '2026.05.05',
+  },
+];

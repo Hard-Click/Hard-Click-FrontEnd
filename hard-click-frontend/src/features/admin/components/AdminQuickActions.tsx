@@ -15,9 +15,9 @@ const QUICK_ACTIONS = [
   },
   {
     title: '강의 상태 관리',
-    desc: '강의 승인/승급',
+    desc: '강의 공개/비공개',
     icon: '/icons/quickAction2.svg',
-    href: '/admin/courses',
+    href: '/admin/courses/manage',
   },
   {
     title: '사용자 관리',
