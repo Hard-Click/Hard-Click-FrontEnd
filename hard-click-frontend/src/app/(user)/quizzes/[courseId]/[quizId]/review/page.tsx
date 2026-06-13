@@ -87,7 +87,7 @@ export default async function QuizReviewPage({
       {/* 푸터 — 다시 학습하기(재응시) / 퀴즈 목록으로 */}
       <div className="mt-8 flex gap-4">
         <Link
-          href={`/quizzes/${courseId}/${quizId}`}
+          href={`/learning/${courseId}`}
           className="flex h-14 flex-1 items-center justify-center gap-2 rounded-[10px] bg-[#2F5DAA] text-base font-semibold text-white transition hover:bg-[#274C8B]"
         >
           {BookIcon} 다시 학습하기
