@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import {
   getEnrolledCoursesServer,
   getStudentQuizDetailServer,
@@ -24,6 +24,8 @@ export default async function QuizTakePage({
     getEnrolledCoursesServer(),
   ]);
   if (!detail || detail.questions.length === 0) notFound();
+  // 재응시 없음 — 이미 응시한 퀴즈는 결과(해설) 화면으로 리다이렉트
+  if (detail.attempted) redirect(`/quizzes/${courseId}/${quizId}/review`);
 
   const courseTitle = courses.find((c) => c.courseId === courseId)?.title ?? '';
 

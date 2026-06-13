@@ -83,6 +83,7 @@ export interface StudentQuizDetail {
   courseId: number;
   week: number;
   title: string;
+  attempted: boolean; // 이미 응시했는지 (응시 페이지 재진입 차단용 — 재응시 없음)
   questions: StudentQuizQuestion[];
 }
 

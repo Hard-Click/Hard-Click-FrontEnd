@@ -96,6 +96,7 @@ interface ApiStudentQuizDetail {
   courseId: number;
   week: number;
   title: string;
+  attempted: boolean;
   questions: { questionId: number; content: string; options: string[] }[];
 }
 
@@ -105,6 +106,7 @@ function toStudentQuizDetail(api: ApiStudentQuizDetail): StudentQuizDetail {
     courseId: api.courseId,
     week: api.week,
     title: api.title,
+    attempted: api.attempted,
     questions: api.questions.map((q) => ({
       questionId: q.questionId,
       content: q.content,
@@ -132,6 +134,7 @@ export async function getStudentQuizDetailServer(
       courseId: quiz.courseId,
       week: quiz.week,
       title: quiz.title,
+      attempted: getStudentAttempt(quizId) !== null,
       // 정답·해설 제거 — 문제/보기만 노출
       questions: quiz.questions.map((q) => ({
         questionId: q.questionId,

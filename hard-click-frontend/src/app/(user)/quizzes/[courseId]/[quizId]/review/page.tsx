@@ -47,7 +47,7 @@ export default async function QuizReviewPage({
         <p className="text-sm text-[#4B5563]">{review.courseTitle}</p>
         <h1 className="mt-1 text-3xl font-bold text-[#1F2937]">{review.title}</h1>
         <p className="mt-2 text-base text-[#4B5563]">
-          • 응시일: {review.attemptedAt.split(' ')[0]}
+          • 응시일: {review.attemptedAt.slice(0, 10)}
         </p>
       </header>
 
