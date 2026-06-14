@@ -41,8 +41,14 @@ export default function AdminReportDetailModal({ report, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-[560px] max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-8 shadow-xl">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-[560px] max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-8 shadow-xl"
+      >
         <h2 className="mb-6 text-xl font-bold text-[#1F2937]">신고 상세</h2>
 
         {/* 신고 대상 내용 */}
@@ -147,6 +153,7 @@ export default function AdminReportDetailModal({ report, onClose }: Props) {
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
             placeholder="처리 메모를 입력하세요"
+            aria-label="처리 메모"
             rows={3}
             className="w-full resize-none rounded-xl border border-[#E2E8F0] px-4 py-3 text-sm outline-none placeholder:text-[#9CA3AF]"
           />

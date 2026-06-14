@@ -123,7 +123,9 @@ export default function AdminReportTable({
                     <div className="flex items-center justify-center gap-4">
                       <button
                         type="button"
-                        onClick={() => setSelectedReport(report)}
+                        onClick={() => {
+                          if (isPending) setSelectedReport(report);
+                        }}
                         className="flex items-center gap-1 whitespace-nowrap rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-sm font-medium text-[#2F5DAA] hover:bg-[#F8FAFC]"
                       >
                         <Image
