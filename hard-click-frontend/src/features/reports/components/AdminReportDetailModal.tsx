@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 import type { ReportItem, ReportTarget } from '../types';
 import AdminReportConfirmModal from './AdminReportConfirmModal';
+import { useRouter } from 'next/navigation';
 
 const TARGET_MOVE_LABEL: Record<ReportTarget, string> = {
   POST: '게시물로 이동',
@@ -30,13 +31,18 @@ export default function AdminReportDetailModal({ report, onClose }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const latestReason = report.reasonStats[0]?.reason ?? '-';
+  const router = useRouter();
 
   const handleConfirm = () => {
     setConfirmOpen(true);
   };
 
   const handleMove = () => {
-    // TODO: 대상 유형별 이동 경로 연동
+    if (report.targetType === 'POST') {
+      router.push(`/admin/community/${report.targetId}?from=report`);
+      return;
+    }
+    // 댓글/리뷰 이동은 후속 이슈
     toast.info(`${TARGET_MOVE_LABEL[report.targetType]} (준비 중)`);
   };
 
