@@ -1,5 +1,9 @@
+'use client';
+
+import { useState } from 'react';
 import Image from 'next/image';
 import ReportStatusBadge from './ReportStatusBadge';
+import AdminReportDetailModal from './AdminReportDetailModal';
 import type { ReportItem, ReportTarget } from '../types';
 
 const TARGET_LABEL: Record<ReportTarget, string> = {
@@ -19,6 +23,8 @@ export default function AdminReportTable({
 }: {
   reports: ReportItem[];
 }) {
+  const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
+
   return (
     <div className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white">
       <table className="w-full">
@@ -88,11 +94,9 @@ export default function AdminReportTable({
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-[#64748B]">
                     {report.authorName}
                   </td>
-                  {/* 신고 사유 */}
+                  {/* 신고 사유 (가장 최근 접수된 사유) */}
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-[#64748B]">
-                    {report.reasons.length > 0
-                      ? report.reasons.join(', ')
-                      : '-'}
+                    {report.reasonStats[0]?.reason ?? '-'}
                   </td>
                   {/* 신고 횟수 */}
                   <td className="px-6 py-4 text-center">
@@ -119,6 +123,9 @@ export default function AdminReportTable({
                     <div className="flex items-center justify-center gap-4">
                       <button
                         type="button"
+                        onClick={() => {
+                          if (isPending) setSelectedReport(report);
+                        }}
                         className="flex items-center gap-1 whitespace-nowrap rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-sm font-medium text-[#2F5DAA] hover:bg-[#F8FAFC]"
                       >
                         <Image
@@ -149,6 +156,13 @@ export default function AdminReportTable({
           )}
         </tbody>
       </table>
+
+      {selectedReport && (
+        <AdminReportDetailModal
+          report={selectedReport}
+          onClose={() => setSelectedReport(null)}
+        />
+      )}
     </div>
   );
 }
