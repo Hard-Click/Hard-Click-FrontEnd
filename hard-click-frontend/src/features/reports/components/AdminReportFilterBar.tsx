@@ -6,7 +6,7 @@ import type { ReportStatusFilter, ReportTargetFilter } from '../types';
 const STATUS_OPTIONS: { key: ReportStatusFilter; label: string }[] = [
   { key: 'ALL', label: '전체' },
   { key: 'PENDING', label: '처리 대기' },
-  { key: 'RESOLVED', label: '처리 완료' },
+  { key: 'COMPLETED', label: '처리 완료' },
   { key: 'REJECTED', label: '반려' },
 ];
 
@@ -31,7 +31,7 @@ export default function AdminReportFilterBar({
   onTargetChange,
 }: AdminReportFilterBarProps) {
   return (
-    <div className="flex items-center gap-16 rounded-2xl border border-[#E2E8F0] bg-white px-6 py-5 shadow-sm">
+    <div className="flex items-center gap-8 rounded-2xl border border-[#E2E8F0] bg-white px-6 py-4 shadow-sm">
       <ReportFilterTabGroup
         title="처리 상태"
         options={STATUS_OPTIONS}

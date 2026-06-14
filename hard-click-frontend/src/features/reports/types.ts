@@ -1,4 +1,4 @@
-export type ReportStatus = 'PENDING' | 'RESOLVED' | 'REJECTED';
+export type ReportStatus = 'PENDING' | 'COMPLETED' | 'REJECTED';
 export type ReportTarget = 'POST' | 'COMMENT' | 'REVIEW';
 
 /** 처리 상태 필터 ('ALL' = 전체) */
