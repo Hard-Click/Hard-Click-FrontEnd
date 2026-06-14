@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { toast } from 'sonner';
 import ReportStatusBadge from './ReportStatusBadge';
 import AdminReportDetailModal from './AdminReportDetailModal';
+import DeleteConfirmModal from '@/features/admin/components/DeleteConfirmModal';
 import type { ReportItem, ReportTarget } from '../types';
 
 const TARGET_LABEL: Record<ReportTarget, string> = {
@@ -23,7 +25,37 @@ export default function AdminReportTable({
 }: {
   reports: ReportItem[];
 }) {
+  // 부모(필터)에서 내려준 목록을 내부 state로 동기화 (삭제 시 즉시 제거)
+  const [rows, setRows] = useState<ReportItem[]>(reports);
+  useEffect(() => {
+    setRows(reports);
+  }, [reports]);
+
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
+  const [deletingReport, setDeletingReport] = useState<ReportItem | null>(null);
+
+  const handleDeleteClick = (report: ReportItem) => {
+    if (report.isTargetDeleted) {
+      toast.error(`이미 삭제된 ${TARGET_LABEL[report.targetType]}입니다.`);
+      return;
+    }
+    setDeletingReport(report);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deletingReport) return;
+    setRows((prev) =>
+      prev.filter(
+        (r) =>
+          !(
+            r.targetType === deletingReport.targetType &&
+            r.targetId === deletingReport.targetId
+          )
+      )
+    );
+    toast.success('삭제되었습니다.');
+    setDeletingReport(null);
+  };
 
   return (
     <div className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white">
@@ -57,7 +89,7 @@ export default function AdminReportTable({
           </tr>
         </thead>
         <tbody>
-          {reports.length === 0 ? (
+          {rows.length === 0 ? (
             <tr>
               <td
                 colSpan={8}
@@ -67,7 +99,7 @@ export default function AdminReportTable({
               </td>
             </tr>
           ) : (
-            reports.map((report) => {
+            rows.map((report) => {
               const isPending = report.status === 'PENDING';
               return (
                 <tr
@@ -140,7 +172,10 @@ export default function AdminReportTable({
                         />
                         {isPending ? '상세보기' : '메모보기'}
                       </button>
-                      <button type="button">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteClick(report)}
+                      >
                         <Image
                           src="/icons/trashIcon.svg"
                           alt="삭제"
@@ -161,6 +196,17 @@ export default function AdminReportTable({
         <AdminReportDetailModal
           report={selectedReport}
           onClose={() => setSelectedReport(null)}
+        />
+      )}
+
+      {deletingReport && (
+        <DeleteConfirmModal
+          title={`${TARGET_LABEL[deletingReport.targetType]} 삭제`}
+          message={`해당 ${
+            TARGET_LABEL[deletingReport.targetType]
+          }을(를) 삭제하시겠습니까?`}
+          onCancel={() => setDeletingReport(null)}
+          onConfirm={handleDeleteConfirm}
         />
       )}
     </div>
