@@ -47,9 +47,17 @@ export default function AdminReportDetailModal({ report, onClose }: Props) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="report-detail-title"
         className="w-full max-w-[560px] max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-8 shadow-xl"
       >
-        <h2 className="mb-6 text-xl font-bold text-[#1F2937]">신고 상세</h2>
+        <h2
+          id="report-detail-title"
+          className="mb-6 text-xl font-bold text-[#1F2937]"
+        >
+          신고 상세
+        </h2>
 
         {/* 신고 대상 내용 */}
         <div className="mb-5 rounded-xl bg-[#FEF2F2] p-4">

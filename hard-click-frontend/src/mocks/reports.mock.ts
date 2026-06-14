@@ -23,6 +23,7 @@ export interface ReportApiItem {
   reasonStats: ReportReasonStat[];
   status: 'PENDING' | 'COMPLETED' | 'REJECTED';
   createdAt: string;
+  isTargetDeleted: boolean;
 }
 
 export interface ReportListApiResponse {
@@ -45,6 +46,7 @@ export const mockReportList: ReportListApiResponse = {
       ],
       status: 'PENDING',
       createdAt: '2026.05.11 14:30',
+      isTargetDeleted: false,
     },
     {
       targetType: 'COMMENT',
@@ -60,6 +62,7 @@ export const mockReportList: ReportListApiResponse = {
       ],
       status: 'PENDING',
       createdAt: '2026.05.10 10:20',
+      isTargetDeleted: false,
     },
     {
       targetType: 'REVIEW',
@@ -74,6 +77,7 @@ export const mockReportList: ReportListApiResponse = {
       ],
       status: 'COMPLETED',
       createdAt: '2026.05.09 16:45',
+      isTargetDeleted: true,
     },
     {
       targetType: 'POST',
@@ -89,6 +93,7 @@ export const mockReportList: ReportListApiResponse = {
       ],
       status: 'REJECTED',
       createdAt: '2026.05.08 09:15',
+      isTargetDeleted: false,
     },
   ],
   totalPages: 1,

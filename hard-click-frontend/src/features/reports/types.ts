@@ -26,6 +26,7 @@ export interface ReportItem {
   reasonStats: ReportReasonStatItem[];
   status: ReportStatus;
   createdAt: string;
+  isTargetDeleted: boolean;
 }
 
 /** 대표 사유 = 가장 최근 접수된 사유 */
@@ -48,5 +49,6 @@ export function toReportItem(api: ReportApiItem): ReportItem {
     })),
     status: api.status,
     createdAt: api.createdAt,
+    isTargetDeleted: api.isTargetDeleted,
   };
 }
