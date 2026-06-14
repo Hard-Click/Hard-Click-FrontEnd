@@ -22,9 +22,14 @@ const TARGET_DELETE_LABEL: Record<ReportTarget, string> = {
 interface Props {
   report: ReportItem;
   onClose: () => void;
+  onRemoveReport: (report: ReportItem) => void;
 }
 
-export default function AdminReportDetailModal({ report, onClose }: Props) {
+export default function AdminReportDetailModal({
+  report,
+  onClose,
+  onRemoveReport,
+}: Props) {
   const [reasonOpen, setReasonOpen] = useState(false);
   const [memo, setMemo] = useState('');
   const [deleteContent, setDeleteContent] = useState(false);
@@ -54,6 +59,7 @@ export default function AdminReportDetailModal({ report, onClose }: Props) {
         deleteContent={deleteContent}
         onBack={() => setConfirmOpen(false)}
         onClose={onClose}
+        onRemoveReport={onRemoveReport}
       />
     );
   }
@@ -193,7 +199,7 @@ export default function AdminReportDetailModal({ report, onClose }: Props) {
             onChange={(e) => setDeleteContent(e.target.checked)}
             className="h-4 w-4 cursor-pointer rounded border-[#B91C1C] accent-[#B91C1C]"
           />
-          <span className="text-m font-bold text-[#B91C1C]">
+          <span className="text-base font-bold text-[#B91C1C]">
             {TARGET_DELETE_LABEL[report.targetType]}
           </span>
         </label>
