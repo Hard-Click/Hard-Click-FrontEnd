@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import type { ReportItem, ReportTarget } from '../types';
+import { getLatestReason } from '../types';
 
 const TARGET_LABEL: Record<ReportTarget, string> = {
   POST: '게시물',
@@ -29,8 +30,7 @@ export default function AdminReportConfirmModal({
   onRemoveReport,
 }: Props) {
   const [reasonOpen, setReasonOpen] = useState(false);
-  const latestReason = report.reasonStats[0]?.reason ?? '-';
-
+  const latestReason = getLatestReason(report);
   const handleReject = () => {
     // TODO: 신고 반려 API 연동 (mock)
     toast.success('신고가 반려되었습니다.');

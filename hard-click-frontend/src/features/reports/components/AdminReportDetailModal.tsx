@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import type { ReportItem, ReportTarget } from '../types';
+import { getLatestReason } from '../types';
 import AdminReportConfirmModal from './AdminReportConfirmModal';
 import { useRouter } from 'next/navigation';
 
@@ -35,7 +36,8 @@ export default function AdminReportDetailModal({
   const [deleteContent, setDeleteContent] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const latestReason = report.reasonStats[0]?.reason ?? '-';
+  const latestReason = getLatestReason(report);
+
   const router = useRouter();
 
   const handleConfirm = () => {
@@ -43,14 +45,24 @@ export default function AdminReportDetailModal({
   };
 
   const handleMove = () => {
+    const reportKey = `${report.targetType}-${report.targetId}`;
     if (report.targetType === 'POST') {
-      const reportKey = `${report.targetType}-${report.targetId}`;
       router.push(
         `/admin/community/${report.targetId}?from=report&reportKey=${reportKey}`
       );
       return;
     }
-    // 댓글/리뷰 이동은 후속 이슈
+    if (report.targetType === 'COMMENT') {
+      if (!report.postId) {
+        toast.error('연결된 게시글 정보를 찾을 수 없습니다.');
+        return;
+      }
+      router.push(
+        `/admin/community/${report.postId}?from=report&reportKey=${reportKey}&highlightComment=${report.targetId}`
+      );
+      return;
+    }
+    // 리뷰 이동은 후속 이슈
     toast.info(`${TARGET_MOVE_LABEL[report.targetType]} (준비 중)`);
   };
 

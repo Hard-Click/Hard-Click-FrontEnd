@@ -25,6 +25,7 @@ export interface ReportApiItem {
   createdAt: string;
   isTargetDeleted: boolean;
   processMemo?: string;
+  postId?: number;
 }
 
 export interface ReportListApiResponse {
@@ -64,6 +65,7 @@ export const mockReportList: ReportListApiResponse = {
       status: 'PENDING',
       createdAt: '2026.05.10 10:20',
       isTargetDeleted: false,
+      postId: 101,
     },
     {
       targetType: 'REVIEW',
@@ -80,6 +82,7 @@ export const mockReportList: ReportListApiResponse = {
       createdAt: '2026.05.09 16:45',
       isTargetDeleted: true,
       processMemo: '강의 비방성 리뷰로 확인되어 삭제 처리했습니다.',
+      postId: 101,
     },
     {
       targetType: 'POST',
@@ -97,6 +100,7 @@ export const mockReportList: ReportListApiResponse = {
       createdAt: '2026.05.08 09:15',
       isTargetDeleted: false,
       processMemo: '신고 사유가 불충분하여 반려 처리했습니다.',
+      postId: 101,
     },
   ],
   totalPages: 1,

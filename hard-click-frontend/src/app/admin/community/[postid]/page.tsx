@@ -4,7 +4,11 @@ import AdminCommunityDetailContent from '@/features/admin/components/AdminCommun
 
 interface AdminCommunityDetailPageProps {
   params: Promise<{ postid: string }>;
-  searchParams: Promise<{ from?: string; reportKey?: string }>;
+  searchParams: Promise<{
+    from?: string;
+    reportKey?: string;
+    highlightComment?: string;
+  }>;
 }
 
 export default async function AdminCommunityDetailPage({
@@ -12,7 +16,7 @@ export default async function AdminCommunityDetailPage({
   searchParams,
 }: AdminCommunityDetailPageProps) {
   const { postid } = await params;
-  const { from, reportKey } = await searchParams;
+  const { from, reportKey, highlightComment } = await searchParams;
   const postId = Number(postid);
 
   if (Number.isNaN(postId)) {
@@ -41,8 +45,13 @@ export default async function AdminCommunityDetailPage({
           initialPost={postRes.data}
           initialComments={initialComments}
           readOnly={fromReport}
-          highlightPost={fromReport}
+          highlightPost={fromReport && !highlightComment}
           backToReportKey={fromReport ? reportKey ?? '' : undefined}
+          highlightCommentId={
+            highlightComment && !Number.isNaN(Number(highlightComment))
+              ? Number(highlightComment)
+              : undefined
+          }
         />
       </div>
     </div>
