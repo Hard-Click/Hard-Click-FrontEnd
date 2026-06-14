@@ -24,6 +24,7 @@ export interface ReportApiItem {
   status: 'PENDING' | 'COMPLETED' | 'REJECTED';
   createdAt: string;
   isTargetDeleted: boolean;
+  processMemo?: string;
 }
 
 export interface ReportListApiResponse {
@@ -78,6 +79,7 @@ export const mockReportList: ReportListApiResponse = {
       status: 'COMPLETED',
       createdAt: '2026.05.09 16:45',
       isTargetDeleted: true,
+      processMemo: '강의 비방성 리뷰로 확인되어 삭제 처리했습니다.',
     },
     {
       targetType: 'POST',
@@ -94,6 +96,7 @@ export const mockReportList: ReportListApiResponse = {
       status: 'REJECTED',
       createdAt: '2026.05.08 09:15',
       isTargetDeleted: false,
+      processMemo: '신고 사유가 불충분하여 반려 처리했습니다.',
     },
   ],
   totalPages: 1,

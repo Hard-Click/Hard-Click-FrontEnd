@@ -7,6 +7,8 @@ import ReportStatusBadge from './ReportStatusBadge';
 import AdminReportDetailModal from './AdminReportDetailModal';
 import DeleteConfirmModal from '@/features/admin/components/DeleteConfirmModal';
 import type { ReportItem, ReportTarget } from '../types';
+import AdminReportMemoModal from './AdminReportMemoModal';
+import { useRouter } from 'next/navigation';
 
 const TARGET_LABEL: Record<ReportTarget, string> = {
   POST: '게시글',
@@ -39,6 +41,8 @@ export default function AdminReportTable({
       : null
   );
   const [deletingReport, setDeletingReport] = useState<ReportItem | null>(null);
+  const [memoReport, setMemoReport] = useState<ReportItem | null>(null);
+  const router = useRouter();
 
   const handleDeleteClick = (report: ReportItem) => {
     if (report.isTargetDeleted) {
@@ -154,13 +158,12 @@ export default function AdminReportTable({
                     <div className="flex items-center justify-center gap-4">
                       <button
                         type="button"
-                        disabled={!isPending}
-                        onClick={() => setSelectedReport(report)}
-                        className={`flex items-center gap-1 whitespace-nowrap rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-sm font-medium text-[#2F5DAA] ${
+                        onClick={() =>
                           isPending
-                            ? 'hover:bg-[#F8FAFC]'
-                            : 'cursor-not-allowed opacity-50'
-                        }`}
+                            ? setSelectedReport(report)
+                            : setMemoReport(report)
+                        }
+                        className="flex items-center gap-1 whitespace-nowrap rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-sm font-medium text-[#2F5DAA] hover:bg-[#F8FAFC]"
                       >
                         <Image
                           src={
@@ -197,7 +200,10 @@ export default function AdminReportTable({
       {selectedReport && (
         <AdminReportDetailModal
           report={selectedReport}
-          onClose={() => setSelectedReport(null)}
+          onClose={() => {
+            setSelectedReport(null);
+            if (openReportKey) router.replace('/admin/reports');
+          }}
           onRemoveReport={onRemoveReport}
         />
       )}
@@ -210,6 +216,13 @@ export default function AdminReportTable({
           }을(를) 삭제하시겠습니까?`}
           onCancel={() => setDeletingReport(null)}
           onConfirm={handleDeleteConfirm}
+        />
+      )}
+
+      {memoReport && (
+        <AdminReportMemoModal
+          memo={memoReport.processMemo}
+          onClose={() => setMemoReport(null)}
         />
       )}
     </div>
