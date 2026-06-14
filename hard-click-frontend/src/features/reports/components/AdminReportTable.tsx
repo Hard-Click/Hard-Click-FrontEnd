@@ -90,7 +90,9 @@ export default function AdminReportTable({
                   </td>
                   {/* 신고 사유 */}
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-[#64748B]">
-                    {report.reasons.join(', ')}
+                    {report.reasons.length > 0
+                      ? report.reasons.join(', ')
+                      : '-'}
                   </td>
                   {/* 신고 횟수 */}
                   <td className="px-6 py-4 text-center">
