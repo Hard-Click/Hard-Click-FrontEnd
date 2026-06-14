@@ -27,6 +27,7 @@ interface AdminCommunityDetailContentProps {
   initialComments: CommentItem[];
   readOnly?: boolean;
   highlightPost?: boolean;
+  backToReportKey?: string;
 }
 
 export default function AdminCommunityDetailContent({
@@ -35,6 +36,7 @@ export default function AdminCommunityDetailContent({
   initialComments,
   readOnly = false,
   highlightPost = false,
+  backToReportKey,
 }: AdminCommunityDetailContentProps) {
   const router = useRouter();
 
@@ -109,11 +111,17 @@ export default function AdminCommunityDetailContent({
       {/* back button */}
       <button
         type="button"
-        onClick={() => router.push('/admin/community')}
-        className="mb-6 cursor-pointer flex items-center gap-2 text-sm font-medium text-[#4B5563]"
+        onClick={() =>
+          router.push(
+            backToReportKey
+              ? `/admin/reports?openReport=${backToReportKey}`
+              : '/admin/community'
+          )
+        }
+        className="mb-6 flex cursor-pointer items-center gap-2 text-sm font-medium text-[#4B5563]"
       >
         <Image src="/icons/back.svg" alt="back" width={16} height={16} />
-        목록으로 돌아가기
+        {backToReportKey ? '신고 관리로 돌아가기' : '목록으로 돌아가기'}
       </button>
 
       {/* post card */}

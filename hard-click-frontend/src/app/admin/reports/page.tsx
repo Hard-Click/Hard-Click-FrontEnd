@@ -1,7 +1,15 @@
 import Image from 'next/image';
 import AdminReportManage from '@/features/reports/components/AdminReportManage';
 
-export default function AdminReportsPage() {
+interface AdminReportsPageProps {
+  searchParams: Promise<{ openReport?: string }>;
+}
+
+export default async function AdminReportsPage({
+  searchParams,
+}: AdminReportsPageProps) {
+  const { openReport } = await searchParams;
+
   return (
     <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
       <div className="mx-auto w-full max-w-[1152px]">
@@ -24,7 +32,7 @@ export default function AdminReportsPage() {
         </div>
 
         {/* 필터 + 목록 (client 섬) */}
-        <AdminReportManage />
+        <AdminReportManage openReport={openReport} />
       </div>
     </div>
   );
