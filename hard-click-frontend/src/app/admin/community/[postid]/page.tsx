@@ -48,7 +48,9 @@ export default async function AdminCommunityDetailPage({
           highlightPost={fromReport && !highlightComment}
           backToReportKey={fromReport ? reportKey ?? '' : undefined}
           highlightCommentId={
-            highlightComment ? Number(highlightComment) : undefined
+            highlightComment && !Number.isNaN(Number(highlightComment))
+              ? Number(highlightComment)
+              : undefined
           }
         />
       </div>
