@@ -115,7 +115,9 @@ export default function AdminCommunityDetailContent({
           router.push(
             backToReportKey !== undefined
               ? backToReportKey
-                ? `/admin/reports?openReport=${backToReportKey}`
+                ? `/admin/reports?openReport=${encodeURIComponent(
+                    backToReportKey
+                  )}`
                 : '/admin/reports'
               : '/admin/community'
           )
