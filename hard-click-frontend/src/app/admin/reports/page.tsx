@@ -1,5 +1,5 @@
-// src/app/admin/reports/page.tsx
 import Image from 'next/image';
+import AdminReportManage from '@/features/reports/components/AdminReportManage';
 
 export default function AdminReportsPage() {
   return (
@@ -7,12 +7,12 @@ export default function AdminReportsPage() {
       <div className="mx-auto w-full max-w-[1152px]">
         {/* 헤더 */}
         <div className="mb-8 flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-[26px] bg-[#EF4444]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-[20px] bg-[#EF4444]">
             <Image
               src="/icons/AdminReportFlag.svg"
               alt="신고 관리"
-              width={36}
-              height={36}
+              width={26}
+              height={26}
             />
           </div>
           <div>
@@ -23,7 +23,8 @@ export default function AdminReportsPage() {
           </div>
         </div>
 
-        {/* 필터 바 + 신고 목록 테이블 (후속 이슈에서 추가) */}
+        {/* 필터 + 목록 (client 섬) */}
+        <AdminReportManage />
       </div>
     </div>
   );

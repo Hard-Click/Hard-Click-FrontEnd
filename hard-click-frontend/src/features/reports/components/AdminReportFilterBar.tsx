@@ -31,7 +31,7 @@ export default function AdminReportFilterBar({
   onTargetChange,
 }: AdminReportFilterBarProps) {
   return (
-    <div className="flex items-center gap-16 rounded-2xl border border-[#E2E8F0] bg-white px-6 py-5 shadow-sm">
+    <div className="flex items-center gap-8 rounded-2xl border border-[#E2E8F0] bg-white px-6 py-4 shadow-sm">
       <ReportFilterTabGroup
         title="처리 상태"
         options={STATUS_OPTIONS}
