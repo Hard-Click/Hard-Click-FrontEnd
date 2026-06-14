@@ -4,11 +4,19 @@ import AdminCourseDetailContent from '@/features/admin/components/AdminCourseDet
 
 export default async function AdminCourseDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ courseId: string }>;
+  searchParams: Promise<{
+    from?: string;
+    reportKey?: string;
+    tab?: string;
+    highlightReview?: string;
+  }>;
 }) {
   const { courseId } = await params;
-  // 강의 상세 + 강의 공지를 서버에서 병렬 조회
+  const { from, reportKey, tab, highlightReview } = await searchParams;
+
   const [course, courseNotices] = await Promise.all([
     getCourseDetailServer(Number(courseId)),
     getCourseNoticesServer(Number(courseId), { page: 0 }),
@@ -18,5 +26,19 @@ export default async function AdminCourseDetailPage({
     ? { ...course, notices: courseNotices.notices }
     : course;
 
-  return <AdminCourseDetailContent initialCourse={initialCourse} courseId={Number(courseId)} />;
+  const fromReport = from === 'report';
+
+  return (
+    <AdminCourseDetailContent
+      initialCourse={initialCourse}
+      courseId={Number(courseId)}
+      initialTab={tab === 'reviews' ? 'reviews' : undefined}
+      backToReportKey={fromReport ? reportKey ?? '' : undefined}
+      highlightReviewId={
+        highlightReview && !Number.isNaN(Number(highlightReview))
+          ? Number(highlightReview)
+          : undefined
+      }
+    />
+  );
 }

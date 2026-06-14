@@ -15,6 +15,7 @@ import {
   mockCourseListResponse,
   mockCourseDetailResponse,
 } from '@/mocks/courses.mock';
+import { mockReviewListResponse } from '@/mocks/reviews.mock';
 
 function formatTotalDuration(totalSecs: number): string {
   if (totalSecs <= 0) return '0분';
@@ -88,7 +89,16 @@ export function toCourseDetail(data: CourseDetailApiResponse): CourseDetail {
         isPreview: l.isPreview,
       })),
     })),
-    reviews: [], // 별도 API: 리뷰 목록
+    reviews: USE_MOCK
+      ? mockReviewListResponse.reviews.map((r) => ({
+          reviewId: r.reviewId,
+          studentName: r.authorName,
+          rating: r.rating,
+          content: r.content,
+          createdAt: r.createdDate,
+          isMine: r.isMyReview,
+        }))
+      : [],
     ratingDistribution: [],
   };
 }

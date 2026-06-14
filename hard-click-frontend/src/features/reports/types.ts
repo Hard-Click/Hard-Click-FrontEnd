@@ -29,6 +29,7 @@ export interface ReportItem {
   isTargetDeleted: boolean;
   processMemo?: string;
   postId?: number;
+  courseId?: number;
 }
 
 /** 대표 사유 = 가장 최근 접수된 사유 */
@@ -54,5 +55,6 @@ export function toReportItem(api: ReportApiItem): ReportItem {
     isTargetDeleted: api.isTargetDeleted,
     processMemo: api.processMemo,
     postId: api.postId,
+    courseId: api.courseId,
   };
 }

@@ -31,6 +31,7 @@ export default function AdminReportConfirmModal({
 }: Props) {
   const [reasonOpen, setReasonOpen] = useState(false);
   const latestReason = getLatestReason(report);
+
   const handleReject = () => {
     // TODO: 신고 반려 API 연동 (mock)
     toast.success('신고가 반려되었습니다.');

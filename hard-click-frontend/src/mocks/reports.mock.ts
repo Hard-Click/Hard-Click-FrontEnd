@@ -26,6 +26,7 @@ export interface ReportApiItem {
   isTargetDeleted: boolean;
   processMemo?: string;
   postId?: number;
+  courseId?: number;
 }
 
 export interface ReportListApiResponse {
@@ -69,7 +70,7 @@ export const mockReportList: ReportListApiResponse = {
     },
     {
       targetType: 'REVIEW',
-      targetId: 208,
+      targetId: 150,
       targetContent: 'React 완벽 가이드 리뷰 - 이 강의는 별로입니다...',
       authorName: '안현',
       reporterName: '명에훼손',
@@ -78,11 +79,11 @@ export const mockReportList: ReportListApiResponse = {
         { reason: '명예훼손', count: 5 },
         { reason: '욕설 및 비하', count: 3 },
       ],
-      status: 'COMPLETED',
+      status: 'PENDING',
       createdAt: '2026.05.09 16:45',
-      isTargetDeleted: true,
-      processMemo: '강의 비방성 리뷰로 확인되어 삭제 처리했습니다.',
+      isTargetDeleted: false,
       postId: 101,
+      courseId: 1,
     },
     {
       targetType: 'POST',
