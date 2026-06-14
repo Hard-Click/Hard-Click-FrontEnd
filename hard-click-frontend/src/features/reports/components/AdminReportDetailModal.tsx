@@ -43,14 +43,20 @@ export default function AdminReportDetailModal({
   };
 
   const handleMove = () => {
+    const reportKey = `${report.targetType}-${report.targetId}`;
     if (report.targetType === 'POST') {
-      const reportKey = `${report.targetType}-${report.targetId}`;
       router.push(
         `/admin/community/${report.targetId}?from=report&reportKey=${reportKey}`
       );
       return;
     }
-    // 댓글/리뷰 이동은 후속 이슈
+    if (report.targetType === 'COMMENT' && report.postId) {
+      router.push(
+        `/admin/community/${report.postId}?from=report&reportKey=${reportKey}&highlightComment=${report.targetId}`
+      );
+      return;
+    }
+    // 리뷰 이동은 후속 이슈
     toast.info(`${TARGET_MOVE_LABEL[report.targetType]} (준비 중)`);
   };
 

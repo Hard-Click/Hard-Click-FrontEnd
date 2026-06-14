@@ -28,6 +28,7 @@ interface AdminCommunityDetailContentProps {
   readOnly?: boolean;
   highlightPost?: boolean;
   backToReportKey?: string;
+  highlightCommentId?: number;
 }
 
 export default function AdminCommunityDetailContent({
@@ -37,6 +38,7 @@ export default function AdminCommunityDetailContent({
   readOnly = false,
   highlightPost = false,
   backToReportKey,
+  highlightCommentId,
 }: AdminCommunityDetailContentProps) {
   const router = useRouter();
 
@@ -251,7 +253,9 @@ export default function AdminCommunityDetailContent({
             <div key={comment.commentId}>
               <div
                 className={`rounded-2xl p-4 ${
-                  comment.isAccepted
+                  highlightCommentId === comment.commentId
+                    ? 'border border-[#F59E0B] bg-white shadow-[0_0_0_3px_rgba(245,158,11,0.2)]'
+                    : comment.isAccepted
                     ? 'border border-[#BBF7D0] bg-[#F0FDF4]'
                     : 'bg-[#F8FAFC]'
                 }`}
@@ -313,7 +317,13 @@ export default function AdminCommunityDetailContent({
                         height={14}
                         className="mt-4 rotate-180 opacity-40"
                       />
-                      <div className="flex-1 rounded-2xl bg-[#F8FAFC] p-4">
+                      <div
+                        className={`flex-1 rounded-2xl p-4 ${
+                          highlightCommentId === reply.commentId
+                            ? 'border border-[#F59E0B] bg-white shadow-[0_0_0_3px_rgba(245,158,11,0.2)]'
+                            : 'bg-[#F8FAFC]'
+                        }`}
+                      >
                         <div className="mb-2 flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E2E8F0] text-sm font-semibold text-[#475569]">
