@@ -12,6 +12,7 @@ import { useAuth } from '@/features/auth/AuthProvider';
 
 const NAV_ITEMS = [
   { label: '강의', href: '/courses' },
+  { label: '퀴즈', href: '/quizzes' },
   { label: '커뮤니티', href: '/community' },
   { label: '랭킹', href: '/rankings' },
   { label: '마이페이지', href: '/mypage' },
@@ -24,6 +25,7 @@ const DROPDOWN_ITEMS = [
   { label: '찜한 강의', href: '/mypage/wishlist' },
   { label: '장바구니', href: '/cart' },
   { label: '결제 내역', href: '/mypage/orders' },
+  { label: '구독권', href: '/subscriptions' },
 ];
 
 export default function UserHeader() {
