@@ -23,10 +23,21 @@ const TARGET_STYLE: Record<ReportTarget, string> = {
 interface Props {
   reports: ReportItem[];
   onRemoveReport: (report: ReportItem) => void;
+  openReportKey?: string;
 }
 
-export default function AdminReportTable({ reports, onRemoveReport }: Props) {
-  const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
+export default function AdminReportTable({
+  reports,
+  onRemoveReport,
+  openReportKey,
+}: Props) {
+  const [selectedReport, setSelectedReport] = useState<ReportItem | null>(() =>
+    openReportKey
+      ? reports.find(
+          (r) => `${r.targetType}-${r.targetId}` === openReportKey
+        ) ?? null
+      : null
+  );
   const [deletingReport, setDeletingReport] = useState<ReportItem | null>(null);
 
   const handleDeleteClick = (report: ReportItem) => {

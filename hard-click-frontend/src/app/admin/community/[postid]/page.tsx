@@ -4,7 +4,7 @@ import AdminCommunityDetailContent from '@/features/admin/components/AdminCommun
 
 interface AdminCommunityDetailPageProps {
   params: Promise<{ postid: string }>;
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string; reportKey?: string }>;
 }
 
 export default async function AdminCommunityDetailPage({
@@ -12,7 +12,7 @@ export default async function AdminCommunityDetailPage({
   searchParams,
 }: AdminCommunityDetailPageProps) {
   const { postid } = await params;
-  const { from } = await searchParams;
+  const { from, reportKey } = await searchParams;
   const postId = Number(postid);
 
   if (Number.isNaN(postId)) {
@@ -31,7 +31,6 @@ export default async function AdminCommunityDetailPage({
   const initialComments =
     commentsRes.success && commentsRes.data ? commentsRes.data.comments : [];
 
-  // 신고에서 진입 → 읽기 전용 + 게시글 하이라이트
   const fromReport = from === 'report';
 
   return (
@@ -43,6 +42,7 @@ export default async function AdminCommunityDetailPage({
           initialComments={initialComments}
           readOnly={fromReport}
           highlightPost={fromReport}
+          backToReportKey={fromReport ? reportKey ?? '' : undefined}
         />
       </div>
     </div>

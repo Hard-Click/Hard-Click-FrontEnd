@@ -11,7 +11,11 @@ import type {
   ReportTargetFilter,
 } from '../types';
 
-export default function AdminReportManage() {
+export default function AdminReportManage({
+  openReport,
+}: {
+  openReport?: string;
+}) {
   // 목록 원본 state (삭제/처리의 source of truth)
   const [reports, setReports] = useState<ReportItem[]>(() =>
     mockReportList.content.map(toReportItem)
@@ -51,6 +55,7 @@ export default function AdminReportManage() {
       <AdminReportTable
         reports={filtered}
         onRemoveReport={handleRemoveReport}
+        openReportKey={openReport}
       />
     </div>
   );

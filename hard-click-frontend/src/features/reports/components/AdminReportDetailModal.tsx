@@ -44,7 +44,10 @@ export default function AdminReportDetailModal({
 
   const handleMove = () => {
     if (report.targetType === 'POST') {
-      router.push(`/admin/community/${report.targetId}?from=report`);
+      const reportKey = `${report.targetType}-${report.targetId}`;
+      router.push(
+        `/admin/community/${report.targetId}?from=report&reportKey=${reportKey}`
+      );
       return;
     }
     // 댓글/리뷰 이동은 후속 이슈
