@@ -46,6 +46,8 @@ const NAV_ITEMS = [
   { id: 'reviews', label: '수강평' },
 ];
 
+const REVIEWS_PER_PAGE = 5;
+
 function SideNav({
   activeId,
   onNav,
@@ -123,7 +125,13 @@ export default function AdminCourseDetailContent({
     setDeletingReviewId(null);
     toast.success('수강평이 삭제되었습니다.');
   };
-  const [reviewPage, setReviewPage] = useState(1);
+  const [reviewPage, setReviewPage] = useState(() => {
+    if (!highlightReviewId) return 1;
+    const idx = (initialCourse?.reviews ?? []).findIndex(
+      (r) => r.reviewId === highlightReviewId
+    );
+    return idx >= 0 ? Math.floor(idx / REVIEWS_PER_PAGE) + 1 : 1;
+  });
 
   /* 케밥 메뉴 외부 클릭 닫기 */
   useEffect(() => {
@@ -229,7 +237,6 @@ export default function AdminCourseDetailContent({
     );
   }
 
-  const REVIEWS_PER_PAGE = 5;
   const maxRatingCount = Math.max(
     ...course.ratingDistribution.map((d) => d.count),
     1
