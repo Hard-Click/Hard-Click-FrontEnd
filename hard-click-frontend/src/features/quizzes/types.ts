@@ -10,7 +10,7 @@ export interface QuizQuestion {
   content: string; // 문제
   options: string[]; // 보기 (4개)
   answerIndex: number; // 정답 인덱스 (0~3)
-  explanation: string | null; // 해설 (선택)
+  explanation: string; // 해설 (필수 — 모든 문제가 해설 보유)
 }
 
 /** 강사 퀴즈 — 강의 + 주차(week)별 */
@@ -68,4 +68,55 @@ export interface StudentQuizItem {
   attempted: boolean; // 응시 여부
   score: number | null; // 점수 0~100 (미응시 null)
   attemptedDate: string | null; // 응시일 YYYY-MM-DD (미응시 null)
+}
+
+/** 응시 화면용 문항 — 정답 없는 표현 (격리막: 정답은 서버 채점 전용) */
+export interface StudentQuizQuestion {
+  questionId: number;
+  content: string; // 문제
+  options: string[]; // 보기 4개
+}
+
+/** 응시 화면 — 퀴즈 1개 상세 (정답·해설 미포함) */
+export interface StudentQuizDetail {
+  quizId: number;
+  courseId: number;
+  week: number;
+  title: string;
+  attempted: boolean; // 이미 응시했는지 (응시 페이지 재진입 차단용 — 재응시 없음)
+  questions: StudentQuizQuestion[];
+}
+
+/** 퀴즈 제출 채점 결과 (서버에서 채점) */
+export interface QuizSubmitResult {
+  score: number; // 0~100
+  correctCount: number;
+  totalCount: number;
+}
+
+/** 리뷰(해설) 화면 문항 — 정답·내 답·해설 모두 공개 */
+export interface QuizReviewQuestion {
+  questionId: number;
+  content: string;
+  options: string[];
+  answerIndex: number; // 정답 인덱스 (0~3)
+  selectedIndex: number | null; // 내가 고른 답 (null = 미응시)
+  explanation: string; // 해설 (필수)
+  correct: boolean; // 정답 여부
+}
+
+/** 리뷰(해설) 화면 전체 — 점수 + 향상도(직전 주차 대비) + 문항별 결과 */
+export interface StudentQuizReview {
+  quizId: number;
+  courseId: number;
+  week: number;
+  title: string;
+  courseTitle: string;
+  attemptedAt: string; // 응시일시 'YYYY-MM-DD HH:mm'
+  score: number; // 0~100
+  correctCount: number;
+  totalCount: number;
+  previousScore: number | null; // 직전 주차 점수 (없으면 null)
+  improvement: number | null; // score - previousScore (직전 주차 없으면 null)
+  questions: QuizReviewQuestion[];
 }
