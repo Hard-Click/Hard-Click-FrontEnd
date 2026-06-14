@@ -25,12 +25,16 @@ interface AdminCommunityDetailContentProps {
   postId: number;
   initialPost: PostDetail;
   initialComments: CommentItem[];
+  readOnly?: boolean;
+  highlightPost?: boolean;
 }
 
 export default function AdminCommunityDetailContent({
   postId,
   initialPost,
   initialComments,
+  readOnly = false,
+  highlightPost = false,
 }: AdminCommunityDetailContentProps) {
   const router = useRouter();
 
@@ -113,7 +117,13 @@ export default function AdminCommunityDetailContent({
       </button>
 
       {/* post card */}
-      <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6">
+      <div
+        className={`rounded-2xl border bg-white p-6 ${
+          highlightPost
+            ? 'border-[#F59E0B] shadow-[0_0_0_3px_rgba(245,158,11,0.2)]'
+            : 'border-[#E2E8F0]'
+        }`}
+      >
         {/* badges */}
         <div className="mb-3 flex items-center gap-2">
           <span
@@ -128,7 +138,12 @@ export default function AdminCommunityDetailContent({
           )}
           {category === '질문게시판' && isAccepted && (
             <span className="flex items-center gap-1 rounded-full bg-[#D1FAE5] px-3 py-1 text-xs font-semibold text-[#059669]">
-              <Image src="/icons/check.svg" alt="check" width={12} height={12} />
+              <Image
+                src="/icons/check.svg"
+                alt="check"
+                width={12}
+                height={12}
+              />
               채택 완료
             </span>
           )}
@@ -159,14 +174,16 @@ export default function AdminCommunityDetailContent({
               {post.viewCount}
             </span>
           </div>
-          <button type="button" onClick={() => setIsDeleteConfirmOpen(true)}>
-            <Image
-              src="/icons/trashIcon.svg"
-              alt="삭제"
-              width={18}
-              height={18}
-            />
-          </button>
+          {!readOnly && (
+            <button type="button" onClick={() => setIsDeleteConfirmOpen(true)}>
+              <Image
+                src="/icons/trashIcon.svg"
+                alt="삭제"
+                width={18}
+                height={18}
+              />
+            </button>
+          )}
         </div>
 
         {/* content */}
@@ -249,17 +266,19 @@ export default function AdminCommunityDetailContent({
                       {formatDate(comment.createdAt)}
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setDeletingCommentId(comment.commentId)}
-                  >
-                    <Image
-                      src="/icons/trashIcon.svg"
-                      alt="삭제"
-                      width={16}
-                      height={16}
-                    />
-                  </button>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      onClick={() => setDeletingCommentId(comment.commentId)}
+                    >
+                      <Image
+                        src="/icons/trashIcon.svg"
+                        alt="삭제"
+                        width={16}
+                        height={16}
+                      />
+                    </button>
+                  )}
                 </div>
 
                 <p className="mb-2 text-sm text-[#374151]">{comment.content}</p>
@@ -293,22 +312,24 @@ export default function AdminCommunityDetailContent({
                               {formatDate(reply.createdAt)}
                             </span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setDeletingReplyInfo({
-                                commentId: comment.commentId,
-                                replyId: reply.commentId,
-                              })
-                            }
-                          >
-                            <Image
-                              src="/icons/trashIcon.svg"
-                              alt="삭제"
-                              width={16}
-                              height={16}
-                            />
-                          </button>
+                          {!readOnly && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setDeletingReplyInfo({
+                                  commentId: comment.commentId,
+                                  replyId: reply.commentId,
+                                })
+                              }
+                            >
+                              <Image
+                                src="/icons/trashIcon.svg"
+                                alt="삭제"
+                                width={16}
+                                height={16}
+                              />
+                            </button>
+                          )}
                         </div>
                         <p className="text-sm text-[#374151]">
                           {reply.content}
@@ -358,7 +379,10 @@ export default function AdminCommunityDetailContent({
 
       {/* 삭제 로딩 */}
       {isDeleting && (
-        <LoadingModal title="삭제 중입니다" description="잠시만 기다려주세요...." />
+        <LoadingModal
+          title="삭제 중입니다"
+          description="잠시만 기다려주세요...."
+        />
       )}
 
       {/* 댓글 삭제 확인 모달 */}

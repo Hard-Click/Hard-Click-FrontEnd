@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 import type { ReportItem, ReportTarget } from '../types';
 import AdminReportConfirmModal from './AdminReportConfirmModal';
+import { useRouter } from 'next/navigation';
 
 const TARGET_MOVE_LABEL: Record<ReportTarget, string> = {
   POST: '게시물로 이동',
@@ -21,22 +22,32 @@ const TARGET_DELETE_LABEL: Record<ReportTarget, string> = {
 interface Props {
   report: ReportItem;
   onClose: () => void;
+  onRemoveReport: (report: ReportItem) => void;
 }
 
-export default function AdminReportDetailModal({ report, onClose }: Props) {
+export default function AdminReportDetailModal({
+  report,
+  onClose,
+  onRemoveReport,
+}: Props) {
   const [reasonOpen, setReasonOpen] = useState(false);
   const [memo, setMemo] = useState('');
   const [deleteContent, setDeleteContent] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const latestReason = report.reasonStats[0]?.reason ?? '-';
+  const router = useRouter();
 
   const handleConfirm = () => {
     setConfirmOpen(true);
   };
 
   const handleMove = () => {
-    // TODO: 대상 유형별 이동 경로 연동
+    if (report.targetType === 'POST') {
+      router.push(`/admin/community/${report.targetId}?from=report`);
+      return;
+    }
+    // 댓글/리뷰 이동은 후속 이슈
     toast.info(`${TARGET_MOVE_LABEL[report.targetType]} (준비 중)`);
   };
 
@@ -48,6 +59,7 @@ export default function AdminReportDetailModal({ report, onClose }: Props) {
         deleteContent={deleteContent}
         onBack={() => setConfirmOpen(false)}
         onClose={onClose}
+        onRemoveReport={onRemoveReport}
       />
     );
   }
@@ -187,7 +199,7 @@ export default function AdminReportDetailModal({ report, onClose }: Props) {
             onChange={(e) => setDeleteContent(e.target.checked)}
             className="h-4 w-4 cursor-pointer rounded border-[#B91C1C] accent-[#B91C1C]"
           />
-          <span className="text-m font-bold text-[#B91C1C]">
+          <span className="text-base font-bold text-[#B91C1C]">
             {TARGET_DELETE_LABEL[report.targetType]}
           </span>
         </label>

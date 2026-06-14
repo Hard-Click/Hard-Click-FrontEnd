@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import ReportStatusBadge from './ReportStatusBadge';
@@ -20,17 +20,12 @@ const TARGET_STYLE: Record<ReportTarget, string> = {
   REVIEW: 'bg-[#F0FDF4] text-[#16A34A]',
 };
 
-export default function AdminReportTable({
-  reports,
-}: {
+interface Props {
   reports: ReportItem[];
-}) {
-  // 부모(필터)에서 내려준 목록을 내부 state로 동기화 (삭제 시 즉시 제거)
-  const [rows, setRows] = useState<ReportItem[]>(reports);
-  useEffect(() => {
-    setRows(reports);
-  }, [reports]);
+  onRemoveReport: (report: ReportItem) => void;
+}
 
+export default function AdminReportTable({ reports, onRemoveReport }: Props) {
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
   const [deletingReport, setDeletingReport] = useState<ReportItem | null>(null);
 
@@ -44,15 +39,8 @@ export default function AdminReportTable({
 
   const handleDeleteConfirm = () => {
     if (!deletingReport) return;
-    setRows((prev) =>
-      prev.filter(
-        (r) =>
-          !(
-            r.targetType === deletingReport.targetType &&
-            r.targetId === deletingReport.targetId
-          )
-      )
-    );
+    // TODO: 삭제 API 호출 후 성공 시 갱신 (현재 mock — 부모 목록에서 제거)
+    onRemoveReport(deletingReport);
     toast.success('삭제되었습니다.');
     setDeletingReport(null);
   };
@@ -89,7 +77,7 @@ export default function AdminReportTable({
           </tr>
         </thead>
         <tbody>
-          {rows.length === 0 ? (
+          {reports.length === 0 ? (
             <tr>
               <td
                 colSpan={8}
@@ -99,7 +87,7 @@ export default function AdminReportTable({
               </td>
             </tr>
           ) : (
-            rows.map((report) => {
+            reports.map((report) => {
               const isPending = report.status === 'PENDING';
               return (
                 <tr
@@ -155,10 +143,13 @@ export default function AdminReportTable({
                     <div className="flex items-center justify-center gap-4">
                       <button
                         type="button"
-                        onClick={() => {
-                          if (isPending) setSelectedReport(report);
-                        }}
-                        className="flex items-center gap-1 whitespace-nowrap rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-sm font-medium text-[#2F5DAA] hover:bg-[#F8FAFC]"
+                        disabled={!isPending}
+                        onClick={() => setSelectedReport(report)}
+                        className={`flex items-center gap-1 whitespace-nowrap rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-sm font-medium text-[#2F5DAA] ${
+                          isPending
+                            ? 'hover:bg-[#F8FAFC]'
+                            : 'cursor-not-allowed opacity-50'
+                        }`}
                       >
                         <Image
                           src={
@@ -196,6 +187,7 @@ export default function AdminReportTable({
         <AdminReportDetailModal
           report={selectedReport}
           onClose={() => setSelectedReport(null)}
+          onRemoveReport={onRemoveReport}
         />
       )}
 
