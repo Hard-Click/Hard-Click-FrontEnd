@@ -1,12 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import AdminReportFilterBar from './AdminReportFilterBar';
+import AdminReportTable from './AdminReportTable';
+import { mockReportList } from '@/mocks/reports.mock';
+import { toReportItem } from '../types';
 import type { ReportStatusFilter, ReportTargetFilter } from '../types';
+
+const ALL_REPORTS = mockReportList.content.map(toReportItem);
 
 export default function AdminReportManage() {
   const [status, setStatus] = useState<ReportStatusFilter>('ALL');
   const [target, setTarget] = useState<ReportTargetFilter>('ALL');
+
+  const filtered = useMemo(() => {
+    return ALL_REPORTS.filter((r) => {
+      const matchStatus = status === 'ALL' || r.status === status;
+      const matchTarget = target === 'ALL' || r.targetType === target;
+      return matchStatus && matchTarget;
+    });
+  }, [status, target]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -16,7 +29,7 @@ export default function AdminReportManage() {
         onStatusChange={setStatus}
         onTargetChange={setTarget}
       />
-      {/* 신고 목록 테이블 (다음 이슈에서 추가) */}
+      <AdminReportTable reports={filtered} />
     </div>
   );
 }
