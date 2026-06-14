@@ -62,7 +62,16 @@ export default function AdminReportDetailModal({
       );
       return;
     }
-    // 리뷰 이동은 후속 이슈
+    if (report.targetType === 'REVIEW') {
+      if (!report.courseId) {
+        toast.error('연결된 강의 정보를 찾을 수 없습니다.');
+        return;
+      }
+      router.push(
+        `/admin/courses/manage/${report.courseId}?from=report&reportKey=${reportKey}&tab=reviews&highlightReview=${report.targetId}`
+      );
+      return;
+    }
     toast.info(`${TARGET_MOVE_LABEL[report.targetType]} (준비 중)`);
   };
 

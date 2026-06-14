@@ -46,6 +46,8 @@ const NAV_ITEMS = [
   { id: 'reviews', label: '수강평' },
 ];
 
+const REVIEWS_PER_PAGE = 5;
+
 function SideNav({
   activeId,
   onNav,
@@ -88,14 +90,20 @@ function SideNav({
 export default function AdminCourseDetailContent({
   initialCourse,
   courseId,
+  initialTab,
+  backToReportKey,
+  highlightReviewId,
 }: {
   initialCourse: CourseDetail | null;
   courseId: number;
+  initialTab?: string;
+  backToReportKey?: string;
+  highlightReviewId?: number;
 }) {
   const router = useRouter();
 
   const [course, setCourse] = useState<CourseDetail | null>(initialCourse);
-  const [activeSection, setActiveSection] = useState('notices');
+  const [activeSection, setActiveSection] = useState(initialTab ?? 'notices');
   const [previewLesson, setPreviewLesson] = useState<CurriculumLesson | null>(
     null
   );
@@ -117,7 +125,19 @@ export default function AdminCourseDetailContent({
     setDeletingReviewId(null);
     toast.success('수강평이 삭제되었습니다.');
   };
-  const [reviewPage, setReviewPage] = useState(1);
+  const [reviewPage, setReviewPage] = useState(() => {
+    if (!highlightReviewId) return 1;
+    const idx = (initialCourse?.reviews ?? []).findIndex(
+      (r) => r.reviewId === highlightReviewId
+    );
+    return idx >= 0 ? Math.floor(idx / REVIEWS_PER_PAGE) + 1 : 1;
+  });
+
+  // 리뷰 삭제로 페이지 수가 줄면 마지막 페이지로 보정 (빈 페이지 방지)
+  useEffect(() => {
+    const lastPage = Math.max(1, Math.ceil(reviews.length / REVIEWS_PER_PAGE));
+    setReviewPage((prev) => (prev > lastPage ? lastPage : prev));
+  }, [reviews.length]);
 
   /* 케밥 메뉴 외부 클릭 닫기 */
   useEffect(() => {
@@ -147,6 +167,19 @@ export default function AdminCourseDetailContent({
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // 신고에서 리뷰 탭으로 진입 시 수강평 섹션으로 스크롤
+  useEffect(() => {
+    if (initialTab === 'reviews') {
+      // 렌더 후 DOM 준비되면 스크롤
+      const timer = setTimeout(() => {
+        document
+          .getElementById('reviews')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [initialTab]);
 
   /* ── 강사 액션 ── */
   const handleEditClick = () => {
@@ -210,7 +243,6 @@ export default function AdminCourseDetailContent({
     );
   }
 
-  const REVIEWS_PER_PAGE = 5;
   const maxRatingCount = Math.max(
     ...course.ratingDistribution.map((d) => d.count),
     1
@@ -236,6 +268,25 @@ export default function AdminCourseDetailContent({
       <div className="w-full max-w-[1440px] mx-auto px-[157.5px]">
         {/* 내부 패딩 */}
         <div className="pt-10 px-8 pb-0 flex flex-col gap-8">
+          {/* 신고에서 진입 시 복귀 버튼 */}
+          {backToReportKey !== undefined && (
+            <button
+              type="button"
+              onClick={() =>
+                router.push(
+                  backToReportKey
+                    ? `/admin/reports?openReport=${encodeURIComponent(
+                        backToReportKey
+                      )}`
+                    : '/admin/reports'
+                )
+              }
+              className="flex cursor-pointer items-center gap-2 text-sm font-medium text-[#4B5563]"
+            >
+              <Image src="/icons/back.svg" alt="back" width={16} height={16} />
+              신고 관리로 돌아가기
+            </button>
+          )}
           {/* ── 히어로 카드 ── */}
           <div
             className="bg-white border border-[#D5D8DD] relative"
@@ -876,7 +927,11 @@ export default function AdminCourseDetailContent({
                       {displayedReviews.map((review) => (
                         <div
                           key={review.reviewId}
-                          className="border border-[#D5D8DD] rounded-2xl"
+                          className={`rounded-2xl border ${
+                            highlightReviewId === review.reviewId
+                              ? 'border-[#F59E0B] shadow-[0_0_0_3px_rgba(245,158,11,0.2)]'
+                              : 'border-[#D5D8DD]'
+                          }`}
                           style={{ padding: '21px 21px 1px' }}
                         >
                           <div className="flex items-start justify-between mb-3">
