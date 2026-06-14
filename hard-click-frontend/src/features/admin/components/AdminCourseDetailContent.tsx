@@ -133,6 +133,12 @@ export default function AdminCourseDetailContent({
     return idx >= 0 ? Math.floor(idx / REVIEWS_PER_PAGE) + 1 : 1;
   });
 
+  // 리뷰 삭제로 페이지 수가 줄면 마지막 페이지로 보정 (빈 페이지 방지)
+  useEffect(() => {
+    const lastPage = Math.max(1, Math.ceil(reviews.length / REVIEWS_PER_PAGE));
+    setReviewPage((prev) => (prev > lastPage ? lastPage : prev));
+  }, [reviews.length]);
+
   /* 케밥 메뉴 외부 클릭 닫기 */
   useEffect(() => {
     if (!isMenuOpen) return;
