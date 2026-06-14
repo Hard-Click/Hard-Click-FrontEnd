@@ -25,7 +25,7 @@ interface ApiOrder {
   orderNo: string;
   type: OrderType;
   status: 'READY';
-  items: { title: string; subtitle: string; price: number }[];
+  items: { id: number; title: string; subtitle: string; price: number }[];
   totalAmount: number;
   finalAmount: number;
 }
@@ -36,6 +36,7 @@ function toOrderSummary(api: ApiOrder): OrderSummary {
     type: api.type,
     status: api.status,
     items: api.items.map((i) => ({
+      id: i.id,
       title: i.title,
       subtitle: i.subtitle,
       price: i.price,
@@ -61,13 +62,15 @@ export async function getCheckoutServer(
         orderNo: MOCK_ORDER_NO,
         type: 'subscription',
         status: 'READY',
-        items: [{ title: PLAN_NAME, subtitle: '이용 기간: 1년', price }],
+        // id 0 = 구독 단일 플랜(mock; 연동 시 BE가 플랜 id 발급)
+        items: [{ id: 0, title: PLAN_NAME, subtitle: '이용 기간: 1년', price }],
         totalAmount: price,
         finalAmount: price,
       };
     }
     // course — 장바구니 선택분
     const items = mockCart.items.map((it) => ({
+      id: it.courseId,
       title: it.courseTitle,
       subtitle: it.instructorName,
       price: it.price,

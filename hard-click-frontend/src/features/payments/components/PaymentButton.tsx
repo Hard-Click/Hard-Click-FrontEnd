@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import LoadingModal from '@/components/ui/loadingModal';
@@ -24,13 +24,21 @@ export default function PaymentButton({
 }) {
   const router = useRouter();
   const [processing, setProcessing] = useState(false);
+  const timerRef = useRef<number | null>(null);
+
+  // 언마운트 시 진행 중인 mock 타이머 정리 (콜백이 언마운트 뒤 실행되는 것 방지)
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    };
+  }, []);
 
   const handlePay = () => {
     if (disabled || processing) return;
     setProcessing(true);
 
     // TODO(API 연동): 토스 SDK 결제창 호출. 지금은 mock으로 처리 흐름만 재현.
-    window.setTimeout(() => {
+    timerRef.current = window.setTimeout(() => {
       const success = true; // mock 성공. 실연동 시 토스 successUrl/failUrl 결과로 분기
       if (success) {
         toast.success('결제가 완료되었습니다');

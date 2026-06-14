@@ -34,9 +34,11 @@ export default async function PaymentResultPage({
   }>;
 }) {
   const { status, orderNo, amount, type } = await searchParams;
-  if (status !== 'success') notFound(); // 성공 전용
+  // 성공 + 필수 파라미터(주문번호·금액) 검증 — 비정상 진입은 404
+  if (status !== 'success' || !orderNo || !amount) notFound();
 
-  const amountNum = Number(amount) || 0;
+  const amountNum = Number(amount);
+  if (Number.isNaN(amountNum) || amountNum <= 0) notFound();
   const isSubscription = type === 'subscription';
 
   return (
@@ -57,7 +59,7 @@ export default async function PaymentResultPage({
           <div className="flex items-center justify-between">
             <span className="text-sm text-[#64748B]">주문번호</span>
             <span className="text-sm font-medium text-[#1F2937]">
-              {orderNo ?? '-'}
+              {orderNo}
             </span>
           </div>
           <div className="mt-3 flex items-center justify-between">

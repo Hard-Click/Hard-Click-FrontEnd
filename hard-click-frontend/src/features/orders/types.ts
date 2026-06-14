@@ -6,6 +6,8 @@
 export type OrderType = 'course' | 'subscription';
 
 export interface OrderItem {
+  /** 상품 식별자 — 강의는 courseId, 구독은 플랜 id (BE 매핑·React key용) */
+  id: number;
   /** 강의명 또는 상품명 */
   title: string;
   /** 강사명(단건) 또는 이용 안내(구독) */

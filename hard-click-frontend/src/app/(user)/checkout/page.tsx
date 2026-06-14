@@ -38,6 +38,9 @@ export default async function CheckoutPage({
   const order = await getCheckoutServer(type);
   if (!order) notFound();
 
+  // 구독 결제는 항상 단일 상품(FLOWN 연간 패스) — 빈 배열은 비정상이므로 방어
+  if (order.type === 'subscription' && order.items.length === 0) notFound();
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <div className="mx-auto max-w-[1080px] px-8 py-12">

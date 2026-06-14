@@ -33,7 +33,7 @@ export default function OrderCourseList({
       {items.map((item, i) => {
         const on = selected[i];
         return (
-          <li key={`${item.title}-${i}`}>
+          <li key={item.id}>
             <button
               type="button"
               onClick={() => onToggle(i)}
