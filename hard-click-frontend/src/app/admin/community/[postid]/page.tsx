@@ -42,7 +42,7 @@ export default async function AdminCommunityDetailPage({
           initialComments={initialComments}
           readOnly={fromReport}
           highlightPost={fromReport}
-          backToReportKey={fromReport ? reportKey : undefined}
+          backToReportKey={fromReport ? reportKey ?? '' : undefined}
         />
       </div>
     </div>

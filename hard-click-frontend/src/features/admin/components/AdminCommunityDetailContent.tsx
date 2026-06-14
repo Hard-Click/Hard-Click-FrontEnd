@@ -113,15 +113,19 @@ export default function AdminCommunityDetailContent({
         type="button"
         onClick={() =>
           router.push(
-            backToReportKey
-              ? `/admin/reports?openReport=${backToReportKey}`
+            backToReportKey !== undefined
+              ? backToReportKey
+                ? `/admin/reports?openReport=${backToReportKey}`
+                : '/admin/reports'
               : '/admin/community'
           )
         }
         className="mb-6 flex cursor-pointer items-center gap-2 text-sm font-medium text-[#4B5563]"
       >
         <Image src="/icons/back.svg" alt="back" width={16} height={16} />
-        {backToReportKey ? '신고 관리로 돌아가기' : '목록으로 돌아가기'}
+        {backToReportKey !== undefined
+          ? '신고 관리로 돌아가기'
+          : '목록으로 돌아가기'}
       </button>
 
       {/* post card */}
