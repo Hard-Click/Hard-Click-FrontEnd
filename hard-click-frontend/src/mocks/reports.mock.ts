@@ -17,6 +17,7 @@ export interface ReportApiItem {
   reportCount: number;
   aggregatedReasons: string[];
   status: 'PENDING' | 'COMPLETED' | 'REJECTED';
+  createdAt: string;
 }
 
 export interface ReportListApiResponse {
@@ -27,22 +28,45 @@ export interface ReportListApiResponse {
 export const mockReportList: ReportListApiResponse = {
   content: [
     {
+      targetType: 'POST',
+      targetId: 101,
+      targetContent: 'React Hook useEffect 사용 시 무한 루프',
+      authorName: '이준호',
+      reportCount: 3,
+      aggregatedReasons: ['스팸/광고'],
+      status: 'PENDING',
+      createdAt: '2026.05.11 14:30',
+    },
+    {
       targetType: 'COMMENT',
       targetId: 315,
-      targetContent: '이거 완전 사기 아니냐 ㅋㅋㅋ',
-      authorName: '최*혁',
-      reportCount: 4,
-      aggregatedReasons: ['욕설 및 비하', '부적절한 언어 사용'],
+      targetContent: '댓글 내용 - 이것은 부적절한 댓글 내용입니다.',
+      authorName: '최수진',
+      reportCount: 5,
+      aggregatedReasons: ['욕설 및 비하'],
       status: 'PENDING',
+      createdAt: '2026.05.10 10:20',
+    },
+    {
+      targetType: 'REVIEW',
+      targetId: 208,
+      targetContent: 'React 완벽 가이드 리뷰 - 이 강의는 별로입니다...',
+      authorName: '안현',
+      reportCount: 8,
+      aggregatedReasons: ['명예훼손'],
+      status: 'COMPLETED',
+      createdAt: '2026.05.09 16:45',
     },
     {
       targetType: 'POST',
       targetId: 210,
-      targetContent: '외부 강의 링크 홍보 게시글입니다',
-      authorName: '김*수',
-      reportCount: 6,
-      aggregatedReasons: ['스팸/홍보', '도배'],
-      status: 'COMPLETED',
+      targetContent:
+        '프론트엔드 개발자 로드맵 - 프론트엔드 개발자가 되기 위한 로드맵을 공유합니다',
+      authorName: '박지영',
+      reportCount: 4,
+      aggregatedReasons: ['기타'],
+      status: 'REJECTED',
+      createdAt: '2026.05.08 09:15',
     },
   ],
   totalPages: 1,
