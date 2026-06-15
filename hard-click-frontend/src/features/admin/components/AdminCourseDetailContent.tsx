@@ -495,7 +495,7 @@ export default function AdminCourseDetailContent({
                     </h2>
                   </div>
                   <Link
-                    href={`/admin/courses/${courseId}/notices`}
+                    href={`/admin/courses/manage/${courseId}/notices`}
                     className="w-20 h-10 border border-[#E2E8F0] rounded-2xl text-sm font-medium text-[#4B5563] hover:bg-[#F8FAFC] transition-colors flex items-center justify-center"
                   >
                     전체보기

@@ -83,7 +83,7 @@ export default async function AdminCoursesPage({
         <CourseList
           courses={courses}
           status={status}
-          hrefPrefix="/admin/courses"
+          hrefPrefix="/admin/courses/manage"
         />
       </div>
     </div>

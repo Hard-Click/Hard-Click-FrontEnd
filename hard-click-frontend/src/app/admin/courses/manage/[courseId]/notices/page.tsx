@@ -43,7 +43,7 @@ export default async function AdminCourseNoticesPage({
         {/* 강의로 돌아가기 + 공지 작성 */}
         <div className="mb-6 flex items-center justify-between">
           <Link
-            href={`/admin/courses/${courseId}`}
+            href={`/admin/courses/manage/${courseId}`}
             className="inline-flex items-center gap-1 text-sm font-medium text-[#4B5563] hover:text-[#2F5DAA]"
           >
             <Image src="/icons/back.svg" alt="back" width={16} height={16} />
