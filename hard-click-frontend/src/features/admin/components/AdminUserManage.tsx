@@ -7,6 +7,7 @@ import type {
   AdminUserRoleFilter,
   AdminUserStatusFilter,
 } from '@/features/admin/types';
+import AdminMemberTable from './AdminMemberTable';
 
 interface AdminUserManageProps {
   users: AdminUser[];
@@ -45,6 +46,8 @@ export default function AdminUserManage({ users }: AdminUserManageProps) {
       <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 text-m text-[#64748B]">
         총 {filteredUsers.length}명의 사용자가 있습니다.
       </div>
+
+      <AdminMemberTable users={filteredUsers} />
     </div>
   );
 }
