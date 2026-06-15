@@ -8,25 +8,7 @@
  *   - reportCount: 해당 회원이 누적으로 신고당한 횟수
  */
 
-export type AdminUserRole = 'STUDENT' | 'INSTRUCTOR';
-export type AdminUserStatus = 'ACTIVE' | 'LOCKED';
-
-export interface AdminUserApiItem {
-  memberId: number;
-  name: string;
-  loginId: string;
-  email: string;
-  role: AdminUserRole;
-  status: AdminUserStatus;
-  joinedAt: string; // 가입일
-  lastLoginAt: string | null; // 최근 로그인 (없으면 null)
-  reportCount: number; // 누적 신고수
-}
-
-export interface AdminUserListApiResponse {
-  content: AdminUserApiItem[];
-  totalPages: number;
-}
+import type { AdminUserListApiResponse } from '@/features/users/types';
 
 export const mockAdminUserList: AdminUserListApiResponse = {
   content: [

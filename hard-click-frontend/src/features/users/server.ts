@@ -1,16 +1,20 @@
 import { serverApi } from '@/lib/api';
-import type { MyCourse, CompletedCourse, MyProfile, MyProfileApi } from './types';
+import type {
+  MyCourse,
+  CompletedCourse,
+  MyProfile,
+  MyProfileApi,
+  AdminUser,
+  AdminUserListApiResponse,
+} from './types';
+import { toAdminUser } from './types';
 import { USE_MOCK } from '@/mocks/config';
 import {
   mockMyEnrolledCourses,
   mockMyCompletedCourses,
   mockMyProfile,
 } from '@/mocks/mypage.mock';
-import {
-  mockAdminUserList,
-  type AdminUserApiItem,
-  type AdminUserListApiResponse,
-} from '@/mocks/users.mock';
+import { mockAdminUserList } from '@/mocks/users.mock';
 
 /** 내 프로필 — 서버 조회 (Server Component 전용). 백엔드 memberId → userId 매핑. */
 export async function getMyProfileServer(): Promise<MyProfile | null> {
@@ -49,10 +53,10 @@ export async function getMyCompletedCoursesServer(): Promise<CompletedCourse[]> 
 }
 
 /** 사용자 관리 — 전체 회원 목록 서버 조회 (GET /api/admin/members, 관리자) */
-export async function getAdminUsersServer(): Promise<AdminUserApiItem[]> {
-  if (USE_MOCK) return mockAdminUserList.content;
+export async function getAdminUsersServer(): Promise<AdminUser[]> {
+  if (USE_MOCK) return mockAdminUserList.content.map(toAdminUser);
   const res = await serverApi.get<AdminUserListApiResponse>(
     '/api/admin/members',
   );
-  return res.success && res.data ? res.data.content : [];
+  return res.success && res.data ? res.data.content.map(toAdminUser) : [];
 }

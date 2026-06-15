@@ -51,3 +51,54 @@ export interface CompletedCourse {
   progressRate: number; // 항상 100
   completedAt: string | null; // ISO 8601
 }
+
+/* ───── 사용자 관리 (관리자) — GET /api/admin/members ─────
+ * role: 수강생 STUDENT / 강사 INSTRUCTOR, status: 활성 ACTIVE / 잠김 LOCKED. */
+export type AdminUserRole = 'STUDENT' | 'INSTRUCTOR';
+export type AdminUserStatus = 'ACTIVE' | 'LOCKED';
+
+/** 백엔드 응답 항목 (API 타입) */
+export interface AdminUserApiItem {
+  memberId: number;
+  name: string;
+  loginId: string;
+  email: string;
+  role: AdminUserRole;
+  status: AdminUserStatus;
+  joinedAt: string; // 가입일
+  lastLoginAt: string | null; // 최근 로그인 (없으면 null)
+  reportCount: number; // 누적 신고수
+}
+
+export interface AdminUserListApiResponse {
+  content: AdminUserApiItem[];
+  totalPages: number;
+}
+
+/** UI 표시용 사용자 타입 */
+export interface AdminUser {
+  memberId: number;
+  name: string;
+  loginId: string;
+  email: string;
+  role: AdminUserRole;
+  status: AdminUserStatus;
+  joinedAt: string;
+  lastLoginAt: string | null;
+  reportCount: number;
+}
+
+/** 백엔드 응답 → UI 타입 변환 */
+export function toAdminUser(api: AdminUserApiItem): AdminUser {
+  return {
+    memberId: api.memberId,
+    name: api.name,
+    loginId: api.loginId,
+    email: api.email,
+    role: api.role,
+    status: api.status,
+    joinedAt: api.joinedAt,
+    lastLoginAt: api.lastLoginAt,
+    reportCount: api.reportCount,
+  };
+}
