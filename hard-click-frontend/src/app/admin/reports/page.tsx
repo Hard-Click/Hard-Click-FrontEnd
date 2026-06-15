@@ -15,12 +15,12 @@ export default async function AdminReportsPage({
       <div className="mx-auto w-full max-w-[1152px]">
         {/* 헤더 */}
         <div className="mb-8 flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-[20px] bg-[#EF4444]">
+          <div className="flex h-16 w-16 items-center justify-center rounded-[26px] bg-[#EF4444]">
             <Image
               src="/icons/AdminReportFlag.svg"
               alt="신고 관리"
-              width={26}
-              height={26}
+              width={36}
+              height={36}
             />
           </div>
           <div>

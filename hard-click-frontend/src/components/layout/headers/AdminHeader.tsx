@@ -9,6 +9,8 @@ const NAV_ITEMS = [
   { label: '커뮤니티', href: '/admin/community' },
   { label: '공지', href: '/admin/notices' },
   { label: '신고', href: '/admin/reports' },
+  { label: '사용자', href: '/admin/users' },
+  { label: '결제', href: '/admin/payments' },
   { label: '대시보드', href: '/admin/dashboard' },
 ];
 
