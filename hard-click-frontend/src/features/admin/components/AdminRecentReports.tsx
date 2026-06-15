@@ -44,7 +44,9 @@ export default function AdminRecentReports({
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-[#1E293B]">{r.title}</p>
               <Link
-                href={`/admin/reports/${r.id}`}
+                href={`/admin/reports?openReport=${encodeURIComponent(
+                  r.reportKey
+                )}`}
                 className="text-xs text-[#2F5DAA] rounded-xl px-2 py-0.5  border border-[#E2E8F0]"
               >
                 상세보기

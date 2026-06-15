@@ -104,10 +104,16 @@ export default function AdminReportTable({
           ) : (
             reports.map((report) => {
               const isPending = report.status === 'PENDING';
+              const isHighlighted =
+                `${report.targetType}-${report.targetId}` === openReportKey;
               return (
                 <tr
                   key={`${report.targetType}-${report.targetId}`}
-                  className="border-b border-[#E2E8F0] last:border-none hover:bg-[#F8FAFC]"
+                  className={
+                    isHighlighted
+                      ? '[&>td]:bg-[#FEF3C7] [&>td:first-child]:rounded-l-xl [&>td:last-child]:rounded-r-xl'
+                      : 'border-b border-[#E2E8F0] last:border-none hover:bg-[#F8FAFC]'
+                  }
                 >
                   {/* 대상 유형 */}
                   <td className="px-6 py-4">
