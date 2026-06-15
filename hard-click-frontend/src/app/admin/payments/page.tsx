@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { getAdminPaymentsServer } from '@/features/payment/server';
+import AdminPaymentManage from '@/features/admin/components/AdminPaymentManage';
 
 export default async function AdminPaymentsPage() {
   // 서버에서 결제 내역 확보 (현재 mock — 추후 GET /api/admin/payments 연동)
@@ -26,10 +27,8 @@ export default async function AdminPaymentsPage() {
           </div>
         </div>
 
-        {/* 필터 + 목록 (후속 이슈에서 분리 작업) */}
-        <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 text-sm text-[#64748B]">
-          결제 내역 ({payments.length}건)
-        </div>
+        {/* 필터 + 목록 (테이블은 후속 이슈에서 연결) */}
+        <AdminPaymentManage payments={payments} />
       </div>
     </div>
   );
