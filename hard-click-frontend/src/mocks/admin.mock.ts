@@ -1,9 +1,13 @@
+import { mockReportList, type ReportApiItem } from './reports.mock';
+
 export interface AdminRecentReport {
   id: number;
   type: string;
   status: string;
   title: string;
   date: string;
+  /** 신고 관리탭 딥링크 키 (`${targetType}-${targetId}`) */
+  reportKey: string;
 }
 
 export interface AdminRecentNotice {
@@ -13,29 +17,29 @@ export interface AdminRecentNotice {
   date: string;
 }
 
-export const mockRecentReports: AdminRecentReport[] = [
-  {
-    id: 1,
-    type: '게시글',
-    status: '대기 중',
-    title: '부적절한 언어 사용',
-    date: '2026.05.12 14:30',
-  },
-  {
-    id: 2,
-    type: '댓글',
-    status: '대기 중',
-    title: '욕설 및 비방',
-    date: '2026.05.12 13:15',
-  },
-  {
-    id: 3,
-    type: '리뷰',
-    status: '대기 중',
-    title: '스팸/광고',
-    date: '2026.05.12 11:20',
-  },
-];
+// 신고 대상/상태 → 표시 라벨
+const REPORT_TYPE_LABEL: Record<ReportApiItem['targetType'], string> = {
+  POST: '게시글',
+  COMMENT: '댓글',
+  REVIEW: '리뷰',
+};
+const REPORT_STATUS_LABEL: Record<ReportApiItem['status'], string> = {
+  PENDING: '대기 중',
+  COMPLETED: '처리 완료',
+  REJECTED: '반려',
+};
+
+// 대시보드 '최근 신고'는 신고 관리탭과 동일한 중앙 mock에서 파생 → 딥링크 키 정합성 유지
+export const mockRecentReports: AdminRecentReport[] = mockReportList.content
+  .slice(0, 3)
+  .map((r, idx) => ({
+    id: idx + 1,
+    type: REPORT_TYPE_LABEL[r.targetType],
+    status: REPORT_STATUS_LABEL[r.status],
+    title: r.reasonStats[0]?.reason ?? '-',
+    date: r.createdAt,
+    reportKey: `${r.targetType}-${r.targetId}`,
+  }));
 
 export const mockRecentNotices: AdminRecentNotice[] = [
   { id: 1, badge: '중요', title: '서버 점검 안내', date: '2026.05.11 09:00' },
