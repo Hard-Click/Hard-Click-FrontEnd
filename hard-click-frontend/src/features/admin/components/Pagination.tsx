@@ -32,9 +32,9 @@ export default function Pagination({
     <div className="flex items-center justify-center gap-2 rounded-2xl border border-[#E2E8F0] bg-white py-4">
       <button
         type="button"
-        aria-label="이전 페이지"
-        disabled={currentPage === 1}
-        onClick={() => onPageChange(currentPage - 1)}
+        aria-label="이전 페이지 그룹"
+        disabled={groupStart === 1}
+        onClick={() => onPageChange(groupStart - 1)}
         className={arrowClass}
       >
         <svg
@@ -72,9 +72,9 @@ export default function Pagination({
 
       <button
         type="button"
-        aria-label="다음 페이지"
-        disabled={currentPage === totalPages}
-        onClick={() => onPageChange(currentPage + 1)}
+        aria-label="다음 페이지 그룹"
+        disabled={groupEnd === totalPages}
+        onClick={() => onPageChange(groupEnd + 1)}
         className={arrowClass}
       >
         <svg
