@@ -86,7 +86,7 @@ export default function AdminMemberTable({ users }: AdminMemberTableProps) {
                   {user.loginId}
                 </td>
                 {/* 이메일 */}
-                <td className="whitespace-nowrap py-4 pl-2 pr-6 *:text-sm text-center text-[#64748B]">
+                <td className="whitespace-nowrap py-4 pl-2 pr-6 text-sm text-center text-[#64748B]">
                   {user.email}
                 </td>
                 {/* 역할 */}
