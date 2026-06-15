@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { getAdminUsersServer } from '@/features/users/server';
+import AdminUserManage from '@/features/admin/components/AdminUserManage';
 
 export default async function AdminUsersPage() {
   // 서버에서 사용자 목록 확보 (현재 mock — 추후 GET /api/admin/members 연동)
@@ -26,10 +27,8 @@ export default async function AdminUsersPage() {
           </div>
         </div>
 
-        {/* 필터 + 목록 (후속 이슈에서 분리 작업) */}
-        <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 text-lg text-[#64748B]">
-          총 {users.length}명의 사용자가 있습니다.
-        </div>
+        {/* 필터 + 목록 (테이블은 후속 이슈에서 연결) */}
+        <AdminUserManage users={users} />
       </div>
     </div>
   );
