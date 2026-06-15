@@ -21,7 +21,10 @@ export default async function AdminNoticeDetailPage({
   params: Promise<{ noticeId: string }>;
 }) {
   const { noticeId } = await params;
-  const notice = await getNoticeDetailServer(Number(noticeId));
+  const id = Number(noticeId);
+  if (Number.isNaN(id)) notFound();
+
+  const notice = await getNoticeDetailServer(id);
   if (!notice) notFound();
 
   return (
