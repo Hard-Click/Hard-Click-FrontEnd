@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import AdminReportFilterBar from './AdminReportFilterBar';
 import AdminReportTable from './AdminReportTable';
+import Pagination from '@/features/admin/components/Pagination';
 import { mockReportList } from '@/mocks/reports.mock';
 import { toReportItem } from '../types';
 import type {
@@ -10,6 +11,8 @@ import type {
   ReportStatusFilter,
   ReportTargetFilter,
 } from '../types';
+
+const PAGE_SIZE = 10;
 
 export default function AdminReportManage({
   openReport,
@@ -33,6 +36,32 @@ export default function AdminReportManage({
     [reports, status, target]
   );
 
+  // 딥링크(openReport)로 진입 시 해당 신고가 있는 페이지로 시작
+  const [page, setPage] = useState(() => {
+    if (!openReport) return 1;
+    const idx = filtered.findIndex(
+      (r) => `${r.targetType}-${r.targetId}` === openReport
+    );
+    return idx >= 0 ? Math.floor(idx / PAGE_SIZE) + 1 : 1;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pagedReports = filtered.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE
+  );
+
+  // 필터 변경 시 1페이지로 리셋
+  const handleStatusChange = (next: ReportStatusFilter) => {
+    setStatus(next);
+    setPage(1);
+  };
+  const handleTargetChange = (next: ReportTargetFilter) => {
+    setTarget(next);
+    setPage(1);
+  };
+
   const handleRemoveReport = (report: ReportItem) => {
     setReports((prev) =>
       prev.filter(
@@ -49,13 +78,18 @@ export default function AdminReportManage({
       <AdminReportFilterBar
         status={status}
         target={target}
-        onStatusChange={setStatus}
-        onTargetChange={setTarget}
+        onStatusChange={handleStatusChange}
+        onTargetChange={handleTargetChange}
       />
       <AdminReportTable
-        reports={filtered}
+        reports={pagedReports}
         onRemoveReport={handleRemoveReport}
         openReportKey={openReport}
+      />
+      <Pagination
+        currentPage={safePage}
+        totalPages={totalPages}
+        onPageChange={setPage}
       />
     </div>
   );
