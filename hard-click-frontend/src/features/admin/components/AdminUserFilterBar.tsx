@@ -61,7 +61,7 @@ export default function AdminUserFilterBar({
         </div>
 
         <div className="flex h-11 flex-1 items-center rounded-xl border border-[#E2E8F0] px-4">
-          <Image src="/icons/search.svg" alt="search" width={18} height={18} />
+          <Image src="/icons/search.svg" alt="검색" width={18} height={18} />
           <input
             type="text"
             value={keyword}
