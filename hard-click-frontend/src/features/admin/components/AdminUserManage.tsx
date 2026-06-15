@@ -5,11 +5,14 @@ import { toast } from 'sonner';
 import AdminUserFilterBar from './AdminUserFilterBar';
 import AdminMemberTable from './AdminMemberTable';
 import MemberStatusChangeModal from './MemberStatusChangeModal';
+import Pagination from './Pagination';
 import type { AdminUser } from '@/features/users/types';
 import type {
   AdminUserRoleFilter,
   AdminUserStatusFilter,
 } from '@/features/admin/types';
+
+const PAGE_SIZE = 10;
 
 interface AdminUserManageProps {
   users: AdminUser[];
@@ -21,6 +24,7 @@ export default function AdminUserManage({ users }: AdminUserManageProps) {
   const [status, setStatus] = useState<AdminUserStatusFilter>('ALL');
   const [keyword, setKeyword] = useState('');
   const [targetUser, setTargetUser] = useState<AdminUser | null>(null);
+  const [page, setPage] = useState(1);
 
   const filteredUsers = useMemo(() => {
     const q = keyword.trim().toLowerCase();
@@ -34,6 +38,27 @@ export default function AdminUserManage({ users }: AdminUserManageProps) {
       return true;
     });
   }, [userList, role, status, keyword]);
+
+  // 필터/검색 변경 시 1페이지로 리셋
+  const handleRoleChange = (next: AdminUserRoleFilter) => {
+    setRole(next);
+    setPage(1);
+  };
+  const handleStatusChange = (next: AdminUserStatusFilter) => {
+    setStatus(next);
+    setPage(1);
+  };
+  const handleKeywordChange = (next: string) => {
+    setKeyword(next);
+    setPage(1);
+  };
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pagedUsers = filteredUsers.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE
+  );
 
   const handleConfirmToggle = () => {
     if (!targetUser) return;
@@ -58,13 +83,19 @@ export default function AdminUserManage({ users }: AdminUserManageProps) {
         role={role}
         status={status}
         keyword={keyword}
-        onRoleChange={setRole}
-        onStatusChange={setStatus}
-        onKeywordChange={setKeyword}
+        onRoleChange={handleRoleChange}
+        onStatusChange={handleStatusChange}
+        onKeywordChange={handleKeywordChange}
       />
 
       {/* 사용자 목록 테이블 */}
-      <AdminMemberTable users={filteredUsers} onToggleStatus={setTargetUser} />
+      <AdminMemberTable users={pagedUsers} onToggleStatus={setTargetUser} />
+
+      <Pagination
+        currentPage={safePage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
 
       {targetUser && (
         <MemberStatusChangeModal

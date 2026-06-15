@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import AdminNoticeFilterBar from './AdminNoticeFilterBar';
 import AdminCourseCard from './AdminCourseCard';
+import Pagination from './Pagination';
 import SelectDropdown from '@/components/ui/SelectDropdown';
 import type {
   AdminCourseManageRow,
@@ -14,6 +15,8 @@ import {
 } from '@/mocks/admin.mock';
 
 type FilterTab = 'ALL' | 'PUBLISHED' | 'HIDDEN';
+
+const PAGE_SIZE = 10;
 
 const COURSE_TABS = [
   { key: 'ALL', label: '전체' },
@@ -30,6 +33,7 @@ export default function AdminCourseManage({ initialCourses }: Props) {
     useState<AdminCourseManageRow[]>(initialCourses);
   const [keyword, setKeyword] = useState('');
   const [tab, setTab] = useState<FilterTab>('ALL');
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     return courses.filter((c) => {
@@ -40,6 +44,23 @@ export default function AdminCourseManage({ initialCourses }: Props) {
       return matchTab && matchKeyword;
     });
   }, [courses, keyword, tab]);
+
+  // 탭/검색 변경 시 1페이지로 리셋
+  const handleKeywordChange = (next: string) => {
+    setKeyword(next);
+    setPage(1);
+  };
+  const handleTabChange = (next: FilterTab) => {
+    setTab(next);
+    setPage(1);
+  };
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pagedCourses = filtered.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE
+  );
 
   const handleStatusChange = useCallback(
     (id: number, next: AdminCourseStatus) => {
@@ -59,10 +80,10 @@ export default function AdminCourseManage({ initialCourses }: Props) {
       <AdminNoticeFilterBar
         keyword={keyword}
         placeholder="강의 검색"
-        onKeywordChange={setKeyword}
+        onKeywordChange={handleKeywordChange}
         tabs={COURSE_TABS}
         activeTab={tab}
-        onTabChange={(key) => setTab(key as FilterTab)}
+        onTabChange={(key) => handleTabChange(key as FilterTab)}
       >
         <SelectDropdown
           placeholder="과목"
@@ -84,7 +105,7 @@ export default function AdminCourseManage({ initialCourses }: Props) {
             해당하는 강의가 없습니다.
           </div>
         ) : (
-          filtered.map((course) => (
+          pagedCourses.map((course) => (
             <AdminCourseCard
               key={course.id}
               course={course}
@@ -94,6 +115,12 @@ export default function AdminCourseManage({ initialCourses }: Props) {
           ))
         )}
       </div>
+
+      <Pagination
+        currentPage={safePage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </div>
   );
 }
