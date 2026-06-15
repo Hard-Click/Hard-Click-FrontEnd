@@ -53,6 +53,7 @@ export default function AdminPaymentFilterBar({
           value={keyword}
           onChange={(e) => onKeywordChange(e.target.value)}
           placeholder="주문번호, 사용자명, 이메일 검색"
+          aria-label="결제 내역 검색 (주문번호, 사용자명, 이메일)"
           className="ml-3 w-full bg-transparent text-sm outline-none placeholder:text-[#94A3B8]"
         />
       </div>
