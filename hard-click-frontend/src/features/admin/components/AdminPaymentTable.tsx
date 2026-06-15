@@ -47,31 +47,58 @@ export default function AdminPaymentTable({
       <table className="w-full">
         <thead>
           <tr className="border-b border-[#E2E8F0] bg-[#F8FAFC]">
-            <th className="whitespace-nowrap px-6 py-4 text-left text-sm font-semibold text-[#374151]">
+            <th
+              scope="col"
+              className="whitespace-nowrap px-6 py-4 text-left text-sm font-semibold text-[#374151]"
+            >
               주문번호
             </th>
-            <th className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
+            <th
+              scope="col"
+              className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]"
+            >
               구분
             </th>
-            <th className="whitespace-nowrap px-6 py-4 text-left text-sm font-semibold text-[#374151]">
+            <th
+              scope="col"
+              className="whitespace-nowrap px-6 py-4 text-left text-sm font-semibold text-[#374151]"
+            >
               사용자
             </th>
-            <th className="whitespace-nowrap px-6 py-4 text-left text-sm font-semibold text-[#374151]">
+            <th
+              scope="col"
+              className="whitespace-nowrap px-6 py-4 text-left text-sm font-semibold text-[#374151]"
+            >
               상품
             </th>
-            <th className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
+            <th
+              scope="col"
+              className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]"
+            >
               금액
             </th>
-            <th className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
+            <th
+              scope="col"
+              className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]"
+            >
               결제수단
             </th>
-            <th className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
+            <th
+              scope="col"
+              className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]"
+            >
               상태
             </th>
-            <th className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
+            <th
+              scope="col"
+              className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]"
+            >
               일시
             </th>
-            <th className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
+            <th
+              scope="col"
+              className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]"
+            >
               관리
             </th>
           </tr>
