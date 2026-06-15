@@ -10,5 +10,7 @@ export async function getAdminPaymentsServer(): Promise<AdminPayment[]> {
   const res = await serverApi.get<AdminPaymentListApiResponse>(
     '/api/admin/payments',
   );
-  return res.success && res.data ? res.data.content.map(toAdminPayment) : [];
+  return res.success && Array.isArray(res.data?.content)
+    ? res.data.content.map(toAdminPayment)
+    : [];
 }
