@@ -24,9 +24,13 @@ const STATUS_STYLE: Record<AdminUserStatus, string> = {
 
 interface AdminMemberTableProps {
   users: AdminUser[];
+  onToggleStatus: (user: AdminUser) => void;
 }
 
-export default function AdminMemberTable({ users }: AdminMemberTableProps) {
+export default function AdminMemberTable({
+  users,
+  onToggleStatus,
+}: AdminMemberTableProps) {
   return (
     <div className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white">
       <table className="w-full">
@@ -132,6 +136,7 @@ export default function AdminMemberTable({ users }: AdminMemberTableProps) {
                   <div className="flex items-center justify-center">
                     <button
                       type="button"
+                      onClick={() => onToggleStatus(user)}
                       aria-label={
                         user.status === 'ACTIVE' ? '계정 잠금' : '잠금 해제'
                       }
