@@ -6,6 +6,11 @@ import {
   mockMyCompletedCourses,
   mockMyProfile,
 } from '@/mocks/mypage.mock';
+import {
+  mockAdminUserList,
+  type AdminUserApiItem,
+  type AdminUserListApiResponse,
+} from '@/mocks/users.mock';
 
 /** 내 프로필 — 서버 조회 (Server Component 전용). 백엔드 memberId → userId 매핑. */
 export async function getMyProfileServer(): Promise<MyProfile | null> {
@@ -41,4 +46,13 @@ export async function getMyCompletedCoursesServer(): Promise<CompletedCourse[]> 
     '/api/members/me/courses/completed',
   );
   return res.success && res.data ? res.data : [];
+}
+
+/** 사용자 관리 — 전체 회원 목록 서버 조회 (GET /api/admin/members, 관리자) */
+export async function getAdminUsersServer(): Promise<AdminUserApiItem[]> {
+  if (USE_MOCK) return mockAdminUserList.content;
+  const res = await serverApi.get<AdminUserListApiResponse>(
+    '/api/admin/members',
+  );
+  return res.success && res.data ? res.data.content : [];
 }
