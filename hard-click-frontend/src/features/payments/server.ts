@@ -39,10 +39,14 @@ export async function getMyPaymentsServer(): Promise<PaymentHistory[]> {
   }
 
   // TODO(API 연동): GET /api/payment/me (MyPaymentHistoryPageResponse). 페이지네이션 추후.
-  const res =
-    await serverApi.get<MyPaymentHistoryPageResponse>('/api/payment/me');
-  if (!res.success || !res.data) return [];
-  return res.data.content.map(toPaymentHistory);
+  try {
+    const res =
+      await serverApi.get<MyPaymentHistoryPageResponse>('/api/payment/me');
+    if (!res.success || !res.data) return [];
+    return res.data.content.map(toPaymentHistory);
+  } catch {
+    return [];
+  }
 }
 
 /** BE 주문 상세 → UI 계약 매퍼(격리막) */
@@ -73,7 +77,11 @@ export async function getOrderDetailServer(
   }
 
   // TODO(API 연동): GET /api/order/{orderId} (BE 상세 엔드포인트 추가 시 매퍼만 맞추면 됨)
-  const res = await serverApi.get<ApiOrderDetail>(`/api/order/${orderId}`);
-  if (!res.success || !res.data) return null;
-  return toOrderDetail(res.data);
+  try {
+    const res = await serverApi.get<ApiOrderDetail>(`/api/order/${orderId}`);
+    if (!res.success || !res.data) return null;
+    return toOrderDetail(res.data);
+  } catch {
+    return null;
+  }
 }

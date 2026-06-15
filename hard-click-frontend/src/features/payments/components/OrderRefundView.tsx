@@ -83,19 +83,23 @@ export default function OrderRefundView({ order }: { order: OrderDetail }) {
     }
     setProcessing(true);
     const courseIds = refundableSelected.map((it) => it.courseId);
-    const res = await refundAction(order.orderId, courseIds, reason);
-    setProcessing(false);
-
-    if (res.ok) {
-      toast.success(
-        isSubscription ? '구독 환불이 완료되었습니다' : '환불이 완료되었습니다',
-      );
-      setModal('none');
-      setRefundedIds((prev) => [...prev, ...courseIds]);
-    } else if (res.kind === 'blocked') {
-      setModal('blocked');
-    } else {
+    try {
+      const res = await refundAction(order.orderId, courseIds, reason);
+      if (res.ok) {
+        toast.success(
+          isSubscription ? '구독 환불이 완료되었습니다' : '환불이 완료되었습니다',
+        );
+        setModal('none');
+        setRefundedIds((prev) => [...prev, ...courseIds]);
+      } else if (res.kind === 'blocked') {
+        setModal('blocked');
+      } else {
+        toast.error('환불 요청에 실패했어요. 잠시 후 다시 시도해주세요.');
+      }
+    } catch {
       toast.error('환불 요청에 실패했어요. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setProcessing(false);
     }
   };
 

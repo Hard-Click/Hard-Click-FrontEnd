@@ -56,8 +56,7 @@ export default async function OrdersPage() {
         <div className="mt-8 rounded-2xl border border-[#E2E8F0] bg-white p-8 shadow-[0_4px_10px_rgba(0,0,0,0.06)]">
           {payments.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src="/icons/emptyStateIcon.svg"
                 width={80}
                 height={80}

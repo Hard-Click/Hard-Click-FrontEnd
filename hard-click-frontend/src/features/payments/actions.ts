@@ -1,5 +1,6 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { USE_MOCK } from '@/mocks/config';
 import { mockOrderDetails } from '@/mocks/payments.mock';
 import type { RefundResult } from './types';
@@ -22,15 +23,20 @@ export async function refundAction(
   if (USE_MOCK) {
     const order = mockOrderDetails.find((o) => o.orderId === orderId);
     if (!order) return { ok: false, kind: 'error' };
-    // 선택 항목이 모두 환불 가능해야 함(항목별 refundable) — UI가 1차 차단, 여기선 안전망
-    const targets = order.items.filter((it) => courseIds.includes(it.courseId));
-    if (targets.length === 0 || targets.some((it) => !it.refundable)) {
+    // 요청 항목이 모두 주문에 존재하고 환불 가능해야 함(중복 제거) — UI가 1차 차단, 여기선 안전망
+    const requested = [...new Set(courseIds)];
+    const targets = order.items.filter((it) => requested.includes(it.courseId));
+    if (
+      targets.length !== requested.length ||
+      targets.some((it) => !it.refundable)
+    ) {
       return {
         ok: false,
         kind: 'blocked',
         reason: '환불할 수 없는 항목이 포함되어 있어요.',
       };
     }
+    revalidatePath(`/orders/${orderId}`);
     return { ok: true };
   }
 

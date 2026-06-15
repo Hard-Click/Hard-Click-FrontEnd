@@ -47,7 +47,9 @@ export default async function OrderDetailPage({
   params: Promise<{ orderId: string }>;
 }) {
   const { orderId } = await params;
-  const order = await getOrderDetailServer(Number(orderId));
+  const parsedOrderId = Number(orderId);
+  if (!Number.isFinite(parsedOrderId)) notFound();
+  const order = await getOrderDetailServer(parsedOrderId);
   if (!order) notFound();
 
   const status = STATUS_STYLE[order.status];
