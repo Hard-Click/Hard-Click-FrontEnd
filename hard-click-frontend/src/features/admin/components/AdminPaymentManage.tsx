@@ -1,8 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import AdminPaymentFilterBar from './AdminPaymentFilterBar';
 import AdminPaymentTable from './AdminPaymentTable';
+import PaymentRefundModal from './PaymentRefundModal';
 import Pagination from './Pagination';
 import type {
   AdminPayment,
@@ -18,13 +20,15 @@ interface AdminPaymentManageProps {
 export default function AdminPaymentManage({
   payments,
 }: AdminPaymentManageProps) {
+  const [paymentList, setPaymentList] = useState<AdminPayment[]>(payments);
   const [type, setType] = useState<AdminPaymentTypeFilter>('ALL');
   const [keyword, setKeyword] = useState('');
   const [page, setPage] = useState(1);
+  const [refundTarget, setRefundTarget] = useState<AdminPayment | null>(null);
 
   const filteredPayments = useMemo(() => {
     const q = keyword.trim().toLowerCase();
-    return payments.filter((p) => {
+    return paymentList.filter((p) => {
       if (type !== 'ALL' && p.type !== type) return false;
       if (q) {
         const haystack =
@@ -33,7 +37,7 @@ export default function AdminPaymentManage({
       }
       return true;
     });
-  }, [payments, type, keyword]);
+  }, [paymentList, type, keyword]);
 
   // 필터/검색 변경 시 1페이지로 리셋
   const handleTypeChange = (next: AdminPaymentTypeFilter) => {
@@ -43,6 +47,20 @@ export default function AdminPaymentManage({
   const handleKeywordChange = (next: string) => {
     setKeyword(next);
     setPage(1);
+  };
+
+  const handleConfirmRefund = () => {
+    if (!refundTarget) return;
+    // TODO: 환불 API 연동 후 성공 시 갱신 (현재 mock — 로컬 상태 전환)
+    setPaymentList((prev) =>
+      prev.map((p) =>
+        p.paymentId === refundTarget.paymentId
+          ? { ...p, status: 'REFUNDED' }
+          : p
+      )
+    );
+    toast.success(`${refundTarget.userName}님의 결제를 환불 처리했습니다.`);
+    setRefundTarget(null);
   };
 
   const totalPages = Math.max(
@@ -67,6 +85,7 @@ export default function AdminPaymentManage({
       <AdminPaymentTable
         payments={pagedPayments}
         totalCount={filteredPayments.length}
+        onRefund={setRefundTarget}
       />
 
       <Pagination
@@ -74,6 +93,14 @@ export default function AdminPaymentManage({
         totalPages={totalPages}
         onPageChange={setPage}
       />
+
+      {refundTarget && (
+        <PaymentRefundModal
+          payment={refundTarget}
+          onCancel={() => setRefundTarget(null)}
+          onConfirm={handleConfirmRefund}
+        />
+      )}
     </div>
   );
 }

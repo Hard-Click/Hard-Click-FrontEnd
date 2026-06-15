@@ -29,11 +29,13 @@ const STATUS_STYLE: Record<AdminPaymentStatus, string> = {
 interface AdminPaymentTableProps {
   payments: AdminPayment[];
   totalCount: number;
+  onRefund: (payment: AdminPayment) => void;
 }
 
 export default function AdminPaymentTable({
   payments,
   totalCount,
+  onRefund,
 }: AdminPaymentTableProps) {
   return (
     <div className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white">
@@ -171,6 +173,7 @@ export default function AdminPaymentTable({
                   {payment.status === 'PAID' ? (
                     <button
                       type="button"
+                      onClick={() => onRefund(payment)}
                       className="whitespace-nowrap rounded-full border border-[#DC2626] px-3 py-1 text-xs font-semibold text-[#DC2626] transition hover:bg-[#FEF2F2]"
                     >
                       환불
