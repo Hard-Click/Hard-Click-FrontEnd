@@ -23,6 +23,14 @@ export async function refundAction(
   if (USE_MOCK) {
     const order = mockOrderDetails.find((o) => o.orderId === orderId);
     if (!order) return { ok: false, kind: 'error' };
+    // 결제완료(PAID) 주문만 환불 가능 — UI 우회 호출 방어
+    if (order.status !== 'PAID') {
+      return {
+        ok: false,
+        kind: 'blocked',
+        reason: '이미 환불되었거나 환불 대상이 아닌 주문입니다.',
+      };
+    }
     // 요청 항목이 모두 주문에 존재하고 환불 가능해야 함(중복 제거) — UI가 1차 차단, 여기선 안전망
     const requested = [...new Set(courseIds)];
     const targets = order.items.filter((it) => requested.includes(it.courseId));
