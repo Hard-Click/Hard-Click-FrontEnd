@@ -34,6 +34,7 @@ export default async function AdminCourseDetailPage({
       courseId={Number(courseId)}
       initialTab={tab === 'reviews' ? 'reviews' : undefined}
       backToReportKey={fromReport ? reportKey ?? '' : undefined}
+      readOnly={fromReport}
       highlightReviewId={
         highlightReview && !Number.isNaN(Number(highlightReview))
           ? Number(highlightReview)

@@ -92,12 +92,14 @@ export default function AdminCourseDetailContent({
   courseId,
   initialTab,
   backToReportKey,
+  readOnly = false,
   highlightReviewId,
 }: {
   initialCourse: CourseDetail | null;
   courseId: number;
   initialTab?: string;
   backToReportKey?: string;
+  readOnly?: boolean;
   highlightReviewId?: number;
 }) {
   const router = useRouter();
@@ -408,51 +410,53 @@ export default function AdminCourseDetailContent({
               </div>
 
               {/* 강사 케밥 메뉴 (우측 상단) */}
-              <div ref={menuRef} className="absolute top-[33px] right-[33px]">
-                <button
-                  type="button"
-                  onClick={() => setIsMenuOpen((v) => !v)}
-                  aria-label="강의 관리 메뉴"
-                  className="w-6 h-6 flex items-center justify-center text-[#1A1F2E] hover:bg-[#F3F4F6] rounded transition-colors"
-                >
-                  <svg width="5" height="19" viewBox="0 0 5 19" fill="none">
-                    <circle cx="2.5" cy="2.5" r="2.5" fill="#1A1F2E" />
-                    <circle cx="2.5" cy="9.5" r="2.5" fill="#1A1F2E" />
-                    <circle cx="2.5" cy="16.5" r="2.5" fill="#1A1F2E" />
-                  </svg>
-                </button>
-                {isMenuOpen && (
-                  <div className="absolute right-0 mt-1 w-[136px] bg-white border border-[#E2E8F0] rounded-[14px] shadow-md overflow-hidden z-20">
-                    <button
-                      type="button"
-                      onClick={handleEditClick}
-                      className="w-full h-[34px] text-base text-[#67798D] hover:bg-[#F8FAFC] border-b border-[#E2E8F0] transition-colors"
-                    >
-                      강의 수정
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        setIsDeleteModalOpen(true);
-                      }}
-                      className="w-full h-[34px] text-base text-[#67798D] hover:bg-[#F8FAFC] border-b border-[#E2E8F0] transition-colors"
-                    >
-                      강의 삭제
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        setIsStatusModalOpen(true);
-                      }}
-                      className="w-full h-[34px] text-base text-[#67798D] hover:bg-[#F8FAFC] transition-colors"
-                    >
-                      {isPublished ? '강의 비공개' : '강의 공개'}
-                    </button>
-                  </div>
-                )}
-              </div>
+              {!readOnly && (
+                <div ref={menuRef} className="absolute top-[33px] right-[33px]">
+                  <button
+                    type="button"
+                    onClick={() => setIsMenuOpen((v) => !v)}
+                    aria-label="강의 관리 메뉴"
+                    className="w-6 h-6 flex items-center justify-center text-[#1A1F2E] hover:bg-[#F3F4F6] rounded transition-colors"
+                  >
+                    <svg width="5" height="19" viewBox="0 0 5 19" fill="none">
+                      <circle cx="2.5" cy="2.5" r="2.5" fill="#1A1F2E" />
+                      <circle cx="2.5" cy="9.5" r="2.5" fill="#1A1F2E" />
+                      <circle cx="2.5" cy="16.5" r="2.5" fill="#1A1F2E" />
+                    </svg>
+                  </button>
+                  {isMenuOpen && (
+                    <div className="absolute right-0 mt-1 w-[136px] bg-white border border-[#E2E8F0] rounded-[14px] shadow-md overflow-hidden z-20">
+                      <button
+                        type="button"
+                        onClick={handleEditClick}
+                        className="w-full h-[34px] text-base text-[#67798D] hover:bg-[#F8FAFC] border-b border-[#E2E8F0] transition-colors"
+                      >
+                        강의 수정
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          setIsDeleteModalOpen(true);
+                        }}
+                        className="w-full h-[34px] text-base text-[#67798D] hover:bg-[#F8FAFC] border-b border-[#E2E8F0] transition-colors"
+                      >
+                        강의 삭제
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          setIsStatusModalOpen(true);
+                        }}
+                        className="w-full h-[34px] text-base text-[#67798D] hover:bg-[#F8FAFC] transition-colors"
+                      >
+                        {isPublished ? '강의 비공개' : '강의 공개'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Row 2: 강의 상태 표시 (읽기 전용 — 변경은 케밥 메뉴에서) */}
               <div className="border-t border-[#D5D8DD] pt-6 pb-8">
@@ -959,22 +963,24 @@ export default function AdminCourseDetailContent({
                                 </span>
                               </div>
                               {/* 관리자는 리뷰 삭제 가능 */}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setDeletingReviewId(review.reviewId)
-                                }
-                                className="w-7 h-7 flex items-center justify-center rounded-2xl hover:bg-red-50 transition-colors"
-                                title="삭제"
-                              >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src="/icons/trashIcon.svg"
-                                  width={14}
-                                  height={14}
-                                  alt="삭제"
-                                />
-                              </button>
+                              {!readOnly && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setDeletingReviewId(review.reviewId)
+                                  }
+                                  className="w-7 h-7 flex items-center justify-center rounded-2xl hover:bg-red-50 transition-colors"
+                                  title="삭제"
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src="/icons/trashIcon.svg"
+                                    width={14}
+                                    height={14}
+                                    alt="삭제"
+                                  />
+                                </button>
+                              )}
                             </div>
                           </div>
                           <p className="text-sm leading-[23px] text-[#1A1F2E] pb-5">
