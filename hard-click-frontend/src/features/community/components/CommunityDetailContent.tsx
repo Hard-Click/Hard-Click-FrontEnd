@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import ReportModal from '@/features/reports/components/ReportModal';
+import type { ReportTargetRef } from '@/features/reports/types';
 import { toast } from 'sonner';
 import LoadingModal from '@/components/ui/loadingModal';
 import {
@@ -59,7 +60,9 @@ export default function CommunityDetailContent({
   const [commentText, setCommentText] = useState('');
   const [replyInputId, setReplyInputId] = useState<number | null>(null);
   const [replyText, setReplyText] = useState('');
-  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [reportTarget, setReportTarget] = useState<ReportTargetRef | null>(
+    null,
+  );
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
@@ -360,7 +363,12 @@ export default function CommunityDetailContent({
                 </button>
               </>
             ) : (
-              <button type="button" onClick={() => setIsReportOpen(true)}>
+              <button
+                type="button"
+                onClick={() =>
+                  setReportTarget({ targetType: 'POST', targetId: postId })
+                }
+              >
                 <Image
                   src="/icons/reportFlagIcon.svg"
                   alt="신고"
@@ -502,7 +510,12 @@ export default function CommunityDetailContent({
                     ) : (
                       <button
                         type="button"
-                        onClick={() => setIsReportOpen(true)}
+                        onClick={() =>
+                          setReportTarget({
+                            targetType: 'COMMENT',
+                            targetId: comment.commentId,
+                          })
+                        }
                       >
                         <Image
                           src="/icons/reportFlagIcon.svg"
@@ -692,7 +705,12 @@ export default function CommunityDetailContent({
                             ) : (
                               <button
                                 type="button"
-                                onClick={() => setIsReportOpen(true)}
+                                onClick={() =>
+                                  setReportTarget({
+                                    targetType: 'COMMENT',
+                                    targetId: reply.commentId,
+                                  })
+                                }
                               >
                                 <Image
                                   src="/icons/reportFlagIcon.svg"
@@ -961,6 +979,14 @@ export default function CommunityDetailContent({
             </div>
           </div>
         </div>
+      )}
+
+      {/* 신고 사유 모달 — 깃발 클릭 시 표시 (신고하기 → 확인 모달은 내부에서) */}
+      {reportTarget && (
+        <ReportModal
+          target={reportTarget}
+          onClose={() => setReportTarget(null)}
+        />
       )}
     </div>
   );

@@ -190,6 +190,57 @@ export const mockPostDetail: PostDetailApiResponse = {
   ],
 };
 
+/**
+ * 게시글별 상세 (테스트용 — 여러 글, 내용·작성자 일치).
+ * 889/888/887 = 남의 글(isMyPost:false) → 신고 깃발 노출. 목록에 없는 글은 server에서 기본 처리.
+ */
+export const mockPostDetailsById: Record<number, PostDetailApiResponse> = {
+  889: {
+    postId: 889,
+    boardType: 'QUESTION',
+    title: 'React Hook useEffect 사용 시 무한 루프 문제 해결 방법',
+    authorName: '이*호',
+    createdAt: '2026-05-18T19:00:00',
+    viewCount: 145,
+    subjectName: '독서',
+    content:
+      'useEffect 의존성 배열에 data를 넣었더니 무한 루프가 발생합니다. 어떻게 해결하나요?',
+    isMyPost: false,
+    isAccepted: true,
+    fileUrls: [
+      'https://picsum.photos/id/24/800/600',
+      'https://picsum.photos/id/180/800/600',
+    ],
+  },
+  888: {
+    postId: 888,
+    boardType: 'FREE',
+    title: '수능 공부 팁 공유합니다',
+    authorName: '박*영',
+    createdAt: '2026-05-17T10:00:00',
+    viewCount: 321,
+    content:
+      '저만의 수능 공부 루틴을 공유해요. 매일 아침 6시에 일어나 국어 비문학 2지문, 수학 4문제를 풀고 시작합니다. 꾸준함이 제일 중요한 것 같아요!',
+    isMyPost: false,
+    isAccepted: false,
+    fileUrls: [],
+  },
+  887: {
+    postId: 887,
+    boardType: 'QUESTION',
+    title: '미적분 극한 개념 질문',
+    authorName: '이*윤',
+    createdAt: '2026-05-16T09:00:00',
+    viewCount: 120,
+    subjectName: '미적분',
+    content:
+      '극한에서 좌극한과 우극한이 다르면 극한값이 존재하지 않는 건가요? 예시로 설명해주시면 감사하겠습니다.',
+    isMyPost: false,
+    isAccepted: false,
+    fileUrls: [],
+  },
+};
+
 /** GET /api/posts/{postId}/comments → CommentListResponse */
 export const mockCommentsResponse: CommentListApiResponse = {
   totalCount: 2,
