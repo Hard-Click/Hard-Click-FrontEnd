@@ -33,6 +33,10 @@ export interface AddWishlistInput {
 export async function addWishlistAction(
   input: AddWishlistInput,
 ): Promise<WishlistActionResult> {
+  if (!Number.isInteger(input.courseId) || input.courseId <= 0) {
+    return { success: false, message: '잘못된 강의입니다.' };
+  }
+
   if (USE_MOCK) {
     const already = mockWishlist.items.some(
       (it) => it.courseId === input.courseId,
@@ -72,6 +76,10 @@ export async function addWishlistAction(
 export async function removeWishlistAction(
   courseId: number,
 ): Promise<WishlistActionResult> {
+  if (!Number.isInteger(courseId) || courseId <= 0) {
+    return { success: false, message: '잘못된 강의입니다.' };
+  }
+
   if (USE_MOCK) {
     const exists = mockWishlist.items.some((it) => it.courseId === courseId);
     if (!exists) {

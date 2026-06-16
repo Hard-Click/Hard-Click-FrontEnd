@@ -79,10 +79,7 @@ export default function WishlistCard({
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_4px_10px_rgba(0,0,0,0.06)]">
       {/* 썸네일 + 찜 해제 버튼 */}
-      <div
-        className="relative overflow-hidden"
-        style={{ aspectRatio: '284/160' }}
-      >
+      <div className="relative aspect-[284/160] overflow-hidden">
         {thumbnailUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img

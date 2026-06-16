@@ -26,13 +26,20 @@ export default function WishlistClient({
 
   /** 찜 해제 — 낙관적 제거 후 실패 시 복구 */
   const handleRemove = async (courseId: number) => {
-    const prev = items;
+    const index = items.findIndex((it) => it.courseId === courseId);
+    const removed = items[index];
+    if (!removed) return;
     setItems((list) => list.filter((it) => it.courseId !== courseId));
     const res = await removeWishlistAction(courseId);
     if (res.success) {
       toast.success(res.message);
     } else {
-      setItems(prev);
+      // 실패 시 전체 스냅샷 복원이 아니라 해당 항목만 원위치 복구(그 사이 다른 변경 보존)
+      setItems((list) =>
+        list.some((it) => it.courseId === courseId)
+          ? list
+          : [...list.slice(0, index), removed, ...list.slice(index)],
+      );
       toast.error(res.message);
     }
   };
