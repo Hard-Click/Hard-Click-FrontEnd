@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import SelectDropdown from '@/components/ui/SelectDropdown';
@@ -80,22 +80,33 @@ export default function QuizFormModal({
     null
   );
 
-  const instructorOptions = Array.from(
-    new Set(
-      courses
-        .map((c) => c.instructor)
-        .filter((name): name is string => Boolean(name))
-    )
-  ).map((name) => ({ label: name, value: name }));
+  const instructorOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          courses
+            .map((c) => c.instructor)
+            .filter((name): name is string => Boolean(name))
+        )
+      ).map((name) => ({ label: name, value: name })),
+    [courses]
+  );
 
-  const visibleCourses =
-    withInstructorSelect && instructor
-      ? courses.filter((c) => c.instructor === instructor)
-      : courses;
-  const courseOptions = visibleCourses.map((c) => ({
-    label: c.title,
-    value: String(c.courseId),
-  }));
+  const visibleCourses = useMemo(
+    () =>
+      withInstructorSelect && instructor
+        ? courses.filter((c) => c.instructor === instructor)
+        : courses,
+    [courses, withInstructorSelect, instructor]
+  );
+  const courseOptions = useMemo(
+    () =>
+      visibleCourses.map((c) => ({
+        label: c.title,
+        value: String(c.courseId),
+      })),
+    [visibleCourses]
+  );
   // 등록: 1주 1퀴즈 — 이미 퀴즈 있는 주차 제외 / 수정: 자기 주차 고정(변경 불가)
   const weekOptions =
     mode === 'edit' && initialData
