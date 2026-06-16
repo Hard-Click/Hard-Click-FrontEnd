@@ -1,7 +1,5 @@
-'use client';
-
 import RankingRow from './RankingRow';
-import type { RankingUser } from './RankingPodium';
+import type { RankingUser } from '../types';
 
 interface RankingTableProps {
   users: RankingUser[]; // 4위~10위

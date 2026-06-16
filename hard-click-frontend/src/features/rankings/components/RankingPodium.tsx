@@ -1,11 +1,4 @@
-'use client';
-
-export interface RankingUser {
-  rank: number;
-  name: string;
-  subtitle: string;
-  value: string;
-}
+import type { RankingUser } from '../types';
 
 interface RankingPodiumProps {
   top3: RankingUser[];

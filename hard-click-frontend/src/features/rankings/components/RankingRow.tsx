@@ -1,6 +1,4 @@
-'use client';
-
-import type { RankingUser } from './RankingPodium';
+import type { RankingUser } from '../types';
 
 interface RankingRowProps {
   user: RankingUser;
