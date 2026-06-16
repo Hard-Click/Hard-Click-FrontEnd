@@ -20,7 +20,7 @@ export default function CourseNoticeBanner({ notices }: { notices: Notice[] }) {
       {/* 배너 전체 클릭 영역 → 전체 공지사항. 화살표보다 아래 레이어 */}
       <Link
         href="/notices"
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F97316]"
         aria-label="전체 공지사항 보기"
       />
       {/* 내용: 클릭은 아래 Link로 통과(pointer-events-none), 캐러셀만 예외(pointer-events-auto) */}
@@ -40,6 +40,7 @@ export default function CourseNoticeBanner({ notices }: { notices: Notice[] }) {
         {notices.length > 1 && (
           <div className="pointer-events-auto flex items-center gap-2">
             <button
+              type="button"
               onClick={() =>
                 setNoticeIndex((i) => (i - 1 + notices.length) % notices.length)
               }
@@ -60,6 +61,7 @@ export default function CourseNoticeBanner({ notices }: { notices: Notice[] }) {
               {notices.map((_, i) => (
                 <button
                   key={i}
+                  type="button"
                   onClick={() => setNoticeIndex(i)}
                   aria-label={`공지 ${i + 1}`}
                   className="w-1.5 h-1.5 rounded-full transition-colors"
@@ -71,6 +73,7 @@ export default function CourseNoticeBanner({ notices }: { notices: Notice[] }) {
               ))}
             </div>
             <button
+              type="button"
               onClick={() => setNoticeIndex((i) => (i + 1) % notices.length)}
               aria-label="다음 공지"
               className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-black/5 transition-colors"
