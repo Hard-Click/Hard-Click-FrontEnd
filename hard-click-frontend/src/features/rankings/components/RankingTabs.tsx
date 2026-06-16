@@ -1,6 +1,4 @@
-'use client';
-
-export type RankingTabType = 'studyTime' | 'lessonCount' | 'acceptedCount';
+import type { RankingTabType } from '../types';
 
 const TABS: { key: RankingTabType; label: string }[] = [
   { key: 'studyTime', label: '순공 시간' },
