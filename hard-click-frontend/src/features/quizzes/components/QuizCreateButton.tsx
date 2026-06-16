@@ -4,18 +4,16 @@ import { useState } from 'react';
 import Image from 'next/image';
 import QuizFormModal from './QuizFormModal';
 
-/**
- * "+ 퀴즈 등록" 버튼 + 등록 모달 (헤더용 client 섬).
- * 페이지(Server)는 정적으로 두고, 등록 상호작용만 이 컴포넌트가 담당.
- */
 export default function QuizCreateButton({
   courses,
   takenWeeksByCourse,
   presetCourseId,
+  withInstructorSelect = false,
 }: {
-  courses: { courseId: number; title: string }[];
+  courses: { courseId: number; title: string; instructor?: string }[];
   takenWeeksByCourse: Record<number, number[]>;
   presetCourseId?: number;
+  withInstructorSelect?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -36,6 +34,7 @@ export default function QuizCreateButton({
           courses={courses}
           takenWeeksByCourse={takenWeeksByCourse}
           presetCourseId={presetCourseId}
+          withInstructorSelect={withInstructorSelect}
           onClose={() => setOpen(false)}
         />
       )}

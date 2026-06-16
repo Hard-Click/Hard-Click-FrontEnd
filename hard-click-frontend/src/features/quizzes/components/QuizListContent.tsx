@@ -22,13 +22,15 @@ export default function QuizListContent({
   courses,
   takenWeeksByCourse,
   basePath = '/instructor/quizzes',
+  withInstructorSelect = false,
 }: {
   quizzes: Quiz[];
   courseId: number;
   courseName: string;
-  courses: { courseId: number; title: string }[];
+  courses: { courseId: number; title: string; instructor?: string }[];
   takenWeeksByCourse: Record<number, number[]>;
   basePath?: string;
+  withInstructorSelect?: boolean;
 }) {
   const [quizzes, setQuizzes] = useState<Quiz[]>(initialQuizzes);
   const [selectedWeek, setSelectedWeek] = useState<'all' | number>('all');
@@ -129,6 +131,7 @@ export default function QuizListContent({
           courses={courses}
           takenWeeksByCourse={takenWeeksByCourse}
           initialData={editing}
+          withInstructorSelect={withInstructorSelect}
           onClose={() => setEditing(null)}
         />
       )}

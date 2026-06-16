@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import SelectDropdown from '@/components/ui/SelectDropdown';
@@ -38,11 +38,13 @@ export default function QuizFormModal({
   takenWeeksByCourse,
   initialData,
   presetCourseId,
+  withInstructorSelect = false,
   onClose,
   onSuccess,
 }: {
-  courses: { courseId: number; title: string }[];
+  courses: { courseId: number; title: string; instructor?: string }[];
   takenWeeksByCourse: Record<number, number[]>;
+  withInstructorSelect?: boolean;
   onClose: () => void;
   onSuccess?: () => void;
 } & (
@@ -51,7 +53,13 @@ export default function QuizFormModal({
 )) {
   const [title, setTitle] = useState(initialData?.title ?? '');
   const [courseId, setCourseId] = useState<number>(
-    initialData?.courseId ?? presetCourseId ?? 0,
+    initialData?.courseId ?? presetCourseId ?? 0
+  );
+  const [instructor, setInstructor] = useState<string>(
+    () =>
+      courses.find(
+        (c) => c.courseId === (initialData?.courseId ?? presetCourseId)
+      )?.instructor ?? ''
   );
   const [week, setWeek] = useState<number>(initialData?.week ?? 0);
   const [questions, setQuestions] = useState<QuizQuestionInput[]>(
@@ -62,20 +70,43 @@ export default function QuizFormModal({
           answerIndex: q.answerIndex,
           explanation: q.explanation ?? '',
         }))
-      : [blankQuestion()],
+      : [blankQuestion()]
   );
   const [submitted, setSubmitted] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [deletingQuestionIdx, setDeletingQuestionIdx] = useState<number | null>(
-    null,
+    null
   );
 
-  const courseOptions = courses.map((c) => ({
-    label: c.title,
-    value: String(c.courseId),
-  }));
+  const instructorOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          courses
+            .map((c) => c.instructor)
+            .filter((name): name is string => Boolean(name))
+        )
+      ).map((name) => ({ label: name, value: name })),
+    [courses]
+  );
+
+  const visibleCourses = useMemo(
+    () =>
+      withInstructorSelect && instructor
+        ? courses.filter((c) => c.instructor === instructor)
+        : courses,
+    [courses, withInstructorSelect, instructor]
+  );
+  const courseOptions = useMemo(
+    () =>
+      visibleCourses.map((c) => ({
+        label: c.title,
+        value: String(c.courseId),
+      })),
+    [visibleCourses]
+  );
   // 등록: 1주 1퀴즈 — 이미 퀴즈 있는 주차 제외 / 수정: 자기 주차 고정(변경 불가)
   const weekOptions =
     mode === 'edit' && initialData
@@ -96,7 +127,7 @@ export default function QuizFormModal({
         q.content.trim() !== '' &&
         q.options.every((o) => o.trim() !== '') &&
         q.answerIndex >= 0 &&
-        q.explanation.trim() !== '',
+        q.explanation.trim() !== ''
     );
 
   const updateQuestion = (idx: number, q: QuizQuestionInput) =>
@@ -287,8 +318,31 @@ export default function QuizFormModal({
             <FieldError message={errors?.title} />
           </div>
 
-          {/* 연결 강의 + 연결 주차 */}
-          <div className="mt-2 grid grid-cols-2 gap-6">
+          {/* (관리자) 강사 선택 + 연결 강의 + 연결 주차 */}
+          <div
+            className={`mt-2 grid gap-6 ${
+              withInstructorSelect ? 'grid-cols-3' : 'grid-cols-2'
+            }`}
+          >
+            {withInstructorSelect && (
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-[#1F2937]">
+                  강사 선택
+                </label>
+                <SelectDropdown
+                  placeholder="강사 선택"
+                  value={instructor}
+                  options={instructorOptions}
+                  onChange={(v) => {
+                    setInstructor(v);
+                    setCourseId(0);
+                    setWeek(0);
+                  }}
+                  disabled={mode === 'edit'}
+                  fullWidth
+                />
+              </div>
+            )}
             <div id="quiz-field-course">
               <label className="mb-2 block text-sm font-semibold text-[#1F2937]">
                 연결 강의
