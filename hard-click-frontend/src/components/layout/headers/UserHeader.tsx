@@ -24,7 +24,7 @@ const PUBLIC_NAV_HREFS = new Set<string>(['/courses']);
 const DROPDOWN_ITEMS = [
   { label: '찜한 강의', href: '/mypage/wishlist' },
   { label: '장바구니', href: '/cart' },
-  { label: '결제 내역', href: '/mypage/orders' },
+  { label: '결제 내역', href: '/orders' },
   { label: '구독권', href: '/subscriptions' },
 ];
 
