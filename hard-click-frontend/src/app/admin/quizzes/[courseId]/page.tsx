@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { notFound } from 'next/navigation';
 import {
   getQuizzesServer,
   getTakenWeeksByCourseServer,
@@ -14,6 +15,7 @@ export default async function AdminCourseQuizzesPage({
 }) {
   const { courseId: courseIdStr } = await params;
   const courseId = Number(courseIdStr);
+  if (Number.isNaN(courseId)) notFound();
 
   const [quizzes, takenWeeksByCourse] = await Promise.all([
     getQuizzesServer(courseId),
