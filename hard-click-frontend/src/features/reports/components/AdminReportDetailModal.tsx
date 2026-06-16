@@ -20,6 +20,9 @@ const TARGET_DELETE_LABEL: Record<ReportTarget, string> = {
   REVIEW: '리뷰 삭제',
 };
 
+/** 처리 메모 최대 글자수 */
+const MEMO_MAX_LENGTH = 50;
+
 interface Props {
   report: ReportItem;
   onClose: () => void;
@@ -207,12 +210,16 @@ export default function AdminReportDetailModal({
           </p>
           <textarea
             value={memo}
-            onChange={(e) => setMemo(e.target.value)}
+            onChange={(e) => setMemo(e.target.value.slice(0, MEMO_MAX_LENGTH))}
             placeholder="처리 메모를 입력하세요"
             aria-label="처리 메모"
             rows={3}
+            maxLength={MEMO_MAX_LENGTH}
             className="w-full resize-none rounded-xl border border-[#E2E8F0] px-4 py-3 text-sm outline-none placeholder:text-[#9CA3AF]"
           />
+          <p className="mt-1 text-right text-xs text-[#94A3B8]">
+            {memo.length}/{MEMO_MAX_LENGTH}
+          </p>
         </div>
 
         {/* 콘텐츠 삭제 체크박스 */}
