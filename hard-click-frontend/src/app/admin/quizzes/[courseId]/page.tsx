@@ -27,6 +27,7 @@ export default async function AdminCourseQuizzesPage({
   const quizFormCourses = mockAdminCourseManage.map((c) => ({
     courseId: c.id,
     title: c.title,
+    instructor: c.instructor,
   }));
 
   return (
@@ -75,6 +76,7 @@ export default async function AdminCourseQuizzesPage({
         courses={quizFormCourses}
         takenWeeksByCourse={takenWeeksByCourse}
         basePath="/admin/quizzes"
+        withInstructorSelect
       />
     </div>
   );
