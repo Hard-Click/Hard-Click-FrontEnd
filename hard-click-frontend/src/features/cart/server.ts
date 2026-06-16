@@ -27,8 +27,6 @@ function toCart(api: CartApiResponse): Cart {
   };
 }
 
-const EMPTY_CART: Cart = { items: [], totalPrice: 0, totalCount: 0 };
-
 /**
  * 내 장바구니 조회 (Server Component 전용).
  * BE 미구현(노션 명세) → USE_MOCK. 연동 시 엔드포인트/매퍼만 맞추면 됨.
@@ -38,12 +36,11 @@ export async function getCartServer(): Promise<Cart> {
     return toCart(mockCart);
   }
 
-  // TODO(API 연동): GET /api/cart (CartApiResponse)
-  try {
-    const res = await serverApi.get<CartApiResponse>('/api/cart');
-    if (!res.success || !res.data) return EMPTY_CART;
-    return toCart(res.data);
-  } catch {
-    return EMPTY_CART;
+  // TODO(API 연동): GET /api/cart (CartApiResponse).
+  // 실패는 빈 장바구니로 숨기지 않고 전파 → error.tsx에서 에러/빈상태 구분 처리.
+  const res = await serverApi.get<CartApiResponse>('/api/cart');
+  if (!res.success || !res.data) {
+    throw new Error('장바구니를 불러오지 못했습니다.');
   }
+  return toCart(res.data);
 }

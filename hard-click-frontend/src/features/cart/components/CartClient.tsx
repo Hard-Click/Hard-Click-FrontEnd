@@ -61,14 +61,19 @@ export default function CartClient({ cart }: { cart: Cart }) {
     if (!pending) return;
     const ids = pending.ids;
     setProcessing(true);
-    const res = await removeCartItemsAction(ids);
-    setProcessing(false);
-    setPending(null);
-    if (res.success) {
-      setRemovedIds((prev) => [...prev, ...ids]);
-      toast.success(res.message);
-    } else {
-      toast.error(res.message);
+    try {
+      const res = await removeCartItemsAction(ids);
+      if (res.success) {
+        setRemovedIds((prev) => [...prev, ...ids]);
+        toast.success(res.message);
+      } else {
+        toast.error(res.message);
+      }
+    } catch {
+      toast.error('삭제에 실패했어요. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setProcessing(false);
+      setPending(null);
     }
   };
 

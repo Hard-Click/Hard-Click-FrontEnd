@@ -30,6 +30,13 @@ export async function removeCartItemsAction(
     }
     // 삭제 처리중 UX 노출용 지연(mock). 연동 시 실제 DELETE 응답으로 대체.
     await new Promise((resolve) => setTimeout(resolve, 500));
+    // mock 상태 실제 갱신(연동 시 BE가 처리) → revalidate·새로고침에도 반영
+    const removeSet = new Set(cartItemIds);
+    mockCart.items = mockCart.items.filter(
+      (it) => !removeSet.has(it.cartItemId),
+    );
+    mockCart.totalCount = mockCart.items.length;
+    mockCart.totalPrice = mockCart.items.reduce((sum, it) => sum + it.price, 0);
     revalidatePath('/cart');
     return { success: true, message: '장바구니가 삭제되었습니다.' };
   }
