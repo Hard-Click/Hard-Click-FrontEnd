@@ -9,6 +9,7 @@ import type {
   SubjectItem,
 } from '@/features/community/types';
 import { TAB_TO_BOARD_TYPE } from '@/features/community/types';
+import CommunityPagination from '@/features/community/components/CommunityPagination';
 
 const SORT_MAP: Record<string, string> = {
   최신순: 'latest',
@@ -53,6 +54,7 @@ export default async function CommunityPage({
   ]);
   const posts: PostListItem[] =
     result.success && result.data ? result.data.content ?? [] : [];
+  const totalPages = result.success && result.data ? result.data.totalPages : 1;
   const subjects: SubjectItem[] =
     subjectsResult.success && subjectsResult.data ? subjectsResult.data : [];
 
@@ -86,7 +88,14 @@ export default async function CommunityPage({
           subject={sp.subject ?? ''}
           subjects={subjects}
         />
-        <CommunityPostList posts={posts} />
+        <CommunityPostList posts={posts} isStudyTab={boardType === 'STUDY'} />
+
+        <div className="mt-6">
+          <CommunityPagination
+            page={Number.isNaN(pageNum) ? 0 : pageNum}
+            totalPages={totalPages}
+          />
+        </div>
       </div>
     </div>
   );

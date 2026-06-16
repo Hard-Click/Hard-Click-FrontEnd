@@ -2,11 +2,9 @@ import Image from 'next/image';
 import CommunityListControls from '@/features/community/components/CommunityListControls';
 import AdminCommunityPostList from '@/features/admin/components/AdminCommunityPostList';
 import { getCommunityPosts, getSubjects } from '@/features/community/server';
-import type {
-  PostListItem,
-  SubjectItem,
-} from '@/features/community/types';
+import type { PostListItem, SubjectItem } from '@/features/community/types';
 import { TAB_TO_BOARD_TYPE } from '@/features/community/types';
+import CommunityPagination from '@/features/community/components/CommunityPagination';
 
 const SORT_MAP: Record<string, string> = {
   최신순: 'latest',
@@ -53,6 +51,7 @@ export default async function AdminCommunityPage({
     result.success && result.data ? result.data.content ?? [] : [];
   const subjects: SubjectItem[] =
     subjectsResult.success && subjectsResult.data ? subjectsResult.data : [];
+  const totalPages = result.success && result.data ? result.data.totalPages : 1;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] px-8 py-10">
@@ -68,7 +67,9 @@ export default async function AdminCommunityPage({
                   height={30}
                 />
               </div>
-              <h1 className="text-4xl font-bold text-[#1E293B]">커뮤니티 관리</h1>
+              <h1 className="text-4xl font-bold text-[#1E293B]">
+                커뮤니티 관리
+              </h1>
             </div>
             <p className="text-base text-[#4B5563]">
               게시물과 댓글을 관리하세요
@@ -83,7 +84,16 @@ export default async function AdminCommunityPage({
           subject={sp.subject ?? ''}
           subjects={subjects}
         />
-        <AdminCommunityPostList posts={posts} />
+        <AdminCommunityPostList
+          posts={posts}
+          isStudyTab={boardType === 'STUDY'}
+        />
+        <div className="mt-6">
+          <CommunityPagination
+            page={Number.isNaN(pageNum) ? 0 : pageNum}
+            totalPages={totalPages}
+          />
+        </div>
       </div>
     </div>
   );
