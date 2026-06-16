@@ -23,6 +23,7 @@ import { USE_MOCK } from '@/mocks/config';
 import {
   mockPostListResponse,
   mockPostDetail,
+  mockPostDetailsById,
   mockCommentsResponse,
   mockSubjects,
 } from '@/mocks/community.mock';
@@ -146,7 +147,19 @@ export async function getSubjects() {
 }
 
 export async function getPostDetail(postId: number) {
-  if (USE_MOCK) return mockOk(toPostDetail({ ...mockPostDetail, postId }));
+  if (USE_MOCK) {
+    // 게시글별 상세(테스트용 여러 글) 우선. 없으면 목록 항목에 맞춰 기본 글 노출.
+    // isMine 없는 항목(질문/자유 게시판)은 남의 글로 간주 → 신고 테스트 가능.
+    const li = mockPostListResponse.posts.find((p) => p.postId === postId);
+    const detail = mockPostDetailsById[postId] ?? {
+      ...mockPostDetail,
+      postId,
+      title: li?.title ?? mockPostDetail.title,
+      authorName: li?.authorName ?? mockPostDetail.authorName,
+      isMyPost: li?.isMine ?? false,
+    };
+    return mockOk(toPostDetail(detail));
+  }
   return mapOk(
     await api.get<PostDetailApiResponse>(`/api/posts/${postId}`),
     toPostDetail

@@ -58,3 +58,23 @@ export function toReportItem(api: ReportApiItem): ReportItem {
     courseId: api.courseId,
   };
 }
+
+/* ───── 신고 제출 (사용자가 게시글/댓글 신고) ───── */
+
+/** 신고 대상 (무엇을 신고하는지) */
+export interface ReportTargetRef {
+  targetType: ReportTarget;
+  targetId: number;
+}
+
+/** 신고 제출 입력 — POST /api/reports body (신고자는 토큰으로 식별) */
+export interface SubmitReportInput extends ReportTargetRef {
+  reasons: string[];
+  detail?: string;
+}
+
+/** 신고 제출 결과 */
+export interface ReportActionResult {
+  success: boolean;
+  message: string;
+}
