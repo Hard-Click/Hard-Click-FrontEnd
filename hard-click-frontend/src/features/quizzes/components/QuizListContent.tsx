@@ -21,12 +21,14 @@ export default function QuizListContent({
   courseName,
   courses,
   takenWeeksByCourse,
+  basePath = '/instructor/quizzes',
 }: {
   quizzes: Quiz[];
   courseId: number;
   courseName: string;
   courses: { courseId: number; title: string }[];
   takenWeeksByCourse: Record<number, number[]>;
+  basePath?: string;
 }) {
   const [quizzes, setQuizzes] = useState<Quiz[]>(initialQuizzes);
   const [selectedWeek, setSelectedWeek] = useState<'all' | number>('all');
@@ -95,7 +97,7 @@ export default function QuizListContent({
                 key={quiz.quizId}
                 quiz={quiz}
                 onView={() =>
-                  router.push(`/instructor/quizzes/${courseId}/${quiz.quizId}`)
+                  router.push(`${basePath}/${courseId}/${quiz.quizId}`)
                 }
                 onEdit={() => setEditing(quiz)}
                 onDelete={() => setDeleting(quiz)}

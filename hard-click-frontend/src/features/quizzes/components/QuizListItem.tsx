@@ -36,15 +36,14 @@ export default function QuizListItem({
         <button
           type="button"
           onClick={onView}
-          className="flex h-10 items-center gap-1.5 rounded-[10px] border border-[#E2E8F0] px-4 text-base font-semibold text-[#4B5563] transition hover:bg-[#F8FAFC]"
+          className="flex h-9 items-center gap-1.5 rounded-xl border border-[#E2E8F0] px-4 text-sm font-medium text-[#4B5563] transition hover:bg-[#F8FAFC]"
         >
-          <Image src="/icons/searchIcon.svg" alt="" width={16} height={16} />
           조회하기
         </button>
         <button
           type="button"
           onClick={onEdit}
-          className="flex h-10 items-center gap-1.5 rounded-[10px] border border-[#E2E8F0] px-4 text-base font-semibold text-[#4B5563] transition hover:bg-[#F8FAFC]"
+          className="flex h-9 items-center gap-1.5 rounded-xl border border-[#E2E8F0] px-4 text-sm font-medium text-[#4B5563] transition hover:bg-[#F8FAFC]"
         >
           <Image src="/icons/editIcon.svg" alt="" width={16} height={16} />
           수정
@@ -52,7 +51,7 @@ export default function QuizListItem({
         <button
           type="button"
           onClick={onDelete}
-          className="flex h-10 items-center gap-1.5 rounded-[10px] border border-[#E2E8F0] px-4 text-base font-semibold text-[#B91C1C] transition hover:bg-[#FEF2F2]"
+          className="flex h-9 items-center gap-1.5 rounded-xl border border-[#E2E8F0] px-4 text-sm font-medium text-[#B91C1C] transition hover:bg-[#FEF2F2]"
         >
           <Image src="/icons/trashIcon.svg" alt="" width={16} height={16} />
           삭제
