@@ -12,6 +12,10 @@ import {
   addToCart,
   removeFromCart,
 } from '@/features/courses/actions';
+import {
+  addWishlistAction,
+  removeWishlistAction,
+} from '@/features/wishlist/actions';
 import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
 import PreviewVideoModal from '@/features/learning/components/PreviewVideoModal';
 import {
@@ -134,6 +138,7 @@ export default function CourseDetailContent({
   const [isWishlisted, setIsWishlisted] = useState(
     initialCourse?.isWishlisted ?? false
   );
+  const [wishlistPending, setWishlistPending] = useState(false);
   const [isInCart, setIsInCart] = useState(initialCourse?.isInCart ?? false);
   const [cartItemId, setCartItemId] = useState<number | null>(null);
 
@@ -521,16 +526,44 @@ export default function CourseDetailContent({
                 )}
                 {/* TODO: 찜 API 엔드포인트 명세에 없음 — 백엔드 확인 후 연결 */}
                 <button
-                  onClick={() => {
-                    if (!requireLogin()) return;
-                    setIsWishlisted((v) => !v);
-                    toast.success(
-                      isWishlisted
-                        ? '찜이 해제되었습니다.'
-                        : '찜 목록에 추가되었습니다.'
-                    );
+                  onClick={async () => {
+                    if (!requireLogin() || wishlistPending) return;
+                    const next = !isWishlisted;
+                    setWishlistPending(true);
+                    setIsWishlisted(next); // 낙관적
+                    try {
+                      const res = next
+                        ? await addWishlistAction({
+                            courseId: course.courseId,
+                            title: course.title,
+                            instructorName: course.instructorName,
+                            subjectName: course.subjectName,
+                            price: course.price,
+                            isFree: course.isFree,
+                            averageRating: course.averageRating,
+                            reviewCount: course.reviewCount,
+                            studentCount: course.studentCount,
+                            thumbnailUrl: course.thumbnailUrl,
+                            isEnrolled,
+                            isInCart,
+                          })
+                        : await removeWishlistAction(course.courseId);
+                      if (res.success) {
+                        toast.success(
+                          next
+                            ? '찜 목록에 추가되었습니다.'
+                            : '찜이 해제되었습니다.'
+                        );
+                      } else {
+                        setIsWishlisted(!next); // 실패 복구
+                        toast.error(res.message);
+                      }
+                    } finally {
+                      setWishlistPending(false);
+                    }
                   }}
-                  className={`h-14 rounded-[10px] font-medium text-base transition-colors flex items-center justify-center gap-2 border-2 ${
+                  disabled={wishlistPending}
+                  className={`h-14 rounded-[10px] font-medium text-base transition-colors flex items-center justify-center gap-2 border-2 disabled:opacity-60 ${
                     isWishlisted
                       ? 'bg-[#FEF2F2] text-[#EF4444] border-[#EF4444]'
                       : 'bg-white text-[#4B5563] border-[#E2E8F0] hover:border-[#CBD5E1]'
