@@ -24,16 +24,16 @@ function formatDate(isoString: string): string {
  */
 export default function CommunityPostList({
   posts,
+  isStudyTab = false,
   hrefPrefix = '/community',
 }: {
   posts: PostListItem[];
+  isStudyTab?: boolean;
   hrefPrefix?: string;
 }) {
   if (posts.length === 0) {
     return <PostEmptyState />;
   }
-
-  const isStudyTab = posts.every((p) => p.boardType === 'STUDY');
 
   return (
     <div

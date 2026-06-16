@@ -1,11 +1,58 @@
 import type {
   PostListApiResponse,
+  PostItemApiResponse,
   PostDetailApiResponse,
   CommentListApiResponse,
   SubjectItem,
 } from '@/features/community/types';
 
 import { SUBJECTS } from '@/constants/subjects';
+
+/** 페이저 확인용 더미 게시글 생성 — 게시판별 10개 이상 채우기 (mock 단계) */
+function makeFillerPosts(
+  boardType: PostItemApiResponse['boardType'],
+  startId: number,
+  count: number,
+): PostItemApiResponse[] {
+  const subjectByBoard: Record<PostItemApiResponse['boardType'], string> = {
+    QUESTION: '독서',
+    FREE: '국어',
+    STUDY: '수학Ⅰ',
+  };
+  const titlePrefix: Record<PostItemApiResponse['boardType'], string> = {
+    QUESTION: '질문 게시글',
+    FREE: '자유 게시글',
+    STUDY: '스터디 모집',
+  };
+
+  return Array.from({ length: count }, (_, i) => {
+    const day = String(((i + 1) % 28) + 1).padStart(2, '0');
+    const base: PostItemApiResponse = {
+      postId: startId - i,
+      boardType,
+      title: `${titlePrefix[boardType]} ${i + 1}`,
+      authorName: '익*명',
+      createdAt: `2026-04-${day}T09:00:00`,
+      viewCount: 10 + i,
+      commentCount: i % 5,
+      subjectName: subjectByBoard[boardType],
+    };
+    if (boardType === 'STUDY') {
+      return {
+        ...base,
+        description: '함께 공부하실 분을 찾습니다',
+        currentCount: (i % 5) + 1,
+        maxCount: 6,
+        isMine: false,
+        isJoined: false,
+      };
+    }
+    if (boardType === 'QUESTION') {
+      return { ...base, status: i % 2 === 0 ? 'PENDING' : 'ADOPTED' };
+    }
+    return base; // FREE
+  });
+}
 
 /**
  * 커뮤니티 도메인 목 데이터 — 실제 백엔드 코드(community) DTO 기준.
@@ -114,6 +161,10 @@ export const mockPostListResponse: PostListApiResponse = {
       isMine: false,
       isJoined: false,
     },
+    // 페이저 확인용 더미 (게시판별 10개 이상)
+    ...makeFillerPosts('QUESTION', 800, 11),
+    ...makeFillerPosts('FREE', 780, 11),
+    ...makeFillerPosts('STUDY', 760, 11),
   ],
   currentPage: 0,
   totalPages: 3,

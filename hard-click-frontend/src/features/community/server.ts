@@ -31,11 +31,22 @@ export async function getCommunityPosts(
       const subjectName = SUBJECT_NAME[subjectCode];
       filtered = filtered.filter((p) => p.subjectName === subjectName);
     }
+    const PAGE_SIZE = 10;
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const safePage = Math.min(Math.max(page, 0), totalPages - 1);
+    const paged = filtered.slice(
+      safePage * PAGE_SIZE,
+      (safePage + 1) * PAGE_SIZE
+    );
     return {
       success: true,
       httpStatus: 200,
       message: '',
-      data: toPostListResponse({ ...mockPostListResponse, posts: filtered }),
+      data: toPostListResponse({
+        ...mockPostListResponse,
+        posts: paged,
+        totalPages,
+      }),
     };
   }
 
