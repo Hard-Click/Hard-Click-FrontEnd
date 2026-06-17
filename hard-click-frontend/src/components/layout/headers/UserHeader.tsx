@@ -9,6 +9,7 @@ import { getMyProfile } from '@/features/users/services';
 import { logout } from '@/features/auth/services';
 import { clearSession } from '@/features/auth/session';
 import { useAuth } from '@/features/auth/AuthProvider';
+import NotificationDropdown from '@/features/notifications/components/NotificationDropdown';
 
 const NAV_ITEMS = [
   { label: '강의', href: '/courses' },
@@ -108,22 +109,7 @@ export default function UserHeader() {
           {isLoggedIn ? (
             <>
               {/* 알림 */}
-              <Link
-                href="/notifications"
-                className="relative w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-colors"
-              >
-                <Image
-                  src="/icons/bellIcon.svg"
-                  alt="알림"
-                  width={20}
-                  height={20}
-                />
-                <span className="absolute top-[-2px] left-[23px] min-w-[16px] h-4 bg-[#EF4444] rounded-full flex items-center justify-center px-[3px]">
-                  <span className="text-white font-bold text-[10px] leading-none">
-                    3
-                  </span>
-                </span>
-              </Link>
+              <NotificationDropdown role="STUDENT" />
 
               {/* 프로필 */}
               <div className="relative" ref={dropdownRef}>
