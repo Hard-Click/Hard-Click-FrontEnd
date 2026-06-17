@@ -7,7 +7,6 @@ import {
   CATEGORY_ORDER,
   CATEGORY_LABEL,
   type NotificationCategory,
-  type NotificationItem as Noti,
   type NotificationRole,
 } from '../types';
 import NotificationItem from './NotificationItem';
@@ -25,20 +24,10 @@ export default function NotificationDropdown({
 }: NotificationDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState<FilterKey>('all');
-  const [items, setItems] = useState<Noti[]>([]);
   const ref = useRef<HTMLDivElement>(null);
 
-  // 알림 로드 (Client Component → @/services/api 경유)
-  useEffect(() => {
-    let alive = true;
-    getNotifications(role).then((data) => {
-      if (alive) setItems(data);
-    });
-    return () => {
-      alive = false;
-    };
-  }, [role]);
-
+  // mock 동기 읽기 (useEffect 데이터 페칭 금지 — CLAUDE.md)
+  const items = useMemo(() => getNotifications(role), [role]);
   const unreadCount = getUnreadCount(items);
 
   // 실제 존재하는 구분만 탭으로 노출한다 (없는 구분은 숨김)
