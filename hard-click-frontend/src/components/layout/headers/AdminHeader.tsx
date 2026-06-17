@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import NotificationDropdown from '@/features/notifications/components/NotificationDropdown';
 
 const NAV_ITEMS = [
   { label: '강의', href: '/admin/courses' },
@@ -51,17 +52,7 @@ export default function AdminHeader() {
 
         {/* 우측 — 관리자 뱃지 */}
         <div className="flex flex-1 items-center justify-end gap-6">
-          <Link
-            href="/notifications"
-            className="relative w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-colors"
-          >
-            <Image
-              src="/icons/bellIcon.svg"
-              alt="알림"
-              width={20}
-              height={20}
-            />
-          </Link>
+          <NotificationDropdown role="ADMIN" />
           <span className="rounded-full bg-white/20 px-5 py-2 text-sm font-semibold text-white">
             관리자
           </span>
