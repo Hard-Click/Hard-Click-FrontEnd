@@ -27,6 +27,9 @@ export type NotificationCategory =
   | 'report' // 신고
   | 'course'; // 강좌 등록
 
+/** 알림 대상 역할 — mock에서 역할별 목록을 고르기 위함 (실연동에선 BE가 사용자별 필터링) */
+export type NotificationRole = 'STUDENT' | 'INSTRUCTOR' | 'ADMIN';
+
 /** UI에서 사용하는 알림 항목 (백엔드 shape → 이 타입으로 변환해 사용) */
 export interface NotificationItem {
   notiId: number;

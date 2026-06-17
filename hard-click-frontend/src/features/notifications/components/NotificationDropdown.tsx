@@ -7,12 +7,14 @@ import {
   CATEGORY_ORDER,
   CATEGORY_LABEL,
   type NotificationCategory,
+  type NotificationItem as Noti,
+  type NotificationRole,
 } from '../types';
 import NotificationItem from './NotificationItem';
 
 interface NotificationDropdownProps {
   /** 역할 — mock에서 역할별 알림 목록을 고르기 위함 (STUDENT/INSTRUCTOR/ADMIN) */
-  role?: string;
+  role: NotificationRole;
 }
 
 type FilterKey = 'all' | NotificationCategory;
@@ -23,9 +25,20 @@ export default function NotificationDropdown({
 }: NotificationDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState<FilterKey>('all');
+  const [items, setItems] = useState<Noti[]>([]);
   const ref = useRef<HTMLDivElement>(null);
 
-  const items = useMemo(() => getNotifications(role), [role]);
+  // 알림 로드 (Client Component → @/services/api 경유)
+  useEffect(() => {
+    let alive = true;
+    getNotifications(role).then((data) => {
+      if (alive) setItems(data);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [role]);
+
   const unreadCount = getUnreadCount(items);
 
   // 실제 존재하는 구분만 탭으로 노출한다 (없는 구분은 숨김)
