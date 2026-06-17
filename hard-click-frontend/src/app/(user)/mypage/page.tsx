@@ -18,20 +18,7 @@ import type { StudyTimeGrassCell, LessonsGrassCell } from '@/features/grass/type
 import type { MyRankingSummary } from '@/features/rankings/types';
 import { SectionHeader } from '@/components/common/SectionHeader';
 
-/* ─────────────────────────── 목 데이터 (UI 표시용 — 결제/퀴즈/채팅은 mock 유지) ─────────────────────────── */
-
-const MOCK_PAYMENTS = [
-  { orderId: 'ORD-20260510-001', date: '2026.05.10 14:30', amount: 49000, status: 'PAID', item: 'React 완벽 가이드' },
-  { orderId: 'SUB-20260501-001', date: '2026.05.01 09:00', amount: 19900, status: 'PAID', item: '프리미엄 월간 플랜' },
-  { orderId: 'ORD-20260425-002', date: '2026.04.25 09:15', amount: 99000, status: 'PAID', item: 'TypeScript 심화 학습\nNode.js 백엔드 개발' },
-  { orderId: 'ORD-20260320-003', date: '2026.03.20 16:45', amount: 39000, status: 'REFUNDED', item: 'Python 기초' },
-];
-
-const MOCK_QUIZZES = [
-  { quizId: 1, courseTitle: 'React 완벽 가이드', name: 'React 기초 개념 퀴즈', date: '2026.05.12', score: 80 },
-  { quizId: 2, courseTitle: 'TypeScript 심화 학습', name: 'TypeScript 타입 시스템 퀴즈', date: '2026.05.10', score: 92 },
-  { quizId: 3, courseTitle: 'Node.js 백엔드 개발', name: 'Node.js 중간 점검 퀴즈', date: '2026.05.08', score: 75 },
-];
+/* ─────────────────────────── 목 데이터 (UI 표시용 — 채팅은 모듈 5 결정 전까지 mock 유지) ─────────────────────────── */
 
 const MOCK_CHATS = [
   { chatId: 1, name: 'React 스터디 그룹', lastMessage: '다음 주 일정 확인 부탁드립니다', lastMessageAt: '2026.05.11 10:30', unread: 3 },
@@ -560,92 +547,6 @@ export default function MyPage() {
                       </div>
                     </div>
                   )))}
-                </div>
-              </SectionCard>
-            </div>
-
-            {/* ── 결제 내역 ── */}
-            <div className="flex flex-col">
-              <SectionHeader title="결제 내역" action={<ViewAllLink href="/mypage/payments" />} />
-              <SectionCard>
-                <div className="p-[33px]">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
-                        <th className="h-[52px] px-5 text-center text-sm font-bold text-[#1F2937]">주문번호</th>
-                        <th className="h-[52px] px-5 text-center text-sm font-bold text-[#1F2937]">결제일시</th>
-                        <th className="h-[52px] px-5 text-center text-sm font-bold text-[#1F2937]">결제금액</th>
-                        <th className="h-[52px] px-5 text-center text-sm font-bold text-[#1F2937]">상태</th>
-                        <th className="h-[52px] px-5 text-center text-sm font-bold text-[#1F2937]">구매 내역</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {MOCK_PAYMENTS.map((p) => (
-                        <tr key={p.orderId} className="border-b border-[#E2E8F0]">
-                          <td className="py-5 px-5 text-center text-base font-semibold text-[#1F2937]">{p.orderId}</td>
-                          <td className="py-5 px-5 text-center text-base text-[#4B5563]">{p.date}</td>
-                          <td className="py-5 px-5 text-center text-lg font-bold text-[#1F2937]">
-                            {p.amount.toLocaleString()}원
-                          </td>
-                          <td className="py-5 px-5 text-center">
-                            <span
-                              className={`inline-flex items-center justify-center min-w-[56px] h-8 px-3 rounded-2xl text-sm font-semibold ${
-                                p.status === 'PAID'
-                                  ? 'bg-[rgba(22,163,74,0.1)] text-[#16A34A]'
-                                  : 'bg-[rgba(75,85,99,0.1)] text-[#4B5563]'
-                              }`}
-                            >
-                              {p.status}
-                            </span>
-                          </td>
-                          <td className="py-5 px-5 text-center text-base text-[#4B5563] whitespace-pre-line">{p.item}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </SectionCard>
-            </div>
-
-            {/* ── 내 퀴즈 ── */}
-            <div className="flex flex-col">
-              <SectionHeader title="내 퀴즈" />
-              <SectionCard>
-                <div className="p-[33px]">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
-                        <th className="h-[52px] px-5 text-center text-sm font-bold text-[#1F2937]">강의명</th>
-                        <th className="h-[52px] px-5 text-center text-sm font-bold text-[#1F2937]">퀴즈명</th>
-                        <th className="h-[52px] px-5 text-center text-sm font-bold text-[#1F2937]">응시일</th>
-                        <th className="h-[52px] px-5 text-center text-sm font-bold text-[#1F2937]">점수</th>
-                        <th className="h-[52px] px-5 text-center text-sm font-bold text-[#1F2937]">결과 보기</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {MOCK_QUIZZES.map((q) => (
-                        <tr key={q.quizId} className="border-b border-[#E2E8F0]">
-                          <td className="py-5 px-5 text-center text-base font-semibold text-[#1F2937]">{q.courseTitle}</td>
-                          <td className="py-5 px-5 text-center text-base text-[#4B5563]">{q.name}</td>
-                          <td className="py-5 px-5 text-center text-base text-[#4B5563]">{q.date}</td>
-                          <td className="py-5 px-5 text-center">
-                            <span
-                              className={`text-xl font-bold ${
-                                q.score >= 80 ? 'text-[#16A34A]' : 'text-[#F59E0B]'
-                              }`}
-                            >
-                              {q.score}점
-                            </span>
-                          </td>
-                          <td className="py-5 px-5 text-center">
-                            <button className="w-[95px] h-10 bg-[#2F5DAA] rounded-[10px] text-white text-base font-semibold hover:bg-[#1D3E75] transition-colors">
-                              확인하기
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
               </SectionCard>
             </div>
