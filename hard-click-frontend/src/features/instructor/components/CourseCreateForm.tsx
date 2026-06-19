@@ -297,7 +297,8 @@ export default function CourseCreateForm({
 
   return (
     <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
-      <div className="mb-8">
+      <div className="mx-auto w-full max-w-[1152px]">
+        <div className="mb-8">
         <div className="mb-3 flex items-center gap-3">
           <h1 className="text-3xl font-bold text-[#1E293B]">
             {mode === 'edit' ? '강의 수정' : '강의 등록'}
@@ -764,6 +765,7 @@ export default function CourseCreateForm({
           }}
         />
       )}
+      </div>
     </div>
   );
 }
