@@ -25,7 +25,7 @@ export default function DeleteConfirmModal({
         aria-modal="true"
         aria-labelledby="delete-confirm-title"
         aria-describedby="delete-confirm-message"
-        className="w-full max-w-[448px] rounded-2xl bg-white p-8 shadow-xl"
+        className="w-full max-w-[400px] rounded-3xl bg-white p-8 shadow-xl"
       >
         <h2
           id="delete-confirm-title"
@@ -43,18 +43,18 @@ export default function DeleteConfirmModal({
             삭제 후 복구가 불가능합니다.
           </span>
         </p>
-        <div className="mt-8 flex gap-3">
+        <div className="mt-6 flex gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="h-12 flex-1 rounded-[10px] border border-[#E2E8F0] bg-white text-base font-semibold text-[#4B5563] transition-colors hover:bg-[#F8FAFC]"
+            className="h-10 flex-1 rounded-[12px] border border-[#E2E8F0] bg-white text-base font-semibold text-[#4B5563] transition-colors hover:bg-[#F8FAFC]"
           >
             취소
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="h-12 flex-1 rounded-[10px] bg-[#DC2626] text-base font-semibold text-white transition-colors hover:bg-[#B91C1C]"
+            className="h-10 flex-1 rounded-[12px] bg-[#DC2626] text-base font-semibold text-white transition-colors hover:bg-[#B91C1C]"
           >
             삭제
           </button>

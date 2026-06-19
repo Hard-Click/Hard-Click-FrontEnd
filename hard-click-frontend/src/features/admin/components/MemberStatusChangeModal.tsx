@@ -27,7 +27,7 @@ export default function MemberStatusChangeModal({
         aria-modal="true"
         aria-labelledby="member-status-title"
         aria-describedby="member-status-message"
-        className="w-full max-w-[448px] rounded-2xl bg-white p-8 shadow-xl"
+        className="w-full max-w-[400px] rounded-3xl bg-white p-8 shadow-xl"
       >
         <h2
           id="member-status-title"
@@ -52,14 +52,14 @@ export default function MemberStatusChangeModal({
           <button
             type="button"
             onClick={onCancel}
-            className="h-12 flex-1 rounded-[10px] border border-[#E2E8F0] bg-white text-base font-semibold text-[#4B5563] transition-colors hover:bg-[#F8FAFC]"
+            className="h-10 flex-1 rounded-[12px] border border-[#E2E8F0] bg-white text-base font-semibold text-[#4B5563] transition-colors hover:bg-[#F8FAFC]"
           >
             취소
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`h-12 flex-1 rounded-[10px] text-base font-semibold text-white transition-colors ${
+            className={`h-10 flex-1 rounded-[12px] text-base font-semibold text-white transition-colors ${
               isActive
                 ? 'bg-[#F97316] hover:bg-[#EA580C]'
                 : 'bg-[#16A34A] hover:bg-[#15803D]'
