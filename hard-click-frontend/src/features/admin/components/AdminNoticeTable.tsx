@@ -10,8 +10,11 @@ import AdminNoticeFormModal from './AdminNoticeFormModal';
 
 export default function AdminNoticeTable({
   notices,
+  detailBasePath = '/admin/notices',
 }: {
   notices: AdminNoticeRow[];
+  // 공지 상세 링크 base. 공지 관리=/admin/notices(기본), 강의 공지 목록=강의 경로(헤더 '강의' 유지)
+  detailBasePath?: string;
 }) {
   const [rows, setRows] = useState<AdminNoticeRow[]>(notices);
   useEffect(() => {
@@ -80,7 +83,7 @@ export default function AdminNoticeTable({
                 className="border-b border-[#E2E8F0] last:border-none hover:bg-[#F8FAFC]"
               >
                 <td className="px-6 py-4">
-                  <Link href={`/admin/notices/${notice.id}`}>
+                  <Link href={`${detailBasePath}/${notice.id}`}>
                     <div className="flex cursor-pointer items-center gap-2">
                       {notice.isPinned && (
                         <Image

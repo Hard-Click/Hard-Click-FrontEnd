@@ -59,7 +59,18 @@ export default function InstructorHeader() {
         {/* 네비게이션 */}
         <nav className="flex items-center gap-[40px]">
           {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.href;
+            // 강의에서 진입하는 공지(강의별 공지 상세 = /instructor/courses/.../notices,
+            // 전체공지 = /instructor/notices/global)는 '강의' active.
+            // '공지' nav는 공지 관리(/instructor/notices, 그 상세 /instructor/notices/[id])에서 active.
+            const isActive =
+              item.href === '/instructor/courses'
+                ? pathname.startsWith('/instructor/courses') ||
+                  pathname.startsWith('/instructor/notices/global')
+                : item.href === '/instructor/notices'
+                  ? pathname.startsWith('/instructor/notices') &&
+                    !pathname.startsWith('/instructor/notices/global')
+                  : pathname === item.href ||
+                    pathname.startsWith(`${item.href}/`);
             return (
               <Link
                 key={item.label}

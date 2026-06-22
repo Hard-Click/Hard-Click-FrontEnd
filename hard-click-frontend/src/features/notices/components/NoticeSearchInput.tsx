@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
-/** 공지 검색 입력(잎사귀) — 제출 시 ?keyword= 로 URL 이동 → 서버에서 재조회 */
+/** 공지 검색 입력(잎사귀) — 제출 시 ?keyword= 로 URL 이동 → 서버에서 재조회. usePathname 기반이라 경로 무관. */
 export default function NoticeSearchInput({ initial }: { initial: string }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -24,7 +24,12 @@ export default function NoticeSearchInput({ initial }: { initial: string }) {
         fill="none"
       >
         <circle cx="8.5" cy="8.5" r="5.5" stroke="#4B5563" strokeWidth="1.67" />
-        <path d="M14.5 14.5l3 3" stroke="#4B5563" strokeWidth="1.67" strokeLinecap="round" />
+        <path
+          d="M14.5 14.5l3 3"
+          stroke="#4B5563"
+          strokeWidth="1.67"
+          strokeLinecap="round"
+        />
       </svg>
       <input
         type="text"

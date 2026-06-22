@@ -1,11 +1,20 @@
 import Link from 'next/link';
 import type { Notice } from '../types';
 
-/** 공지 카드 — 표시 전용 Server Component (Link로 상세 이동) */
-export default function NoticeCard({ notice }: { notice: Notice }) {
+/**
+ * 공지 카드 — 표시 전용 Server Component (Link로 상세 이동)
+ * 상세 경로는 사용처(학생/강사)에 따라 `basePath`로 주입. (기본: 학생 `/notices`)
+ */
+export default function NoticeCard({
+  notice,
+  basePath = '/notices',
+}: {
+  notice: Notice;
+  basePath?: string;
+}) {
   return (
     <Link
-      href={`/notices/${notice.noticeId}`}
+      href={`${basePath}/${notice.noticeId}`}
       className="block w-full text-left box-border border border-[#E2E8F0] rounded-[20px] p-[21px] hover:border-[#2F5DAA] transition-colors"
     >
       <div className="flex flex-row items-start gap-4">

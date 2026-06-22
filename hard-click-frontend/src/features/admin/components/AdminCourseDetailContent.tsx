@@ -511,7 +511,7 @@ export default function AdminCourseDetailContent({
                     {displayedNotices.map((notice) => (
                       <Link
                         key={notice.noticeId}
-                        href={`/admin/notices/${notice.noticeId}`}
+                        href={`/admin/courses/manage/${courseId}/notices/${notice.noticeId}`}
                         className={`rounded-[20px] h-[89px] overflow-hidden flex flex-col hover:opacity-80 transition-opacity ${
                           notice.isPinned
                             ? 'bg-[rgba(47,93,170,0.05)] border border-[#2F5DAA]'

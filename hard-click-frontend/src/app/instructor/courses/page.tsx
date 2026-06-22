@@ -77,7 +77,7 @@ export default async function InstructorCoursesPage({ searchParams }: PageProps)
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       {/* 공지 배너 (client 잎사귀) */}
-      <CourseNoticeBanner notices={notices} href="/instructor/notices" />
+      <CourseNoticeBanner notices={notices} href="/instructor/notices/global" />
 
       {/* 히어로 */}
       <div

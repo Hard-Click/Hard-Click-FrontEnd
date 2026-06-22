@@ -431,7 +431,7 @@ export default function InstructorCourseDetailContent({
                     </h2>
                   </div>
                   <Link
-                    href={`/courses/${courseId}/notices`}
+                    href={`/instructor/courses/${courseId}/notices`}
                     className="w-20 h-10 border border-[#E2E8F0] rounded-2xl text-sm font-medium text-[#4B5563] hover:bg-[#F8FAFC] transition-colors flex items-center justify-center"
                   >
                     전체보기
@@ -447,7 +447,7 @@ export default function InstructorCourseDetailContent({
                     {displayedNotices.map((notice) => (
                       <Link
                         key={notice.noticeId}
-                        href={`/instructor/notices/${notice.noticeId}`}
+                        href={`/instructor/courses/${courseId}/notices/${notice.noticeId}`}
                         className={`rounded-[20px] h-[89px] overflow-hidden flex flex-col hover:opacity-80 transition-opacity ${
                           notice.isPinned
                             ? 'bg-[rgba(47,93,170,0.05)] border border-[#2F5DAA]'

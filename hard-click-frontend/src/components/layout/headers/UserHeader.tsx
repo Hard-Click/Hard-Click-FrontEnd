@@ -11,8 +11,9 @@ import { clearSession } from '@/features/auth/session';
 import { useAuth } from '@/features/auth/AuthProvider';
 import NotificationDropdown from '@/features/notifications/components/NotificationDropdown';
 
-const NAV_ITEMS = [
-  { label: '강의', href: '/courses' },
+// match: href 외에 이 prefix들에서도 active 처리 (예: 공지는 강의 영역에서 진입)
+const NAV_ITEMS: { label: string; href: string; match?: string[] }[] = [
+  { label: '강의', href: '/courses', match: ['/notices'] },
   { label: '퀴즈', href: '/quizzes' },
   { label: '커뮤니티', href: '/community' },
   { label: '랭킹', href: '/rankings' },
@@ -81,7 +82,9 @@ export default function UserHeader() {
         {/* 네비게이션 */}
         <nav className="flex items-center justify-center gap-[60px]">
           {NAV_ITEMS.map((item) => {
-            const isActive = pathname.startsWith(item.href);
+            const isActive =
+              pathname.startsWith(item.href) ||
+              (item.match?.some((m) => pathname.startsWith(m)) ?? false);
             const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
               // 비로그인 + 비공개 메뉴 → 토스트만 (페이지 이동 X)
               if (!isLoggedIn && !PUBLIC_NAV_HREFS.has(item.href)) {
