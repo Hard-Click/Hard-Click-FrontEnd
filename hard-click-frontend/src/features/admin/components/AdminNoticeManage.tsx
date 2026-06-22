@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import AdminNoticeTabs, { type NoticeTab } from './AdminNoticeTabs';
 import AdminNoticeFilterBar from './AdminNoticeFilterBar';
@@ -31,10 +31,14 @@ interface Props {
 }
 
 export default function AdminNoticeManage({ notices, courses }: Props) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const autoOpen = searchParams.get('openWrite') === 'true';
 
-  const [activeTab, setActiveTab] = useState<NoticeTab>('SYSTEM');
+  // 탭을 URL(?tab=)에 보존 → 공지 상세 갔다 뒤로가기 해도 선택 탭 유지
+  const [activeTab, setActiveTab] = useState<NoticeTab>(
+    searchParams.get('tab') === 'COURSE' ? 'COURSE' : 'SYSTEM'
+  );
   const [keyword, setKeyword] = useState('');
   const [filter, setFilter] = useState<NoticeFilter>('ALL');
   const [subject, setSubject] = useState('');
@@ -60,6 +64,9 @@ export default function AdminNoticeManage({ notices, courses }: Props) {
   const handleTabChange = (next: NoticeTab) => {
     setActiveTab(next);
     setPage(1);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', next);
+    router.replace(`/admin/notices?${params.toString()}`, { scroll: false });
   };
   const handleKeywordChange = (next: string) => {
     setKeyword(next);
