@@ -53,7 +53,7 @@ export default function ConfirmModal({
         </p>
 
         {/* buttons */}
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onCancel}
@@ -68,7 +68,7 @@ export default function ConfirmModal({
             className={`h-10 flex-1 rounded-[12px] text-base font-semibold text-white transition-colors ${
               confirmVariant === 'danger'
                 ? 'bg-[#B91C1C] hover:bg-[#991B1B]'
-                : 'bg-[#2F5DAA] hover:bg-[#1D3E75]'
+                : 'bg-[#3563B7] hover:bg-[#274B8A]'
             }`}
           >
             {confirmText}
