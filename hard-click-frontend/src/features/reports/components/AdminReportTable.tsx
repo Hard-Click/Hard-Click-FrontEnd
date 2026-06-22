@@ -24,13 +24,15 @@ const TARGET_STYLE: Record<ReportTarget, string> = {
 
 interface Props {
   reports: ReportItem[];
-  onProcessReport: (report: ReportItem) => void;
+  onProcessReport: (report: ReportItem, memo?: string) => void;
+  onSaveMemo: (report: ReportItem, memo: string) => void;
   openReportKey?: string;
 }
 
 export default function AdminReportTable({
   reports,
   onProcessReport,
+  onSaveMemo,
   openReportKey,
 }: Props) {
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(() =>
@@ -212,6 +214,7 @@ export default function AdminReportTable({
             if (openReportKey) router.replace('/admin/reports');
           }}
           onProcessReport={onProcessReport}
+          onSaveMemo={onSaveMemo}
         />
       )}
 

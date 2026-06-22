@@ -14,36 +14,38 @@ const TARGET_MOVE_LABEL: Record<ReportTarget, string> = {
   REVIEW: '리뷰로 이동',
 };
 
-const TARGET_DELETE_LABEL: Record<ReportTarget, string> = {
-  POST: '게시물 삭제',
-  COMMENT: '댓글 삭제',
-  REVIEW: '리뷰 삭제',
-};
-
 /** 처리 메모 최대 글자수 */
 const MEMO_MAX_LENGTH = 50;
 
 interface Props {
   report: ReportItem;
   onClose: () => void;
-  onProcessReport: (report: ReportItem) => void;
+  onProcessReport: (report: ReportItem, memo?: string) => void;
+  onSaveMemo: (report: ReportItem, memo: string) => void;
 }
 
 export default function AdminReportDetailModal({
   report,
   onClose,
   onProcessReport,
+  onSaveMemo,
 }: Props) {
   const [reasonOpen, setReasonOpen] = useState(false);
-  const [memo, setMemo] = useState('');
-  const [deleteContent, setDeleteContent] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [memo, setMemo] = useState(report.processMemo ?? '');
+  // 이미 메모가 저장된 신고는 상세 단계를 건너뛰고 바로 처리 확인(2번)으로 진입한다.
+  const [confirmOpen, setConfirmOpen] = useState(!!report.processMemo);
 
   const latestReason = getLatestReason(report);
 
+  const handleSave = () => {
+    onSaveMemo(report, memo);
+    toast.success('처리 메모가 저장되었습니다.');
+    onClose();
+  };
+
   const router = useRouter();
 
-  const handleConfirm = () => {
+  const handleNext = () => {
     setConfirmOpen(true);
   };
 
@@ -83,7 +85,6 @@ export default function AdminReportDetailModal({
       <AdminReportConfirmModal
         report={report}
         memo={memo}
-        deleteContent={deleteContent}
         onBack={() => setConfirmOpen(false)}
         onClose={onClose}
         onProcessReport={onProcessReport}
@@ -103,12 +104,29 @@ export default function AdminReportDetailModal({
         aria-labelledby="report-detail-title"
         className="w-full max-w-[560px] max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-8 shadow-xl"
       >
-        <h2
-          id="report-detail-title"
-          className="mb-6 text-xl font-bold text-[#1F2937]"
-        >
-          신고 상세
-        </h2>
+        <div className="mb-6 flex items-center justify-between">
+          <h2
+            id="report-detail-title"
+            className="text-xl font-bold text-[#1F2937]"
+          >
+            신고 상세
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="닫기"
+            className="text-[#94A3B8] transition-colors hover:text-[#1E293B]"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M6 6l12 12M18 6L6 18"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        </div>
 
         {/* 신고 대상 내용 */}
         <div className="mb-5 rounded-xl bg-[#FEF2F2] p-4">
@@ -222,41 +240,28 @@ export default function AdminReportDetailModal({
           </p>
         </div>
 
-        {/* 콘텐츠 삭제 체크박스 */}
-        <label className="mb-6 flex cursor-pointer items-center gap-2">
-          <input
-            type="checkbox"
-            checked={deleteContent}
-            onChange={(e) => setDeleteContent(e.target.checked)}
-            className="h-4 w-4 cursor-pointer rounded border-[#B91C1C] accent-[#B91C1C]"
-          />
-          <span className="text-base font-bold text-[#B91C1C]">
-            {TARGET_DELETE_LABEL[report.targetType]}
-          </span>
-        </label>
-
         {/* 버튼 */}
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-12 flex-1 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-[#4B5563] hover:bg-[#F8FAFC]"
-          >
-            닫기
-          </button>
+        <div className="flex gap-2">
           <button
             type="button"
             onClick={handleMove}
-            className="h-12 flex-1 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-[#4B5563] hover:bg-[#F8FAFC]"
+            className="h-10 flex-1 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-[#4B5563] hover:bg-[#F8FAFC]"
           >
             {TARGET_MOVE_LABEL[report.targetType]}
           </button>
           <button
             type="button"
-            onClick={handleConfirm}
-            className="h-12 flex-1 rounded-xl bg-[#2F5DAA] text-sm font-semibold text-white hover:bg-[#1D3E75]"
+            onClick={handleSave}
+            className="h-10 flex-1 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-[#2F5DAA] hover:bg-[#F8FAFC]"
           >
-            확인
+            저장
+          </button>
+          <button
+            type="button"
+            onClick={handleNext}
+            className="h-10 flex-1 rounded-xl bg-[#2F5DAA] text-sm font-semibold text-white hover:bg-[#1D3E75]"
+          >
+            다음
           </button>
         </div>
       </div>
