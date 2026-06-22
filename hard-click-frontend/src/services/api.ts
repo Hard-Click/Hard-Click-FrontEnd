@@ -49,6 +49,18 @@ async function request<T>(
     return withSuccess(response.data);
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
+      // BFF 프록시가 refresh까지 시도했는데도 401 → 세션 만료/차단.
+      // 토큰은 프록시에서 정리되므로 클라는 로그인 페이지로 이동한다. (로그인 페이지 제외)
+      if (
+        error.response.status === 401 &&
+        typeof window !== 'undefined' &&
+        !window.location.pathname.startsWith('/auth')
+      ) {
+        window.location.href = '/auth/login';
+        // 페이지가 로그인으로 이동 중 — 호출자가 에러 UI를 그리지 않도록 보류
+        // (네비게이션 완료 시까지 resolve하지 않음)
+        return new Promise<never>(() => {});
+      }
       const body = error.response.data as {
         httpStatus?: number;
         message?: string;
