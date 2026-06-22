@@ -8,7 +8,8 @@ export default async function AdminCourseNoticeDetailPage({
   params: Promise<{ courseId: string; noticeId: string }>;
 }) {
   const { courseId, noticeId } = await params;
-  const notice = await getNoticeDetailServer(Number(noticeId));
+  const id = Number(noticeId);
+  const notice = Number.isNaN(id) ? null : await getNoticeDetailServer(id);
 
   return (
     <NoticeDetail

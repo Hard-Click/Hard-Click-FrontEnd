@@ -8,7 +8,8 @@ export default async function InstructorCourseNoticeDetailPage({
   params: Promise<{ courseid: string; noticeid: string }>;
 }) {
   const { courseid, noticeid } = await params;
-  const notice = await getNoticeDetailServer(Number(noticeid));
+  const id = Number(noticeid);
+  const notice = Number.isNaN(id) ? null : await getNoticeDetailServer(id);
 
   return (
     <NoticeDetail

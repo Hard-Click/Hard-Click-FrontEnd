@@ -13,8 +13,13 @@ export default async function InstructorCourseNoticesPage({
   const { courseid } = await params;
   const sp = await searchParams;
   const courseId = Number(courseid);
-  const page = Number(sp.page ?? '0') || 0;
+  const page = Math.max(0, Number(sp.page ?? '0') || 0);
   const keyword = sp.keyword ?? '';
+
+  // 잘못된 courseId면 서버 호출 없이 빈 화면 (NaN 병렬 호출 방지)
+  if (Number.isNaN(courseId)) {
+    return <div className="min-h-screen bg-[#F8FAFC]" />;
+  }
 
   const [course, { notices, totalPages }] = await Promise.all([
     getCourseDetailServer(courseId),

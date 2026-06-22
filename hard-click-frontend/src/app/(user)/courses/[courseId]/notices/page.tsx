@@ -12,8 +12,12 @@ export default async function CourseNoticesPage({
   const { courseId: courseIdStr } = await params;
   const sp = await searchParams;
   const courseId = Number(courseIdStr);
-  const page = Number(sp.page ?? '0') || 0;
+  const page = Math.max(0, Number(sp.page ?? '0') || 0);
   const keyword = sp.keyword ?? '';
+
+  if (Number.isNaN(courseId)) {
+    return <div className="min-h-screen bg-[#F8FAFC]" />;
+  }
 
   // 서버에서 강의 정보 + 강의 공지(검색/페이징) 동시 확보
   const [course, { notices, totalPages }] = await Promise.all([

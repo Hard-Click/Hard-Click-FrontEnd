@@ -26,7 +26,7 @@ export default function NoticeBackButton({
       onClick={handleBack}
       className="mb-6 flex w-fit items-center gap-2 text-sm font-medium text-[#4B5563] hover:text-[#1E293B]"
     >
-      <Image src="/icons/back.svg" alt="back" width={16} height={16} />
+      <Image src="/icons/back.svg" alt="" width={16} height={16} />
       뒤로가기
     </button>
   );

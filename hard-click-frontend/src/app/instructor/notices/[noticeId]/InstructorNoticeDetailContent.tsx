@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 import { deleteNoticeAction } from '@/features/notices/actions';
 import { updateNotice } from '@/features/notices/services';
+import NoticeBackButton from '@/features/notices/components/NoticeBackButton';
 import type { NoticeDetail } from '@/features/notices/types';
 
 // TODO: API 연동 시 교체
@@ -296,19 +297,8 @@ export default function InstructorNoticeDetailContent({
 
       <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
         <div className="mx-auto w-full max-w-[760px]">
-          {/* 뒤로가기 — 실제 이전 페이지(강의 상세 등)로 복귀, 없으면 공지 관리로 */}
-          <button
-            type="button"
-            onClick={() =>
-              window.history.length > 1
-                ? router.back()
-                : router.push('/instructor/notices')
-            }
-            className="mb-6 flex cursor-pointer items-center gap-2 text-sm font-medium text-[#4B5563]"
-          >
-            <Image src="/icons/back.svg" alt="back" width={16} height={16} />
-            뒤로가기
-          </button>
+          {/* 뒤로가기 — 공용 컴포넌트로 통합 (실제 이전 페이지 복귀, 없으면 공지 관리) */}
+          <NoticeBackButton fallbackHref="/instructor/notices" />
 
           {/* 공지 카드 */}
           <div className="rounded-2xl border border-[#E2E8F0] bg-white p-8 shadow-sm">

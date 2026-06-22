@@ -8,7 +8,8 @@ export default async function InstructorGlobalNoticeDetailPage({
   params: Promise<{ noticeid: string }>;
 }) {
   const { noticeid } = await params;
-  const notice = await getNoticeDetailServer(Number(noticeid));
+  const id = Number(noticeid);
+  const notice = Number.isNaN(id) ? null : await getNoticeDetailServer(id);
 
   return (
     <NoticeDetail notice={notice} backHref="/instructor/notices/global" />
