@@ -8,6 +8,10 @@ import { mockLoginData } from '@/mocks/auth.mock';
 
 const BACKEND = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
 
+// 백엔드 토큰 정책: Access 15분 / Refresh 14일
+const ACCESS_TOKEN_MAX_AGE = 60 * 15;
+const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 14;
+
 export interface LoginActionState {
   success: boolean;
   message?: string;
@@ -39,10 +43,10 @@ export async function loginAction(
     }
     const cookieStore = await cookies();
     const base = { httpOnly: true, sameSite: 'lax' as const, path: '/' };
-    cookieStore.set('accessToken', mockLoginData.accessToken, { ...base, maxAge: 60 * 60 });
-    cookieStore.set('refreshToken', mockLoginData.refreshToken, { ...base, maxAge: 60 * 60 * 24 * 7 });
-    cookieStore.set('memberId', String(mockLoginData.memberId), { ...base, maxAge: 60 * 60 * 24 * 7 });
-    cookieStore.set('role', mockLoginData.role, { ...base, maxAge: 60 * 60 * 24 * 7 });
+    cookieStore.set('accessToken', mockLoginData.accessToken, { ...base, maxAge: ACCESS_TOKEN_MAX_AGE });
+    cookieStore.set('refreshToken', mockLoginData.refreshToken, { ...base, maxAge: REFRESH_TOKEN_MAX_AGE });
+    cookieStore.set('memberId', String(mockLoginData.memberId), { ...base, maxAge: REFRESH_TOKEN_MAX_AGE });
+    cookieStore.set('role', mockLoginData.role, { ...base, maxAge: REFRESH_TOKEN_MAX_AGE });
     redirect(mockLoginData.role === 'INSTRUCTOR' ? '/instructor/dashboard' : '/courses');
   }
   // ──────────────────────────────────────────────────────────────────────────
@@ -69,18 +73,18 @@ export async function loginAction(
 
     const cookieStore = await cookies();
     const base = { httpOnly: true, sameSite: 'lax' as const, path: '/' };
-    cookieStore.set('accessToken', data.accessToken, { ...base, maxAge: 60 * 60 });
+    cookieStore.set('accessToken', data.accessToken, { ...base, maxAge: ACCESS_TOKEN_MAX_AGE });
     cookieStore.set('refreshToken', data.refreshToken, {
       ...base,
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: REFRESH_TOKEN_MAX_AGE,
     });
     cookieStore.set('memberId', String(data.memberId ?? ''), {
       ...base,
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: REFRESH_TOKEN_MAX_AGE,
     });
     cookieStore.set('role', data.role ?? '', {
       ...base,
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: REFRESH_TOKEN_MAX_AGE,
     });
     role = data.role ?? '';
   } catch (error) {

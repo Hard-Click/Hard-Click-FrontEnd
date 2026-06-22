@@ -22,23 +22,28 @@ const COOKIE_BASE = {
  * 현재는 클라이언트의 localStorage 저장과 **병행(dual-write)** 한다.
  * 모든 도메인이 서버 호출로 전환되면 localStorage 쪽을 제거할 예정.
  */
+// 백엔드 토큰 정책: Access 15분 / Refresh 14일
+const ACCESS_TOKEN_MAX_AGE = 60 * 15;
+const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 14;
+
 export async function establishSession(data: SessionData) {
   const cookieStore = await cookies();
   cookieStore.set('accessToken', data.accessToken, {
     ...COOKIE_BASE,
-    maxAge: 60 * 60, // 1시간
+    maxAge: ACCESS_TOKEN_MAX_AGE,
   });
   cookieStore.set('refreshToken', data.refreshToken, {
     ...COOKIE_BASE,
-    maxAge: 60 * 60 * 24 * 7, // 7일
+    maxAge: REFRESH_TOKEN_MAX_AGE,
   });
+  // memberId·role은 세션 유지 동안 필요하므로 Refresh Token과 동일 수명
   cookieStore.set('memberId', String(data.memberId), {
     ...COOKIE_BASE,
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: REFRESH_TOKEN_MAX_AGE,
   });
   cookieStore.set('role', data.role, {
     ...COOKIE_BASE,
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: REFRESH_TOKEN_MAX_AGE,
   });
 }
 
