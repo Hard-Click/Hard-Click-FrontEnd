@@ -19,7 +19,7 @@ export default function AdminReportManage({
 }: {
   openReport?: string;
 }) {
-  // 목록 원본 state (삭제/처리의 source of truth)
+  // 목록 원본 state (처리의 source of truth)
   const [reports, setReports] = useState<ReportItem[]>(() =>
     mockReportList.content.map(toReportItem)
   );
@@ -62,13 +62,14 @@ export default function AdminReportManage({
     setPage(1);
   };
 
-  const handleRemoveReport = (report: ReportItem) => {
+  // 신고 처리: 행을 제거하지 않고 그대로 두되, 대상(게시물/댓글/대댓글)은
+  // 삭제 처리하고 상태를 '처리 완료'로 바꾼다.
+  const handleProcessReport = (report: ReportItem) => {
     setReports((prev) =>
-      prev.filter(
-        (r) =>
-          !(
-            r.targetType === report.targetType && r.targetId === report.targetId
-          )
+      prev.map((r) =>
+        r.targetType === report.targetType && r.targetId === report.targetId
+          ? { ...r, status: 'COMPLETED', isTargetDeleted: true }
+          : r
       )
     );
   };
@@ -83,7 +84,7 @@ export default function AdminReportManage({
       />
       <AdminReportTable
         reports={pagedReports}
-        onRemoveReport={handleRemoveReport}
+        onProcessReport={handleProcessReport}
         openReportKey={openReport}
       />
       <Pagination

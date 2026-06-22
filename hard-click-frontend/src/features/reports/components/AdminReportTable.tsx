@@ -24,13 +24,13 @@ const TARGET_STYLE: Record<ReportTarget, string> = {
 
 interface Props {
   reports: ReportItem[];
-  onRemoveReport: (report: ReportItem) => void;
+  onProcessReport: (report: ReportItem) => void;
   openReportKey?: string;
 }
 
 export default function AdminReportTable({
   reports,
-  onRemoveReport,
+  onProcessReport,
   openReportKey,
 }: Props) {
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(() =>
@@ -54,8 +54,9 @@ export default function AdminReportTable({
 
   const handleDeleteConfirm = () => {
     if (!deletingReport) return;
-    // TODO: 삭제 API 호출 후 성공 시 갱신 (현재 mock — 부모 목록에서 제거)
-    onRemoveReport(deletingReport);
+    // TODO: 삭제 API 호출 후 성공 시 갱신 (현재 mock)
+    // 대상 콘텐츠는 삭제 처리하되 신고 행은 목록에 남기고 '처리 완료'로 전환한다.
+    onProcessReport(deletingReport);
     toast.success('삭제되었습니다.');
     setDeletingReport(null);
   };
@@ -210,7 +211,7 @@ export default function AdminReportTable({
             setSelectedReport(null);
             if (openReportKey) router.replace('/admin/reports');
           }}
-          onRemoveReport={onRemoveReport}
+          onProcessReport={onProcessReport}
         />
       )}
 

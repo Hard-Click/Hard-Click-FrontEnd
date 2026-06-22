@@ -26,13 +26,13 @@ const MEMO_MAX_LENGTH = 50;
 interface Props {
   report: ReportItem;
   onClose: () => void;
-  onRemoveReport: (report: ReportItem) => void;
+  onProcessReport: (report: ReportItem) => void;
 }
 
 export default function AdminReportDetailModal({
   report,
   onClose,
-  onRemoveReport,
+  onProcessReport,
 }: Props) {
   const [reasonOpen, setReasonOpen] = useState(false);
   const [memo, setMemo] = useState('');
@@ -86,7 +86,7 @@ export default function AdminReportDetailModal({
         deleteContent={deleteContent}
         onBack={() => setConfirmOpen(false)}
         onClose={onClose}
-        onRemoveReport={onRemoveReport}
+        onProcessReport={onProcessReport}
       />
     );
   }
