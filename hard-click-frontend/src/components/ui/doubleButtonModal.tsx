@@ -19,14 +19,26 @@ export default function DoubleBtnModal({
 }: DoubleBtnModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-[400px] rounded-3xl bg-white px-8 py-8 shadow-xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="double-btn-modal-title"
+        aria-describedby="double-btn-modal-description"
+        className="w-full max-w-[400px] rounded-3xl bg-white px-8 py-8 shadow-xl"
+      >
         {/* title */}
-        <h2 className="mb-3 text-center text-2xl font-bold text-[#1F2937]">
+        <h2
+          id="double-btn-modal-title"
+          className="mb-3 text-center text-2xl font-bold text-[#1F2937]"
+        >
           {title}
         </h2>
 
         {/* description */}
-        <p className="mb-6 text-center text-base text-[#6B7280]">
+        <p
+          id="double-btn-modal-description"
+          className="mb-6 text-center text-base text-[#6B7280]"
+        >
           {description}
         </p>
 
