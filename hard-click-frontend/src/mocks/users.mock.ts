@@ -21,7 +21,7 @@ export const mockAdminUserList: AdminUserListApiResponse = {
       status: 'ACTIVE',
       joinedAt: '2026.03.15',
       lastLoginAt: '2026.05.12 14:30',
-      reportCount: 3,
+      reportCount: 52, // 누적 신고 50회 이상 → 자동 잠김(toAdminUser에서 파생)
     },
     {
       memberId: 2,
