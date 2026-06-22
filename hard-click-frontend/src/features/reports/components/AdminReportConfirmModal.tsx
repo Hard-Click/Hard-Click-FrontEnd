@@ -15,16 +15,14 @@ const TARGET_LABEL: Record<ReportTarget, string> = {
 interface Props {
   report: ReportItem;
   memo: string;
-  deleteContent: boolean;
   onBack: () => void;
   onClose: () => void;
-  onProcessReport: (report: ReportItem) => void;
+  onProcessReport: (report: ReportItem, memo?: string) => void;
 }
 
 export default function AdminReportConfirmModal({
   report,
   memo,
-  deleteContent,
   onBack,
   onClose,
   onProcessReport,
@@ -38,11 +36,10 @@ export default function AdminReportConfirmModal({
     onClose();
   };
 
-  const handleConfirm = () => {
+  const handleDelete = () => {
     // TODO: 신고 처리 API 연동 (현재 mock)
-    if (deleteContent) {
-      onProcessReport(report);
-    }
+    // 대상 콘텐츠 삭제 + 처리 완료 전환 (입력한 메모도 함께 보존)
+    onProcessReport(report, memo);
     toast.success('신고가 처리되었습니다.');
     onClose();
   };
@@ -59,12 +56,29 @@ export default function AdminReportConfirmModal({
         aria-labelledby="report-confirm-title"
         className="w-full max-w-[560px] max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-8 shadow-xl"
       >
-        <h2
-          id="report-confirm-title"
-          className="mb-3 text-xl font-bold text-[#1F2937]"
-        >
-          신고 처리 확인
-        </h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2
+            id="report-confirm-title"
+            className="text-xl font-bold text-[#1F2937]"
+          >
+            신고 처리 확인
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="닫기"
+            className="text-[#94A3B8] transition-colors hover:text-[#1E293B]"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M6 6l12 12M18 6L6 18"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        </div>
 
         {/* 뒤로가기 */}
         <button
@@ -173,27 +187,26 @@ export default function AdminReportConfirmModal({
         </div>
 
         {/* 삭제 안내 */}
-        {deleteContent && (
-          <p className="mb-6 text-sm font-bold text-[#B91C1C]">
-            해당 {TARGET_LABEL[report.targetType]}이(가) 삭제됩니다.
-          </p>
-        )}
+        <p className="mb-6 text-sm font-bold text-[#B91C1C]">
+          삭제 시 해당 {TARGET_LABEL[report.targetType]}이(가) 삭제되고 신고가
+          처리 완료됩니다.
+        </p>
 
         {/* 버튼 */}
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <button
             type="button"
             onClick={handleReject}
-            className="h-12 flex-1 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-[#4B5563] hover:bg-[#F8FAFC]"
+            className="h-10 flex-1 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-[#4B5563] hover:bg-[#F8FAFC]"
           >
             반려
           </button>
           <button
             type="button"
-            onClick={handleConfirm}
-            className="h-12 flex-1 rounded-xl bg-[#2F5DAA] text-sm font-semibold text-white hover:bg-[#1D3E75]"
+            onClick={handleDelete}
+            className="h-10 flex-1 rounded-xl border border-[#FCA5A5] bg-[#FEF2F2] text-sm font-semibold text-[#B91C1C] hover:bg-[#FEE2E2]"
           >
-            확인
+            삭제
           </button>
         </div>
       </div>
