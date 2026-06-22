@@ -2,20 +2,20 @@ import CourseNoticeList from '@/features/notices/components/CourseNoticeList';
 import { getCourseDetailServer } from '@/features/courses/server';
 import { getCourseNoticesServer } from '@/features/notices/server';
 
-export default async function CourseNoticesPage({
+// 강사 레이아웃(헤더 유지) 하에서 학생과 동일한 강의별 공지 목록을 표시한다.
+export default async function InstructorCourseNoticesPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ courseId: string }>;
+  params: Promise<{ courseid: string }>;
   searchParams: Promise<{ page?: string; keyword?: string }>;
 }) {
-  const { courseId: courseIdStr } = await params;
+  const { courseid } = await params;
   const sp = await searchParams;
-  const courseId = Number(courseIdStr);
+  const courseId = Number(courseid);
   const page = Number(sp.page ?? '0') || 0;
   const keyword = sp.keyword ?? '';
 
-  // 서버에서 강의 정보 + 강의 공지(검색/페이징) 동시 확보
   const [course, { notices, totalPages }] = await Promise.all([
     getCourseDetailServer(courseId),
     getCourseNoticesServer(courseId, { page, keyword: keyword || undefined }),
@@ -33,8 +33,8 @@ export default async function CourseNoticesPage({
       totalPages={totalPages}
       page={page}
       keyword={keyword}
-      noticeBasePath="/notices"
-      backHref={`/courses/${courseId}`}
+      noticeBasePath={`/instructor/courses/${courseId}/notices`}
+      backHref={`/instructor/courses/${courseId}`}
     />
   );
 }

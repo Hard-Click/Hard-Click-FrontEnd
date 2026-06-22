@@ -7,10 +7,17 @@ import type { Notice } from '@/features/notices/types';
 
 /**
  * 상단 고정 공지 배너 (캐러셀) — Client 잎사귀(index 상태).
- * 배너 전체를 클릭하면 전체 공지사항(`/notices`)으로 이동. (강의 공지가 아니라 전역 공지)
+ * 배너 전체를 클릭하면 전체 공지사항으로 이동. (강의 공지가 아니라 전역 공지)
+ * 이동 경로는 사용처(학생/강사/관리자)에 따라 `href`로 주입한다. (기본: 학생 `/notices`)
  * 캐러셀 화살표/점만 예외로 동작(이동 대신 항목 전환).
  */
-export default function CourseNoticeBanner({ notices }: { notices: Notice[] }) {
+export default function CourseNoticeBanner({
+  notices,
+  href = '/notices',
+}: {
+  notices: Notice[];
+  href?: string;
+}) {
   const [noticeIndex, setNoticeIndex] = useState(0);
 
   if (notices.length === 0) return null;
@@ -19,7 +26,7 @@ export default function CourseNoticeBanner({ notices }: { notices: Notice[] }) {
     <div className="relative w-full bg-[#FEF3E2] border-b border-[#F5D9A8] transition-colors hover:bg-[#FDECCB]">
       {/* 배너 전체 클릭 영역 → 전체 공지사항. 화살표보다 아래 레이어 */}
       <Link
-        href="/notices"
+        href={href}
         className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F97316]"
         aria-label="전체 공지사항 보기"
       />

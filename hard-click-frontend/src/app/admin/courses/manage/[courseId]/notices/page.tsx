@@ -53,7 +53,10 @@ export default async function AdminCourseNoticesPage({
         </div>
 
         {/* 공지 목록 테이블 */}
-        <AdminNoticeTable notices={notices} />
+        <AdminNoticeTable
+          notices={notices}
+          detailBasePath={`/admin/courses/manage/${courseId}/notices`}
+        />
       </div>
     </div>
   );

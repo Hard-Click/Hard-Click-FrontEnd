@@ -296,14 +296,18 @@ export default function InstructorNoticeDetailContent({
 
       <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
         <div className="mx-auto w-full max-w-[760px]">
-          {/* 목록으로 돌아가기 */}
+          {/* 뒤로가기 — 실제 이전 페이지(강의 상세 등)로 복귀, 없으면 공지 관리로 */}
           <button
             type="button"
-            onClick={() => router.push('/instructor/notices')}
+            onClick={() =>
+              window.history.length > 1
+                ? router.back()
+                : router.push('/instructor/notices')
+            }
             className="mb-6 flex cursor-pointer items-center gap-2 text-sm font-medium text-[#4B5563]"
           >
             <Image src="/icons/back.svg" alt="back" width={16} height={16} />
-            목록으로 돌아가기
+            뒤로가기
           </button>
 
           {/* 공지 카드 */}

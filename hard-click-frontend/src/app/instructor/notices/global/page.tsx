@@ -1,12 +1,14 @@
 import GlobalNoticeList from '@/features/notices/components/GlobalNoticeList';
 import { getGlobalNoticesServer } from '@/features/notices/server';
 
-interface NoticesPageProps {
+interface InstructorGlobalNoticesPageProps {
   searchParams: Promise<{ keyword?: string; page?: string }>;
 }
 
-// Server Component: 검색/페이징을 searchParams로 받아 서버에서 조회 (useEffect 없음)
-export default async function NoticesPage({ searchParams }: NoticesPageProps) {
+// 강사 레이아웃(헤더 유지) 하에서 학생과 동일한 전체 공지 목록을 표시한다.
+export default async function InstructorGlobalNoticesPage({
+  searchParams,
+}: InstructorGlobalNoticesPageProps) {
   const sp = await searchParams;
   const keyword = sp.keyword ?? '';
   const page = Math.max(0, Number(sp.page ?? '0') || 0);
@@ -22,8 +24,8 @@ export default async function NoticesPage({ searchParams }: NoticesPageProps) {
       totalPages={totalPages}
       page={page}
       keyword={keyword}
-      basePath="/notices"
-      backHref="/courses"
+      basePath="/instructor/notices/global"
+      backHref="/instructor/courses"
     />
   );
 }
