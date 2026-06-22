@@ -18,7 +18,7 @@ interface Props {
   deleteContent: boolean;
   onBack: () => void;
   onClose: () => void;
-  onRemoveReport: (report: ReportItem) => void;
+  onProcessReport: (report: ReportItem) => void;
 }
 
 export default function AdminReportConfirmModal({
@@ -27,7 +27,7 @@ export default function AdminReportConfirmModal({
   deleteContent,
   onBack,
   onClose,
-  onRemoveReport,
+  onProcessReport,
 }: Props) {
   const [reasonOpen, setReasonOpen] = useState(false);
   const latestReason = getLatestReason(report);
@@ -41,7 +41,7 @@ export default function AdminReportConfirmModal({
   const handleConfirm = () => {
     // TODO: 신고 처리 API 연동 (현재 mock)
     if (deleteContent) {
-      onRemoveReport(report);
+      onProcessReport(report);
     }
     toast.success('신고가 처리되었습니다.');
     onClose();
