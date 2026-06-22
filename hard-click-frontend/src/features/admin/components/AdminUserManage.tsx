@@ -7,6 +7,7 @@ import AdminMemberTable from './AdminMemberTable';
 import MemberStatusChangeModal from './MemberStatusChangeModal';
 import Pagination from './Pagination';
 import type { AdminUser } from '@/features/users/types';
+import { AUTO_LOCK_REPORT_THRESHOLD } from '@/features/users/types';
 import type {
   AdminUserRoleFilter,
   AdminUserStatusFilter,
@@ -63,6 +64,17 @@ export default function AdminUserManage({ users }: AdminUserManageProps) {
   const handleConfirmToggle = () => {
     if (!targetUser) return;
     const nextStatus = targetUser.status === 'ACTIVE' ? 'LOCKED' : 'ACTIVE';
+    // 누적 신고 50회 이상은 자동 잠김 대상 — 수동 해제를 막는다.
+    if (
+      nextStatus === 'ACTIVE' &&
+      targetUser.reportCount >= AUTO_LOCK_REPORT_THRESHOLD
+    ) {
+      toast.error(
+        `누적 신고 ${AUTO_LOCK_REPORT_THRESHOLD}회 이상이라 잠금을 해제할 수 없습니다.`
+      );
+      setTargetUser(null);
+      return;
+    }
     // TODO: 상태 변경 API 연동 후 성공 시 갱신 (현재 mock — 로컬 상태 토글)
     setUserList((prev) =>
       prev.map((u) =>

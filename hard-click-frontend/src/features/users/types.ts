@@ -57,6 +57,9 @@ export interface CompletedCourse {
 export type AdminUserRole = 'STUDENT' | 'INSTRUCTOR';
 export type AdminUserStatus = 'ACTIVE' | 'LOCKED';
 
+/** 누적 신고 이 횟수 이상이면 계정이 자동으로 잠긴다. */
+export const AUTO_LOCK_REPORT_THRESHOLD = 50;
+
 /** 백엔드 응답 항목 (API 타입) */
 export interface AdminUserApiItem {
   memberId: number;
@@ -96,7 +99,9 @@ export function toAdminUser(api: AdminUserApiItem): AdminUser {
     loginId: api.loginId,
     email: api.email,
     role: api.role,
-    status: api.status,
+    // 누적 신고 50회 이상이면 자동 잠김 (백엔드가 ACTIVE로 줘도 프론트에서 LOCKED 처리)
+    status:
+      api.reportCount >= AUTO_LOCK_REPORT_THRESHOLD ? 'LOCKED' : api.status,
     joinedAt: api.joinedAt,
     lastLoginAt: api.lastLoginAt,
     reportCount: api.reportCount,
