@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { cookies } from 'next/headers';
+import { ACCESS_TOKEN_MAX_AGE, AUTH_COOKIE_BASE } from '@/lib/auth-cookies';
 import type { ApiResponse } from '@/services/api';
 
 /**
@@ -79,10 +80,8 @@ async function refreshAccessTokenServer(): Promise<string | null> {
     if (!newToken) return null;
     try {
       cookieStore.set('accessToken', newToken, {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 60 * 15,
+        ...AUTH_COOKIE_BASE,
+        maxAge: ACCESS_TOKEN_MAX_AGE,
       });
     } catch {
       // RSC 렌더 컨텍스트: 쿠키 persist 불가 (Server Action/route에서만 가능)

@@ -1,16 +1,20 @@
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  ACCESS_TOKEN_MAX_AGE,
+  AUTH_COOKIE_BASE as COOKIE_BASE,
+  AUTH_COOKIE_NAMES,
+} from '@/lib/auth-cookies';
 
 const BACKEND = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
-
-/** Access Token 만료시간(15분) — 백엔드 정책과 일치. refresh로 재발급 시 쿠키 maxAge에 반영. */
-const ACCESS_TOKEN_MAX_AGE = 60 * 15;
-const COOKIE_BASE = { httpOnly: true, sameSite: 'lax' as const, path: '/' };
 
 /**
  * Refresh Token으로 Access Token 재발급 (POST /api/auth/refresh).
  * - 정책: refresh 응답은 `accessToken`만 반환, Refresh Token은 그대로 유지.
  * - 동시 401이 여러 건 와도 재발급은 1회만 (single-flight)으로 중복 호출 방지.
+ *   단, 모듈 레벨 변수라 **단일 서버 인스턴스 내에서만** 동작한다(서버리스 멀티 인스턴스에선
+ *   인스턴스별로 1회씩). Refresh는 고정 방식이라 중복 재발급은 무해(idempotent)하며,
+ *   엄밀한 전역 dedup이 필요해지면 Redis 등 외부 상태로 전환한다.
  *
  * ⚠️ refreshToken 전달 방식(body vs 헤더)·응답 필드는 Swagger 확정 시 재확인 필요.
  */
@@ -99,8 +103,9 @@ async function proxy(
       }
     }
   } catch {
+    // 백엔드에 닿지 못함 → 게이트웨이 에러로 일관 (body·HTTP 모두 502)
     return NextResponse.json(
-      { httpStatus: 500, message: '서버와 연결할 수 없습니다', data: null },
+      { httpStatus: 502, message: '서버와 연결할 수 없습니다', data: null },
       { status: 502 },
     );
   }
@@ -119,7 +124,7 @@ async function proxy(
   } else if (backendRes.status === 401 && !isAuthEndpoint) {
     // 재발급 실패/불가(만료·BANNED·WITHDRAWN·locked) → 세션 토큰 정리
     // (클라이언트는 401 응답을 받고 로그인 페이지로 이동)
-    for (const name of ['accessToken', 'refreshToken', 'memberId', 'role']) {
+    for (const name of AUTH_COOKIE_NAMES) {
       response.cookies.set(name, '', { ...COOKIE_BASE, maxAge: 0 });
     }
   }

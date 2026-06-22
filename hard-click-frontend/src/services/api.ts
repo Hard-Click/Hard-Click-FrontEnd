@@ -57,6 +57,9 @@ async function request<T>(
         !window.location.pathname.startsWith('/auth')
       ) {
         window.location.href = '/auth/login';
+        // 페이지가 로그인으로 이동 중 — 호출자가 에러 UI를 그리지 않도록 보류
+        // (네비게이션 완료 시까지 resolve하지 않음)
+        return new Promise<never>(() => {});
       }
       const body = error.response.data as {
         httpStatus?: number;

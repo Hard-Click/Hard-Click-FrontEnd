@@ -5,12 +5,13 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { USE_MOCK } from '@/mocks/config';
 import { mockLoginData } from '@/mocks/auth.mock';
+import {
+  ACCESS_TOKEN_MAX_AGE,
+  REFRESH_TOKEN_MAX_AGE,
+  AUTH_COOKIE_BASE,
+} from '@/lib/auth-cookies';
 
 const BACKEND = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
-
-// 백엔드 토큰 정책: Access 15분 / Refresh 14일
-const ACCESS_TOKEN_MAX_AGE = 60 * 15;
-const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 14;
 
 export interface LoginActionState {
   success: boolean;
@@ -42,7 +43,7 @@ export async function loginAction(
       return { success: false, message: '아이디 또는 비밀번호가 올바르지 않습니다' };
     }
     const cookieStore = await cookies();
-    const base = { httpOnly: true, sameSite: 'lax' as const, path: '/' };
+    const base = AUTH_COOKIE_BASE;
     cookieStore.set('accessToken', mockLoginData.accessToken, { ...base, maxAge: ACCESS_TOKEN_MAX_AGE });
     cookieStore.set('refreshToken', mockLoginData.refreshToken, { ...base, maxAge: REFRESH_TOKEN_MAX_AGE });
     cookieStore.set('memberId', String(mockLoginData.memberId), { ...base, maxAge: REFRESH_TOKEN_MAX_AGE });
@@ -72,7 +73,7 @@ export async function loginAction(
     }
 
     const cookieStore = await cookies();
-    const base = { httpOnly: true, sameSite: 'lax' as const, path: '/' };
+    const base = AUTH_COOKIE_BASE;
     cookieStore.set('accessToken', data.accessToken, { ...base, maxAge: ACCESS_TOKEN_MAX_AGE });
     cookieStore.set('refreshToken', data.refreshToken, {
       ...base,
