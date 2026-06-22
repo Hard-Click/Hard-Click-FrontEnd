@@ -43,7 +43,7 @@ export default async function AdminCoursesPage({
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       {/* 공지 배너 (client 잎사귀) */}
-      <CourseNoticeBanner notices={notices} />
+      <CourseNoticeBanner notices={notices} href="/admin/notices" />
 
       {/* 히어로 */}
       <div className="w-full bg-[#2F5DAA]">
