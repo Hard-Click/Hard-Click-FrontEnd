@@ -44,7 +44,7 @@ export default async function AdminCommunityDetailPage({
           postId={postId}
           initialPost={postRes.data}
           initialComments={initialComments}
-          readOnly={fromReport}
+          readOnly={true}
           highlightPost={fromReport && !highlightComment}
           backToReportKey={fromReport ? reportKey ?? '' : undefined}
           highlightCommentId={
