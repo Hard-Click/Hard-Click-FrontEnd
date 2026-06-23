@@ -6,15 +6,15 @@ import ConfirmModal from '@/components/ui/confirmModal';
 import { submitReportAction } from '@/features/reports/actions';
 import type { ReportTargetRef, ReportTarget } from '@/features/reports/types';
 
-/** 신고 사유 (BE 명세 순서) */
+/** 신고 사유 — BE `reportTypes` enum과 1:1 대응 */
 const REPORT_REASONS = [
-  '부적절한 언어 사용',
-  '명예훼손',
-  '음란 행위',
-  '스팸/광고',
-  '개인정보 노출',
-  '욕설 및 비하',
-  '기타',
+  '욕설/비속어', // ABUSIVE_LANGUAGE
+  '비방/명예훼손', // ABUSE
+  '음란물', // OBSCENE
+  '스팸/도배', // SPAM
+  '상업적 광고', // COMMERCIAL
+  '개인정보 노출', // PRIVACY
+  '기타', // OTHER
 ];
 
 /** 대상별 라벨 */

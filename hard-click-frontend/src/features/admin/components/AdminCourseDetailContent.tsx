@@ -738,7 +738,7 @@ export default function AdminCourseDetailContent({
                         alt=""
                       />
                       <h3 className="text-lg font-semibold text-[#1A1F2E]">
-                        사용기술
+                        과목
                       </h3>
                     </div>
                     <div className="flex flex-wrap gap-2">

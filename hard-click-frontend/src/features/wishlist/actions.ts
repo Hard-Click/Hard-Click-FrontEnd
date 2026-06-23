@@ -1,7 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { USE_MOCK } from '@/mocks/config';
+import { serverApi } from '@/lib/api';
+import { isMock } from '@/mocks/config';
 import { mockWishlist } from '@/mocks/wishlist.mock';
 
 /** 찜 동작 결과 */
@@ -37,7 +38,7 @@ export async function addWishlistAction(
     return { success: false, message: '잘못된 강의입니다.' };
   }
 
-  if (USE_MOCK) {
+  if (isMock('wishlist')) {
     const already = mockWishlist.items.some(
       (it) => it.courseId === input.courseId,
     );
@@ -62,11 +63,16 @@ export async function addWishlistAction(
     return { success: true, message: '찜 목록에 추가되었습니다.' };
   }
 
-  // TODO(API 연동): POST /api/wishlist { courseId } 후 revalidatePath('/mypage/wishlist')
-  return {
-    success: false,
-    message: '찜에 실패했어요. 잠시 후 다시 시도해주세요.',
-  };
+  // 라이브: POST /api/wishlist { courseId } (BE는 courseId만 필요)
+  const res = await serverApi.post('/api/wishlist', { courseId: input.courseId });
+  if (!res.success) {
+    return {
+      success: false,
+      message: res.message || '찜에 실패했어요. 잠시 후 다시 시도해주세요.',
+    };
+  }
+  revalidatePath('/mypage/wishlist');
+  return { success: true, message: '찜 목록에 추가되었습니다.' };
 }
 
 /**
@@ -80,7 +86,7 @@ export async function removeWishlistAction(
     return { success: false, message: '잘못된 강의입니다.' };
   }
 
-  if (USE_MOCK) {
+  if (isMock('wishlist')) {
     const exists = mockWishlist.items.some((it) => it.courseId === courseId);
     if (!exists) {
       return { success: false, message: '찜한 강의를 찾을 수 없습니다.' };
@@ -93,9 +99,14 @@ export async function removeWishlistAction(
     return { success: true, message: '찜한 강의에서 삭제되었습니다.' };
   }
 
-  // TODO(API 연동): DELETE /api/wishlist/{courseId} 후 revalidatePath('/mypage/wishlist')
-  return {
-    success: false,
-    message: '삭제에 실패했어요. 잠시 후 다시 시도해주세요.',
-  };
+  // 라이브: DELETE /api/wishlist/{courseId}
+  const res = await serverApi.delete(`/api/wishlist/${courseId}`);
+  if (!res.success) {
+    return {
+      success: false,
+      message: res.message || '삭제에 실패했어요. 잠시 후 다시 시도해주세요.',
+    };
+  }
+  revalidatePath('/mypage/wishlist');
+  return { success: true, message: '찜한 강의에서 삭제되었습니다.' };
 }
