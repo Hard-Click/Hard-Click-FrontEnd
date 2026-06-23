@@ -88,6 +88,7 @@ export default function NoticeDetail({
         {notice.previousNotice && (
           <Link
             href={`${backHref}/${notice.previousNotice.noticeId}`}
+            replace
             className="mt-4 block w-full rounded-2xl border border-[#E2E8F0] bg-white px-6 py-4 text-left shadow-sm transition-colors hover:border-[#2F5DAA]"
           >
             <p className="mb-1 text-xs text-[#94A3B8]">&gt; 이전 공지</p>
