@@ -157,9 +157,11 @@ export async function getPostDetail(postId: number) {
   if (USE_MOCK) {
     // 게시글별 상세(테스트용 여러 글) 우선. 없으면 목록 항목에 맞춰 기본 글 노출.
     // isMine 없는 항목(질문/자유 게시판)은 남의 글로 간주 → 신고 테스트 가능.
-    const li = (mockPostListResponse.posts ?? []).find(
-      (p) => p.postId === postId
-    );
+    const li = (
+      mockPostListResponse.posts ??
+      mockPostListResponse.items ??
+      []
+    ).find((p) => p.postId === postId || (p.groupId ?? null) === postId);
     const detail = mockPostDetailsById[postId] ?? {
       ...mockPostDetail,
       postId,

@@ -24,7 +24,9 @@ export async function getCommunityPosts(
   subjectCode?: string
 ): Promise<ApiResponse<PostListResponse>> {
   if (USE_MOCK) {
-    const mockPosts = mockPostListResponse.posts ?? [];
+    // mock도 posts/items 둘 다 수용 (live와 동일 토글 유지)
+    const mockPosts =
+      mockPostListResponse.posts ?? mockPostListResponse.items ?? [];
     let filtered =
       boardType === 'ALL'
         ? mockPosts
