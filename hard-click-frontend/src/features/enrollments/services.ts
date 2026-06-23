@@ -5,7 +5,7 @@ import type {
   EnrollmentStatusFilter,
   MyEnrollment,
 } from './types';
-import { USE_MOCK } from '@/mocks/config';
+import { isMock } from '@/mocks/config';
 import { mockMyEnrollments, type MyEnrollmentApiItem } from '@/mocks/enrollments.mock';
 
 /** 백엔드 enrollment 응답(API: progressPercent/enrolledAt) → UI MyEnrollment(progressRate/createdAt) */
@@ -26,7 +26,7 @@ function toMyEnrollment(e: MyEnrollmentApiItem): MyEnrollment {
  * 백엔드 EnrollRequest는 courseId만 사용(paymentType은 무시됨).
  */
 export async function enroll(payload: EnrollRequest) {
-  if (USE_MOCK) {
+  if (isMock('enrollments')) {
     return {
       success: true,
       httpStatus: 201,
@@ -42,7 +42,7 @@ export async function enroll(payload: EnrollRequest) {
  * 백엔드는 List<MyEnrollmentResponse>(배열 직접)을 반환 → UI MyEnrollment[]로 매핑.
  */
 export async function getMyEnrollments(status: EnrollmentStatusFilter = 'ALL') {
-  if (USE_MOCK) {
+  if (isMock('enrollments')) {
     return {
       success: true,
       httpStatus: 200,

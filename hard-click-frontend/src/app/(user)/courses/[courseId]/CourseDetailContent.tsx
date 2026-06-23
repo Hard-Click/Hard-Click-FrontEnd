@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAuth } from '@/features/auth/AuthProvider';
 // TODO: 수강신청 모달 — 팀원 결제 모달 확인 후 연결
@@ -31,8 +31,7 @@ import type {
 import { StarRow, StarIcon } from '@/components/common/RatingStars';
 import { CurriculumAccordion } from '@/features/courses/components/CourseCurriculumSection';
 
-// TODO: 리뷰 신고 모달 — 팀원 컴포넌트 완성 후 아래 import 연결
-// import ReviewReportModal from '@/components/ui/reviewReportModal';
+import ReportModal from '@/features/reports/components/ReportModal';
 
 /* ── 강의 에러 화면 공통 컴포넌트 ── */
 function CourseErrorScreen({
@@ -127,6 +126,7 @@ export default function CourseDetailContent({
   initialCourse: CourseDetail | null;
 }) {
   const params = useParams();
+  const router = useRouter();
   const courseId = Number(params.courseId);
 
   const [course] = useState<CourseDetail | null>(initialCourse);
@@ -148,8 +148,7 @@ export default function CourseDetailContent({
   const [previewLesson, setPreviewLesson] = useState<CurriculumLesson | null>(
     null
   );
-  // TODO: reportingReview — 팀원 ReviewReportModal 완성 후 활성화
-  // const [reportingReview, setReportingReview] = useState<Review | null>(null);
+  const [reportingReview, setReportingReview] = useState<Review | null>(null);
 
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewPage, setReviewPage] = useState(1);
@@ -238,15 +237,8 @@ export default function CourseDetailContent({
         toast.error(result.message);
       }
     } else {
-      // TODO: 유료 수강신청 — 팀원 결제 모달 확인 후 연결 (UA-P0-121)
-      // 결제 모달 완성 전까지는 mock에서 결제 우회하여 즉시 수강 처리
-      const result = await enrollCourse(courseId, 'PAID');
-      if (result.success) {
-        setIsEnrolled(true);
-        toast.success(result.message);
-      } else {
-        toast.error(result.message);
-      }
+      // UA-P0-121: 유료 → 해당 강의 단건 결제 페이지로 이동 → 토스 결제 → 승인 시 수강 등록
+      router.push(`/checkout?type=course&courseId=${courseId}`);
     }
   };
 
@@ -590,7 +582,7 @@ export default function CourseDetailContent({
           {/* ── 메인 콘텐츠 (풀 너비) ── */}
           <div className="flex flex-col gap-8">
             {/* ── 공지사항 ── */}
-            <section id="notices" className="scroll-mt-6">
+            <section id="notices" className="scroll-mt-20">
               <div
                 className="bg-white border border-[#E2E8F0] shadow-[0_4px_10px_rgba(0,0,0,0.06)] rounded-2xl flex flex-col gap-6"
                 style={{ padding: '33px' }}
@@ -671,7 +663,7 @@ export default function CourseDetailContent({
             </section>
 
             {/* ── 강사소개 ── */}
-            <section id="instructor" className="scroll-mt-6">
+            <section id="instructor" className="scroll-mt-20">
               <div
                 className="bg-white border border-[#D5D8DD]"
                 style={{ padding: '33px 33px 1px' }}
@@ -779,7 +771,7 @@ export default function CourseDetailContent({
             </section>
 
             {/* ── 강의소개 ── */}
-            <section id="intro" className="scroll-mt-6">
+            <section id="intro" className="scroll-mt-20">
               <div
                 className="bg-white border border-[#D5D8DD]"
                 style={{ padding: '33px 33px 1px' }}
@@ -858,7 +850,7 @@ export default function CourseDetailContent({
                         alt=""
                       />
                       <h3 className="text-lg font-semibold text-[#1A1F2E]">
-                        사용기술
+                        과목
                       </h3>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -918,34 +910,12 @@ export default function CourseDetailContent({
                       </div>
                     ))}
                   </div>
-
-                  <div>
-                    <div className="grid grid-cols-2 gap-3">
-                      {course.materialsProvided.map((item, i) => (
-                        <div
-                          key={i}
-                          className="bg-[#E8EAED] rounded-2xl flex items-center gap-3"
-                          style={{ padding: '12px 16px' }}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src="/icons/checkDarkIcon.svg"
-                            width={16}
-                            height={16}
-                            alt=""
-                            className="flex-shrink-0"
-                          />
-                          <span className="text-sm text-[#1A1F2E]">{item}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
                 </div>
               </div>
             </section>
 
             {/* ── 커리큘럼 ── */}
-            <section id="curriculum" className="scroll-mt-6">
+            <section id="curriculum" className="scroll-mt-20">
               <div
                 className="bg-white border border-[#D5D8DD]"
                 style={{ padding: '33px 33px 1px' }}
@@ -972,7 +942,7 @@ export default function CourseDetailContent({
             </section>
 
             {/* ── 수강평 ── */}
-            <section id="reviews" className="scroll-mt-6 mb-10">
+            <section id="reviews" className="scroll-mt-20 mb-10">
               <div
                 className="bg-white border border-[#D5D8DD]"
                 style={{ padding: '33px 33px 1px' }}
@@ -1113,9 +1083,12 @@ export default function CourseDetailContent({
                                   </button>
                                 </>
                               )}
-                              {/* UA-P1-197: 타인 리뷰 신고 버튼 — TODO: onClick={() => setReportingReview(review)} 팀원 ReviewReportModal 완성 후 연결 */}
+                              {/* UA-P1-197: 타인 리뷰 신고 — 공용 ReportModal 재사용(targetType=REVIEW) */}
                               {!review.isMine && (
                                 <button
+                                  onClick={() => {
+                                    if (requireLogin()) setReportingReview(review);
+                                  }}
                                   className="w-7 h-7 flex items-center justify-center rounded-2xl hover:bg-red-50 transition-colors"
                                   title="신고"
                                 >
@@ -1246,8 +1219,13 @@ export default function CourseDetailContent({
         </div>
       )}
 
-      {/* TODO: 수강신청 모달 — 팀원 결제 모달 확인 후 연결 */}
-      {/* TODO: 리뷰 신고 모달 — import ReviewReportModal from '@/components/ui/reviewReportModal' 팀원 확인 후 연결 */}
+      {/* 리뷰 신고 모달 — 공용 ReportModal 재사용 (커뮤니티 신고와 동일) */}
+      {reportingReview && (
+        <ReportModal
+          target={{ targetType: 'REVIEW', targetId: reportingReview.reviewId }}
+          onClose={() => setReportingReview(null)}
+        />
+      )}
 
       {/* 미리보기 영상 모달 */}
       {previewLesson && (

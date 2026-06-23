@@ -88,6 +88,33 @@ export async function getCourseNoticesServer(
   };
 }
 
+/**
+ * 강의 상세 미리보기용 공지 — 목록 + 상위 N개 본문(content) 보강.
+ *
+ * 공지 "목록"(`GET /api/notices`) 응답엔 **content가 없다**(상세에만 존재).
+ * 그래서 강의 상세 카드의 본문이 비어 보였음 → 표시할 상위 N개만 상세를 조회해 content를 채운다.
+ * (정렬은 CourseDetailContent와 동일: 고정 맨 위 → 최신순. N개 한정이라 N+1 비용 허용)
+ */
+export async function getCourseNoticePreviewServer(
+  courseId: number,
+  limit = 3,
+): Promise<Notice[]> {
+  const { notices } = await getCourseNoticesServer(courseId, { page: 0 });
+  const sorted = [...notices].sort((a, b) => {
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+  const top = sorted.slice(0, limit);
+  // 상세 조회 실패해도 카드 자체는 노출(빈 본문 유지)
+  return Promise.all(
+    top.map(async (n) => {
+      const detail = await getNoticeDetailServer(n.noticeId).catch(() => null);
+      return { ...n, content: detail?.content ?? '' };
+    }),
+  );
+}
+
 /** 공지 상세 — 서버에서 조회 (Server Component 전용) */
 export async function getNoticeDetailServer(
   noticeId: number,

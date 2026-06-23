@@ -6,7 +6,7 @@ import type {
   UpdateReviewResponse,
   DeleteReviewResponse,
 } from './types';
-import { USE_MOCK } from '@/mocks/config';
+import { isMock } from '@/mocks/config';
 import { mockReviewListResponse } from '@/mocks/reviews.mock';
 
 /* ───── 수강 리뷰 작성 (POST /api/courses/{courseId}/reviews) ─────
@@ -14,7 +14,7 @@ import { mockReviewListResponse } from '@/mocks/reviews.mock';
  * body: { rating, content } → response: { reviewId } (201)
  * 400: 비속어/글자수/별점 단위 오류 | 403: 미완료 | 409: 중복 작성 */
 export async function createReview(courseId: number, body: CreateReviewRequest) {
-  if (USE_MOCK) {
+  if (isMock('reviews')) {
     return {
       success: true,
       httpStatus: 201,
@@ -35,7 +35,7 @@ export async function updateReview(
   reviewId: number,
   body: UpdateReviewRequest,
 ) {
-  if (USE_MOCK) {
+  if (isMock('reviews')) {
     return {
       success: true,
       httpStatus: 200,
@@ -74,7 +74,7 @@ export async function getReviews(
   sort: 'latest' | 'rating' = 'latest',
   page = 0,
 ) {
-  if (USE_MOCK) {
+  if (isMock('reviews')) {
     const PER_PAGE = 5;
     const sorted = [...mockReviewListResponse.reviews].sort((a, b) =>
       sort === 'rating'
@@ -105,7 +105,7 @@ export async function getReviews(
  * body 없음 → response body 없음 (200)
  * 403: 작성자 본인이 아님 | 404: 없는 리뷰 */
 export async function deleteReview(courseId: number, reviewId: number) {
-  if (USE_MOCK) {
+  if (isMock('reviews')) {
     return {
       success: true,
       httpStatus: 200,

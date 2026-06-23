@@ -1,11 +1,23 @@
 'use server';
 
-import { USE_MOCK } from '@/mocks/config';
+import { isMock } from '@/mocks/config';
+import { serverApi } from '@/lib/api';
 import type { SubmitReportInput, ReportActionResult } from './types';
 
+/** FE 신고 사유 → BE `reportTypes` enum (1:1 대응, ReportModal 라벨과 일치). */
+const REASON_TO_ENUM: Record<string, string> = {
+  '욕설/비속어': 'ABUSIVE_LANGUAGE',
+  '비방/명예훼손': 'ABUSE',
+  음란물: 'OBSCENE',
+  '스팸/도배': 'SPAM',
+  '상업적 광고': 'COMMERCIAL',
+  '개인정보 노출': 'PRIVACY',
+  기타: 'OTHER',
+};
+
 /**
- * 콘텐츠 신고 제출 (Server Action) — 게시글/댓글/대댓글 공용.
- * 신고자는 BE가 토큰으로 식별. mock: 접수 성공. 연동 시 POST /api/reports로 교체.
+ * 콘텐츠 신고 제출 (Server Action) — 게시글/댓글/리뷰 공용.
+ * 신고자는 BE가 토큰으로 식별. `POST /api/reports` 실서버 연동.
  */
 export async function submitReportAction(
   input: SubmitReportInput,
@@ -18,15 +30,29 @@ export async function submitReportAction(
     return { success: false, message: '신고 사유를 하나 이상 선택해주세요.' };
   }
 
-  if (USE_MOCK) {
+  if (isMock('reports')) {
     // mock: 접수 성공 (관리자 신고 목록은 BE가 누적 집계 → GET /api/reports)
     return { success: true, message: '신고가 접수되었습니다.' };
   }
 
-  // TODO(API 연동): POST /api/reports
-  //   body: { targetType, targetId, reasons, detail } — 신고자는 토큰으로 식별
-  return {
-    success: false,
-    message: '신고에 실패했어요. 잠시 후 다시 시도해주세요.',
-  };
+  // 한글 사유 → enum(중복 제거, 모르는 사유는 OTHER).
+  const reportTypes = [
+    ...new Set(input.reasons.map((r) => REASON_TO_ENUM[r] ?? 'OTHER')),
+  ];
+  // 추가 설명(선택)만 reason free-text로 — 사유 자체는 reportTypes(enum)가 표현
+  const reason = input.detail?.trim() || undefined;
+
+  const res = await serverApi.post<{ reportId: number }>('/api/reports', {
+    targetType: input.targetType,
+    targetId: input.targetId,
+    reportTypes,
+    reason,
+  });
+  if (!res.success || !res.data) {
+    return {
+      success: false,
+      message: res.message || '신고에 실패했어요. 잠시 후 다시 시도해주세요.',
+    };
+  }
+  return { success: true, message: '신고가 접수되었습니다.' };
 }
