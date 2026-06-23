@@ -58,7 +58,7 @@ export async function getInstructorCourses(page = 0, size = 20) {
     };
   }
   const res = await api.get<CourseListApiResponse>(
-    `/api/instructor/courses?page=${page}&size=${size}`,
+    `/api/instructor/courses?page=${page}&size=${size}`
   );
   if (res.success && res.data) {
     return {
@@ -80,15 +80,23 @@ export async function getInstructorCourses(page = 0, size = 20) {
  */
 export async function createCourse(payload: {
   title: string;
-  subject: string;
-  description: string;
+  subjectId: number;
+  description?: string;
   thumbnailUrl?: string;
   priceType: 'FREE' | 'PAID';
   price: number;
+  learningObjectives?: string[];
+  targetAudience?: string[];
+  level?: string;
   sections: Array<{
     title: string;
     orderIndex: number;
-    lessons: Array<{ title: string; description?: string; orderIndex: number }>;
+    lessons: Array<{
+      title: string;
+      description?: string;
+      orderIndex: number;
+      durationSeconds?: number;
+    }>;
   }>;
 }) {
   if (USE_MOCK) {
@@ -116,11 +124,14 @@ export async function updateCourse(
   courseId: number,
   payload: {
     title: string;
-    subject: string;
-    description: string;
+    subjectId: number;
+    description?: string;
     thumbnailUrl?: string;
     priceType: 'FREE' | 'PAID';
     price: number;
+    learningObjectives?: string[];
+    targetAudience?: string[];
+    level?: string;
     sections: Array<{
       title: string;
       orderIndex: number;
@@ -128,9 +139,10 @@ export async function updateCourse(
         title: string;
         description?: string;
         orderIndex: number;
+        durationSeconds?: number;
       }>;
     }>;
-  },
+  }
 ) {
   if (USE_MOCK) {
     console.log('[MOCK] 강의 수정:', courseId, payload);
@@ -199,6 +211,6 @@ export async function publishCourse(courseId: number, published: boolean) {
     };
   }
   return api.patch<null>(
-    `/api/courses/${courseId}/status?published=${published}`,
+    `/api/courses/${courseId}/status?published=${published}`
   );
 }

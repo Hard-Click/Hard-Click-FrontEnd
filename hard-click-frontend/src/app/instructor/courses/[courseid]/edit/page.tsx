@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 
 import CourseCreateForm from '@/features/instructor/components/CourseCreateForm';
-import { getCourseDetail } from '@/features/courses/services';
+import { getCourseDetail, getSubjects } from '@/features/courses/services';
 
 export default function EditCoursePage() {
   const params = useParams();
@@ -19,20 +19,21 @@ export default function EditCoursePage() {
       return;
     }
 
-    // API에서 강의 상세 조회 (실패 시 localStorage 폴백)
-    getCourseDetail(courseId)
-      .then((data) => {
+    Promise.all([getCourseDetail(courseId), getSubjects()])
+      .then(([data, subjects]) => {
         if (data) {
+          const matched = subjects.find((s) => s.name === data.subjectName);
           setCourse({
             courseId,
             title: data.title,
-            category: data.subjectName,
-            description: data.description,
+            subjectId: matched?.subjectId ?? 0,
             priceType: data.isFree ? 'FREE' : 'PAID',
             price: data.isFree ? '' : String(data.price),
             thumbnailUrl: data.thumbnailUrl,
             thumbnailName: '',
-            // API 응답 curriculum(sectionId/lessons) → 폼 형태(id/lectures)로 변환
+            learningGoals: data.learningGoals ?? [],
+            targetAudience: data.targetAudience ?? [],
+            level: data.level ?? '',
             curriculum: (data.curriculum ?? []).map((section) => ({
               id: String(section.sectionId),
               title: section.title,
@@ -43,13 +44,6 @@ export default function EditCoursePage() {
               })),
             })),
           });
-        } else {
-          // 폴백: localStorage
-          const savedCourses = JSON.parse(localStorage.getItem('myCourses') || '[]');
-          const foundCourse = savedCourses.find(
-            (item: any) => item.id === courseId,
-          );
-          setCourse(foundCourse);
         }
       })
       .finally(() => setIsLoading(false));
@@ -69,12 +63,14 @@ export default function EditCoursePage() {
       initialData={{
         courseId: course.courseId,
         title: course.title,
-        subject: course.category,
-        description: course.description,
+        subjectId: course.subjectId,
         priceType: course.priceType,
-        price: course.price === '무료' ? '' : String(course.price).replace('원', ''),
+        price: course.price,
         thumbnailUrl: course.thumbnailUrl,
         thumbnailName: course.thumbnailName,
+        learningGoals: course.learningGoals,
+        targetAudience: course.targetAudience,
+        level: course.level,
         curriculum: course.curriculum,
       }}
     />
