@@ -16,6 +16,7 @@ import {
 } from '@/mocks/courses.mock';
 import { toCourseDetail } from './services';
 import { SUBJECTS, subjectLabel, subjectValueById } from './subjects';
+import { getCurrentUser } from '@/features/auth/session';
 
 /** 백엔드 목록 응답 → UI CourseListItem */
 function toCourseListItem(item: CourseListApiItem): CourseListItem {
@@ -112,13 +113,16 @@ export async function getCourseDetailServer(
   if (!res.success || !res.data) return null;
   const detail = toCourseDetail(res.data);
 
-  // 수강 여부 보강: 상세 응답엔 isEnrolled가 없으므로, 내 수강목록에 이 강의가 있으면 true.
-  // 비로그인이면 /api/enrollments/me가 401 → success=false → isEnrolled는 false 유지.
-  const enrolled = await serverApi.get<{ courseId: number }[]>(
-    '/api/enrollments/me?status=ALL',
-  );
-  if (enrolled.success && Array.isArray(enrolled.data)) {
-    detail.isEnrolled = enrolled.data.some((e) => e.courseId === courseId);
+  // 수강 여부 보강: 로그인 사용자만 조회한다.
+  // 비로그인이면 어차피 /api/enrollments/me가 401(isEnrolled=false 유지)이므로 호출 자체를 생략.
+  const user = await getCurrentUser();
+  if (user) {
+    const enrolled = await serverApi.get<{ courseId: number }[]>(
+      '/api/enrollments/me?status=ALL',
+    );
+    if (enrolled.success && Array.isArray(enrolled.data)) {
+      detail.isEnrolled = enrolled.data.some((e) => e.courseId === courseId);
+    }
   }
   return detail;
 }

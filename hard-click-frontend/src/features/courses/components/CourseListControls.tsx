@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import CourseSearchBar from './CourseSearchBar';
 import CourseFilterBar from './CourseFilterBar';
@@ -32,9 +32,23 @@ export default function CourseListControls({
   const searchParams = useSearchParams();
   const [keywordInput, setKeywordInput] = useState(keyword);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 디바운스 콜백이 늦게 실행돼도 항상 최신 searchParams로 push한다.
+  // (대기 중 과목·정렬 등 다른 필터가 바뀌어도 이전 상태로 덮어쓰지 않게)
+  const searchParamsRef = useRef(searchParams);
+  useEffect(() => {
+    searchParamsRef.current = searchParams;
+  }, [searchParams]);
+
+  // 언마운트 시 대기 중 디바운스 타이머 정리
+  useEffect(
+    () => () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    },
+    [],
+  );
 
   function pushWith(next: Record<string, string | undefined>) {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParamsRef.current.toString());
     Object.entries(next).forEach(([key, value]) => {
       if (value) params.set(key, value);
       else params.delete(key);

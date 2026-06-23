@@ -29,5 +29,6 @@ const MOCK_OVERRIDE: Record<string, boolean> = {
 
 /** 도메인 단위 mock 사용 여부. 오버라이드가 없으면 전역 `USE_MOCK`을 따른다. */
 export function isMock(domain: string): boolean {
-  return MOCK_OVERRIDE[domain] ?? USE_MOCK;
+  // own-property만 조회 (prototype 키로 boolean 외 값이 새지 않도록)
+  return Object.hasOwn(MOCK_OVERRIDE, domain) ? MOCK_OVERRIDE[domain] : USE_MOCK;
 }

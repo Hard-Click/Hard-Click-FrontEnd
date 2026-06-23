@@ -12,7 +12,7 @@ export interface SubjectOption {
   name: string; // 한글 라벨 (화면 표시)
 }
 
-export const SUBJECTS: SubjectOption[] = [
+export const SUBJECTS: readonly SubjectOption[] = [
   { subjectId: 1, value: 'KO_READING', name: '독서' },
   { subjectId: 2, value: 'KO_LITERATURE', name: '문학' },
   { subjectId: 3, value: 'KO_SPEECH_WRITING', name: '화법과 작문' },
