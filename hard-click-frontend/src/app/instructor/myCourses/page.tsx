@@ -1,12 +1,13 @@
 import { getInstructorCoursesServer } from '@/features/instructor/server';
 import MyCoursesContent, { type Course } from '@/features/instructor/components/MyCoursesContent';
+import { SUBJECTS } from '@/features/courses/subjects';
 
 export default async function MyCoursesPage() {
   // 서버에서 강사 내 강의 목록 확보 → 화면 표시용 Course로 변환
   const { content } = await getInstructorCoursesServer();
   const courses: Course[] = content.map((c) => ({
     id: c.courseId,
-    category: c.subjectName,
+    category: SUBJECTS.find((s) => s.value === c.subjectName)?.name ?? c.subjectName,
     title: c.title,
     isPublic: c.status === 'PUBLISHED',
     students: c.enrollmentCount,
