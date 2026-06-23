@@ -1,5 +1,6 @@
 import { serverApi as api } from '@/lib/api';
 import type { ApiResponse } from '@/services/api';
+import { SUBJECTS } from '@/features/courses/subjects';
 import type {
   BoardType,
   PostListResponse,
@@ -150,9 +151,12 @@ export async function getPosts(
   return mapOk(await api.get<PostListApiResponse>(url), toPostListResponse);
 }
 
-export async function getSubjects() {
+export async function getSubjects(): Promise<ApiResponse<SubjectItem[]>> {
   if (USE_MOCK) return mockOk(mockSubjects);
-  return api.get<SubjectItem[]>('/api/subjects');
+  // BE에 과목 마스터 API 없음 → FE 상수에서 직접 제공
+  return mockOk(
+    SUBJECTS.map((s) => ({ code: s.value, name: s.name }))
+  );
 }
 
 export async function getPostDetail(postId: number) {

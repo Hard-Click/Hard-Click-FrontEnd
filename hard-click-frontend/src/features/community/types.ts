@@ -100,13 +100,13 @@ export interface CreatePostRequest {
   boardType: Exclude<BoardType, 'ALL'>;
   title: string;
   content: string;
-  subject?: string; // 백엔드는 과목명 문자열(예: "수학")로 받음
+  subject?: string; // 백엔드는 과목 enum 코드(예: MATH_1)로 받음
 }
 
 export interface UpdatePostRequest {
   title: string;
   content: string;
-  subject?: string; // 백엔드는 과목명 문자열(예: "수학")로 받음
+  subject?: string; // 백엔드는 과목 enum 코드(예: MATH_1)로 받음
 }
 
 export interface CreateCommentRequest {
