@@ -1,7 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { USE_MOCK } from '@/mocks/config';
+import { serverApi } from '@/lib/api';
+import { isMock } from '@/mocks/config';
 import { mockCart } from '@/mocks/cart.mock';
 
 /** 장바구니 삭제 결과 */
@@ -21,7 +22,7 @@ export async function removeCartItemsAction(
     return { success: false, message: '삭제할 항목이 없습니다.' };
   }
 
-  if (USE_MOCK) {
+  if (isMock('cart')) {
     const exists = cartItemIds.every((id) =>
       mockCart.items.some((it) => it.cartItemId === id),
     );
@@ -41,9 +42,16 @@ export async function removeCartItemsAction(
     return { success: true, message: '장바구니가 삭제되었습니다.' };
   }
 
-  // TODO(API 연동): DELETE /api/cart/{cartItemId} 반복 호출 후 revalidatePath('/cart')
-  return {
-    success: false,
-    message: '삭제에 실패했어요. 잠시 후 다시 시도해주세요.',
-  };
+  // 라이브: BE는 courseId로 삭제(식별자=courseId) → DELETE /api/cart/{courseId} 병렬 호출
+  const results = await Promise.all(
+    cartItemIds.map((id) => serverApi.delete(`/api/cart/${id}`)),
+  );
+  if (results.some((r) => !r.success)) {
+    return {
+      success: false,
+      message: '삭제에 실패했어요. 잠시 후 다시 시도해주세요.',
+    };
+  }
+  revalidatePath('/cart');
+  return { success: true, message: '장바구니가 삭제되었습니다.' };
 }

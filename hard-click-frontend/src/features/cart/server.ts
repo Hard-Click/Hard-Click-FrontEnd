@@ -1,5 +1,5 @@
 import { serverApi } from '@/lib/api';
-import { USE_MOCK } from '@/mocks/config';
+import { isMock } from '@/mocks/config';
 import {
   mockCart,
   type CartApiResponse,
@@ -7,7 +7,7 @@ import {
 } from '@/mocks/cart.mock';
 import type { Cart, CartItem } from './types';
 
-/** BE 항목 → UI 계약 매퍼(격리막) */
+/** mock(CartApiResponse) 항목 → UI 계약 매퍼(격리막) */
 function toCartItem(api: CartItemApiItem): CartItem {
   return {
     cartItemId: api.cartItemId,
@@ -27,20 +27,50 @@ function toCart(api: CartApiResponse): Cart {
   };
 }
 
+/** 실서버 GET /api/cart 응답(BE `CartResponse`) — 격리막 */
+interface BeCartResponse {
+  items: {
+    courseId: number;
+    title: string;
+    instructorName: string;
+    price: number;
+  }[];
+  selectedCount: number;
+  totalAmount: number;
+}
+
+/**
+ * BE 응답 → UI 매퍼. ⚠️ BE는 cartItemId가 없고 **courseId로 삭제**(`DELETE /api/cart/{courseId}`)
+ * → 식별자(cartItemId)를 courseId로 둔다. 썸네일은 BE 미제공이라 빈 값(연동 확장 시 추가).
+ */
+function toCartFromApi(api: BeCartResponse): Cart {
+  return {
+    items: api.items.map((i) => ({
+      cartItemId: i.courseId,
+      courseId: i.courseId,
+      title: i.title,
+      instructor: i.instructorName,
+      price: i.price,
+      thumbnailUrl: '',
+    })),
+    totalPrice: api.totalAmount,
+    totalCount: api.items.length,
+  };
+}
+
 /**
  * 내 장바구니 조회 (Server Component 전용).
- * BE 미구현(노션 명세) → USE_MOCK. 연동 시 엔드포인트/매퍼만 맞추면 됨.
+ * BE `GET /api/cart` 구현됨(레포 origin/develop) — 라이브 서버 배포 후 config `cart:false`로 전환.
+ * 실패는 빈 장바구니로 숨기지 않고 전파 → error.tsx에서 처리.
  */
 export async function getCartServer(): Promise<Cart> {
-  if (USE_MOCK) {
+  if (isMock('cart')) {
     return toCart(mockCart);
   }
 
-  // TODO(API 연동): GET /api/cart (CartApiResponse).
-  // 실패는 빈 장바구니로 숨기지 않고 전파 → error.tsx에서 에러/빈상태 구분 처리.
-  const res = await serverApi.get<CartApiResponse>('/api/cart');
+  const res = await serverApi.get<BeCartResponse>('/api/cart');
   if (!res.success || !res.data) {
     throw new Error('장바구니를 불러오지 못했습니다.');
   }
-  return toCart(res.data);
+  return toCartFromApi(res.data);
 }
