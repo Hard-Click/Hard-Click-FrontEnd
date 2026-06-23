@@ -1,12 +1,12 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import { useRouter } from 'next/navigation';
 import LoadingModal from '@/components/ui/loadingModal';
 import { createCourse, updateCourse, uploadCourseThumbnail } from '../services';
-import { getSubjects } from '@/features/courses/services';
+import { SUBJECTS } from '@/features/courses/subjects';
 import type { Subject } from '@/features/courses/types';
 import { api } from '@/services/api';
 import axios from 'axios';
@@ -190,7 +190,9 @@ export default function CourseCreateForm({
   initialData,
 }: CourseCreateFormProps) {
   const [title, setTitle] = useState(initialData?.title ?? '');
-  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [subjects] = useState<Subject[]>(
+    SUBJECTS.map((s) => ({ subjectId: s.subjectId, name: s.name }))
+  );
   const [subjectId, setSubjectId] = useState<number>(initialData?.subjectId ?? 0);
   const [priceType, setPriceType] = useState<'FREE' | 'PAID'>(
     initialData?.priceType ?? 'FREE'
@@ -213,10 +215,6 @@ export default function CourseCreateForm({
   const [targetAudienceInput, setTargetAudienceInput] = useState('');
   const [level, setLevel] = useState(initialData?.level ?? '');
   const router = useRouter();
-
-  useEffect(() => {
-    getSubjects().then(setSubjects);
-  }, []);
 
   const [errors, setErrors] = useState({
     title: '',
@@ -424,7 +422,7 @@ export default function CourseCreateForm({
                 }`}
               >
                 <option value="" disabled hidden>
-                  {subjects.length === 0 ? '불러오는 중...' : '과목을 선택하세요'}
+                  {'과목을 선택하세요'}
                 </option>
                 {subjects.map((s) => (
                   <option key={s.subjectId} value={s.subjectId}>

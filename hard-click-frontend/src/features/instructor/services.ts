@@ -1,5 +1,6 @@
 import { api } from '@/services/api';
-import { USE_MOCK } from '@/mocks/config';
+import { isMock } from '@/mocks/config';
+const USE_MOCK = isMock('instructor');
 import { mockInstructorCourses } from '@/mocks/instructor.mock';
 import type {
   CourseListApiItem,

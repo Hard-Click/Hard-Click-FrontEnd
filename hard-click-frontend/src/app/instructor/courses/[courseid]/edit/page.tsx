@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 
 import CourseCreateForm from '@/features/instructor/components/CourseCreateForm';
-import { getCourseDetail, getSubjects } from '@/features/courses/services';
+import { getCourseDetail } from '@/features/courses/services';
+import { SUBJECTS } from '@/features/courses/subjects';
+import type { CurriculumSection, CurriculumLesson } from '@/features/courses/types';
 
 export default function EditCoursePage() {
   const params = useParams();
@@ -19,10 +21,10 @@ export default function EditCoursePage() {
       return;
     }
 
-    Promise.all([getCourseDetail(courseId), getSubjects()])
-      .then(([data, subjects]) => {
+    getCourseDetail(courseId)
+      .then((data) => {
         if (data) {
-          const matched = subjects.find((s) => s.name === data.subjectName);
+          const matched = SUBJECTS.find((s) => s.value === data.subjectName);
           setCourse({
             courseId,
             title: data.title,
@@ -34,10 +36,10 @@ export default function EditCoursePage() {
             learningGoals: data.learningGoals ?? [],
             targetAudience: data.targetAudience ?? [],
             level: data.level ?? '',
-            curriculum: (data.curriculum ?? []).map((section) => ({
+            curriculum: (data.curriculum ?? []).map((section: CurriculumSection) => ({
               id: String(section.sectionId),
               title: section.title,
-              lectures: (section.lessons ?? []).map((lesson) => ({
+              lectures: (section.lessons ?? []).map((lesson: CurriculumLesson) => ({
                 id: String(lesson.lessonId),
                 fileName: lesson.title,
                 duration: lesson.duration,
