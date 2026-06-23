@@ -178,7 +178,7 @@ export default function CommunityWriteForm({
     setIsConfirmOpen(false);
     setIsSubmitting(true);
     const boardType = BOARD_TYPE_VALUE[activeTab];
-    // 백엔드는 과목을 이름 문자열(subject)로 받음 (질문/스터디 게시판에서 필수)
+    // 백엔드는 과목을 enum 코드(예: MATH_1)로 받음 (질문/스터디 게시판에서 필수)
     const subjectName =
       (activeTab === '질문게시판' || activeTab === '스터디모집') && subject
         ? subject
@@ -366,7 +366,7 @@ export default function CommunityWriteForm({
                       : 'border-[#E2E8F0]'
                   }`}
                 >
-                  <span>{subject || '과목을 선택하세요'}</span>
+                  <span>{subjects.find((s) => s.code === subject)?.name || '과목을 선택하세요'}</span>
                   <Image
                     src="/icons/chevronDownIcon.svg"
                     alt="down"
@@ -384,13 +384,13 @@ export default function CommunityWriteForm({
                         key={s.code}
                         type="button"
                         onClick={() => {
-                          setSubject(s.name);
+                          setSubject(s.code);
                           setSubjectError('');
                           setFocusedErrorField(null);
                           setIsSubjectOpen(false);
                         }}
                         className={`w-full px-4 py-2.5 text-left text-sm hover:bg-[#F8FAFC] ${
-                          subject === s.name
+                          subject === s.code
                             ? 'bg-[#EFF6FF] font-semibold text-[#2F5DAA]'
                             : 'text-[#374151]'
                         }`}
