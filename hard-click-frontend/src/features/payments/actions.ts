@@ -1,9 +1,81 @@
 'use server';
 
+import { randomUUID } from 'crypto';
 import { revalidatePath } from 'next/cache';
-import { USE_MOCK } from '@/mocks/config';
+import { serverApi } from '@/lib/api';
+import { USE_MOCK, isMock } from '@/mocks/config';
 import { mockOrderDetails } from '@/mocks/payments.mock';
-import type { RefundResult } from './types';
+import type {
+  RefundResult,
+  PaymentConfirmInput,
+  PaymentConfirmResponseData,
+  PaymentConfirmResult,
+} from './types';
+
+/**
+ * 결제 최종 승인 (Server Action) — 토스 successUrl 진입 후 호출.
+ * 흐름: 프론트(토스 결제창에서 paymentKey 획득) → 이 액션 → 백엔드가 금액 검증 + 토스 최종 승인.
+ *
+ * - `POST /api/payments/confirm` (Idempotency-Key 헤더로 중복 승인 방지)
+ * - body: `{ paymentKey, orderId, amount, courseId }`
+ *   (OpenAPI 스키마는 courseId/amount만 명시하나 BE가 실제로 paymentKey도 사용)
+ */
+export async function confirmPaymentAction(
+  input: PaymentConfirmInput,
+): Promise<PaymentConfirmResult> {
+  // 입력 검증 (Server Action 경계)
+  if (
+    typeof input?.paymentKey !== 'string' ||
+    input.paymentKey.length === 0 ||
+    typeof input.orderId !== 'string' ||
+    input.orderId.length === 0 ||
+    !Number.isFinite(input.amount) ||
+    input.amount <= 0 ||
+    !Number.isInteger(input.courseId) ||
+    input.courseId <= 0
+  ) {
+    return { success: false, message: '결제 정보가 올바르지 않습니다.' };
+  }
+
+  if (isMock('payments')) {
+    return {
+      success: true,
+      message: '결제가 완료되었습니다.',
+      status: 'DONE',
+      duplicate: false,
+    };
+  }
+
+  const res = await serverApi.post<PaymentConfirmResponseData>(
+    '/api/payments/confirm',
+    {
+      paymentKey: input.paymentKey,
+      orderId: input.orderId,
+      amount: input.amount,
+      courseId: input.courseId,
+    },
+    { 'Idempotency-Key': randomUUID() },
+  );
+
+  if (!res.success || !res.data) {
+    return {
+      success: false,
+      message: res.message || '결제 승인에 실패했습니다.',
+    };
+  }
+
+  // 결제 성공 시 수강 등록까지 마쳐야 학습 가능.
+  // (BE confirm이 enrollment를 자동 생성하지 않을 경우 대비 — 이미 수강 중이면 BE가 멱등 처리)
+  await serverApi.post('/api/enrollments', { courseId: input.courseId });
+  revalidatePath('/mypage/courses/in-progress');
+
+  return {
+    success: true,
+    message: '결제가 완료되었습니다.',
+    status: res.data.status,
+    duplicate: res.data.duplicate,
+  };
+}
 
 /**
  * 환불 요청 (Server Action).

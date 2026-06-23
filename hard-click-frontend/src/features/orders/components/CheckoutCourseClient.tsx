@@ -38,6 +38,12 @@ export default function CheckoutCourseClient({
     setSelected(order.items.map(() => next));
   };
 
+  // 단건 강의(유료 수강신청 결제)면 토스 실결제 흐름 — 강의 1개일 때만 courseId 전달.
+  // (장바구니 다건은 per-course confirm 미지원 → courseId 없이 mock 흐름)
+  const singleCourse = order.items.length === 1 ? order.items[0] : null;
+  const payCourseId = singleCourse && selected[0] ? singleCourse.id : undefined;
+  const orderName = singleCourse?.title;
+
   return (
     <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-start">
       <section className="flex-1 rounded-2xl border border-[#E5E9F0] bg-white p-8 shadow-[0_1px_3px_rgba(16,24,40,0.05),0_16px_32px_-16px_rgba(16,24,40,0.16)]">
@@ -77,6 +83,8 @@ export default function CheckoutCourseClient({
           type={order.type}
           totalAmount={selectedTotal}
           finalAmount={selectedTotal}
+          courseId={payCourseId}
+          orderName={orderName}
           disabled={selectedCount === 0}
         />
       </div>

@@ -5,26 +5,39 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import LoadingModal from '@/components/ui/loadingModal';
 import type { OrderType } from '@/features/orders/types';
+import { getTossPayments, TOSS_CLIENT_KEY } from '@/features/payments/toss';
 
 /**
  * 결제하기 버튼 (client).
- * mock 흐름: 처리 중 모달 → 성공 토스트 + 결과 페이지 이동 / (실패 시) 실패 토스트 + 머무름.
- * 실연동: 토스 SDK `requestPayment({ successUrl, failUrl })` → successUrl(서버 승인)/failUrl(code·message).
+ *
+ * - **단건 강의 결제(courseId 有 + Client Key 설정)**: 토스 SDK `requestPayment('카드', …)` 호출 →
+ *   토스 결제창 → successUrl/failUrl로 리다이렉트 → `/payment-result`에서 백엔드 승인(confirm).
+ * - **그 외(구독·장바구니·Client Key 미설정)**: BE 결제 엔드포인트가 없거나 키가 없어 mock 흐름 유지
+ *   (처리 중 모달 → 성공 결과 페이지).
  */
 export default function PaymentButton({
   orderNo,
   type,
   amount,
+  courseId,
+  orderName,
   disabled = false,
 }: {
   orderNo: string;
   type: OrderType;
   amount: number;
+  /** 단건 강의 결제 시 강의 식별자(있으면 토스 실결제 흐름) */
+  courseId?: number;
+  /** 상품명(토스 orderName) */
+  orderName?: string;
   disabled?: boolean;
 }) {
   const router = useRouter();
   const [processing, setProcessing] = useState(false);
   const timerRef = useRef<number | null>(null);
+
+  // 토스 실결제 가능 조건: 단건 강의 + Client Key 설정됨
+  const canToss = type === 'course' && !!courseId && TOSS_CLIENT_KEY.length > 0;
 
   // 언마운트 시 진행 중인 mock 타이머 정리 (콜백이 언마운트 뒤 실행되는 것 방지)
   useEffect(() => {
@@ -33,22 +46,37 @@ export default function PaymentButton({
     };
   }, []);
 
-  const handlePay = () => {
+  const handlePay = async () => {
     if (disabled || processing) return;
     setProcessing(true);
 
-    // TODO(API 연동): 토스 SDK 결제창 호출. 지금은 mock으로 처리 흐름만 재현.
-    timerRef.current = window.setTimeout(() => {
-      const success = true; // mock 성공. 실연동 시 토스 successUrl/failUrl 결과로 분기
-      if (success) {
-        toast.success('결제가 완료되었습니다');
-        router.push(
-          `/payment-result?status=success&orderNo=${encodeURIComponent(orderNo)}&type=${type}&amount=${amount}`,
-        );
-      } else {
-        toast.error('결제에 실패하였습니다');
+    if (canToss) {
+      try {
+        const toss = await getTossPayments(TOSS_CLIENT_KEY);
+        const origin = window.location.origin;
+        // successUrl/failUrl엔 type·courseId만 싣고, 토스가 paymentKey·orderId·amount를 덧붙임
+        await toss.requestPayment('카드', {
+          amount,
+          orderId: orderNo,
+          orderName: orderName ?? '강의 수강',
+          successUrl: `${origin}/payment-result?type=course&courseId=${courseId}`,
+          failUrl: `${origin}/payment-result?status=fail&type=course&courseId=${courseId}`,
+        });
+        // 결제창에서 리다이렉트되므로 정상 흐름에선 이 아래로 오지 않는다.
+      } catch {
+        // 사용자가 결제창을 닫음 / SDK 로드 실패 등
+        toast.error('결제가 취소되었습니다.');
         setProcessing(false);
       }
+      return;
+    }
+
+    // mock 흐름 (구독·장바구니·Client Key 미설정) — 처리 흐름만 재현
+    timerRef.current = window.setTimeout(() => {
+      toast.success('결제가 완료되었습니다');
+      router.push(
+        `/payment-result?status=success&orderNo=${encodeURIComponent(orderNo)}&type=${type}&amount=${amount}`,
+      );
     }, 1200);
   };
 

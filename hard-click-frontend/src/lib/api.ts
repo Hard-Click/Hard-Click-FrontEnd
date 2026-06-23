@@ -96,9 +96,12 @@ async function request<T>(
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   url: string,
   data?: unknown,
+  extraHeaders?: Record<string, string>,
 ): Promise<ApiResponse<T>> {
-  const headers =
-    data instanceof FormData ? undefined : { 'Content-Type': 'application/json' };
+  const baseHeaders =
+    data instanceof FormData ? {} : { 'Content-Type': 'application/json' };
+  // 추가 헤더(예: 결제 Idempotency-Key) 병합. FormData면 Content-Type은 axios가 자동 설정.
+  const headers = { ...baseHeaders, ...extraHeaders };
   try {
     const response = await serverAxios.request<Omit<ApiResponse<T>, 'success'>>({
       method,
@@ -140,9 +143,14 @@ async function request<T>(
 
 /** 서버 컴포넌트 / Server Action 전용 API 클라이언트 */
 export const serverApi = {
-  get: <T>(url: string) => request<T>('GET', url),
-  post: <T>(url: string, body?: unknown) => request<T>('POST', url, body),
-  put: <T>(url: string, body?: unknown) => request<T>('PUT', url, body),
-  patch: <T>(url: string, body?: unknown) => request<T>('PATCH', url, body),
-  delete: <T>(url: string, body?: unknown) => request<T>('DELETE', url, body),
+  get: <T>(url: string, extraHeaders?: Record<string, string>) =>
+    request<T>('GET', url, undefined, extraHeaders),
+  post: <T>(url: string, body?: unknown, extraHeaders?: Record<string, string>) =>
+    request<T>('POST', url, body, extraHeaders),
+  put: <T>(url: string, body?: unknown, extraHeaders?: Record<string, string>) =>
+    request<T>('PUT', url, body, extraHeaders),
+  patch: <T>(url: string, body?: unknown, extraHeaders?: Record<string, string>) =>
+    request<T>('PATCH', url, body, extraHeaders),
+  delete: <T>(url: string, body?: unknown, extraHeaders?: Record<string, string>) =>
+    request<T>('DELETE', url, body, extraHeaders),
 };

@@ -83,3 +83,31 @@ export type RefundResult =
   | { ok: true }
   | { ok: false; kind: 'blocked'; reason: string }
   | { ok: false; kind: 'error' };
+
+/* ── 결제 승인 (Toss 결제 후 백엔드 confirm) ── */
+
+/**
+ * 결제 최종 승인 입력 — 토스 successUrl 쿼리(`paymentKey`/`orderId`/`amount`) + 강의 식별자.
+ * (BE `PaymentConfirmRequest`는 OpenAPI상 courseId/amount만이지만 실제론 paymentKey도 사용)
+ */
+export interface PaymentConfirmInput {
+  paymentKey: string;
+  orderId: string;
+  amount: number;
+  courseId: number;
+}
+
+/** 백엔드 결제 승인 응답 data (`PaymentConfirmResponse`) */
+export interface PaymentConfirmResponseData {
+  status: string;
+  pgTransactionId: string;
+  duplicate: boolean;
+}
+
+/** 결제 승인 결과 (UI 계약) */
+export interface PaymentConfirmResult {
+  success: boolean;
+  message: string;
+  status?: string;
+  duplicate?: boolean;
+}

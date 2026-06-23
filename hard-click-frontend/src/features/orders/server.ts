@@ -1,6 +1,8 @@
 import { serverApi } from '@/lib/api';
-import { USE_MOCK } from '@/mocks/config';
+import { USE_MOCK, isMock } from '@/mocks/config';
 import { mockCart } from '@/mocks/cart.mock';
+import { mockCourseListResponse } from '@/mocks/courses.mock';
+import type { CourseDetailApiResponse } from '@/features/courses/types';
 import type { OrderSummary, OrderType } from './types';
 
 /** 데모용 주문번호 (연동 시 BE가 발급) */
@@ -47,14 +49,65 @@ function toOrderSummary(api: ApiOrder): OrderSummary {
 }
 
 /**
+ * 단건 강의 주문 (유료 수강신청 → 결제). 강의 1개를 그대로 주문 1건으로 만든다.
+ * 강의 정보는 라이브 `/api/courses/{id}`(courses 도메인 연동분)에서 가져온다.
+ * orderNo는 토스 orderId 겸 표시번호로 사용 — 매 진입 고유(중복 결제 방지).
+ */
+async function getSingleCourseOrder(
+  courseId: number,
+): Promise<OrderSummary | null> {
+  let title: string;
+  let instructorName: string;
+  let price: number;
+  let isFree: boolean;
+
+  if (isMock('courses')) {
+    const c = mockCourseListResponse.content.find((x) => x.courseId === courseId);
+    if (!c) return null;
+    title = c.title;
+    instructorName = c.instructorName;
+    price = c.price;
+    isFree = c.priceType === 'FREE';
+  } else {
+    const res = await serverApi.get<CourseDetailApiResponse>(
+      `/api/courses/${courseId}`,
+    );
+    if (!res.success || !res.data) return null;
+    title = res.data.title;
+    instructorName = res.data.instructorName;
+    price = res.data.price;
+    isFree = res.data.priceType === 'FREE';
+  }
+
+  // 무료 강의는 결제 대상이 아님 (수강신청에서 즉시 처리) — 방어
+  if (isFree || price <= 0) return null;
+
+  const orderNo = `ORD-${courseId}-${Date.now()}`;
+  return {
+    orderNo,
+    type: 'course',
+    status: 'READY',
+    items: [{ id: courseId, title, subtitle: instructorName, price }],
+    totalAmount: price,
+    finalAmount: price,
+  };
+}
+
+/**
  * 주문/결제 정보 조회 (Server Component 전용).
- * - type=course → 장바구니 선택분 합계
- * - type=subscription → FLOWN 연간 패스(수능 D-day 동적 가격)
- * 단건/구독 동시 결제 없음. API 연동 시: 엔드포인트 + ApiOrder/매퍼만 맞추면 됨.
+ * - type=course + courseId → 단건 강의(유료 수강신청 결제)
+ * - type=course (courseId 없음) → 장바구니 선택분 합계(mock — cart BE 미구현)
+ * - type=subscription → FLOWN 연간 패스(수능 D-day 동적 가격, mock — subscription BE 미구현)
  */
 export async function getCheckoutServer(
   type: OrderType,
+  courseId?: number,
 ): Promise<OrderSummary | null> {
+  // 단건 강의 결제 — 유료 수강신청에서 진입
+  if (type === 'course' && courseId) {
+    return getSingleCourseOrder(courseId);
+  }
+
   if (USE_MOCK) {
     if (type === 'subscription') {
       const price = subscriptionPriceToday();

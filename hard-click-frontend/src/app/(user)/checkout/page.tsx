@@ -30,12 +30,17 @@ const SparkleIcon = (
 export default async function CheckoutPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string }>;
+  searchParams: Promise<{ type?: string; courseId?: string }>;
 }) {
-  const { type: typeParam } = await searchParams;
+  const { type: typeParam, courseId: courseIdParam } = await searchParams;
   const type: OrderType =
     typeParam === 'subscription' ? 'subscription' : 'course';
-  const order = await getCheckoutServer(type);
+  // 유료 수강신청에서 ?courseId=N으로 진입하면 단건 강의 결제
+  const courseId =
+    courseIdParam && /^\d+$/.test(courseIdParam)
+      ? Number(courseIdParam)
+      : undefined;
+  const order = await getCheckoutServer(type, courseId);
   if (!order) notFound();
 
   // 구독 결제는 항상 단일 상품(FLOWN 연간 패스) — 빈 배열은 비정상이므로 방어
