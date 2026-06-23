@@ -27,12 +27,14 @@ export interface SubjectItem {
 
 // GET /api/boards/{boardType}/posts
 export interface PostListItem {
-  postId: number;
+  postId: number; // 스터디 모집글은 백엔드 postId가 null이라 매퍼에서 groupId로 채움
+  groupId?: number | null;
   boardType: Exclude<BoardType, 'ALL'>;
   title: string;
   authorName: string;
   viewCount: number;
   commentCount: number;
+  isClosed?: boolean | null;
   /** 질문글 한정: PENDING(답변대기)/ADOPTED(채택완료), 그 외 null */
   status?: 'PENDING' | 'ADOPTED' | null;
   /** 스터디 모집글 한정 (없으면 null) */
@@ -73,6 +75,7 @@ export interface ReplyItem {
   content: string;
   imageUrl: string | null;
   isMine: boolean;
+  isDeleted: boolean;
   createdAt: string;
 }
 
@@ -83,6 +86,7 @@ export interface CommentItem {
   imageUrl: string | null;
   isAccepted: boolean;
   isMine: boolean;
+  isDeleted: boolean;
   createdAt: string;
   replies: ReplyItem[];
 }
@@ -96,13 +100,13 @@ export interface CreatePostRequest {
   boardType: Exclude<BoardType, 'ALL'>;
   title: string;
   content: string;
-  subjectCode?: string;
+  subject?: string; // 백엔드는 과목명 문자열(예: "수학")로 받음
 }
 
 export interface UpdatePostRequest {
   title: string;
   content: string;
-  subjectCode?: string;
+  subject?: string; // 백엔드는 과목명 문자열(예: "수학")로 받음
 }
 
 export interface CreateCommentRequest {
@@ -118,15 +122,19 @@ export interface UpdateCommentRequest {
 /* ───── 백엔드 응답 (실제 Hard-Click-BackEnd 코드 DTO) ─────
  * 서비스의 toXxx 매퍼가 이 API 타입 → 위의 UI 타입으로 변환한다. */
 
-// GET /api/boards/{boardType}/posts → PostListResponse
+// 게시판 목록 항목.
+// - per-board(`/api/boards/{type}/posts`): `posts[]`
+// - 전체(`/api/boards/posts`): `items[]` — 스터디(STUDY) 포함 피드. STUDY는 postId=null, groupId로 식별
 export interface PostItemApiResponse {
-  postId: number;
+  type?: 'POST' | 'STUDY';
+  postId: number | null;
+  groupId?: number | null;
   boardType: Exclude<BoardType, 'ALL'>;
   title: string;
   authorName: string;
   createdAt: string;
-  viewCount: number;
-  commentCount: number;
+  viewCount: number | null;
+  commentCount: number | null;
   subjectName?: string | null;
   description?: string | null;
   currentCount?: number | null;
@@ -134,10 +142,12 @@ export interface PostItemApiResponse {
   status?: 'PENDING' | 'ADOPTED' | null;
   isMine?: boolean | null;
   isJoined?: boolean | null;
+  isClosed?: boolean | null;
 }
 
 export interface PostListApiResponse {
-  posts: PostItemApiResponse[];
+  posts?: PostItemApiResponse[]; // per-board
+  items?: PostItemApiResponse[]; // 전체(ALL) 피드
   currentPage: number;
   totalPages: number;
   totalCount: number;

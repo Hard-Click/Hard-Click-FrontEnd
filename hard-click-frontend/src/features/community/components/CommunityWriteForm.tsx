@@ -178,9 +178,10 @@ export default function CommunityWriteForm({
     setIsConfirmOpen(false);
     setIsSubmitting(true);
     const boardType = BOARD_TYPE_VALUE[activeTab];
-    const subjectCode =
+    // 백엔드는 과목을 이름 문자열(subject)로 받음 (질문/스터디 게시판에서 필수)
+    const subjectName =
       (activeTab === '질문게시판' || activeTab === '스터디모집') && subject
-        ? subjects.find((s) => s.name === subject)?.code
+        ? subject
         : undefined;
     const filesToUpload = selectedFiles.length > 0 ? selectedFiles : undefined;
 
@@ -190,7 +191,7 @@ export default function CommunityWriteForm({
         {
           title,
           content,
-          ...(subjectCode !== undefined ? { subjectCode } : {}),
+          ...(subjectName !== undefined ? { subject: subjectName } : {}),
         },
         filesToUpload
       );
@@ -207,7 +208,7 @@ export default function CommunityWriteForm({
           boardType,
           title,
           content,
-          ...(subjectCode !== undefined ? { subjectCode } : {}),
+          ...(subjectName !== undefined ? { subject: subjectName } : {}),
         },
         filesToUpload
       );
