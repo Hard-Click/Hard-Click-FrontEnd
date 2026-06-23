@@ -94,6 +94,7 @@ function toReply(c: CommentApiItem): ReplyItem {
     content: c.content,
     imageUrl: c.imageUrl,
     isMine: c.isMine,
+    isDeleted: c.isDeleted,
     createdAt: c.createdAt,
   };
 }
@@ -106,6 +107,7 @@ function toComment(c: CommentApiItem): CommentItem {
     imageUrl: c.imageUrl,
     isAccepted: c.isAccepted,
     isMine: c.isMine,
+    isDeleted: c.isDeleted,
     createdAt: c.createdAt,
     replies: c.replies.map(toReply),
   };

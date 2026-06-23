@@ -75,6 +75,7 @@ export interface ReplyItem {
   content: string;
   imageUrl: string | null;
   isMine: boolean;
+  isDeleted: boolean;
   createdAt: string;
 }
 
@@ -85,6 +86,7 @@ export interface CommentItem {
   imageUrl: string | null;
   isAccepted: boolean;
   isMine: boolean;
+  isDeleted: boolean;
   createdAt: string;
   replies: ReplyItem[];
 }
