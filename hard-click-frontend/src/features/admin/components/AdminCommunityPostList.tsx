@@ -1,6 +1,3 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
 import CommunityPostCard from '@/features/community/components/CommunityPostCard';
 import StudyPostCard from '@/features/community/components/StudyPostCard';
 import PostEmptyState from '@/features/community/components/PostEmptyState';
@@ -17,8 +14,6 @@ export default function AdminCommunityPostList({
   posts: PostListItem[];
   isStudyTab?: boolean;
 }) {
-  const router = useRouter();
-
   if (posts.length === 0) {
     return <PostEmptyState />;
   }
