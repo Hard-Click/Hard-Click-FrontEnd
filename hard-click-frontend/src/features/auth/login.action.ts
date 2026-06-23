@@ -3,7 +3,8 @@
 import axios from 'axios';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { USE_MOCK } from '@/mocks/config';
+// 인증 도메인만 실서버 연동 (실토큰 발급 → 다른 실연동 도메인이 동작)
+import { USE_MOCK_AUTH as USE_MOCK } from '@/mocks/config';
 import { mockLoginData } from '@/mocks/auth.mock';
 import {
   ACCESS_TOKEN_MAX_AGE,
