@@ -1,5 +1,6 @@
 import { serverApi as api } from '@/lib/api';
 import type { ApiResponse } from '@/services/api';
+import { subjectLabel } from '@/features/courses/subjects';
 import type {
   BoardType,
   PostListResponse,
@@ -150,9 +151,22 @@ export async function getPosts(
   return mapOk(await api.get<PostListApiResponse>(url), toPostListResponse);
 }
 
-export async function getSubjects() {
+interface SubjectApiItem {
+  subjectId: number;
+  subjectName: string;
+}
+
+export async function getSubjects(): Promise<ApiResponse<SubjectItem[]>> {
   if (USE_MOCK) return mockOk(mockSubjects);
-  return api.get<SubjectItem[]>('/api/subjects');
+  const res = await api.get<SubjectApiItem[]>('/api/subjects');
+  if (!res.success || !res.data) return { ...res, data: [] };
+  return {
+    ...res,
+    data: res.data.map((item) => ({
+      code: item.subjectName,
+      name: subjectLabel(item.subjectName),
+    })),
+  };
 }
 
 export async function getPostDetail(postId: number) {
