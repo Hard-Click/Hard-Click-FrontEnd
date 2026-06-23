@@ -475,7 +475,7 @@ export default function CommunityDetailContent({
                           채택
                         </button>
                       )}
-                    {comment.isMine ? (
+                    {comment.isMine && !comment.isDeleted ? (
                       <>
                         <button
                           type="button"
@@ -554,8 +554,12 @@ export default function CommunityDetailContent({
                     </div>
                   </div>
                 ) : (
-                  <p className="mb-2 text-sm text-[#374151]">
-                    {comment.content}
+                  <p
+                    className={`mb-2 text-sm ${
+                      comment.isDeleted ? 'italic text-[#94A3B8]' : 'text-[#374151]'
+                    }`}
+                  >
+                    {comment.isDeleted ? '삭제된 댓글입니다.' : comment.content}
                   </p>
                 )}
 
@@ -667,7 +671,7 @@ export default function CommunityDetailContent({
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
-                            {reply.isMine ? (
+                            {reply.isMine && !reply.isDeleted ? (
                               <>
                                 <button
                                   type="button"
@@ -752,8 +756,12 @@ export default function CommunityDetailContent({
                             </div>
                           </div>
                         ) : (
-                          <p className="text-sm text-[#374151]">
-                            {reply.content}
+                          <p
+                            className={`text-sm ${
+                              reply.isDeleted ? 'italic text-[#94A3B8]' : 'text-[#374151]'
+                            }`}
+                          >
+                            {reply.isDeleted ? '삭제된 댓글입니다.' : reply.content}
                           </p>
                         )}
                       </div>
