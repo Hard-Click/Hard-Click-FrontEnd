@@ -62,11 +62,18 @@ export default function InstructorHeader() {
             // 강의에서 진입하는 공지(강의별 공지 상세 = /instructor/courses/.../notices,
             // 전체공지 = /instructor/notices/global)는 '강의' active.
             // '공지' nav는 공지 관리(/instructor/notices, 그 상세 /instructor/notices/[id])에서 active.
+            // 강의 등록(/instructor/courses/new)·수정(/instructor/courses/.../edit)은 '내 강의' active
+            const isMyCourseSubPath =
+              pathname.startsWith('/instructor/courses/') ||
+              pathname === '/instructor/courses/new';
             const isActive =
               item.href === '/instructor/courses'
-                ? pathname.startsWith('/instructor/courses') ||
-                  pathname.startsWith('/instructor/notices/global')
-                : item.href === '/instructor/notices'
+                ? !isMyCourseSubPath &&
+                  (pathname === '/instructor/courses' ||
+                    pathname.startsWith('/instructor/notices/global'))
+                : item.href === '/instructor/myCourses'
+                  ? pathname.startsWith('/instructor/myCourses') || isMyCourseSubPath
+                  : item.href === '/instructor/notices'
                   ? pathname.startsWith('/instructor/notices') &&
                     !pathname.startsWith('/instructor/notices/global')
                   : pathname === item.href ||
