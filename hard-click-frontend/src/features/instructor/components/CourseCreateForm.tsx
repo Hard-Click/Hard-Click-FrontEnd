@@ -302,9 +302,12 @@ export default function CourseCreateForm({
       newErrors.thumbnail = '썸네일을 등록해주세요';
       if (!firstError) firstError = 'thumbnail';
     }
-    if (priceType === 'PAID' && !price.trim()) {
-      newErrors.price = '가격을 입력해주세요';
-      if (!firstError) firstError = 'price';
+    if (priceType === 'PAID') {
+      const priceNum = Number(price);
+      if (!price.trim() || !Number.isFinite(priceNum) || priceNum < 1) {
+        newErrors.price = '1원 이상의 올바른 가격을 입력해주세요';
+        if (!firstError) firstError = 'price';
+      }
     }
 
     setErrors(newErrors);
@@ -476,6 +479,8 @@ export default function CourseCreateForm({
                     const trimmed = learningGoalInput.trim();
                     if (trimmed && !learningGoals.includes(trimmed)) {
                       setLearningGoals((prev) => [...prev, trimmed]);
+                      setErrors((prev) => ({ ...prev, learningGoals: '' }));
+                      if (firstErrorField === 'learningGoals') setFirstErrorField('');
                     }
                     setLearningGoalInput('');
                   }
@@ -489,6 +494,8 @@ export default function CourseCreateForm({
                   const trimmed = learningGoalInput.trim();
                   if (trimmed && !learningGoals.includes(trimmed)) {
                     setLearningGoals((prev) => [...prev, trimmed]);
+                    setErrors((prev) => ({ ...prev, learningGoals: '' }));
+                    if (firstErrorField === 'learningGoals') setFirstErrorField('');
                   }
                   setLearningGoalInput('');
                 }}
@@ -546,6 +553,8 @@ export default function CourseCreateForm({
                     const trimmed = targetAudienceInput.trim();
                     if (trimmed && !targetAudience.includes(trimmed)) {
                       setTargetAudience((prev) => [...prev, trimmed]);
+                      setErrors((prev) => ({ ...prev, targetAudience: '' }));
+                      if (firstErrorField === 'targetAudience') setFirstErrorField('');
                     }
                     setTargetAudienceInput('');
                   }
@@ -559,6 +568,8 @@ export default function CourseCreateForm({
                   const trimmed = targetAudienceInput.trim();
                   if (trimmed && !targetAudience.includes(trimmed)) {
                     setTargetAudience((prev) => [...prev, trimmed]);
+                    setErrors((prev) => ({ ...prev, targetAudience: '' }));
+                    if (firstErrorField === 'targetAudience') setFirstErrorField('');
                   }
                   setTargetAudienceInput('');
                 }}
@@ -616,7 +627,14 @@ export default function CourseCreateForm({
                 <button
                   key={value}
                   type="button"
-                  onClick={() => setLevel(level === value ? '' : value)}
+                  onClick={() => {
+                    const newLevel = level === value ? '' : value;
+                    setLevel(newLevel);
+                    if (newLevel) {
+                      setErrors((prev) => ({ ...prev, level: '' }));
+                      if (firstErrorField === 'level') setFirstErrorField('');
+                    }
+                  }}
                   className={`h-11 rounded-2xl px-8 text-sm font-semibold transition ${
                     level === value
                       ? 'bg-[#2F5DAA] text-white shadow-sm'
@@ -776,16 +794,19 @@ export default function CourseCreateForm({
                     ref={priceRef}
                     disabled={mode === 'edit'}
                     type="number"
+                    min="1"
+                    step="1"
                     value={price}
                     onChange={(e) => {
                       const value = e.target.value;
                       setPrice(value);
+                      const num = Number(value);
+                      const valid = value.trim() && Number.isFinite(num) && num >= 1;
                       setErrors((prev) => ({
                         ...prev,
-                        price: value.trim() ? '' : '가격을 입력해주세요',
+                        price: valid ? '' : '1원 이상의 올바른 가격을 입력해주세요',
                       }));
-                      if (firstErrorField === 'price' && value.trim())
-                        setFirstErrorField('');
+                      if (firstErrorField === 'price' && valid) setFirstErrorField('');
                     }}
                     className="w-full bg-transparent text-base outline-none"
                   />
@@ -1003,9 +1024,15 @@ export default function CourseCreateForm({
                   })),
                 };
 
+                if (mode === 'edit' && !initialData?.courseId) {
+                  toast.error('강의 정보를 불러올 수 없습니다. 페이지를 새로고침해주세요.');
+                  setIsLoading(false);
+                  return;
+                }
+
                 const result =
                   mode === 'edit' && initialData
-                    ? await updateCourse(initialData.courseId ?? 0, payload)
+                    ? await updateCourse(initialData.courseId!, payload)
                     : await createCourse(payload);
 
                 if (!result.success) {
@@ -1016,22 +1043,28 @@ export default function CourseCreateForm({
 
                 const savedCourseId: number =
                   result.data?.courseId ??
-                  (mode === 'edit' ? initialData?.courseId ?? 0 : 0);
+                  (mode === 'edit' ? (initialData?.courseId ?? 0) : 0);
 
                 const hasFiles = sections.some((sec) =>
                   sec.lectures.some((lec) => lec.file)
                 );
 
                 if (hasFiles && savedCourseId) {
-                  const detailRes = await api.get<any>(
+                  interface LessonApiItem { lessonId: number; }
+                  interface SectionApiItem { lessons: LessonApiItem[]; }
+                  interface CourseDetailForUpload { sections: SectionApiItem[]; }
+
+                  const detailRes = await api.get<CourseDetailForUpload>(
                     `/api/courses/${savedCourseId}`
                   );
                   if (detailRes.success && detailRes.data) {
-                    const apiSections: any[] = detailRes.data.sections ?? [];
+                    const apiSections = detailRes.data.sections ?? [];
+                    let uploadFailed = false;
                     for (let sIdx = 0; sIdx < sections.length; sIdx++) {
+                      if (uploadFailed) break;
                       const apiSection = apiSections[sIdx];
                       if (!apiSection) continue;
-                      const apiLessons: any[] = apiSection.lessons ?? [];
+                      const apiLessons = apiSection.lessons ?? [];
                       for (
                         let lIdx = 0;
                         lIdx < sections[sIdx].lectures.length;
@@ -1052,9 +1085,16 @@ export default function CourseCreateForm({
                               `영상 업로드 실패 lessonId=${apiLesson.lessonId}`,
                               err
                             );
+                            toast.error('영상 업로드에 실패했습니다. 다시 시도해주세요.');
+                            uploadFailed = true;
+                            break;
                           }
                         }
                       }
+                    }
+                    if (uploadFailed) {
+                      setIsLoading(false);
+                      return;
                     }
                   }
                 }
