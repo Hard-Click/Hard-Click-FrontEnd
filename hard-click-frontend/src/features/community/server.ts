@@ -1,7 +1,8 @@
 import { serverApi } from '@/lib/api';
 import type { ApiResponse } from '@/services/api';
 import type { BoardType, PostListResponse, PostListApiResponse } from './types';
-import { USE_MOCK } from '@/mocks/config';
+// 커뮤니티 도메인만 실서버 연동 (다른 도메인은 전역 USE_MOCK 유지)
+import { USE_MOCK_COMMUNITY as USE_MOCK } from '@/mocks/config';
 import { mockPostListResponse } from '@/mocks/community.mock';
 import { toPostListResponse, mapOk } from './services';
 import { mockSubjects } from '@/mocks/community.mock';
@@ -23,10 +24,11 @@ export async function getCommunityPosts(
   subjectCode?: string
 ): Promise<ApiResponse<PostListResponse>> {
   if (USE_MOCK) {
+    const mockPosts = mockPostListResponse.posts ?? [];
     let filtered =
       boardType === 'ALL'
-        ? mockPostListResponse.posts
-        : mockPostListResponse.posts.filter((p) => p.boardType === boardType);
+        ? mockPosts
+        : mockPosts.filter((p) => p.boardType === boardType);
     if (subjectCode) {
       const subjectName = SUBJECT_NAME[subjectCode];
       filtered = filtered.filter((p) => p.subjectName === subjectName);
