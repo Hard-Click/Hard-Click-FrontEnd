@@ -70,6 +70,9 @@ export async function removeFromCart(cartItemId: number): Promise<{
   success: boolean;
   message: string;
 }> {
+  if (!Number.isInteger(cartItemId) || cartItemId <= 0) {
+    return { success: false, message: '잘못된 항목입니다.' };
+  }
   if (isMock('cart')) {
     return { success: true, message: '장바구니에서 제거되었습니다.' };
   }

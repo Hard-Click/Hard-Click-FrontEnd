@@ -99,13 +99,15 @@ export async function getCourseNoticePreviewServer(
   courseId: number,
   limit = 3,
 ): Promise<Notice[]> {
+  // 미리보기 용도 — 상세 병렬 조회 폭주 방지를 위해 1~10으로 클램프
+  const safeLimit = Math.min(10, Math.max(1, Math.trunc(limit) || 1));
   const { notices } = await getCourseNoticesServer(courseId, { page: 0 });
   const sorted = [...notices].sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1;
     if (!a.isPinned && b.isPinned) return 1;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
-  const top = sorted.slice(0, limit);
+  const top = sorted.slice(0, safeLimit);
   // 상세 조회 실패해도 카드 자체는 노출(빈 본문 유지)
   return Promise.all(
     top.map(async (n) => {
