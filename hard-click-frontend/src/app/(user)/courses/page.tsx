@@ -2,7 +2,6 @@ import CourseList from '@/features/courses/components/CourseList';
 import CourseListControls from '@/features/courses/components/CourseListControls';
 import CourseNoticeBanner from '@/features/courses/components/CourseNoticeBanner';
 import { getCoursesServer, getSubjectsServer } from '@/features/courses/server';
-import { getInstructors } from '@/features/courses/services';
 import { getPinnedNoticesServer } from '@/features/notices/server';
 import type { CourseSortType } from '@/features/courses/types';
 
@@ -24,17 +23,26 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
   const instructor = sp.instructor ?? '';
   const sort = (sp.sort as CourseSortType) ?? 'latest';
 
-  const [courses, subjects, notices] = await Promise.all([
+  // ⚠️ 강사 필터는 빼고 조회한다(과목·검색·정렬만).
+  // 강사 드롭다운 옵션을 이 결과에서 뽑으므로, 강사 선택에 따라 옵션이 줄어들지 않는다.
+  const [baseCourses, subjects, notices] = await Promise.all([
     getCoursesServer({
       keyword: keyword || undefined,
       subjectId,
-      instructor: instructor || undefined,
       sort,
     }),
     getSubjectsServer(),
     getPinnedNoticesServer(),
   ]);
-  const instructors = getInstructors();
+  // 강사 드롭다운 옵션 = (현재 과목·검색에 해당하는) 전체 강사. 강사 선택과 무관하게 고정.
+  // (BE에 강사 목록 API 없음 → 조회된 강의들의 강사명에서 파생)
+  const instructors = Array.from(
+    new Set(baseCourses.map((c) => c.instructorName).filter(Boolean)),
+  ).sort();
+  // 화면 표시용 강의 = 선택된 강사로 한 번 더 거른다 (BE에 강사 필터 없음 → 여기서)
+  const courses = instructor
+    ? baseCourses.filter((c) => c.instructorName === instructor)
+    : baseCourses;
 
   const hasFilter = Boolean(keyword || subjectId || instructor);
   const status: 'empty' | 'no-results' | 'idle' =

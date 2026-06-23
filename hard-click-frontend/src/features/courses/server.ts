@@ -7,15 +7,15 @@ import type {
   CourseListApiItem,
   CourseListApiResponse,
   CourseDetailApiResponse,
-  SubjectApiItem,
 } from './types';
-import { USE_MOCK } from '@/mocks/config';
+import { isMock } from '@/mocks/config';
 import {
   mockSubjects,
   mockCourseListResponse,
   mockCourseDetailResponse,
 } from '@/mocks/courses.mock';
 import { toCourseDetail } from './services';
+import { SUBJECTS, subjectLabel, subjectValueById } from './subjects';
 
 /** 백엔드 목록 응답 → UI CourseListItem */
 function toCourseListItem(item: CourseListApiItem): CourseListItem {
@@ -23,7 +23,7 @@ function toCourseListItem(item: CourseListApiItem): CourseListItem {
     courseId: item.courseId,
     title: item.title,
     instructorName: item.instructorName,
-    subjectName: item.subjectName,
+    subjectName: subjectLabel(item.subjectName), // BE raw enum 이름 → 한글 라벨
     price: item.price,
     thumbnailUrl: item.thumbnailUrl,
     averageRating: item.averageRating,
@@ -37,21 +37,22 @@ function toCourseListItem(item: CourseListApiItem): CourseListItem {
   };
 }
 
-/** 과목 목록 — 서버 조회 */
+/**
+ * 과목 목록 (필터 드롭다운용).
+ * BE는 과목 마스터 API가 없고 SubjectType enum(38 세부과목)을 사용 → FE 상수(subjects.ts)로 제공.
+ */
 export async function getSubjectsServer(): Promise<Subject[]> {
-  if (USE_MOCK) {
+  if (isMock('courses')) {
     return mockSubjects.map((s) => ({ subjectId: s.subjectId, name: s.subjectName }));
   }
-  const res = await serverApi.get<SubjectApiItem[]>('/api/subjects');
-  if (!res.success || !res.data) return [];
-  return res.data.map((s) => ({ subjectId: s.subjectId, name: s.subjectName }));
+  return SUBJECTS.map((s) => ({ subjectId: s.subjectId, name: s.name }));
 }
 
 /** 강의 목록 — 서버 조회 (Server Component 전용) */
 export async function getCoursesServer(
   query?: CourseListQuery,
 ): Promise<CourseListItem[]> {
-  if (USE_MOCK) {
+  if (isMock('courses')) {
     let courses = mockCourseListResponse.content.map(toCourseListItem);
     if (query?.subjectId) {
       const name = mockSubjects.find((s) => s.subjectId === query.subjectId)?.subjectName;
@@ -78,8 +79,12 @@ export async function getCoursesServer(
   params.set('size', '100');
   if (query?.keyword) params.set('keyword', query.keyword);
   params.set('sort', (query?.sort ?? 'latest').toUpperCase());
-  // 명세: subject 파라미터는 subjectId(숫자)
-  if (query?.subjectId) params.set('subject', String(query.subjectId));
+
+  // 과목 필터: subjectId → BE enum 이름으로 변환해 그대로 전송 (BE가 SubjectType enum으로 필터).
+  if (query?.subjectId) {
+    const value = subjectValueById(query.subjectId);
+    if (value) params.set('subject', value);
+  }
 
   const res = await serverApi.get<CourseListApiResponse>(
     `/api/courses?${params.toString()}`,
@@ -87,6 +92,7 @@ export async function getCoursesServer(
   if (!res.success || !res.data) return [];
 
   let courses = res.data.content.map(toCourseListItem);
+  // 강사 필터는 BE 미지원 → client-side (응답 강사명 기준).
   if (query?.instructor) {
     courses = courses.filter((c) => c.instructorName === query.instructor);
   }
@@ -97,12 +103,22 @@ export async function getCoursesServer(
 export async function getCourseDetailServer(
   courseId: number,
 ): Promise<CourseDetail | null> {
-  if (USE_MOCK) {
+  if (isMock('courses')) {
     return toCourseDetail({ ...mockCourseDetailResponse, courseId });
   }
   const res = await serverApi.get<CourseDetailApiResponse>(
     `/api/courses/${courseId}`,
   );
   if (!res.success || !res.data) return null;
-  return toCourseDetail(res.data);
+  const detail = toCourseDetail(res.data);
+
+  // 수강 여부 보강: 상세 응답엔 isEnrolled가 없으므로, 내 수강목록에 이 강의가 있으면 true.
+  // 비로그인이면 /api/enrollments/me가 401 → success=false → isEnrolled는 false 유지.
+  const enrolled = await serverApi.get<{ courseId: number }[]>(
+    '/api/enrollments/me?status=ALL',
+  );
+  if (enrolled.success && Array.isArray(enrolled.data)) {
+    detail.isEnrolled = enrolled.data.some((e) => e.courseId === courseId);
+  }
+  return detail;
 }

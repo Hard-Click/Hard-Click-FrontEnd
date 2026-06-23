@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import CourseSearchBar from './CourseSearchBar';
 import CourseFilterBar from './CourseFilterBar';
@@ -31,6 +31,7 @@ export default function CourseListControls({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [keywordInput, setKeywordInput] = useState(keyword);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function pushWith(next: Record<string, string | undefined>) {
     const params = new URLSearchParams(searchParams.toString());
@@ -41,16 +42,32 @@ export default function CourseListControls({
     router.push(`${pathname}?${params.toString()}`);
   }
 
+  /** 키워드 검색 적용 (특수문자만이면 무시) */
+  function searchKeyword(raw: string) {
+    const trimmed = raw.trim();
+    if (trimmed && /^[^\w가-힣]+$/u.test(trimmed)) return;
+    pushWith({ keyword: trimmed || undefined });
+  }
+
+  /** 타이핑 → 150ms 디바운스 후 자동 검색 (거의 즉각 반영, 키 입력마다 서버호출은 방지) */
+  function handleKeywordChange(value: string) {
+    setKeywordInput(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => searchKeyword(value), 150);
+  }
+
+  /** 검색 버튼/Enter → 즉시 검색 (대기 중 디바운스 취소) */
+  function handleSearchNow() {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    searchKeyword(keywordInput);
+  }
+
   return (
     <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-[0_4px_10px_rgba(0,0,0,0.06)] p-6 mb-8 flex flex-col gap-4">
       <CourseSearchBar
         value={keywordInput}
-        onChange={setKeywordInput}
-        onSearch={() => {
-          const trimmed = keywordInput.trim();
-          if (trimmed && /^[^\w가-힣]+$/u.test(trimmed)) return;
-          pushWith({ keyword: trimmed || undefined });
-        }}
+        onChange={handleKeywordChange}
+        onSearch={handleSearchNow}
       />
       <CourseFilterBar
         subjects={subjects}
