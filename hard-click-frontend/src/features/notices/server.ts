@@ -5,7 +5,8 @@ import type {
   NoticeApiItem,
   NoticeApiResponse,
 } from './types';
-import { USE_MOCK } from '@/mocks/config';
+// 공지 도메인만 실서버 연동 (다른 도메인은 전역 USE_MOCK 유지)
+import { USE_MOCK_NOTICES as USE_MOCK } from '@/mocks/config';
 import { mockNoticesResponse } from '@/mocks/notices.mock';
 
 function toNotice(item: NoticeApiItem): Notice {
