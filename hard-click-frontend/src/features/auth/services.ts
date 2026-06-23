@@ -13,7 +13,6 @@ import { api } from '@/services/api';
 
 export async function checkUsername(username: string) {
   if (USE_MOCK) {
-    console.log('[MOCK] 아이디 중복 확인:', username);
     return {
       success: true,
       httpStatus: 200,
@@ -29,7 +28,6 @@ export async function checkUsername(username: string) {
 
 export async function checkEmail(email: string) {
   if (USE_MOCK) {
-    console.log('[MOCK] 이메일 중복 확인:', email);
     return {
       success: true,
       httpStatus: 200,
@@ -45,7 +43,6 @@ export async function checkEmail(email: string) {
 
 export async function sendEmailVerification(email: string) {
   if (USE_MOCK) {
-    console.log('[MOCK] 이메일 인증번호 발송:', email);
     return {
       success: true,
       httpStatus: 200,
@@ -59,7 +56,6 @@ export async function sendEmailVerification(email: string) {
 
 export async function verifyEmailCode(email: string, code: string) {
   if (USE_MOCK) {
-    console.log('[MOCK] 이메일 인증번호 확인:', email, code);
     return {
       success: true,
       httpStatus: 200,
@@ -76,7 +72,6 @@ export async function verifyEmailCode(email: string, code: string) {
 
 export async function register(payload: RegisterRequest) {
   if (USE_MOCK) {
-    console.log('[MOCK] 회원가입 요청:', payload);
     return {
       success: true,
       httpStatus: 201,
@@ -94,7 +89,6 @@ export async function register(payload: RegisterRequest) {
  */
 export async function login(payload: LoginRequest): Promise<LoginResult> {
   if (USE_MOCK) {
-    console.log('[MOCK] 로그인 요청:', payload);
 
     // 테스트 계정: test / test1234 일 때만 성공
     const isValid =
@@ -194,7 +188,6 @@ export async function login(payload: LoginRequest): Promise<LoginResult> {
 /** 비밀번호 찾기 인증번호 발송 (POST /api/auth/password-reset/email) */
 export async function sendPasswordResetEmail(email: string) {
   if (USE_MOCK) {
-    console.log('[MOCK] 비번 재설정 인증번호 발송:', email);
     return {
       success: true,
       httpStatus: 200,
@@ -210,7 +203,6 @@ export async function sendPasswordResetEmail(email: string) {
 /** 비밀번호 찾기 인증번호 검증 (POST /api/auth/password-reset/verify) */
 export async function verifyPasswordResetCode(email: string, code: string) {
   if (USE_MOCK) {
-    console.log('[MOCK] 비번 재설정 인증번호 검증:', email, code);
     return {
       success: true,
       httpStatus: 200,
@@ -232,7 +224,6 @@ export async function resetPassword(payload: {
   newPasswordConfirm: string;
 }) {
   if (USE_MOCK) {
-    console.log('[MOCK] 비번 재설정:', payload);
     return {
       success: true,
       httpStatus: 200,
@@ -246,7 +237,6 @@ export async function resetPassword(payload: {
 /** 잠긴 계정 인증번호 발송/재발송 (POST /api/auth/account-locks/email) */
 export async function sendAccountLockEmail(email: string) {
   if (USE_MOCK) {
-    console.log('[MOCK] 계정 잠금 인증번호 발송:', email);
     return {
       success: true,
       httpStatus: 200,
@@ -254,7 +244,9 @@ export async function sendAccountLockEmail(email: string) {
       message: '계정 보호 인증번호가 발송되었습니다',
     };
   }
-  return api.post<{}>('/api/auth/account-locks/email', { email });
+  return api.post<Record<string, never>>('/api/auth/account-locks/email', {
+    email,
+  });
 }
 
 /* ─────────────────────────── 잠긴 계정 흐름 ─────────────────────────── */
@@ -262,7 +254,6 @@ export async function sendAccountLockEmail(email: string) {
 /** 잠긴 계정 인증번호 검증 (POST /api/auth/account-locks/verify) */
 export async function verifyAccountLockCode(email: string, code: string) {
   if (USE_MOCK) {
-    console.log('[MOCK] 잠긴 계정 인증번호 검증:', email, code);
     return {
       success: true,
       httpStatus: 200,
@@ -283,7 +274,6 @@ export async function changeLockedAccountPassword(payload: {
   newPasswordConfirm: string;
 }) {
   if (USE_MOCK) {
-    console.log('[MOCK] 잠긴 계정 비번 변경:', payload);
     return {
       success: true,
       httpStatus: 200,
@@ -306,7 +296,6 @@ export async function changePassword(payload: {
   newPasswordConfirm: string;
 }) {
   if (USE_MOCK) {
-    console.log('[MOCK] 비밀번호 변경:', payload);
     return {
       success: true,
       httpStatus: 200,
@@ -320,7 +309,6 @@ export async function changePassword(payload: {
 /** 로그아웃 (POST /api/auth/logout) */
 export async function logout() {
   if (USE_MOCK) {
-    console.log('[MOCK] 로그아웃');
     return {
       success: true,
       httpStatus: 200,
