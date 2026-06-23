@@ -55,12 +55,21 @@ export default function UserHeader() {
   }, []);
 
   useEffect(() => {
+    // 비로그인 상태에선 /api/members/me를 호출하지 않는다.
+    // (호출 시 401 → 전역 401 핸들러가 /auth/login으로 리다이렉트 → 공개 페이지 브라우징 차단)
+    if (!isLoggedIn) return;
+    // 로그아웃 직후 늦게 도착한 이전 응답이 상태를 덮어쓰지 않도록 가드
+    let cancelled = false;
     getMyProfile().then((result) => {
-      if (result.success && result.data?.profileImageUrl) {
-        setProfileImageUrl(result.data.profileImageUrl);
-      }
+      if (cancelled) return;
+      setProfileImageUrl(
+        result.success ? (result.data?.profileImageUrl ?? '') : '',
+      );
     });
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn]);
 
   const handleLogout = async () => {
     setIsDropdownOpen(false);

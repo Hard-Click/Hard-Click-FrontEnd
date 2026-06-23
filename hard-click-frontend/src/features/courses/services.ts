@@ -1,21 +1,15 @@
 import type {
-  CourseListItem,
-  Subject,
-  CourseListQuery,
   CourseDetail,
-  SubjectApiItem,
-  CourseListApiItem,
-  CourseListApiResponse,
   CourseDetailApiResponse,
 } from './types';
 import { api } from '@/services/api';
-import { USE_MOCK } from '@/mocks/config';
+import { isMock } from '@/mocks/config';
 import {
-  mockSubjects,
   mockCourseListResponse,
   mockCourseDetailResponse,
 } from '@/mocks/courses.mock';
 import { mockReviewListResponse } from '@/mocks/reviews.mock';
+import { subjectLabel } from './subjects';
 
 function formatTotalDuration(totalSecs: number): string {
   if (totalSecs <= 0) return '0분';
@@ -48,7 +42,7 @@ export function toCourseDetail(data: CourseDetailApiResponse): CourseDetail {
     courseId: data.courseId,
     title: data.title,
     description: data.description,
-    subjectName: data.subjectName,
+    subjectName: subjectLabel(data.subjectName), // BE raw enum 이름 → 한글 라벨
     instructorName: data.instructorName,
     price: data.price,
     isFree: data.priceType === 'FREE',
@@ -89,7 +83,7 @@ export function toCourseDetail(data: CourseDetailApiResponse): CourseDetail {
         isPreview: l.isPreview,
       })),
     })),
-    reviews: USE_MOCK
+    reviews: isMock('reviews')
       ? mockReviewListResponse.reviews.map((r) => ({
           reviewId: r.reviewId,
           studentName: r.authorName,
@@ -103,30 +97,10 @@ export function toCourseDetail(data: CourseDetailApiResponse): CourseDetail {
   };
 }
 
-/** 백엔드 목록 응답 → UI CourseListItem */
-function toCourseListItem(item: CourseListApiItem): CourseListItem {
-  return {
-    courseId: item.courseId,
-    title: item.title,
-    instructorName: item.instructorName,
-    subjectName: item.subjectName,
-    price: item.price,
-    thumbnailUrl: item.thumbnailUrl,
-    averageRating: item.averageRating,
-    reviewCount: item.reviewCount,
-    studentCount: item.studentCount,
-    isFree: item.priceType === 'FREE',
-    status: item.status,
-    createdAt: item.createdAt,
-    isEnrolled: false,
-    hasPreview: false,
-  };
-}
-
 export async function getCourseDetail(
   courseId: number
 ): Promise<CourseDetail | null> {
-  if (USE_MOCK) {
+  if (isMock('courses')) {
     return toCourseDetail({ ...mockCourseDetailResponse, courseId });
   }
   const response = await api.get<CourseDetailApiResponse>(
@@ -134,68 +108,6 @@ export async function getCourseDetail(
   );
   if (!response.success || !response.data) return null;
   return toCourseDetail(response.data);
-}
-
-export async function getCourses(
-  query?: CourseListQuery
-): Promise<CourseListItem[]> {
-  if (USE_MOCK) {
-    let courses = mockCourseListResponse.content.map(toCourseListItem);
-    if (query?.subjectId) {
-      const name = mockSubjects.find(
-        (s) => s.subjectId === query.subjectId
-      )?.subjectName;
-      if (name) courses = courses.filter((c) => c.subjectName === name);
-    }
-    if (query?.keyword) {
-      const kw = query.keyword.toLowerCase();
-      courses = courses.filter((c) => c.title.toLowerCase().includes(kw));
-    }
-    if (query?.instructor) {
-      courses = courses.filter((c) => c.instructorName === query.instructor);
-    }
-    return courses;
-  }
-
-  const params = new URLSearchParams();
-  params.set('page', '0');
-  params.set('size', '100');
-  if (query?.keyword) params.set('keyword', query.keyword);
-  params.set('sort', (query?.sort ?? 'latest').toUpperCase());
-  // 명세: subject 파라미터는 subjectId(숫자)
-  if (query?.subjectId) params.set('subject', String(query.subjectId));
-
-  const response = await api.get<CourseListApiResponse>(
-    `/api/courses?${params.toString()}`
-  );
-  if (!response.success || !response.data) return [];
-
-  let courses = response.data.content.map(toCourseListItem);
-  // 강사 필터는 백엔드 미지원 → 클라 후처리
-  if (query?.instructor) {
-    courses = courses.filter((c) => c.instructorName === query.instructor);
-  }
-  return courses;
-}
-
-export async function getSubjects(): Promise<Subject[]> {
-  if (USE_MOCK) {
-    return mockSubjects.map((s) => ({
-      subjectId: s.subjectId,
-      name: s.subjectName,
-    }));
-  }
-  const response = await api.get<SubjectApiItem[]>('/api/subjects');
-  if (!response.success || !response.data) {
-    return mockSubjects.map((s) => ({
-      subjectId: s.subjectId,
-      name: s.subjectName,
-    }));
-  }
-  return response.data.map((s) => ({
-    subjectId: s.subjectId,
-    name: s.subjectName,
-  }));
 }
 
 /** 강사 목록 — 백엔드 미지원, 목 강의 데이터에서 파생 */
