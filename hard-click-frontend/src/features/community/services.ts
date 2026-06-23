@@ -19,7 +19,8 @@ import type {
   CommentApiItem,
   CommentListApiResponse,
 } from './types';
-import { USE_MOCK } from '@/mocks/config';
+// 커뮤니티 도메인만 실서버 연동 (다른 도메인은 전역 USE_MOCK 유지)
+import { USE_MOCK_COMMUNITY as USE_MOCK } from '@/mocks/config';
 import {
   mockPostListResponse,
   mockPostDetail,
@@ -44,12 +45,14 @@ export function mapOk<A, B>(
 /* ───── 백엔드 응답(API) → UI 타입 매퍼 ───── */
 function toPostListItem(p: PostItemApiResponse): PostListItem {
   return {
-    postId: p.postId,
+    // 스터디는 postId가 null이라 groupId로 대체 (StudyPostCard 링크용)
+    postId: p.postId ?? p.groupId ?? 0,
+    groupId: p.groupId ?? null,
     boardType: p.boardType,
     title: p.title,
     authorName: p.authorName,
-    viewCount: p.viewCount,
-    commentCount: p.commentCount,
+    viewCount: p.viewCount ?? 0,
+    commentCount: p.commentCount ?? 0,
     status: p.status ?? null,
     currentCount: p.currentCount ?? null,
     maxCount: p.maxCount ?? null,
@@ -58,11 +61,14 @@ function toPostListItem(p: PostItemApiResponse): PostListItem {
     createdAt: p.createdAt,
     isMine: p.isMine ?? null,
     isJoined: p.isJoined ?? null,
+    isClosed: p.isClosed ?? null,
   };
 }
 
 export function toPostListResponse(r: PostListApiResponse): PostListResponse {
-  return { content: r.posts.map(toPostListItem), totalPages: r.totalPages };
+  // 전체(ALL)는 `items`, per-board는 `posts` — 둘 중 존재하는 배열을 사용
+  const list = r.posts ?? r.items ?? [];
+  return { content: list.map(toPostListItem), totalPages: r.totalPages };
 }
 
 function toPostDetail(d: PostDetailApiResponse): PostDetail {
@@ -116,7 +122,8 @@ export async function createComment(body: CreateCommentRequest, image?: File) {
     'data',
     new Blob([JSON.stringify(body)], { type: 'application/json' })
   );
-  if (image) form.append('image', image);
+  // 백엔드 댓글 이미지 multipart 필드명은 `file` (게시글은 `files`)
+  if (image) form.append('file', image);
   return api.post<{ commentId: number }>('/api/comments', form);
 }
 
@@ -150,7 +157,11 @@ export async function getPostDetail(postId: number) {
   if (USE_MOCK) {
     // 게시글별 상세(테스트용 여러 글) 우선. 없으면 목록 항목에 맞춰 기본 글 노출.
     // isMine 없는 항목(질문/자유 게시판)은 남의 글로 간주 → 신고 테스트 가능.
-    const li = mockPostListResponse.posts.find((p) => p.postId === postId);
+    const li = (
+      mockPostListResponse.posts ??
+      mockPostListResponse.items ??
+      []
+    ).find((p) => p.postId === postId || (p.groupId ?? null) === postId);
     const detail = mockPostDetailsById[postId] ?? {
       ...mockPostDetail,
       postId,
