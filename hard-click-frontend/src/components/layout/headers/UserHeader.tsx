@@ -55,12 +55,15 @@ export default function UserHeader() {
   }, []);
 
   useEffect(() => {
+    // 비로그인 상태에선 /api/members/me를 호출하지 않는다.
+    // (호출 시 401 → 전역 401 핸들러가 /auth/login으로 리다이렉트 → 공개 페이지 브라우징 차단)
+    if (!isLoggedIn) return;
     getMyProfile().then((result) => {
       if (result.success && result.data?.profileImageUrl) {
         setProfileImageUrl(result.data.profileImageUrl);
       }
     });
-  }, []);
+  }, [isLoggedIn]);
 
   const handleLogout = async () => {
     setIsDropdownOpen(false);
