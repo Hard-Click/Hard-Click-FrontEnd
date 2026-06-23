@@ -15,3 +15,4 @@ export const USE_MOCK = true;
  */
 export const USE_MOCK_NOTICES = false; // 학생 공지 목록/상세 실서버 연동
 export const USE_MOCK_COMMUNITY = false; // 학생 커뮤니티 실서버 연동
+export const USE_MOCK_AUTH = false; // 로그인/로그아웃 등 인증 실서버 연동 (실토큰 발급 필요)
