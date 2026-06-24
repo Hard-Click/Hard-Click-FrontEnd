@@ -70,7 +70,7 @@ export function toReportItem(api: ReportApiItem): ReportItem {
     authorName: api.authorName,
     reporterName: api.reporterName,
     reportCount: api.reportCount,
-    reasonStats: api.reasonStats.map((s: ReportReasonStat) => ({
+    reasonStats: (api.reasonStats ?? []).map((s: ReportReasonStat) => ({
       reason: s.reason,
       count: s.count,
     })),
