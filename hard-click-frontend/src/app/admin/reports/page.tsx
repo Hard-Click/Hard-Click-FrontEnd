@@ -1,5 +1,11 @@
+export const dynamic = 'force-dynamic';
+
 import Image from 'next/image';
 import AdminReportManage from '@/features/reports/components/AdminReportManage';
+import { serverApi } from '@/lib/api';
+import { toReportItem } from '@/features/reports/types';
+import type { ReportItem } from '@/features/reports/types';
+import type { ReportListApiResponse } from '@/mocks/reports.mock';
 
 interface AdminReportsPageProps {
   searchParams: Promise<{ openReport?: string }>;
@@ -9,6 +15,12 @@ export default async function AdminReportsPage({
   searchParams,
 }: AdminReportsPageProps) {
   const { openReport } = await searchParams;
+
+  const res = await serverApi.get<ReportListApiResponse>(
+    '/api/admin/reports?page=0&size=100',
+  );
+  const initialReports: ReportItem[] =
+    res.success && res.data ? res.data.content.map(toReportItem) : [];
 
   return (
     <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
@@ -32,7 +44,10 @@ export default async function AdminReportsPage({
         </div>
 
         {/* 필터 + 목록 (client 섬) */}
-        <AdminReportManage openReport={openReport} />
+        <AdminReportManage
+          initialReports={initialReports}
+          openReport={openReport}
+        />
       </div>
     </div>
   );

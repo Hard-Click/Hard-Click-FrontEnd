@@ -1,9 +1,38 @@
+export const dynamic = 'force-dynamic';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import AdminCourseManage from '@/features/admin/components/AdminCourseManage';
-import { mockAdminCourseManage } from '@/mocks/admin.mock';
+import { serverApi } from '@/lib/api';
+import { SUBJECTS } from '@/features/courses/subjects';
+import type { AdminCourseManageRow } from '@/mocks/admin.mock';
+import type { CourseListApiItem, CourseListApiResponse } from '@/features/courses/types';
 
-export default function AdminCourseManagePage() {
+function toAdminCourseManageRow(item: CourseListApiItem): AdminCourseManageRow {
+  return {
+    id: item.courseId,
+    title: item.title,
+    subject: SUBJECTS.find((s) => s.value === item.subjectName)?.name ?? item.subjectName,
+    instructor: item.instructorName,
+    studentCount: item.studentCount,
+    rating: item.averageRating,
+    reviewCount: item.reviewCount,
+    price: item.price,
+    isFree: item.priceType === 'FREE',
+    status: item.status === 'PUBLISHED' ? 'PUBLISHED' : 'HIDDEN',
+    createdAt: item.createdAt.split('T')[0] ?? item.createdAt,
+  };
+}
+
+export default async function AdminCourseManagePage() {
+  const res = await serverApi.get<CourseListApiResponse>(
+    '/api/courses?page=0&size=100',
+  );
+  const courses: AdminCourseManageRow[] =
+    res.success && res.data
+      ? res.data.content.map(toAdminCourseManageRow)
+      : [];
+
   return (
     <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
       <div className="mx-auto w-full max-w-[1152px]">
@@ -32,7 +61,7 @@ export default function AdminCourseManagePage() {
             강의 등록
           </Link>
         </div>
-        <AdminCourseManage initialCourses={mockAdminCourseManage} />
+        <AdminCourseManage initialCourses={courses} />
       </div>
     </div>
   );

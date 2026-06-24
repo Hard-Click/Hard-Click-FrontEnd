@@ -1,5 +1,5 @@
 import { serverApi } from '@/lib/api';
-import { USE_MOCK } from '@/mocks/config';
+import { isMock } from '@/mocks/config';
 import { mockInstructorCourses } from '@/mocks/instructor.mock';
 import type {
   CourseListApiItem,
@@ -28,7 +28,7 @@ export async function getInstructorCoursesServer(
   page = 0,
   size = 20,
 ): Promise<{ content: InstructorCourseItem[]; totalPages: number }> {
-  if (USE_MOCK) {
+  if (isMock('instructor')) {
     return {
       content: mockInstructorCourses.content.map(toInstructorCourseItem),
       totalPages: mockInstructorCourses.totalPages,

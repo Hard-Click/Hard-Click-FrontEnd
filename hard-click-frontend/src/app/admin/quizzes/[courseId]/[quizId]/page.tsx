@@ -5,7 +5,7 @@ import { getQuizScoresServer } from '@/features/quizzes/server';
 import { summarizeScores } from '@/features/quizzes/scoreboard';
 import QuizScoreOverview from '@/features/quizzes/components/QuizScoreOverview';
 import QuizScoresTable from '@/features/quizzes/components/QuizScoresTable';
-import { mockAdminCourseManage } from '@/mocks/admin.mock';
+import { getCourseDetailServer } from '@/features/courses/server';
 
 export default async function AdminQuizScoresPage({
   params,
@@ -17,11 +17,13 @@ export default async function AdminQuizScoresPage({
   const quizId = Number(quizIdStr);
   if (Number.isNaN(courseId) || Number.isNaN(quizId)) notFound();
 
-  const board = await getQuizScoresServer(courseId, quizId);
+  const [board, courseDetail] = await Promise.all([
+    getQuizScoresServer(courseId, quizId),
+    getCourseDetailServer(courseId),
+  ]);
   if (!board) notFound();
 
-  const courseName =
-    mockAdminCourseManage.find((c) => c.id === courseId)?.title ?? '강의';
+  const courseName = courseDetail?.title ?? '강의';
   const summary = summarizeScores(board.rows);
 
   return (
