@@ -60,7 +60,7 @@ export function getLatestReason(item: ReportItem): string {
   return item.reasonStats?.[0]?.reason ?? '-';
 }
 
-const REASON_LABEL: Record<string, string> = {
+export const REASON_LABEL: Record<string, string> = {
   SPAM: '스팸/광고',
   OBSCENE: '음란 행위',
   ABUSE: '욕설 및 비하',

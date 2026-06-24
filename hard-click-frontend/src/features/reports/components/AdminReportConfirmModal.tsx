@@ -63,7 +63,7 @@ export default function AdminReportConfirmModal({
       return;
     }
     toast.success(result.message);
-    onProcessReport(report, memo);
+    onProcessReport({ ...report, status: 'COMPLETED', isTargetDeleted: true }, memo);
     onClose();
   };
 

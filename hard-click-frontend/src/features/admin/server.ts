@@ -3,6 +3,7 @@ import { SUBJECTS } from '@/features/courses/subjects';
 import type { AdminRecentReport, AdminRecentNotice } from './types';
 import type { AdminNoticeRow, AdminCourseRow, AdminCourseManageRow } from '@/mocks/admin.mock';
 import type { ReportListApiResponse } from '@/features/reports/types';
+import { REASON_LABEL } from '@/features/reports/types';
 import type { NoticeApiItem, NoticeApiResponse } from '@/features/notices/types';
 import type { CourseListApiItem, CourseListApiResponse } from '@/features/courses/types';
 
@@ -34,7 +35,7 @@ export async function getDashboardData(): Promise<{
         id: idx + 1,
         type: REPORT_TYPE_LABEL[r.targetType] ?? r.targetType,
         status: REPORT_STATUS_LABEL[r.status] ?? r.status,
-        title: r.reason ?? r.targetContentPreview?.slice(0, 20) ?? '',
+        title: (r.reason ? (REASON_LABEL[r.reason] ?? r.reason) : null) ?? r.targetContentPreview?.slice(0, 20) ?? '',
         date: r.reportedAt,
         reportKey: `${r.targetType}-${r.targetId}`,
       }))
