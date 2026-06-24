@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useTransition } from 'react';
+import { useRef, useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { toast } from 'sonner';
@@ -9,6 +9,7 @@ import {
   createCourseNoticeAction,
   updateNoticeAction,
 } from '@/features/notices/actions';
+import { getNoticeDetail } from '@/features/notices/services';
 
 interface AdminNoticeFormModalProps {
   mode: 'create' | 'edit';
@@ -42,6 +43,16 @@ export default function AdminNoticeFormModal({
   const [contentError, setContentError] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [isLoadingContent, setIsLoadingContent] = useState(false);
+
+  useEffect(() => {
+    if (mode !== 'edit' || !noticeId || initialContent) return;
+    setIsLoadingContent(true);
+    getNoticeDetail(noticeId).then((res) => {
+      if (res.success && res.data) setContent(res.data.content);
+      setIsLoadingContent(false);
+    });
+  }, []);
 
   const titleRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLTextAreaElement>(null);
@@ -61,6 +72,11 @@ export default function AdminNoticeFormModal({
     }
 
     const body = { title: title.trim(), content: content.trim(), isPinned };
+
+    if (mode === 'edit' && !noticeId) {
+      toast.error('수정할 공지사항 정보가 없습니다.');
+      return;
+    }
 
     startTransition(async () => {
       let res;
@@ -139,8 +155,9 @@ export default function AdminNoticeFormModal({
           </label>
           <textarea
             ref={contentRef}
-            placeholder="공지사항 내용을 입력하세요"
+            placeholder={isLoadingContent ? '내용을 불러오는 중...' : '공지사항 내용을 입력하세요'}
             value={content}
+            disabled={isLoadingContent}
             onChange={(e) => {
               setContent(e.target.value);
               if (submitted)

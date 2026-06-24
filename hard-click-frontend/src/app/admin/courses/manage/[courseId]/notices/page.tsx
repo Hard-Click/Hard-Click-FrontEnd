@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 
+import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import AdminNoticeTable from '@/features/admin/components/AdminNoticeTable';
@@ -28,6 +29,7 @@ export default async function AdminCourseNoticesPage({
   params: Promise<{ courseId: string }>;
 }) {
   const { courseId } = await params;
+  if (isNaN(Number(courseId))) notFound();
 
   const [course, noticesRes] = await Promise.all([
     getCourseDetailServer(Number(courseId)),

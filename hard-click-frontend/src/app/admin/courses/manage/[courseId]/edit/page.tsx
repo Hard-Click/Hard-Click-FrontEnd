@@ -10,6 +10,7 @@ interface Props {
 
 export default async function AdminCourseEditPage({ params }: Props) {
   const { courseId } = await params;
+  if (isNaN(Number(courseId))) notFound();
   const course = await getCourseDetailServer(Number(courseId));
 
   if (!course) {

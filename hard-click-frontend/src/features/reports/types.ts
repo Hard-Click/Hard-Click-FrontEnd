@@ -1,4 +1,28 @@
-import type { ReportApiItem, ReportReasonStat } from '@/mocks/reports.mock';
+export interface ReportReasonStat {
+  reason: string;
+  count: number;
+}
+
+export interface ReportApiItem {
+  targetType: 'POST' | 'COMMENT' | 'REVIEW';
+  targetId: number;
+  targetContent: string;
+  authorName: string;
+  reporterName: string;
+  reportCount: number;
+  reasonStats: ReportReasonStat[];
+  status: 'PENDING' | 'COMPLETED' | 'REJECTED';
+  createdAt: string;
+  isTargetDeleted: boolean;
+  processMemo?: string;
+  postId?: number;
+  courseId?: number;
+}
+
+export interface ReportListApiResponse {
+  content: ReportApiItem[];
+  totalPages: number;
+}
 
 export type ReportStatus = 'PENDING' | 'COMPLETED' | 'REJECTED';
 export type ReportTarget = 'POST' | 'COMMENT' | 'REVIEW';

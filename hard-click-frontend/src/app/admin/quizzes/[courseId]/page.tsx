@@ -9,26 +9,7 @@ import {
 } from '@/features/quizzes/server';
 import QuizListContent from '@/features/quizzes/components/QuizListContent';
 import QuizCreateButton from '@/features/quizzes/components/QuizCreateButton';
-import { serverApi } from '@/lib/api';
-import { SUBJECTS } from '@/features/courses/subjects';
-import type { AdminCourseManageRow } from '@/mocks/admin.mock';
-import type { CourseListApiItem, CourseListApiResponse } from '@/features/courses/types';
-
-function toAdminCourseManageRow(item: CourseListApiItem): AdminCourseManageRow {
-  return {
-    id: item.courseId,
-    title: item.title,
-    subject: SUBJECTS.find((s) => s.value === item.subjectName)?.name ?? item.subjectName,
-    instructor: item.instructorName,
-    studentCount: item.studentCount,
-    rating: item.averageRating,
-    reviewCount: item.reviewCount,
-    price: item.price,
-    isFree: item.priceType === 'FREE',
-    status: item.status === 'PUBLISHED' ? 'PUBLISHED' : 'HIDDEN',
-    createdAt: item.createdAt.split('T')[0] ?? item.createdAt,
-  };
-}
+import { fetchAllAdminCourses } from '@/features/admin/server';
 
 export default async function AdminCourseQuizzesPage({
   params,
@@ -39,16 +20,11 @@ export default async function AdminCourseQuizzesPage({
   const courseId = Number(courseIdStr);
   if (Number.isNaN(courseId)) notFound();
 
-  const [quizzes, takenWeeksByCourse, coursesRes] = await Promise.all([
+  const [quizzes, takenWeeksByCourse, courses] = await Promise.all([
     getQuizzesServer(courseId),
     getTakenWeeksByCourseServer(),
-    serverApi.get<CourseListApiResponse>('/api/courses?page=0&size=100'),
+    fetchAllAdminCourses(),
   ]);
-
-  const courses: AdminCourseManageRow[] =
-    coursesRes.success && coursesRes.data
-      ? coursesRes.data.content.map(toAdminCourseManageRow)
-      : [];
 
   const courseName = courses.find((c) => c.id === courseId)?.title ?? '강의';
   const quizFormCourses = courses.map((c) => ({
