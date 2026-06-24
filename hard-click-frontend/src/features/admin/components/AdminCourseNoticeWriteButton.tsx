@@ -4,8 +4,10 @@ import { useState } from 'react';
 import AdminNoticeFormModal from './AdminNoticeFormModal';
 
 export default function AdminCourseNoticeWriteButton({
+  courseId,
   courseTitle,
 }: {
+  courseId: number;
   courseTitle: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,6 +25,7 @@ export default function AdminCourseNoticeWriteButton({
       {isOpen && (
         <AdminNoticeFormModal
           mode="create"
+          courseId={courseId}
           courseTitle={courseTitle}
           onClose={() => setIsOpen(false)}
         />

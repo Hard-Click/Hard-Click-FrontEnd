@@ -1,13 +1,23 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { toast } from 'sonner';
+import {
+  createGlobalNoticeAction,
+  createCourseNoticeAction,
+  updateNoticeAction,
+} from '@/features/notices/actions';
 
 interface AdminNoticeFormModalProps {
   mode: 'create' | 'edit';
   /** 강의 공지면 대상 강의명, 시스템 공지면 undefined */
   courseTitle?: string;
+  /** 강의 공지 등록 시 필요 */
+  courseId?: number;
+  /** 수정 시 필요 */
+  noticeId?: number;
   initialTitle?: string;
   initialContent?: string;
   initialIsPinned?: boolean;
@@ -17,17 +27,21 @@ interface AdminNoticeFormModalProps {
 export default function AdminNoticeFormModal({
   mode,
   courseTitle,
+  courseId,
+  noticeId,
   initialTitle = '',
   initialContent = '',
   initialIsPinned = false,
   onClose,
 }: AdminNoticeFormModalProps) {
+  const router = useRouter();
   const [title, setTitle] = useState(initialTitle);
   const [content, setContent] = useState(initialContent);
   const [isPinned, setIsPinned] = useState(initialIsPinned);
   const [titleError, setTitleError] = useState('');
   const [contentError, setContentError] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const titleRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLTextAreaElement>(null);
@@ -45,13 +59,27 @@ export default function AdminNoticeFormModal({
       else contentRef.current?.focus();
       return;
     }
-    // TODO: create/update notice 연동 (mock 단계)
-    toast.success(
-      mode === 'edit'
-        ? '공지사항이 수정되었습니다.'
-        : '공지사항이 등록되었습니다.'
-    );
-    onClose();
+
+    const body = { title: title.trim(), content: content.trim(), isPinned };
+
+    startTransition(async () => {
+      let res;
+      if (mode === 'edit' && noticeId) {
+        res = await updateNoticeAction(noticeId, body);
+      } else if (courseId) {
+        res = await createCourseNoticeAction(courseId, body);
+      } else {
+        res = await createGlobalNoticeAction(body);
+      }
+
+      if (res.success) {
+        toast.success(mode === 'edit' ? '공지사항이 수정되었습니다.' : '공지사항이 등록되었습니다.');
+        router.refresh();
+        onClose();
+      } else {
+        toast.error(res.message ?? '요청에 실패했습니다. 다시 시도해주세요.');
+      }
+    });
   };
 
   return (
@@ -97,12 +125,7 @@ export default function AdminNoticeFormModal({
           <div className="mt-1 flex min-h-[20px] items-center gap-1 text-xs text-[#EF4444]">
             {titleError && (
               <>
-                <Image
-                  src="/icons/error.svg"
-                  alt="error"
-                  width={12}
-                  height={12}
-                />
+                <Image src="/icons/error.svg" alt="error" width={12} height={12} />
                 {titleError}
               </>
             )}
@@ -133,12 +156,7 @@ export default function AdminNoticeFormModal({
           <div className="mt-1 flex min-h-[20px] items-center gap-1 text-xs text-[#EF4444]">
             {contentError && (
               <>
-                <Image
-                  src="/icons/error.svg"
-                  alt="error"
-                  width={12}
-                  height={12}
-                />
+                <Image src="/icons/error.svg" alt="error" width={12} height={12} />
                 {contentError}
               </>
             )}
@@ -163,21 +181,22 @@ export default function AdminNoticeFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="h-12 flex-1 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-[#4B5563] hover:bg-[#F8FAFC]"
+            disabled={isPending}
+            className="h-12 flex-1 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-[#4B5563] hover:bg-[#F8FAFC] disabled:opacity-50"
           >
             취소
           </button>
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!isFormValid}
+            disabled={!isFormValid || isPending}
             className={`h-12 flex-1 rounded-xl text-sm font-semibold text-white transition ${
-              isFormValid
+              isFormValid && !isPending
                 ? 'bg-[#2F5DAA] hover:bg-[#1D3E75]'
                 : 'bg-[#2F5DAA] opacity-50 cursor-not-allowed'
             }`}
           >
-            {mode === 'edit' ? '수정' : '등록'}
+            {isPending ? '처리 중...' : mode === 'edit' ? '수정' : '등록'}
           </button>
         </div>
       </div>
