@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import AdminNoticeManage from '@/features/admin/components/AdminNoticeManage';
 import type { AdminNoticeRow, AdminCourseRow } from '@/mocks/admin.mock';
 import { serverApi } from '@/lib/api';
@@ -30,22 +32,20 @@ function toAdminCourseRow(item: CourseListApiItem): AdminCourseRow {
 }
 
 export default async function AdminNoticesPage() {
-  const [noticesRes, coursesRes] = await Promise.all([
+  const [globalRes, courseRes, coursesRes] = await Promise.all([
     serverApi.get<NoticeApiResponse>('/api/notices?type=GLOBAL&page=0&size=100'),
+    serverApi.get<NoticeApiResponse>('/api/notices?type=COURSE&page=0&size=100'),
     serverApi.get<CourseListApiResponse>('/api/courses?page=0&size=100'),
   ]);
 
   const globalNotices =
-    noticesRes.success && noticesRes.data
-      ? noticesRes.data.content.map(toAdminNoticeRow)
+    globalRes.success && globalRes.data
+      ? globalRes.data.content.map(toAdminNoticeRow)
       : [];
 
-  const courseNoticesRes = await serverApi.get<NoticeApiResponse>(
-    '/api/notices?type=COURSE&page=0&size=100',
-  );
   const courseNotices =
-    courseNoticesRes.success && courseNoticesRes.data
-      ? courseNoticesRes.data.content.map(toAdminNoticeRow)
+    courseRes.success && courseRes.data
+      ? courseRes.data.content.map(toAdminNoticeRow)
       : [];
 
   const notices = [...globalNotices, ...courseNotices];
