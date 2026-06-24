@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 import type { ReportItem, ReportTarget } from '../types';
 import { getLatestReason } from '../types';
+import { processReportDecisionAction } from '../actions';
 
 const TARGET_LABEL: Record<ReportTarget, string> = {
   POST: '게시물',
@@ -28,19 +29,41 @@ export default function AdminReportConfirmModal({
   onProcessReport,
 }: Props) {
   const [reasonOpen, setReasonOpen] = useState(false);
+  const [isPending, setIsPending] = useState(false);
   const latestReason = getLatestReason(report);
 
-  const handleReject = () => {
-    // TODO: 신고 반려 API 연동 (mock)
-    toast.success('신고가 반려되었습니다.');
+  const handleReject = async () => {
+    setIsPending(true);
+    const result = await processReportDecisionAction({
+      reportId: report.reportId,
+      decision: 'REJECT',
+      memo: memo,
+    });
+    setIsPending(false);
+    if (!result.success) {
+      toast.error(result.message);
+      return;
+    }
+    toast.success(result.message);
+    onProcessReport({ ...report, status: 'REJECTED' }, memo);
     onClose();
   };
 
-  const handleDelete = () => {
-    // TODO: 신고 처리 API 연동 (현재 mock)
-    // 대상 콘텐츠 삭제 + 처리 완료 전환 (입력한 메모도 함께 보존)
-    onProcessReport(report, memo);
-    toast.success('신고가 처리되었습니다.');
+  const handleDelete = async () => {
+    setIsPending(true);
+    const result = await processReportDecisionAction({
+      reportId: report.reportId,
+      decision: 'DELETE',
+      memo: memo,
+      deleteTarget: true,
+    });
+    setIsPending(false);
+    if (!result.success) {
+      toast.error(result.message);
+      return;
+    }
+    toast.success(result.message);
+    onProcessReport({ ...report, status: 'COMPLETED', isTargetDeleted: true }, memo);
     onClose();
   };
 
@@ -197,14 +220,16 @@ export default function AdminReportConfirmModal({
           <button
             type="button"
             onClick={handleReject}
-            className="h-10 flex-1 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-[#4B5563] hover:bg-[#F8FAFC]"
+            disabled={isPending}
+            className="h-10 flex-1 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-[#4B5563] hover:bg-[#F8FAFC] disabled:opacity-50"
           >
             반려
           </button>
           <button
             type="button"
             onClick={handleDelete}
-            className="h-10 flex-1 rounded-xl border border-[#FCA5A5] bg-[#FEF2F2] text-sm font-semibold text-[#B91C1C] hover:bg-[#FEE2E2]"
+            disabled={isPending}
+            className="h-10 flex-1 rounded-xl border border-[#FCA5A5] bg-[#FEF2F2] text-sm font-semibold text-[#B91C1C] hover:bg-[#FEE2E2] disabled:opacity-50"
           >
             삭제
           </button>

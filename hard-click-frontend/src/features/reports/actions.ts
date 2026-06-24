@@ -1,8 +1,47 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { isMock } from '@/mocks/config';
 import { serverApi } from '@/lib/api';
 import type { SubmitReportInput, ReportActionResult } from './types';
+
+export type ReportDecision = 'REJECT' | 'DELETE';
+
+export interface ReportDecisionInput {
+  reportId: number;
+  decision: ReportDecision;
+  memo?: string;
+  deleteTarget?: boolean;
+}
+
+/** 신고 처리 — PATCH /api/admin/reports/{reportId}/decision */
+export async function processReportDecisionAction(
+  input: ReportDecisionInput,
+): Promise<ReportActionResult> {
+  if (!Number.isInteger(input.reportId) || input.reportId <= 0) {
+    return { success: false, message: '잘못된 신고입니다.' };
+  }
+
+  try {
+    const res = await serverApi.patch(`/api/admin/reports/${input.reportId}/decision`, {
+      decision: input.decision,
+      memo: input.memo?.trim() || undefined,
+      deleteTarget: input.deleteTarget ?? false,
+    });
+
+    if (!res.success) {
+      return { success: false, message: res.message ?? '신고 처리에 실패했습니다.' };
+    }
+  } catch {
+    return { success: false, message: '신고 처리 중 오류가 발생했습니다.' };
+  }
+
+  revalidatePath('/admin/reports');
+  return {
+    success: true,
+    message: input.decision === 'REJECT' ? '신고가 반려되었습니다.' : '신고가 처리되었습니다.',
+  };
+}
 
 /** FE 신고 사유 → BE `reportTypes` enum (1:1 대응, ReportModal 라벨과 일치). */
 const REASON_TO_ENUM: Record<string, string> = {
