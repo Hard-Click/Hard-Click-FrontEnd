@@ -77,19 +77,14 @@ export default function AdminHeader() {
         <div className="flex flex-1 items-center justify-end gap-6">
           <NotificationDropdown role="ADMIN" />
 
-          {/* 프로필 드롭다운 */}
+          {/* 관리자 드롭다운 */}
           <div className="relative" ref={dropdownRef}>
             <button
               type="button"
               onClick={() => setIsDropdownOpen((prev) => !prev)}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/50 overflow-hidden transition-colors hover:bg-white/30"
+              className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/30"
             >
-              <Image
-                src="/icons/headerPerson.svg"
-                alt="프로필"
-                width={28}
-                height={28}
-              />
+              관리자
             </button>
 
             {isDropdownOpen && (
