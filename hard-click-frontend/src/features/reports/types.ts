@@ -38,6 +38,7 @@ export interface ReportReasonStatItem {
 
 /** 신고 목록 UI 아이템 */
 export interface ReportItem {
+  reportId: number;
   targetType: ReportTarget;
   targetId: number;
   targetContent: string;
@@ -73,6 +74,7 @@ const REASON_LABEL: Record<string, string> = {
 /** 백엔드 응답(ReportApiItem) → UI 타입 변환 */
 export function toReportItem(api: ReportApiItem): ReportItem {
   return {
+    reportId: api.reportId,
     targetType: api.targetType,
     targetId: api.targetId,
     targetContent: api.targetContentPreview ?? api.targetTitle ?? '',

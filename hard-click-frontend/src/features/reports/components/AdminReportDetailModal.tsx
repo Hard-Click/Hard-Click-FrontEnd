@@ -21,27 +21,18 @@ interface Props {
   report: ReportItem;
   onClose: () => void;
   onProcessReport: (report: ReportItem, memo?: string) => void;
-  onSaveMemo: (report: ReportItem, memo: string) => void;
 }
 
 export default function AdminReportDetailModal({
   report,
   onClose,
   onProcessReport,
-  onSaveMemo,
 }: Props) {
   const [reasonOpen, setReasonOpen] = useState(false);
   const [memo, setMemo] = useState(report.processMemo ?? '');
-  // 이미 메모가 저장된 신고는 상세 단계를 건너뛰고 바로 처리 확인(2번)으로 진입한다.
-  const [confirmOpen, setConfirmOpen] = useState(!!report.processMemo);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const latestReason = getLatestReason(report);
-
-  const handleSave = () => {
-    onSaveMemo(report, memo);
-    toast.success('처리 메모가 저장되었습니다.');
-    onClose();
-  };
 
   const router = useRouter();
 
@@ -248,13 +239,6 @@ export default function AdminReportDetailModal({
             className="h-10 flex-1 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-[#4B5563] hover:bg-[#F8FAFC]"
           >
             {TARGET_MOVE_LABEL[report.targetType]}
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            className="h-10 flex-1 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-[#2F5DAA] hover:bg-[#F8FAFC]"
-          >
-            저장
           </button>
           <button
             type="button"

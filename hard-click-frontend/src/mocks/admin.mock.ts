@@ -22,8 +22,8 @@ export const mockRecentReports: AdminRecentReport[] = mockReportList.content
     id: idx + 1,
     type: REPORT_TYPE_LABEL[r.targetType],
     status: REPORT_STATUS_LABEL[r.status],
-    title: r.reasonStats?.[0]?.reason ?? '-',
-    date: r.createdAt,
+    title: r.reason ?? '-',
+    date: r.reportedAt,
     reportKey: `${r.targetType}-${r.targetId}`,
   }));
 
