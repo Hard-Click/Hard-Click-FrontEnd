@@ -34,7 +34,7 @@ export async function getDashboardData(): Promise<{
         id: idx + 1,
         type: REPORT_TYPE_LABEL[r.targetType] ?? r.targetType,
         status: REPORT_STATUS_LABEL[r.status] ?? r.status,
-        title: r.reasonStats[0]?.reason ?? r.targetContent.slice(0, 20),
+        title: r.reasonStats?.[0]?.reason ?? r.targetContent?.slice(0, 20) ?? '',
         date: r.createdAt,
         reportKey: `${r.targetType}-${r.targetId}`,
       }))
@@ -123,7 +123,6 @@ export async function getAdminNoticesPageData(): Promise<{
   ]);
 
   if (!globalRes.success) throw new Error(globalRes.message ?? '전체 공지 조회에 실패했습니다.');
-  if (!courseRes.success) throw new Error(courseRes.message ?? '강의 공지 조회에 실패했습니다.');
 
   const courseItems = coursesRes.success && coursesRes.data ? coursesRes.data.content : [];
   const courseMetaMap = new Map(
