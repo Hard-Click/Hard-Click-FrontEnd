@@ -169,7 +169,7 @@ export default function AdminReportDetailModal({
             </button>
             {reasonOpen && (
               <div className="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-xl border border-[#E2E8F0] bg-white shadow-lg">
-                {report.reasonStats.map((stat) => (
+                {(report.reasonStats ?? []).map((stat) => (
                   <div
                     key={stat.reason}
                     className="flex items-center justify-between border-b border-[#F1F5F9] px-4 py-2.5 text-sm last:border-none"
