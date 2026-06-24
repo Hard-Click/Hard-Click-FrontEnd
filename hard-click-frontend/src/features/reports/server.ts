@@ -7,5 +7,5 @@ export async function getAdminReportsServer(): Promise<ReportItem[]> {
     '/api/admin/reports?page=0&size=100',
   );
   if (!res.success) throw new Error(res.message ?? '신고 목록 조회에 실패했습니다.');
-  return res.data?.content?.map(toReportItem) ?? [];
+return res.data?.content?.map(toReportItem) ?? [];
 }

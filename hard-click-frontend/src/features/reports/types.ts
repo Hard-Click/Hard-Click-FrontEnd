@@ -4,19 +4,17 @@ export interface ReportReasonStat {
 }
 
 export interface ReportApiItem {
+  reportId: number;
   targetType: 'POST' | 'COMMENT' | 'REVIEW';
   targetId: number;
-  targetContent: string;
-  authorName: string;
-  reporterName: string;
+  targetTitle?: string;
+  targetContentPreview?: string;
+  reason?: string;
+  targetAuthorId?: number;
+  targetAuthorName?: string;
   reportCount: number;
-  reasonStats: ReportReasonStat[];
   status: 'PENDING' | 'COMPLETED' | 'REJECTED';
-  createdAt: string;
-  isTargetDeleted: boolean;
-  processMemo?: string;
-  postId?: number;
-  courseId?: number;
+  reportedAt: string;
 }
 
 export interface ReportListApiResponse {
@@ -61,25 +59,30 @@ export function getLatestReason(item: ReportItem): string {
   return item.reasonStats?.[0]?.reason ?? '-';
 }
 
+const REASON_LABEL: Record<string, string> = {
+  SPAM: '스팸/광고',
+  OBSCENE: '음란 행위',
+  ABUSE: '욕설 및 비하',
+  DEFAMATION: '명예훼손',
+  FLOOD: '도배',
+  INAPPROPRIATE: '부적절한 언어',
+  SLANDER: '비방',
+  OTHER: '기타',
+};
+
 /** 백엔드 응답(ReportApiItem) → UI 타입 변환 */
 export function toReportItem(api: ReportApiItem): ReportItem {
   return {
     targetType: api.targetType,
     targetId: api.targetId,
-    targetContent: api.targetContent,
-    authorName: api.authorName,
-    reporterName: api.reporterName,
+    targetContent: api.targetContentPreview ?? api.targetTitle ?? '',
+    authorName: api.targetAuthorName ?? '',
+    reporterName: '',
     reportCount: api.reportCount,
-    reasonStats: api.reasonStats.map((s: ReportReasonStat) => ({
-      reason: s.reason,
-      count: s.count,
-    })),
+    reasonStats: api.reason ? [{ reason: REASON_LABEL[api.reason] ?? api.reason, count: api.reportCount }] : [],
     status: api.status,
-    createdAt: api.createdAt,
-    isTargetDeleted: api.isTargetDeleted,
-    processMemo: api.processMemo,
-    postId: api.postId,
-    courseId: api.courseId,
+    createdAt: api.reportedAt?.replace('T', ' ').slice(0, 16) ?? '',
+    isTargetDeleted: false,
   };
 }
 
