@@ -1,21 +1,7 @@
 import { mockReportList, type ReportApiItem } from './reports.mock';
+import type { AdminRecentReport, AdminRecentNotice } from '@/features/admin/types';
 
-export interface AdminRecentReport {
-  id: number;
-  type: string;
-  status: string;
-  title: string;
-  date: string;
-  /** 신고 관리탭 딥링크 키 (`${targetType}-${targetId}`) */
-  reportKey: string;
-}
-
-export interface AdminRecentNotice {
-  id: number;
-  badge: string;
-  title: string;
-  date: string;
-}
+export type { AdminRecentReport, AdminRecentNotice } from '@/features/admin/types';
 
 // 신고 대상/상태 → 표시 라벨
 const REPORT_TYPE_LABEL: Record<ReportApiItem['targetType'], string> = {

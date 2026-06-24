@@ -1,11 +1,16 @@
+export const dynamic = 'force-dynamic';
+
 import AdminQuizCourseManage from '@/features/admin/components/AdminQuizCourseManage';
 import QuizCreateButton from '@/features/quizzes/components/QuizCreateButton';
 import { getTakenWeeksByCourseServer } from '@/features/quizzes/server';
-import { mockAdminCourseManage } from '@/mocks/admin.mock';
+import { fetchAllAdminCourses } from '@/features/admin/server';
 
 export default async function AdminQuizzesPage() {
-  const courses = mockAdminCourseManage;
-  const takenWeeksByCourse = await getTakenWeeksByCourseServer();
+  const [courses, takenWeeksByCourse] = await Promise.all([
+    fetchAllAdminCourses(),
+    getTakenWeeksByCourseServer(),
+  ]);
+
   const quizFormCourses = courses.map((c) => ({
     courseId: c.id,
     title: c.title,

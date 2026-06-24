@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
@@ -6,8 +8,8 @@ import {
   getTakenWeeksByCourseServer,
 } from '@/features/quizzes/server';
 import QuizListContent from '@/features/quizzes/components/QuizListContent';
-import { mockAdminCourseManage } from '@/mocks/admin.mock';
 import QuizCreateButton from '@/features/quizzes/components/QuizCreateButton';
+import { fetchAllAdminCourses } from '@/features/admin/server';
 
 export default async function AdminCourseQuizzesPage({
   params,
@@ -18,14 +20,14 @@ export default async function AdminCourseQuizzesPage({
   const courseId = Number(courseIdStr);
   if (Number.isNaN(courseId)) notFound();
 
-  const [quizzes, takenWeeksByCourse] = await Promise.all([
+  const [quizzes, takenWeeksByCourse, courses] = await Promise.all([
     getQuizzesServer(courseId),
     getTakenWeeksByCourseServer(),
+    fetchAllAdminCourses(),
   ]);
 
-  const courseName =
-    mockAdminCourseManage.find((c) => c.id === courseId)?.title ?? '강의';
-  const quizFormCourses = mockAdminCourseManage.map((c) => ({
+  const courseName = courses.find((c) => c.id === courseId)?.title ?? '강의';
+  const quizFormCourses = courses.map((c) => ({
     courseId: c.id,
     title: c.title,
     instructor: c.instructor,

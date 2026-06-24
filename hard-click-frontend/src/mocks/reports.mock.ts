@@ -8,31 +8,8 @@
  *   - reportCount: 해당 콘텐츠의 총 신고 횟수 (= reasonStats 횟수 총합)
  */
 
-export interface ReportReasonStat {
-  reason: string;
-  count: number;
-}
-
-export interface ReportApiItem {
-  targetType: 'POST' | 'COMMENT' | 'REVIEW';
-  targetId: number;
-  targetContent: string;
-  authorName: string;
-  reporterName: string;
-  reportCount: number;
-  reasonStats: ReportReasonStat[];
-  status: 'PENDING' | 'COMPLETED' | 'REJECTED';
-  createdAt: string;
-  isTargetDeleted: boolean;
-  processMemo?: string;
-  postId?: number;
-  courseId?: number;
-}
-
-export interface ReportListApiResponse {
-  content: ReportApiItem[];
-  totalPages: number;
-}
+export type { ReportReasonStat, ReportApiItem, ReportListApiResponse } from '@/features/reports/types';
+import type { ReportListApiResponse } from '@/features/reports/types';
 
 export const mockReportList: ReportListApiResponse = {
   content: [

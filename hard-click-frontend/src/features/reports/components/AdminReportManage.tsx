@@ -4,8 +4,6 @@ import { useState, useMemo } from 'react';
 import AdminReportFilterBar from './AdminReportFilterBar';
 import AdminReportTable from './AdminReportTable';
 import Pagination from '@/features/admin/components/Pagination';
-import { mockReportList } from '@/mocks/reports.mock';
-import { toReportItem } from '../types';
 import type {
   ReportItem,
   ReportStatusFilter,
@@ -15,14 +13,14 @@ import type {
 const PAGE_SIZE = 10;
 
 export default function AdminReportManage({
+  initialReports,
   openReport,
 }: {
+  initialReports: ReportItem[];
   openReport?: string;
 }) {
   // 목록 원본 state (처리의 source of truth)
-  const [reports, setReports] = useState<ReportItem[]>(() =>
-    mockReportList.content.map(toReportItem)
-  );
+  const [reports, setReports] = useState<ReportItem[]>(initialReports);
   const [status, setStatus] = useState<ReportStatusFilter>('ALL');
   const [target, setTarget] = useState<ReportTargetFilter>('ALL');
 

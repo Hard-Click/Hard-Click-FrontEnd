@@ -1,11 +1,15 @@
+export const dynamic = 'force-dynamic';
+
 import Image from 'next/image';
 import AdminDashboardStats from '@/features/admin/components/AdminDashboardStats';
 import AdminQuickActions from '@/features/admin/components/AdminQuickActions';
 import AdminRecentReports from '@/features/admin/components/AdminRecentReports';
 import AdminRecentNotices from '@/features/admin/components/AdminRecentNotices';
-import { mockRecentReports, mockRecentNotices } from '@/mocks/admin.mock';
+import { getDashboardData } from '@/features/admin/server';
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
+  const { recentReports, recentNotices } = await getDashboardData();
+
   return (
     <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
       <div className="mx-auto w-full max-w-[1152px]">
@@ -41,8 +45,8 @@ export default function AdminDashboardPage() {
 
         {/* 최근 신고 / 최근 공지 */}
         <div className="grid grid-cols-2 gap-5">
-          <AdminRecentReports reports={mockRecentReports} />
-          <AdminRecentNotices notices={mockRecentNotices} />
+          <AdminRecentReports reports={recentReports} />
+          <AdminRecentNotices notices={recentNotices} />
         </div>
       </div>
     </div>
