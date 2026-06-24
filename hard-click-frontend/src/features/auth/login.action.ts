@@ -49,7 +49,14 @@ export async function loginAction(
     cookieStore.set('refreshToken', mockLoginData.refreshToken, { ...base, maxAge: REFRESH_TOKEN_MAX_AGE });
     cookieStore.set('memberId', String(mockLoginData.memberId), { ...base, maxAge: REFRESH_TOKEN_MAX_AGE });
     cookieStore.set('role', mockLoginData.role, { ...base, maxAge: REFRESH_TOKEN_MAX_AGE });
-    redirect(mockLoginData.role === 'INSTRUCTOR' ? '/instructor/dashboard' : '/courses');
+    const mockRole = mockLoginData.role;
+    redirect(
+      mockRole === 'ADMIN'
+        ? '/admin/dashboard'
+        : mockRole === 'INSTRUCTOR'
+          ? '/instructor/dashboard'
+          : '/courses',
+    );
   }
   // ──────────────────────────────────────────────────────────────────────────
 
@@ -111,5 +118,11 @@ export async function loginAction(
   }
 
   // 성공 → 역할별 이동 (redirect는 try/catch 밖에서: 내부적으로 NEXT_REDIRECT 에러를 던짐)
-  redirect(role === 'INSTRUCTOR' ? '/instructor/dashboard' : '/courses');
+  redirect(
+    role === 'ADMIN'
+      ? '/admin/dashboard'
+      : role === 'INSTRUCTOR'
+        ? '/instructor/dashboard'
+        : '/courses',
+  );
 }
