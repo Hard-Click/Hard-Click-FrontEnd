@@ -34,7 +34,7 @@ export async function getDashboardData(): Promise<{
         id: idx + 1,
         type: REPORT_TYPE_LABEL[r.targetType] ?? r.targetType,
         status: REPORT_STATUS_LABEL[r.status] ?? r.status,
-        title: r.reasonStats[0]?.reason ?? r.targetContent.slice(0, 20),
+        title: r.reasonStats?.[0]?.reason ?? r.targetContent?.slice(0, 20) ?? '',
         date: r.createdAt,
         reportKey: `${r.targetType}-${r.targetId}`,
       }))
