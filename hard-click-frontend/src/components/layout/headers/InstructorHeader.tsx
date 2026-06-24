@@ -90,19 +90,14 @@ export default function InstructorHeader() {
           {/* 알림 */}
           <NotificationDropdown role="INSTRUCTOR" />
 
-          {/* 프로필 드롭다운 */}
+          {/* 강사 드롭다운 */}
           <div className="relative" ref={dropdownRef}>
             <button
               type="button"
               onClick={() => setIsDropdownOpen((prev) => !prev)}
-              className="w-9 h-9 rounded-full bg-white/50 flex items-center justify-center hover:bg-white/30 transition-colors overflow-hidden"
+              className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/30"
             >
-              <Image
-                src="/icons/headerPerson.svg"
-                alt="프로필"
-                width={28}
-                height={28}
-              />
+              강사
             </button>
 
             {isDropdownOpen && (
