@@ -58,7 +58,7 @@ export interface ReportItem {
 
 /** 대표 사유 = 가장 최근 접수된 사유 */
 export function getLatestReason(item: ReportItem): string {
-  return item.reasonStats[0]?.reason ?? '-';
+  return item.reasonStats?.[0]?.reason ?? '-';
 }
 
 /** 백엔드 응답(ReportApiItem) → UI 타입 변환 */

@@ -140,7 +140,7 @@ export default function AdminReportTable({
                   </td>
                   {/* 신고 사유 (가장 최근 접수된 사유) */}
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-[#64748B]">
-                    {report.reasonStats[0]?.reason ?? '-'}
+                    {report.reasonStats?.[0]?.reason ?? '-'}
                   </td>
                   {/* 신고 횟수 */}
                   <td className="px-6 py-4 text-center">
