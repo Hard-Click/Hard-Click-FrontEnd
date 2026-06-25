@@ -170,3 +170,31 @@ export async function getMyRankingServer(
     acceptedCommentRank: toRankItem(ac.data),
   };
 }
+
+/** GET /api/rankings/me/summary 응답(BE) — period 없는 3지표 전체 요약. */
+interface BeMyRankingSummary {
+  studyTime: BeRankSlot;
+  lesson: BeRankSlot;
+  acceptedComment: BeRankSlot;
+}
+
+/**
+ * 내 랭킹 "전체 요약" 조회 (마이페이지 카드용 — period 개념 없음).
+ * GET /api/rankings/me/summary (3지표 한 번에). 랭킹 페이지의 period별 getMyRankingServer와 의도적 분리.
+ */
+export async function getMyRankingSummaryServer(): Promise<MyRankingSummary> {
+  if (isMock('rankings')) {
+    return toMyRanking(mockMyRanking);
+  }
+  const res = await serverApi.get<BeMyRankingSummary>(
+    '/api/rankings/me/summary',
+  );
+  if (!res.success || !res.data) {
+    throw new Error('내 랭킹을 불러오지 못했습니다.');
+  }
+  return {
+    studyTimeRank: toRankItem(res.data.studyTime),
+    lessonRank: toRankItem(res.data.lesson),
+    acceptedCommentRank: toRankItem(res.data.acceptedComment),
+  };
+}
