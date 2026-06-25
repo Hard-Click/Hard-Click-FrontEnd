@@ -1,6 +1,6 @@
 import { serverApi } from '@/lib/api';
 import { maskName } from '@/lib/formatter';
-import { USE_MOCK, isMock } from '@/mocks/config';
+import { isMock } from '@/mocks/config';
 import {
   mockRankingBoard,
   mockMyRanking,
@@ -11,6 +11,7 @@ import {
 import type {
   RankingBoard,
   RankingUser,
+  RankingPeriod,
   MyRankingSummary,
   RankItem,
 } from './types';
@@ -72,23 +73,78 @@ function toMyRankingFromApi(api: BeMyRankingSummary): MyRankingSummary {
   };
 }
 
+/* ───── 라이브 보드 — GET /api/rankings/{study-time,lessons,accepted-comments}?period= (격리막) ───── */
+interface RankingViewItem {
+  rank: number;
+  memberId: number;
+}
+interface StudyTimeRankingView {
+  rankings: (RankingViewItem & { studySeconds: number })[];
+}
+interface LessonRankingView {
+  rankings: (RankingViewItem & { watchedLessonCount: number })[];
+}
+interface AcceptedCommentRankingView {
+  rankings: (RankingViewItem & { acceptedCommentCount: number })[];
+}
+
+/** 순공 초 → "N시간"(1시간 미만은 "N분") */
+function formatStudyTime(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  return h > 0 ? `${h}시간` : `${Math.floor((seconds % 3600) / 60)}분`;
+}
+
 /**
- * 탭별 랭킹 보드 조회 (Server Component 전용).
- * BE 미구현(노션 명세) → USE_MOCK. 연동 시 엔드포인트/매퍼만 맞추면 됨.
+ * BE 보드 항목 → UI 항목.
+ * ⚠️ BE가 회원 **이름을 안 주고 memberId만** 준다(타 회원 이름 조회 API도 없음) →
+ *   본인(myMemberId 일치)은 "나", 나머지는 "학습자"로 **익명화**(§0.1#2: memberId를 이름인 척 노출 ❌).
+ *   BE가 닉네임 필드를 추가하면 name을 그 값으로 바꾸면 끝(안현 결정 2026-06-25).
  */
-export async function getRankingBoardServer(): Promise<RankingBoard> {
-  if (USE_MOCK) {
+function toLiveUser(
+  item: RankingViewItem,
+  value: string,
+  myMemberId: number,
+): RankingUser {
+  const isMe = item.memberId === myMemberId;
+  return { rank: item.rank, name: isMe ? '나' : '학습자', subtitle: '', value, isMe };
+}
+
+/**
+ * 탭별 랭킹 보드 조회 (Server Component 전용). period=daily|weekly|monthly.
+ * 라이브: 3개 지표 엔드포인트를 해당 period로 병렬 조회 → 익명화 매핑.
+ * 실패는 빈 보드로 숨기지 않고 전파 → error.tsx.
+ */
+export async function getRankingBoardServer(
+  period: RankingPeriod,
+  myMemberId: number,
+): Promise<RankingBoard> {
+  if (isMock('rankings')) {
     return toRankingBoard(mockRankingBoard);
   }
 
-  // TODO(API 연동): GET /api/rankings/{metric}?period= 별 조회 후 합치기.
-  // 실패는 빈 보드로 숨기지 않고 전파 → error.tsx에서 처리.
-  const res =
-    await serverApi.get<RankingBoardApiResponse>('/api/rankings/board');
-  if (!res.success || !res.data) {
+  const [st, ls, ac] = await Promise.all([
+    serverApi.get<StudyTimeRankingView>(
+      `/api/rankings/study-time?period=${period}`,
+    ),
+    serverApi.get<LessonRankingView>(`/api/rankings/lessons?period=${period}`),
+    serverApi.get<AcceptedCommentRankingView>(
+      `/api/rankings/accepted-comments?period=${period}`,
+    ),
+  ]);
+  if (!st.success || !ls.success || !ac.success) {
     throw new Error('랭킹을 불러오지 못했습니다.');
   }
-  return toRankingBoard(res.data);
+  return {
+    studyTime: (st.data?.rankings ?? []).map((i) =>
+      toLiveUser(i, formatStudyTime(i.studySeconds), myMemberId),
+    ),
+    lessonCount: (ls.data?.rankings ?? []).map((i) =>
+      toLiveUser(i, `${i.watchedLessonCount}회`, myMemberId),
+    ),
+    acceptedCount: (ac.data?.rankings ?? []).map((i) =>
+      toLiveUser(i, `${i.acceptedCommentCount}회`, myMemberId),
+    ),
+  };
 }
 
 /**
