@@ -63,6 +63,8 @@ function toRankItem(slot: BeRankSlot | undefined): RankItem {
 interface RankingViewItem {
   rank: number;
   memberId: number;
+  /** ⭐ BE가 닉네임 필드를 추가하면 자동으로 이 값이 표시된다(현재 미제공 → 익명). 필드명은 BE 확정 시 맞춤. */
+  nickname?: string;
 }
 interface StudyTimeRankingView {
   rankings: (RankingViewItem & { studySeconds: number })[];
@@ -92,7 +94,10 @@ function toLiveUser(
   myMemberId: number,
 ): RankingUser {
   const isMe = item.memberId === myMemberId;
-  return { rank: item.rank, name: isMe ? '나' : '학습자', subtitle: '', value, isMe };
+  // 본인은 "나"(찾기 쉽게), 타인은 BE 닉네임이 오면 그 값, 아직 없으면 "학습자"로 익명.
+  // → BE가 nickname 필드만 추가하면 FE 수정 없이 자동으로 실제 닉네임 표시.
+  const name = isMe ? '나' : (item.nickname ?? '학습자');
+  return { rank: item.rank, name, subtitle: '', value, isMe };
 }
 
 /**
