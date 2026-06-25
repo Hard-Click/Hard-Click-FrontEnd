@@ -7,6 +7,7 @@ import AdminMemberTable from './AdminMemberTable';
 import MemberStatusChangeModal from './MemberStatusChangeModal';
 import Pagination from './Pagination';
 import type { AdminUser } from '@/features/users/types';
+import { changeUserStatusAction } from '@/features/users/actions';
 import type {
   AdminUserRoleFilter,
   AdminUserStatusFilter,
@@ -60,19 +61,21 @@ export default function AdminUserManage({ users }: AdminUserManageProps) {
     safePage * PAGE_SIZE
   );
 
-  const handleConfirmToggle = () => {
+  const handleConfirmToggle = async () => {
     if (!targetUser) return;
     const nextStatus = targetUser.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+    const result = await changeUserStatusAction(targetUser.memberId, nextStatus);
+    if (!result.success) {
+      toast.error(result.message);
+      setTargetUser(null);
+      return;
+    }
     setUserList((prev) =>
       prev.map((u) =>
         u.memberId === targetUser.memberId ? { ...u, status: nextStatus } : u
       )
     );
-    toast.success(
-      nextStatus === 'SUSPENDED'
-        ? `${targetUser.name}님의 계정을 이용제한했습니다.`
-        : `${targetUser.name}님의 계정 이용제한을 해제했습니다.`
-    );
+    toast.success(result.message);
     setTargetUser(null);
   };
 
