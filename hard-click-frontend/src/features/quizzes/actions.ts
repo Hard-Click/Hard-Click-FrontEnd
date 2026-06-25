@@ -17,15 +17,33 @@ export interface QuizActionState {
  *    - 등록/수정: 아래 toInstructorQuizRequest의 **가정 2개**(sectionId·correctOptionId)를 검증/조정해야 함.
  * ───────────────────────────────────────────────────────────────────────── */
 
+/** BE 강사 퀴즈 등록/수정 요청 DTO (격리막 — 매퍼 출력 형태 명시, §3). BE 계약 확정 시 여기서 조정. */
+interface InstructorQuizRequest {
+  quizTitle: string;
+  courseId: number;
+  sectionId: number;
+  questions: {
+    questionText: string;
+    explanation: string;
+    correctOptionId: number;
+    options: { optionId: number; optionText: string }[];
+  }[];
+}
+
 /**
  * FE 폼(QuizFormPayload — 주차·정답index 기반) → BE InstructorQuizRequest(섹션·correctOptionId 기반) 매퍼.
- * ⚠️ BE 쓰기 stub이라 아래 2개는 **가정(미검증, §0.1)** — BE 비즈니스 로직 오면 반드시 검증:
+ * ⚠️ BE 쓰기 stub이라 아래 2개는 **가정(§0.1)** — BE 비즈니스 로직 오면 반드시 검증:
  *   (가정1) sectionId ← week: BE는 sectionId를 요구하나 FE 폼은 "주차"만 받음 → 주차를 그대로 보냄.
  *           실제 강의 섹션ID와 주차가 다르면 폼을 "섹션 선택"으로 개편 필요할 수 있음.
- *   (가정2) correctOptionId ← answerIndex+1: 신규 옵션은 optionId가 없어 1~4 임시 부여, 정답=index+1.
- *           BE가 정답을 옵션 순서/임시id 중 무엇으로 받는지 stub이라 미검증.
+ *   (가정2) correctOptionId ← answerIndex+1 / optionId ← i+1: ⚠️ **라이브 read가 이 가정을 반박함** —
+ *           GET /api/instructor/quizzes/{id}를 보면 optionId는 **전역 DB id**(문제2 옵션은 5~8, 1~4 아님),
+ *           문제별 1-based는 optionNumber이고 correctOptionId는 그 전역 optionId를 가리킴(+ 옵션마다 correct:boolean).
+ *           즉 신규 작성은 optionId/correctOptionId를 FE가 못 만드니, 실제 생성 계약은 correct:boolean 또는
+ *           optionNumber 기반일 가능성이 큼. BE 생성 DTO 확정 시 이 매퍼를 그 형태로 교체할 것.
  */
-function toInstructorQuizRequest(payload: QuizFormPayload) {
+function toInstructorQuizRequest(
+  payload: QuizFormPayload,
+): InstructorQuizRequest {
   return {
     quizTitle: payload.title,
     courseId: payload.courseId,
