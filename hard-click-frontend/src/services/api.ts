@@ -49,10 +49,21 @@ async function request<T>(
     return withSuccess(response.data);
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
+      const body = error.response.data as {
+        httpStatus?: number;
+        message?: string;
+        data?: T;
+        errorCode?: string;
+        details?: Record<string, unknown>;
+      };
       // BFF 프록시가 refresh까지 시도했는데도 401 → 세션 만료/차단.
       // 토큰은 프록시에서 정리되므로 클라는 로그인 페이지로 이동한다. (로그인 페이지 제외)
+      // 단, AUTH_009(현재 비밀번호 불일치)는 비번변경·회원탈퇴의 '본인 확인' 실패라 세션 만료가 아니다.
+      // 이때 로그인으로 튕기면 비번 한 번 틀렸다고 로그아웃되므로, 호출자(모달)에 그대로 돌려줘
+      // "비밀번호가 일치하지 않습니다"를 띄우게 한다.
       if (
         error.response.status === 401 &&
+        body?.errorCode !== 'AUTH_009' &&
         typeof window !== 'undefined' &&
         !window.location.pathname.startsWith('/auth')
       ) {
@@ -61,13 +72,6 @@ async function request<T>(
         // (네비게이션 완료 시까지 resolve하지 않음)
         return new Promise<never>(() => {});
       }
-      const body = error.response.data as {
-        httpStatus?: number;
-        message?: string;
-        data?: T;
-        errorCode?: string;
-        details?: Record<string, unknown>;
-      };
       return withSuccess({
         httpStatus: body?.httpStatus ?? error.response.status,
         message: body?.message ?? '요청 처리 중 오류가 발생했습니다',

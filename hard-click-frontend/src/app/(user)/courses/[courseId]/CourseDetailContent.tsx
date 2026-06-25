@@ -18,6 +18,8 @@ import {
 } from '@/features/wishlist/actions';
 import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
 import PreviewVideoModal from '@/features/learning/components/PreviewVideoModal';
+import CourseInstructorSection from '@/features/courses/components/CourseInstructorSection';
+import CourseIntroSection from '@/features/courses/components/CourseIntroSection';
 import {
   getReviews,
   updateReview,
@@ -324,6 +326,18 @@ export default function CourseDetailContent({
   const maxRatingCount = Math.max(...ratingDist.map((d) => d.count), 1);
   const totalReviewPages = reviewTotalPages;
   const displayedReviews = reviews; // 서버 페이지네이션 (getReviews page 기준)
+  // 페이지 번호 — 5개 묶음(블록) 단위. < > 는 블록 이동 (1~5 → 6~10 → 11~15 ...)
+  const REVIEW_BLOCK = 5;
+  const reviewBlockStart =
+    Math.floor((reviewPage - 1) / REVIEW_BLOCK) * REVIEW_BLOCK + 1;
+  const reviewBlockEnd = Math.min(
+    reviewBlockStart + REVIEW_BLOCK - 1,
+    totalReviewPages,
+  );
+  const reviewPageNumbers = Array.from(
+    { length: reviewBlockEnd - reviewBlockStart + 1 },
+    (_, i) => reviewBlockStart + i,
+  );
   // 공지 고정 맨 위, 나머지 최신순 정렬
   const sortedNotices = [...course.notices].sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1;
@@ -331,9 +345,6 @@ export default function CourseDetailContent({
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
   const displayedNotices = sortedNotices.slice(0, 3);
-
-  // UA-P0-140: 첫 번째 강의 lessonId (학습 시작 이동 대상)
-  const firstLessonId = course.curriculum[0]?.lessons[0]?.lessonId;
 
   return (
     <div className="min-h-screen bg-[#F0F2F5]">
@@ -516,7 +527,7 @@ export default function CourseDetailContent({
                       ))}
                   </>
                 )}
-                {/* TODO: 찜 API 엔드포인트 명세에 없음 — 백엔드 확인 후 연결 */}
+                {/* 찜 토글 — POST/DELETE /api/wishlist 라이브 연동(초기 상태는 서버에서 보강) */}
                 <button
                   onClick={async () => {
                     if (!requireLogin() || wishlistPending) return;
@@ -662,257 +673,17 @@ export default function CourseDetailContent({
               </div>
             </section>
 
-            {/* ── 강사소개 ── */}
-            <section id="instructor" className="scroll-mt-20">
-              <div
-                className="bg-white border border-[#D5D8DD]"
-                style={{ padding: '33px 33px 1px' }}
-              >
-                <h2 className="text-2xl font-semibold text-[#1A1F2E] mb-6">
-                  강사소개
-                </h2>
+            {/* ── 강사소개 (공용 컴포넌트) ── */}
+            <CourseInstructorSection instructor={course.instructor} />
 
-                <div className="flex items-start gap-6 pb-8">
-                  <div className="flex-shrink-0 w-28 h-28 rounded-full border-2 border-[#D5D8DD] overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="/image/Image (박지훈).svg"
-                      width={112}
-                      height={112}
-                      alt="박지훈"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xl font-semibold text-[#1A1F2E] mb-0.5">
-                      {course.instructor.name}
-                    </p>
-                    <p className="text-base text-[#1A1F2E] mb-3">
-                      {course.instructor.subtitle}
-                    </p>
-
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="flex-1 flex items-center gap-1.5">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src="/icons/studentsBlueIcon.svg"
-                          width={16}
-                          height={16}
-                          alt=""
-                        />
-                        <span className="text-sm text-[#1A1F2E]">
-                          수강생{' '}
-                          {course.instructor.instructorStudentCount.toLocaleString()}
-                          명
-                        </span>
-                      </div>
-                      <div className="flex-1 flex items-center gap-1.5">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src="/icons/bookIcon.svg"
-                          width={16}
-                          height={16}
-                          alt=""
-                        />
-                        <span className="text-sm text-[#1A1F2E]">
-                          강의 {course.instructor.instructorCourseCount}개
-                        </span>
-                      </div>
-                      <div className="flex-1 flex items-center gap-1.5">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src="/icons/starFilledIcon.svg"
-                          width={16}
-                          height={16}
-                          alt=""
-                        />
-                        <span className="text-sm text-[#1A1F2E]">
-                          평점 {course.instructor.instructorRating}
-                        </span>
-                      </div>
-                    </div>
-
-                    <p className="text-sm leading-[23px] text-[#1A1F2E] mb-4">
-                      {course.instructor.bio}
-                    </p>
-
-                    {/* 경력 */}
-                    <p className="text-sm font-semibold text-[#1A1F2E] mb-2">
-                      경력
-                    </p>
-                    <div className="flex flex-col gap-1 mb-4">
-                      {course.instructor.career.map((item, i) => (
-                        <div key={i} className="flex items-start gap-2">
-                          <span className="flex-shrink-0 text-sm leading-[20px] text-[#2F5DAA] select-none">
-                            •
-                          </span>
-                          <span className="text-sm leading-[20px] text-[#1A1F2E]">
-                            {item}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* 태그 — Figma: 하단 배치 */}
-                    <div className="flex flex-wrap gap-2">
-                      {course.instructor.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="px-3 py-1 bg-[rgba(47,93,170,0.1)] rounded-full text-xs font-medium text-[#2F5DAA]"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* ── 강의소개 ── */}
-            <section id="intro" className="scroll-mt-20">
-              <div
-                className="bg-white border border-[#D5D8DD]"
-                style={{ padding: '33px 33px 1px' }}
-              >
-                <h2 className="text-2xl font-semibold text-[#1A1F2E] mb-6">
-                  강의소개
-                </h2>
-
-                <div className="flex flex-col gap-8 pb-8">
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src="/icons/targetIcon.svg"
-                        width={20}
-                        height={20}
-                        alt=""
-                      />
-                      <h3 className="text-lg font-semibold text-[#1A1F2E]">
-                        학습목표
-                      </h3>
-                    </div>
-                    <ul className="flex flex-col gap-[10px]">
-                      {course.learningGoals.map((goal, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src="/icons/checkDarkIcon.svg"
-                            width={20}
-                            height={20}
-                            alt=""
-                            className="flex-shrink-0 mt-0.5"
-                          />
-                          <span className="text-sm leading-[23px] text-[#1A1F2E]">
-                            {goal}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src="/icons/studentsBlueIcon.svg"
-                        width={20}
-                        height={20}
-                        alt=""
-                      />
-                      <h3 className="text-lg font-semibold text-[#1A1F2E]">
-                        추천대상
-                      </h3>
-                    </div>
-                    <ul className="flex flex-col gap-[10px]">
-                      {course.targetAudience.map((t, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="flex-shrink-0 text-sm leading-[20px] text-[#2F5DAA] select-none">
-                            •
-                          </span>
-                          <span className="text-sm leading-[23px] text-[#1A1F2E]">
-                            {t}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src="/icons/bookIcon.svg"
-                        width={20}
-                        height={20}
-                        alt=""
-                      />
-                      <h3 className="text-lg font-semibold text-[#1A1F2E]">
-                        과목
-                      </h3>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {course.techTags.map((tag, i) => (
-                        <span
-                          key={i}
-                          className="h-9 px-4 flex items-center bg-[rgba(47,93,170,0.1)] rounded-2xl text-sm font-medium text-[#2F5DAA]"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-6">
-                    {[
-                      {
-                        icon: '/icons/clockBlueIcon.svg',
-                        label: '예상 학습 시간',
-                        value: course.totalDuration,
-                      },
-                      {
-                        icon: '/icons/trendUpBlueIcon.svg',
-                        label: '난이도',
-                        value: course.level,
-                      },
-                    ].map((stat) => (
-                      <div
-                        key={stat.label}
-                        className="flex-1 flex items-start gap-3"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={stat.icon}
-                          width={20}
-                          height={20}
-                          alt=""
-                          className="flex-shrink-0 mt-0.5"
-                        />
-                        <div className="flex flex-col gap-1">
-                          <span
-                            className="text-xs text-[#1A1F2E]"
-                            style={{ lineHeight: '16px' }}
-                          >
-                            {stat.label}
-                          </span>
-                          <span
-                            className="text-base font-semibold text-[#1A1F2E]"
-                            style={{
-                              lineHeight: '24px',
-                              letterSpacing: '-0.3125px',
-                            }}
-                          >
-                            {stat.value}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </section>
+            {/* ── 강의소개 (공용 컴포넌트) ── */}
+            <CourseIntroSection
+              learningGoals={course.learningGoals}
+              targetAudience={course.targetAudience}
+              techTags={course.techTags}
+              totalDuration={course.totalDuration}
+              level={course.level}
+            />
 
             {/* ── 커리큘럼 ── */}
             <section id="curriculum" className="scroll-mt-20">
@@ -1110,15 +881,13 @@ export default function CourseDetailContent({
                       ))}
                     </div>
 
-                    {/* 페이지네이션 */}
-                    {totalReviewPages > 1 && (
+                    {/* 페이지네이션 — 1페이지여도 항상 표시 */}
+                    {(
                       <div className="flex justify-center items-center gap-1 pt-4 pb-6">
                         {/* 이전 버튼 */}
                         <button
-                          onClick={() =>
-                            setReviewPage((p) => Math.max(1, p - 1))
-                          }
-                          disabled={reviewPage === 1}
+                          onClick={() => setReviewPage(reviewBlockStart - 1)}
+                          disabled={reviewBlockStart === 1}
                           className="w-9 h-9 flex items-center justify-center rounded-xl text-sm text-[#9CA3AF] hover:bg-[#F0F2F5] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         >
                           <svg
@@ -1137,11 +906,8 @@ export default function CourseDetailContent({
                           </svg>
                         </button>
 
-                        {/* 페이지 번호 */}
-                        {Array.from(
-                          { length: totalReviewPages },
-                          (_, i) => i + 1
-                        ).map((page) => (
+                        {/* 페이지 번호 — 최대 5개 윈도우(슬라이드) */}
+                        {reviewPageNumbers.map((page) => (
                           <button
                             key={page}
                             onClick={() => setReviewPage(page)}
@@ -1157,12 +923,8 @@ export default function CourseDetailContent({
 
                         {/* 다음 버튼 */}
                         <button
-                          onClick={() =>
-                            setReviewPage((p) =>
-                              Math.min(totalReviewPages, p + 1)
-                            )
-                          }
-                          disabled={reviewPage === totalReviewPages}
+                          onClick={() => setReviewPage(reviewBlockEnd + 1)}
+                          disabled={reviewBlockEnd === totalReviewPages}
                           className="w-9 h-9 flex items-center justify-center rounded-xl text-sm text-[#9CA3AF] hover:bg-[#F0F2F5] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         >
                           <svg
@@ -1201,23 +963,6 @@ export default function CourseDetailContent({
       >
         <SideNav activeId={activeSection} onNav={setActiveSection} />
       </div>
-
-      {/* ── UA-P0-140/142: 학습 시작 플로팅 버튼 — 수강자만 표시 ── */}
-      {isEnrolled && firstLessonId && (
-        <div className="fixed bottom-8 right-8 z-40">
-          <Link href={`/learning/${courseId}`}>
-            <button
-              className="flex items-center justify-center gap-2 bg-[#F97316] hover:bg-[#EA6A10] text-white font-semibold text-lg rounded-[20px] transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]"
-              style={{ width: 167, height: 60 }}
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M6 4L16 10L6 16V4Z" fill="white" />
-              </svg>
-              학습 시작
-            </button>
-          </Link>
-        </div>
-      )}
 
       {/* 리뷰 신고 모달 — 공용 ReportModal 재사용 (커뮤니티 신고와 동일) */}
       {reportingReview && (

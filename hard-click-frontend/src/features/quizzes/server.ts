@@ -1,114 +1,116 @@
 import { serverApi } from '@/lib/api';
-import { USE_MOCK } from '@/mocks/config';
+import { isMock } from '@/mocks/config';
 import { mockQuizzes } from '@/mocks/quizzes.mock';
 import { getMockQuizScoreRows } from '@/mocks/quizScores.mock';
-import type { Quiz, QuizQuestion, QuizScoreBoard } from './types';
+import type { Quiz, QuizScoreBoard } from './types';
 
-/**
- * 백엔드 퀴즈 응답(가정). 실제 명세 확정 시 이 타입 + toQuiz만 맞추면 UI는 그대로.
- * (백엔드는 보통 createdAt=ISO datetime으로 내려준다고 가정 → createdDate=YYYY-MM-DD로 변환)
- */
-interface ApiQuiz {
+/* ─────────────────────────────────────────────────────────────────────────
+ * 퀴즈 도메인 — 강사 읽기(목록·점수통계) 실서버 연동 (2026-06-25, 라이브 검증 완료).
+ * ⚠️ BE는 퀴즈를 "섹션(section)" 기반으로 관리 → FE의 "주차(week)"는 sectionTitle("섹션 N: ...")의
+ *    숫자를 파싱해 매핑(사용자 결정: 섹션을 주차처럼). 섹션명과 주차가 안 맞을 수 있음(허용).
+ * ⚠️ 작성/수정/삭제(actions.ts)·학생 흐름(studentServer/Actions)은 아직 USE_MOCK(mock) — Phase 2.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/** GET /api/instructor/quizzes?courseId= 응답 (라이브 검증). */
+interface ApiInstructorQuizItem {
   quizId: number;
-  courseId: number;
-  week: number;
-  title: string;
+  quizTitle: string;
+  courseTitle: string;
+  sectionTitle: string;
   questionCount: number;
   createdAt: string;
-  questions: QuizQuestion[];
+}
+interface ApiInstructorQuizList {
+  courseId: number;
+  sectionId: number | null;
+  quizzes: ApiInstructorQuizItem[];
 }
 
-/** 백엔드 응답 → UI 타입 Quiz (격리막). UI 타입으로 직접 단정하지 않는다. */
-function toQuiz(api: ApiQuiz): Quiz {
-  return {
-    quizId: api.quizId,
-    courseId: api.courseId,
-    week: api.week,
-    title: api.title,
-    questionCount: api.questionCount,
-    createdDate: api.createdAt.split('T')[0],
-    questions: api.questions,
-  };
+/** "섹션 N: ..." 제목 → 주차 번호. 숫자 없으면 0. (섹션→주차 매핑) */
+function sectionToWeek(sectionTitle: string | null | undefined): number {
+  const m = sectionTitle?.match(/\d+/);
+  return m ? Number(m[0]) : 0;
 }
 
 const byWeekAsc = (a: Quiz, b: Quiz) => a.week - b.week;
 
 /**
  * 강의별 퀴즈 목록 — 서버 조회 (Server Component 전용).
- * API 연동 시: 엔드포인트 + ApiQuiz/toQuiz만 맞추면 됨.
+ * 라이브: GET /api/instructor/quizzes?courseId= → 섹션→주차 매핑. 목록엔 문항 없음(상세에서).
  */
 export async function getQuizzesServer(courseId: number): Promise<Quiz[]> {
-  if (USE_MOCK) {
+  if (isMock('quizzes')) {
     return mockQuizzes.filter((q) => q.courseId === courseId).sort(byWeekAsc);
   }
 
-  const res = await serverApi.get<ApiQuiz[]>(
-    `/api/instructor/courses/${courseId}/quizzes`,
+  const res = await serverApi.get<ApiInstructorQuizList>(
+    `/api/instructor/quizzes?courseId=${courseId}`,
   );
   if (!res.success || !res.data) return [];
-  return res.data.map(toQuiz).sort(byWeekAsc); // mock과 동일 정렬 유지
+  const cid = res.data.courseId ?? courseId;
+  return res.data.quizzes
+    .map((item) => ({
+      quizId: item.quizId,
+      courseId: cid,
+      week: sectionToWeek(item.sectionTitle),
+      title: item.quizTitle,
+      questionCount: item.questionCount,
+      createdDate: item.createdAt ? item.createdAt.split('T')[0] : '',
+      questions: [], // 목록 응답엔 문항 미포함 — 상세(GET /api/instructor/quizzes/{id})에서 조회
+    }))
+    .sort(byWeekAsc);
 }
 
 /**
- * 강의별 "이미 퀴즈가 있는 주차" 맵 — 1주 1퀴즈 규칙용 (등록 시 중복 주차 제외).
- * { courseId: [사용된 주차들] }
+ * 강의별 "이미 퀴즈가 있는 주차" 맵 — 1주 1퀴즈 규칙용(등록 폼).
+ * ⚠️ 등록 폼(actions.ts)은 아직 mock이라 이 값도 mock 사용. 라이브 분기는 BE가 courseId별 집계
+ *    엔드포인트가 없어(목록 item에 courseId 없음) 비워둠 → Phase 2(등록 연동)에서 강의별 집계.
  */
 export async function getTakenWeeksByCourseServer(): Promise<
   Record<number, number[]>
 > {
-  if (USE_MOCK) {
+  if (isMock('quizzes')) {
     const map: Record<number, number[]> = {};
     for (const q of mockQuizzes) {
       (map[q.courseId] ??= []).push(q.week);
     }
     return map;
   }
-
-  // TODO(API 연동): 강사 강의별 사용 주차 집계 (전용 엔드포인트 or 전체 퀴즈 집계)
+  // TODO(Phase 2): 등록 연동 시 강의별 사용 주차 집계 (courseId별 GET /api/instructor/quizzes 호출)
   return {};
 }
 
-/** 백엔드 점수 응답(가정) — 격리막용. submittedAt(ISO) → submittedDate(YYYY-MM-DD). */
-interface ApiQuizScoreRow {
-  studentId: string;
+/** GET /api/instructors/me/quizzes/{quizId}/statistics 응답 (라이브 검증). */
+interface ApiQuizStudentScore {
+  userId: string;
   name: string;
-  attended: boolean;
-  score: number | null;
+  submitted: boolean;
+  score: number;
   submittedAt: string | null;
 }
-interface ApiQuizScoreBoard {
-  quizId: number;
-  courseId: number;
-  week: number;
-  title: string;
-  rows: ApiQuizScoreRow[];
-}
-
-function toScoreBoard(api: ApiQuizScoreBoard): QuizScoreBoard {
-  return {
-    quizId: api.quizId,
-    courseId: api.courseId,
-    week: api.week,
-    title: api.title,
-    rows: api.rows.map((r) => ({
-      studentId: r.studentId,
-      name: r.name,
-      attended: r.attended,
-      score: r.score,
-      submittedDate: r.submittedAt ? r.submittedAt.split('T')[0] : null,
-    })),
+interface ApiQuizStatistics {
+  courseTitle: string;
+  sectionTitle: string;
+  quizTitle: string;
+  summary: {
+    submittedCount: number;
+    notSubmittedCount: number;
+    averageScore: number;
   };
+  scoreDistribution: { range: string; count: number; percentage: number }[];
+  students: ApiQuizStudentScore[];
 }
 
 /**
- * 퀴즈 1개의 점수 현황 — 서버 조회 (Server Component 전용). 없는 퀴즈면 null.
- * API 연동 시: 엔드포인트 + ApiQuizScoreBoard/toScoreBoard만 맞추면 됨.
+ * 퀴즈 1개 점수 현황 — 서버 조회 (Server Component 전용). 없는 퀴즈면 null.
+ * 라이브: GET /api/instructors/me/quizzes/{quizId}/statistics. (courseId는 URL에 없어 인자로 받아 채움)
+ * summary/분포는 FE가 rows로 재집계(scoreboard.ts)하므로 students(rows)만 매핑.
  */
 export async function getQuizScoresServer(
   courseId: number,
   quizId: number,
 ): Promise<QuizScoreBoard | null> {
-  if (USE_MOCK) {
+  if (isMock('quizzes')) {
     const quiz = mockQuizzes.find(
       (q) => q.quizId === quizId && q.courseId === courseId,
     );
@@ -122,9 +124,21 @@ export async function getQuizScoresServer(
     };
   }
 
-  const res = await serverApi.get<ApiQuizScoreBoard>(
-    `/api/instructor/courses/${courseId}/quizzes/${quizId}/scores`,
+  const res = await serverApi.get<ApiQuizStatistics>(
+    `/api/instructors/me/quizzes/${quizId}/statistics`,
   );
   if (!res.success || !res.data) return null;
-  return toScoreBoard(res.data);
+  return {
+    quizId,
+    courseId,
+    week: sectionToWeek(res.data.sectionTitle),
+    title: res.data.quizTitle,
+    rows: res.data.students.map((s) => ({
+      studentId: s.userId,
+      name: s.name,
+      attended: s.submitted,
+      score: s.submitted ? s.score : null,
+      submittedDate: s.submittedAt ? s.submittedAt.split('T')[0] : null,
+    })),
+  };
 }

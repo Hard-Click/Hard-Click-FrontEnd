@@ -181,5 +181,8 @@ export interface CourseDetailApiResponse {
   instructorStudentCount: number;
   instructorCourseCount: number;
   instructorRating: number;
+  instructorOneLineIntro: string | null; // 강사 한줄소개 (현재 BE 전부 null — 시드 대기)
+  instructorIntroduction: string | null; // 강사 자기소개
+  instructorCareer: string | null; // 강사 경력 (BE는 단일 string)
 }
 

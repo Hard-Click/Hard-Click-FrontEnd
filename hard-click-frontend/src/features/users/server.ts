@@ -8,7 +8,7 @@ import type {
   AdminUserListApiResponse,
 } from './types';
 import { toAdminUser } from './types';
-import { USE_MOCK } from '@/mocks/config';
+import { USE_MOCK, isMock } from '@/mocks/config';
 import {
   mockMyEnrolledCourses,
   mockMyCompletedCourses,
@@ -18,7 +18,7 @@ import { mockAdminUserList } from '@/mocks/users.mock';
 
 /** 내 프로필 — 서버 조회 (Server Component 전용). 백엔드 memberId → userId 매핑. */
 export async function getMyProfileServer(): Promise<MyProfile | null> {
-  if (USE_MOCK) {
+  if (isMock('mypage')) {
     return {
       userId: mockMyProfile.memberId,
       name: mockMyProfile.name,
@@ -38,14 +38,14 @@ export async function getMyProfileServer(): Promise<MyProfile | null> {
 
 /** 내 수강 강의 목록 — 서버 조회 (GET /api/members/me/courses) */
 export async function getMyCoursesServer(): Promise<MyCourse[]> {
-  if (USE_MOCK) return mockMyEnrolledCourses;
+  if (isMock('mypage')) return mockMyEnrolledCourses;
   const res = await serverApi.get<MyCourse[]>('/api/members/me/courses');
   return res.success && res.data ? res.data : [];
 }
 
 /** 완료 강의 목록 — 서버 조회 (GET /api/members/me/courses/completed) */
 export async function getMyCompletedCoursesServer(): Promise<CompletedCourse[]> {
-  if (USE_MOCK) return mockMyCompletedCourses;
+  if (isMock('mypage')) return mockMyCompletedCourses;
   const res = await serverApi.get<CompletedCourse[]>(
     '/api/members/me/courses/completed',
   );

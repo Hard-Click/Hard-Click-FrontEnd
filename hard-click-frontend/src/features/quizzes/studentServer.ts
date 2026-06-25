@@ -1,5 +1,5 @@
 import { serverApi } from '@/lib/api';
-import { USE_MOCK } from '@/mocks/config';
+import { isMock } from '@/mocks/config';
 import { mockQuizzes } from '@/mocks/quizzes.mock';
 import {
   mockEnrolledCourses,
@@ -13,58 +13,58 @@ import type {
   QuizReviewQuestion,
 } from './types';
 
+/* ─────────────────────────────────────────────────────────────────────────
+ * 수강생 퀴즈 — 실서버 연동 (2026-06-25, Phase 2). 섹션→주차 매핑은 강사와 동일.
+ * ⚠️ BE `GET /api/members/me/quizzes`엔 courseId가 없어 과목별 필터 불가 →
+ *    "내 퀴즈 전체보기"로 동작(courseId 인자는 링크 라우팅용). BE에 courseId 추가되면 필터 적용.
+ * ⚠️ 향상도(직전 주차 대비)는 BE가 직접 안 줘서 보류(null) — 섹션→주차 매핑이 모호해 임의 계산 안 함.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/** "섹션 N: ..." → 주차 N (server.ts와 동일 규칙). */
+function sectionToWeek(s: string | null | undefined): number {
+  const m = s?.match(/\d+/);
+  return m ? Number(m[0]) : 0;
+}
+
 const byWeekAsc = (a: StudentQuizItem, b: StudentQuizItem) => a.week - b.week;
 
-/**
- * 수강생 수강 중 강의 목록 — 과목 선택 필터용 (Server Component 전용).
- */
+/** 수강 중 강의 목록 — GET /api/members/me/courses (과목 선택용). */
 export async function getEnrolledCoursesServer(): Promise<
   { courseId: number; title: string }[]
 > {
-  if (USE_MOCK) return mockEnrolledCourses;
+  if (isMock('quizzes')) return mockEnrolledCourses;
 
-  // TODO(API 연동): 수강생 수강 중 강의 목록
-  const res = await serverApi.get<{ courseId: number; title: string }[]>(
-    '/api/student/courses',
+  const res = await serverApi.get<{ courseId: number; courseTitle: string }[]>(
+    '/api/members/me/courses',
   );
   if (!res.success || !res.data) return [];
-  return res.data;
+  return res.data.map((c) => ({ courseId: c.courseId, title: c.courseTitle }));
 }
 
-/** 백엔드 수강생 퀴즈 응답(가정) — 격리막. attemptedAt(ISO) → attemptedDate(YYYY-MM-DD). */
-interface ApiStudentQuiz {
+/** GET /api/members/me/quizzes 응답 (라이브 검증). courseId 없음 — courseTitle만. */
+interface ApiMyQuizItem {
   quizId: number;
-  courseId: number;
-  week: number;
-  title: string;
+  quizTitle: string;
+  courseTitle: string;
+  sectionTitle: string;
   questionCount: number;
-  attempted: boolean;
-  score: number | null;
-  attemptedAt: string | null;
+  submitted: boolean;
+  score: number;
+  submittedAt: string | null;
 }
-
-function toStudentQuizItem(api: ApiStudentQuiz): StudentQuizItem {
-  return {
-    quizId: api.quizId,
-    courseId: api.courseId,
-    week: api.week,
-    title: api.title,
-    questionCount: api.questionCount,
-    attempted: api.attempted,
-    score: api.score,
-    attemptedDate: api.attemptedAt ? api.attemptedAt.split('T')[0] : null,
-  };
+interface ApiMyQuizList {
+  quizzes: ApiMyQuizItem[];
+  totalCount: number;
 }
 
 /**
- * 수강생 강의별 퀴즈 목록 + 본인 응시 상태 — 서버 조회 (Server Component 전용).
- * 퀴즈는 강사 등록분(quizzes.mock) 재사용 + 응시 기록 결합.
- * API 연동 시: 엔드포인트 + ApiStudentQuiz/toStudentQuizItem만 맞추면 됨.
+ * 수강생 퀴즈 목록 + 본인 응시 상태 — GET /api/members/me/quizzes (내 전체 퀴즈).
+ * ⚠️ BE에 courseId가 없어 과목별 필터 불가 → 전체 반환, courseId 인자는 카드 링크용으로 부착.
  */
 export async function getStudentQuizzesServer(
   courseId: number,
 ): Promise<StudentQuizItem[]> {
-  if (USE_MOCK) {
+  if (isMock('quizzes')) {
     return mockQuizzes
       .filter((q) => q.courseId === courseId)
       .map((q) => {
@@ -83,48 +83,47 @@ export async function getStudentQuizzesServer(
       .sort(byWeekAsc);
   }
 
-  const res = await serverApi.get<ApiStudentQuiz[]>(
-    `/api/student/courses/${courseId}/quizzes`,
+  const res = await serverApi.get<ApiMyQuizList>(
+    '/api/members/me/quizzes?page=0&size=100',
   );
   if (!res.success || !res.data) return [];
-  return res.data.map(toStudentQuizItem).sort(byWeekAsc);
+  return res.data.quizzes
+    .map((q) => ({
+      quizId: q.quizId,
+      courseId, // BE 미제공 → 라우트 courseId로 채움(take 링크용)
+      week: sectionToWeek(q.sectionTitle),
+      title: q.quizTitle,
+      questionCount: q.questionCount,
+      attempted: q.submitted,
+      score: q.submitted ? q.score : null,
+      attemptedDate: q.submittedAt ? q.submittedAt.split('T')[0] : null,
+    }))
+    .sort(byWeekAsc);
 }
 
-/** 백엔드 응시 화면 응답(가정) — 정답 미포함(격리막). */
+/** GET /api/quizzes/{id} 응답 (응시 — 정답·해설 미포함, 검증). */
 interface ApiStudentQuizDetail {
   quizId: number;
-  courseId: number;
-  week: number;
-  title: string;
-  attempted: boolean;
-  questions: { questionId: number; content: string; options: string[] }[];
-}
-
-function toStudentQuizDetail(api: ApiStudentQuizDetail): StudentQuizDetail {
-  return {
-    quizId: api.quizId,
-    courseId: api.courseId,
-    week: api.week,
-    title: api.title,
-    attempted: api.attempted,
-    questions: api.questions.map((q) => ({
-      questionId: q.questionId,
-      content: q.content,
-      options: q.options,
-    })),
-  };
+  quizTitle: string;
+  sectionTitle: string;
+  submitted: boolean;
+  questions: {
+    questionId: number;
+    questionNumber: number;
+    questionText: string;
+    options: { optionId: number; optionText: string }[];
+  }[];
 }
 
 /**
- * 응시 화면 — 퀴즈 1개 상세(정답·해설 제외) 서버 조회 (Server Component 전용).
- * 격리막: 정답(answerIndex)·해설은 빼고 문제+보기만 내려준다(채점은 제출 시 서버에서).
- * API 연동 시: 엔드포인트 + ApiStudentQuizDetail/toStudentQuizDetail만 맞추면 됨.
+ * 응시 화면 — 퀴즈 1개 상세(정답·해설 제외) GET /api/quizzes/{quizId}.
+ * 격리막: BE가 응시 상세엔 정답을 안 줌 → 문제+보기만. 제출 시 answerIndex→optionId 변환은 studentActions에서.
  */
 export async function getStudentQuizDetailServer(
   courseId: number,
   quizId: number,
 ): Promise<StudentQuizDetail | null> {
-  if (USE_MOCK) {
+  if (isMock('quizzes')) {
     const quiz = mockQuizzes.find(
       (q) => q.courseId === courseId && q.quizId === quizId,
     );
@@ -135,7 +134,6 @@ export async function getStudentQuizDetailServer(
       week: quiz.week,
       title: quiz.title,
       attempted: getStudentAttempt(quizId) !== null,
-      // 정답·해설 제거 — 문제/보기만 노출
       questions: quiz.questions.map((q) => ({
         questionId: q.questionId,
         content: q.content,
@@ -145,76 +143,62 @@ export async function getStudentQuizDetailServer(
   }
 
   const res = await serverApi.get<ApiStudentQuizDetail>(
-    `/api/student/courses/${courseId}/quizzes/${quizId}`,
+    `/api/quizzes/${quizId}`,
   );
   if (!res.success || !res.data) return null;
-  return toStudentQuizDetail(res.data);
-}
-
-/** 백엔드 리뷰(결과) 응답(가정) — 격리막. */
-interface ApiQuizReview {
-  quizId: number;
-  courseId: number;
-  week: number;
-  title: string;
-  courseTitle: string;
-  attemptedAt: string; // ISO
-  score: number;
-  correctCount: number;
-  totalCount: number;
-  previousScore: number | null;
-  questions: {
-    questionId: number;
-    content: string;
-    options: string[];
-    answerIndex: number;
-    selectedIndex: number | null;
-    explanation: string;
-  }[];
-}
-
-function toQuizReview(api: ApiQuizReview): StudentQuizReview {
+  const d = res.data;
   return {
-    quizId: api.quizId,
-    courseId: api.courseId,
-    week: api.week,
-    title: api.title,
-    courseTitle: api.courseTitle,
-    attemptedAt: api.attemptedAt.replace('T', ' ').slice(0, 16),
-    score: api.score,
-    correctCount: api.correctCount,
-    totalCount: api.totalCount,
-    previousScore: api.previousScore,
-    improvement:
-      api.previousScore !== null ? api.score - api.previousScore : null,
-    questions: api.questions.map((q) => ({
+    quizId: d.quizId,
+    courseId, // 라우팅용
+    week: sectionToWeek(d.sectionTitle),
+    title: d.quizTitle,
+    attempted: d.submitted,
+    questions: d.questions.map((q) => ({
       questionId: q.questionId,
-      content: q.content,
-      options: q.options,
-      answerIndex: q.answerIndex,
-      selectedIndex: q.selectedIndex,
-      explanation: q.explanation,
-      correct: q.selectedIndex === q.answerIndex,
+      content: q.questionText,
+      options: q.options.map((o) => o.optionText), // 보기 텍스트만(optionId는 제출 시 재조회로 변환)
     })),
   };
 }
 
+/** GET /api/quizzes/{id}/reports/me 응답 (리뷰 — 정답·내답·해설 포함, 검증). */
+interface ApiQuizReport {
+  quizId: number;
+  quizTitle: string;
+  courseTitle: string;
+  sectionTitle: string;
+  score: number;
+  totalQuestionCount: number;
+  correctCount: number;
+  incorrectCount: number;
+  submittedAt: string;
+  questions: {
+    questionId: number;
+    questionNumber: number;
+    questionText: string;
+    correctOptionId: number;
+    selectedOptionId: number | null;
+    correct: boolean;
+    explanation: string;
+    options: { optionId: number; optionText: string }[];
+  }[];
+}
+
 /**
- * 리뷰(해설) 화면 — 점수·향상도(직전 주차 대비)·문항별 결과 조회 (Server Component 전용).
- * 응시(제출) 기록 없으면 null(리뷰 불가). 향상도 = 같은 강의 직전 주차 점수와의 차.
- * API 연동 시: 엔드포인트 + ApiQuizReview/toQuizReview만 맞추면 됨.
+ * 리뷰(해설) 화면 — GET /api/quizzes/{quizId}/reports/me.
+ * BE가 정답·내가 고른 답·해설·정답여부 다 줌 → optionId를 보기 인덱스로 변환해 UI 타입에 맞춤.
+ * ⚠️ 향상도(previousScore/improvement)는 BE 미제공 → null(보류). 미응시면 BE가 에러 → null.
  */
 export async function getStudentQuizReviewServer(
   courseId: number,
   quizId: number,
 ): Promise<StudentQuizReview | null> {
-  if (USE_MOCK) {
+  if (isMock('quizzes')) {
     const quiz = mockQuizzes.find(
       (q) => q.courseId === courseId && q.quizId === quizId,
     );
     const sub = getQuizSubmission(quizId);
-    if (!quiz || !sub) return null; // 미응시면 리뷰 없음
-
+    if (!quiz || !sub) return null;
     const questions: QuizReviewQuestion[] = quiz.questions.map((q) => {
       const sel = sub.selected[q.questionId];
       const selectedIndex = sel !== undefined ? sel : null;
@@ -233,18 +217,14 @@ export async function getStudentQuizReviewServer(
     const score = totalCount
       ? Math.round((correctCount / totalCount) * 100)
       : 0;
-
-    // 직전 주차(같은 강의) 점수 → 향상도
     const prevQuiz = mockQuizzes.find(
       (q) => q.courseId === courseId && q.week === quiz.week - 1,
     );
     const prevAttempt = prevQuiz ? getStudentAttempt(prevQuiz.quizId) : null;
     const previousScore = prevAttempt ? prevAttempt.score : null;
     const improvement = previousScore !== null ? score - previousScore : null;
-
     const courseTitle =
       mockEnrolledCourses.find((c) => c.courseId === courseId)?.title ?? '';
-
     return {
       quizId: quiz.quizId,
       courseId,
@@ -261,9 +241,39 @@ export async function getStudentQuizReviewServer(
     };
   }
 
-  const res = await serverApi.get<ApiQuizReview>(
-    `/api/student/courses/${courseId}/quizzes/${quizId}/result`,
+  const res = await serverApi.get<ApiQuizReport>(
+    `/api/quizzes/${quizId}/reports/me`,
   );
   if (!res.success || !res.data) return null;
-  return toQuizReview(res.data);
+  const d = res.data;
+  return {
+    quizId: d.quizId,
+    courseId, // 라우팅용
+    week: sectionToWeek(d.sectionTitle),
+    title: d.quizTitle,
+    courseTitle: d.courseTitle,
+    attemptedAt: d.submittedAt ? d.submittedAt.replace('T', ' ').slice(0, 16) : '',
+    score: d.score,
+    correctCount: d.correctCount,
+    totalCount: d.totalQuestionCount,
+    previousScore: null, // BE 미제공 — 향상도 보류
+    improvement: null,
+    questions: d.questions.map((q) => {
+      const answerIndex = q.options.findIndex(
+        (o) => o.optionId === q.correctOptionId,
+      );
+      const selectedIndex = q.options.findIndex(
+        (o) => o.optionId === q.selectedOptionId,
+      );
+      return {
+        questionId: q.questionId,
+        content: q.questionText,
+        options: q.options.map((o) => o.optionText),
+        answerIndex,
+        selectedIndex: selectedIndex >= 0 ? selectedIndex : null,
+        explanation: q.explanation,
+        correct: q.correct,
+      };
+    }),
+  };
 }

@@ -65,9 +65,15 @@ export function toCourseDetail(data: CourseDetailApiResponse): CourseDetail {
     instructor: {
       instructorId: 0, // 상세 응답에 instructorId 없음(강사명만 제공)
       name: data.instructorName,
-      subtitle: '',
-      bio: '',
-      career: [],
+      subtitle: data.instructorOneLineIntro ?? '', // BE 시드 전엔 null → 빈 문자열
+      bio: data.instructorIntroduction ?? '',
+      // BE career는 단일 string — 줄바꿈으로 분리해 항목 배열로 (BE가 다른 구분자면 조정)
+      career: data.instructorCareer
+        ? data.instructorCareer
+            .split('\n')
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [],
       tags: data.techTags ?? [],
       instructorStudentCount: data.instructorStudentCount,
       instructorCourseCount: data.instructorCourseCount,

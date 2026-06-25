@@ -3,7 +3,6 @@ import CourseNoticeBanner from '@/features/courses/components/CourseNoticeBanner
 import InstructorCourseListControls from '@/features/instructor/components/InstructorCourseListControls';
 import { getCoursesServer, getSubjectsServer } from '@/features/courses/server';
 import { getInstructorCoursesServer } from '@/features/instructor/server';
-import { getInstructors } from '@/features/courses/services';
 import { getPinnedNoticesServer } from '@/features/notices/server';
 import type { CourseSortType, CourseListItem } from '@/features/courses/types';
 
@@ -26,11 +25,17 @@ export default async function InstructorCoursesPage({ searchParams }: PageProps)
   const sort = (sp.sort as CourseSortType) ?? 'latest';
   const mine = sp.mine === 'true';
 
-  const [subjects, notices] = await Promise.all([
+  const [subjects, notices, catalog] = await Promise.all([
     getSubjectsServer(),
     getPinnedNoticesServer(),
+    getCoursesServer({ sort: 'latest' }),
   ]);
-  const instructors = getInstructors();
+  // 강사 필터 옵션 = 실제 카탈로그(라이브)의 강사 이름 — 카드에 뜨는 이름과 일치시킴.
+  // (기존 getInstructors()는 mock 강사명이라 라이브 카드 이름과 불일치 → 강사 필터가 0건이었음)
+  // ⚡최적화 대상: 필터 없을 땐 catalog를 courses로 재사용 가능(현재는 명확성 위해 별도 fetch).
+  const instructors = Array.from(
+    new Set(catalog.map((c) => c.instructorName).filter(Boolean)),
+  ).sort((a, b) => a.localeCompare(b, 'ko'));
 
   let courses: CourseListItem[];
   if (mine) {
@@ -52,6 +57,8 @@ export default async function InstructorCoursesPage({ searchParams }: PageProps)
       isEnrolled: false,
       hasPreview: false,
     }));
+    // 삭제된(DELETED) 강의는 '내 강의'에서 숨김 (BE가 강사 목록에 삭제 강의도 포함해 내려줌)
+    mapped = mapped.filter((c) => c.status !== 'DELETED');
     if (keyword) {
       const kw = keyword.toLowerCase();
       mapped = mapped.filter((c) => c.title.toLowerCase().includes(kw));
