@@ -9,7 +9,7 @@
 
 export interface NotificationApiItem {
   notiId: number;
-  type: string; // NOTICE, COURSE_NOTICE, COMMENT, ADOPTED, CHAT, REPORT, COURSE_REGISTER, NOTICE_REGISTER 등 ENUM
+  type: string; // BE enum(라이브): NOTICE · POST_COMMENT · COMMENT_REPLY · COMMENT_ACCEPTED · COURSE_REGISTER · REPORT
   message: string;
   isRead: boolean;
   /** BE 제공 — 클릭 시 이동 경로 (실서버는 이 값 사용). 라이브 검증(2026-06-25). */
@@ -36,7 +36,7 @@ function minutesAgo(n: number): string {
 const studentNotifications: NotificationApiItem[] = [
   {
     notiId: 109,
-    type: 'COMMENT',
+    type: 'POST_COMMENT',
     message: '내 질문 「useEffect 무한 루프 문제」에 새로운 댓글이 달렸습니다.',
     isRead: false,
     referenceId: 889,
@@ -44,7 +44,7 @@ const studentNotifications: NotificationApiItem[] = [
   },
   {
     notiId: 108,
-    type: 'ADOPTED',
+    type: 'COMMENT_ACCEPTED',
     message: '작성하신 답변이 채택되었습니다.',
     isRead: false,
     referenceId: 887,
@@ -52,7 +52,7 @@ const studentNotifications: NotificationApiItem[] = [
   },
   {
     notiId: 107,
-    type: 'COURSE_NOTICE',
+    type: 'NOTICE',
     message: '수강 중인 「수능 국어 독서」 강의에 새 공지가 등록되었습니다.',
     isRead: false,
     referenceId: 1,
@@ -68,7 +68,7 @@ const studentNotifications: NotificationApiItem[] = [
   },
   {
     notiId: 105,
-    type: 'COMMENT',
+    type: 'POST_COMMENT',
     message: '내 게시글 「수능 공부 팁 공유합니다」에 새로운 댓글이 달렸습니다.',
     isRead: true,
     referenceId: 888,
@@ -76,7 +76,7 @@ const studentNotifications: NotificationApiItem[] = [
   },
   {
     notiId: 104,
-    type: 'CHAT',
+    type: 'POST_COMMENT',
     message: '스터디 채팅방에 새로운 메시지가 도착했습니다.',
     isRead: true,
     referenceId: 0,
@@ -92,7 +92,7 @@ const studentNotifications: NotificationApiItem[] = [
   },
   {
     notiId: 102,
-    type: 'ADOPTED',
+    type: 'COMMENT_ACCEPTED',
     message: '작성하신 답변이 채택되었습니다.',
     isRead: true,
     referenceId: 886,
@@ -100,7 +100,7 @@ const studentNotifications: NotificationApiItem[] = [
   },
   {
     notiId: 101,
-    type: 'COURSE_NOTICE',
+    type: 'NOTICE',
     message: '수강 중인 「수능 수학 미적분」 강의에 새 공지가 등록되었습니다.',
     isRead: true,
     referenceId: 2,
@@ -156,7 +156,7 @@ const adminNotifications: NotificationApiItem[] = [
   },
   {
     notiId: 307,
-    type: 'NOTICE_REGISTER',
+    type: 'NOTICE',
     message: '강사 「박민호」님이 강의 공지를 등록했습니다.',
     isRead: false,
     referenceId: 2,

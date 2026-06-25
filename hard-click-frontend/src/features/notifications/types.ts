@@ -1,23 +1,17 @@
 import type { NotificationApiItem } from '@/mocks/notifications.mock';
 
 /**
- * 알림 종류 — 역할(학생/강사/관리자)에 따라 발생하는 종류가 다르다.
- * 단, "어떤 알림을 받을지"는 백엔드가 사용자별로 필터링해서 내려주므로
- * 프론트는 모든 종류에 대한 표시 메타(아이콘/라벨/링크)만 갖추면 된다.
- *
- * - 학생:  전체 공지 / 강의 공지 / 댓글 / 채택 / 채팅(미구현)
- * - 강사:  전체 공지
- * - 관리자: 신고 / 강좌 등록 / 공지 등록
+ * 알림 종류 — BE NotificationItemResponse.type enum과 1:1 (라이브 검증 2026-06-25).
+ * "어떤 알림을 받을지"는 백엔드가 사용자별로 필터링해 내려주므로, 프론트는 각 종류의
+ * 표시 메타(아이콘/라벨/구분)만 갖추면 된다. (이동 경로는 BE redirectUrl을 그대로 사용)
  */
 export type NotificationType =
   | 'NOTICE' // 전체 공지
-  | 'COURSE_NOTICE' // 강의 공지
-  | 'COMMENT' // 내 글/댓글에 달린 댓글
-  | 'ADOPTED' // 답변 채택
-  | 'CHAT' // 채팅 메시지 (채팅 기능 미구현)
-  | 'REPORT' // 신고 접수 (관리자)
-  | 'COURSE_REGISTER' // 강사 강좌 등록 (관리자)
-  | 'NOTICE_REGISTER'; // 강사 공지 등록 (관리자)
+  | 'POST_COMMENT' // 내 게시글에 댓글
+  | 'COMMENT_REPLY' // 내 댓글에 답글(대댓글)
+  | 'COMMENT_ACCEPTED' // 답변 채택
+  | 'COURSE_REGISTER' // 강좌 등록 (관리자)
+  | 'REPORT'; // 신고 접수 (관리자)
 
 /** 알림 구분 — 드롭다운 상단 필터 탭 단위 (여러 종류를 묶는다) */
 export type NotificationCategory =
@@ -48,41 +42,37 @@ export const NOTI_META: Record<
   { label: string; icon: string; iconBg: string }
 > = {
   NOTICE: { label: '공지', icon: '/icons/notice.svg', iconBg: '#FFF7ED' },
-  COURSE_NOTICE: {
-    label: '강의 공지',
-    icon: '/icons/notice.svg',
-    iconBg: '#FEF3C7',
+  POST_COMMENT: {
+    label: '댓글',
+    icon: '/icons/commuComment.svg',
+    iconBg: '#EFF6FF',
   },
-  COMMENT: { label: '댓글', icon: '/icons/commuComment.svg', iconBg: '#EFF6FF' },
-  ADOPTED: {
+  COMMENT_REPLY: {
+    label: '답글',
+    icon: '/icons/commuComment.svg',
+    iconBg: '#EFF6FF',
+  },
+  COMMENT_ACCEPTED: {
     label: '채택',
     icon: '/icons/checkCircleIcon.svg',
     iconBg: '#F0FDF4',
   },
-  CHAT: { label: '채팅', icon: '/icons/commuComment.svg', iconBg: '#F5F3FF' },
-  REPORT: { label: '신고', icon: '/icons/reportFlagIcon.svg', iconBg: '#FEF2F2' },
   COURSE_REGISTER: {
     label: '강좌 등록',
     icon: '/icons/bookIcon.svg',
     iconBg: '#EFF6FF',
   },
-  NOTICE_REGISTER: {
-    label: '공지 등록',
-    icon: '/icons/notice.svg',
-    iconBg: '#FFF7ED',
-  },
+  REPORT: { label: '신고', icon: '/icons/reportFlagIcon.svg', iconBg: '#FEF2F2' },
 };
 
 /** 종류 → 구분 */
 const TYPE_CATEGORY: Record<NotificationType, NotificationCategory> = {
   NOTICE: 'notice',
-  COURSE_NOTICE: 'notice',
-  NOTICE_REGISTER: 'notice',
-  COMMENT: 'community',
-  ADOPTED: 'community',
-  CHAT: 'chat',
-  REPORT: 'report',
+  POST_COMMENT: 'community',
+  COMMENT_REPLY: 'community',
+  COMMENT_ACCEPTED: 'community',
   COURSE_REGISTER: 'course',
+  REPORT: 'report',
 };
 
 /** 필터 탭 표시 순서 */
@@ -118,19 +108,15 @@ function normalizeType(raw: string): NotificationType {
 function toHref(type: NotificationType, referenceId: number): string {
   switch (type) {
     case 'NOTICE':
-    case 'NOTICE_REGISTER':
       return `/notices/${referenceId}`;
-    case 'COURSE_NOTICE':
-      return `/courses/${referenceId}/notices`;
-    case 'COMMENT':
-    case 'ADOPTED':
+    case 'POST_COMMENT':
+    case 'COMMENT_REPLY':
+    case 'COMMENT_ACCEPTED':
       return `/community/${referenceId}`;
     case 'REPORT':
       return `/admin/community/${referenceId}`;
     case 'COURSE_REGISTER':
       return '/admin/courses';
-    case 'CHAT':
-      return '/mypage/chats';
     default:
       return `/notices/${referenceId}`;
   }
