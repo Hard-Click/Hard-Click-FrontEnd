@@ -29,10 +29,10 @@ export default function AdminPaymentManage({
   const filteredPayments = useMemo(() => {
     const q = keyword.trim().toLowerCase();
     return paymentList.filter((p) => {
-      if (type !== 'ALL' && p.type !== type) return false;
+      if (type !== 'ALL' && p.paymentType !== type) return false;
       if (q) {
         const haystack =
-          `${p.orderNo} ${p.userName} ${p.userEmail}`.toLowerCase();
+          `${p.orderNo} ${p.memberName} ${p.memberEmail}`.toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       return true;
@@ -59,7 +59,7 @@ export default function AdminPaymentManage({
           : p
       )
     );
-    toast.success(`${refundTarget.userName}님의 결제를 환불 처리했습니다.`);
+    toast.success(`${refundTarget.memberName}님의 결제를 환불 처리했습니다.`);
     setRefundTarget(null);
   };
 

@@ -34,7 +34,7 @@ export default function PaymentRefundModal({
           className="mt-3 text-center text-base text-[#4B5563]"
         >
           <span className="font-semibold text-[#1F2937]">
-            {payment.userName}
+            {payment.memberName}
           </span>
           님의 결제를 환불하시겠습니까?
           <br />
