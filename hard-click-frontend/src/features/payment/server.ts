@@ -7,7 +7,7 @@ import { toAdminPayment } from './types';
 /** 결제 관리 — 전체 결제 내역 서버 조회 (GET /api/admin/payments, 관리자) */
 export async function getAdminPaymentsServer(): Promise<AdminPayment[]> {
   const res = await serverApi.get<AdminPaymentListApiResponse>(
-    '/api/admin/payments',
+    '/api/admin/payments?page=0&size=100',
   );
   if (res.success && Array.isArray(res.data?.content)) {
     return res.data.content.map(toAdminPayment);
