@@ -70,13 +70,20 @@ export async function submitQuizAction(
       );
     }
 
-    // 2) answerIndex → selectedOptionId
+    // 2) answerIndex → selectedOptionId. 매핑 실패는 조용히 누락하지 않고 에러 반환(부분 제출 방지).
     const answerList: { questionId: number; selectedOptionId: number }[] = [];
     for (const [qid, idx] of Object.entries(answers)) {
-      const opts = optionIdsByQ.get(Number(qid));
-      if (opts && opts[idx] != null) {
-        answerList.push({ questionId: Number(qid), selectedOptionId: opts[idx] });
+      const questionId = Number(qid);
+      const opts = optionIdsByQ.get(questionId);
+      if (
+        !Number.isInteger(questionId) ||
+        !Number.isInteger(idx) ||
+        !opts ||
+        opts[idx] == null
+      ) {
+        return { success: false, message: '제출 데이터가 올바르지 않습니다.' };
       }
+      answerList.push({ questionId, selectedOptionId: opts[idx] });
     }
 
     // 3) 제출

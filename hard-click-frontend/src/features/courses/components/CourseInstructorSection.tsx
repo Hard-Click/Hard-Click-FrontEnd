@@ -30,7 +30,7 @@ export default function CourseInstructorSection({
               src="/image/Image (박지훈).svg"
               width={112}
               height={112}
-              alt="박지훈"
+              alt=""
               className="w-full h-full object-cover"
             />
           </div>

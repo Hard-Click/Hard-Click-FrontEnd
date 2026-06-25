@@ -100,7 +100,12 @@ export default function InstructorCourseListControls({
         onMyCoursesToggle={() =>
           pushWith({ mine: myCoursesOnly ? undefined : 'true' })
         }
-        onReset={() => router.push(pathname, { scroll: false })}
+        onReset={() => {
+          // 대기 중 디바운스 취소 + 입력 초기화 — 안 하면 리셋 후 타이머가 이전 키워드를 재적용
+          if (debounceRef.current) clearTimeout(debounceRef.current);
+          setKeywordInput('');
+          router.push(pathname, { scroll: false });
+        }}
       />
     </div>
   );
