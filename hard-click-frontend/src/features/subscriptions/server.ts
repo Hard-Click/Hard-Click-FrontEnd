@@ -1,5 +1,5 @@
 import { serverApi } from '@/lib/api';
-import { USE_MOCK } from '@/mocks/config';
+import { isMock } from '@/mocks/config';
 import {
   mockSubscriptionStatus,
   SUBSCRIPTION_BENEFITS,
@@ -9,32 +9,31 @@ import {
 } from '@/mocks/subscriptions.mock';
 import type { SubscriptionInfo } from './types';
 
-/**
- * 백엔드 구독 상태 응답(가정) — 격리막.
- * currentPrice·daysUntilSuneung는 BE가 수능 D-day로 계산해 내려주는 값(결제 금액 신뢰성).
- */
-interface ApiSubscription {
+/* ─────────────────────────────────────────────────────────────────────────
+ * 구독권 — 실서버 연동 (2026-06-25). BE는 me(상태)·plan(가격) 2개로 분리 → 합쳐서 SubscriptionInfo로.
+ * ⚠️ 모델 차이: FE는 "수능 D-day 동적가격"이었으나 BE는 "고정 플랜가(plan.price) + 구독 만료(remainingDays)".
+ *    → 가격은 BE plan.price(실값) 사용(원래 placeholder였음). 남은기간은 구독 중일 때 BE remainingDays.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/** GET /api/subscriptions/me (라이브 검증). */
+interface ApiSubscriptionMe {
   subscribed: boolean;
-  planName: string;
-  benefits: string[];
-  suneungDate: string; // YYYY-MM-DD
-  daysUntilSuneung: number;
-  currentPrice: number;
-  paidAt: string | null;
-  paidAmount: number | null;
+  subscriptionId: number | null;
+  planId: number | null;
+  paymentMethod: string;
+  paidAmount: number;
+  startedAt: string | null;
+  expiredAt: string | null;
+  remainingDays: number;
 }
 
-function toSubscriptionInfo(api: ApiSubscription): SubscriptionInfo {
-  return {
-    subscribed: api.subscribed,
-    planName: api.planName,
-    benefits: api.benefits,
-    suneungDate: api.suneungDate,
-    daysUntilSuneung: api.daysUntilSuneung,
-    currentPrice: api.currentPrice,
-    paidAt: api.paidAt,
-    paidAmount: api.paidAmount,
-  };
+/** GET /api/subscriptions/plan (라이브 검증). */
+interface ApiSubscriptionPlan {
+  planId: number;
+  name: string;
+  price: number;
+  durationDays: number;
+  benefits: string[];
 }
 
 /** 미구독 기본값(조회 실패 폴백) — 가격 규칙은 도메인 상수로 계산 */
@@ -52,13 +51,11 @@ function unsubscribedFallback(): SubscriptionInfo {
 }
 
 /**
- * 본인 구독 상태 조회 (Server Component 전용).
- * 미구독/구독 중을 SubscriptionInfo 하나로 반환.
- * 가격은 수능 D-day 기반(남은 일수 × 1만원) — mock은 여기서 계산, 연동 시 BE의 currentPrice 사용.
- * API 연동 시: 엔드포인트 + ApiSubscription/toSubscriptionInfo만 맞추면 됨.
+ * 본인 구독 상태 조회 (Server Component 전용). 미구독/구독 중을 SubscriptionInfo 하나로 반환.
+ * 라이브: GET /api/subscriptions/me(상태) + GET /api/subscriptions/plan(플랜·가격) 병렬 조회 후 합침.
  */
 export async function getSubscriptionServer(): Promise<SubscriptionInfo> {
-  if (USE_MOCK) {
+  if (isMock('subscriptions')) {
     const s = mockSubscriptionStatus;
     return {
       subscribed: s.subscribed,
@@ -72,8 +69,24 @@ export async function getSubscriptionServer(): Promise<SubscriptionInfo> {
     };
   }
 
-  // TODO(API 연동): 구독 상태 조회 (currentPrice·daysUntilSuneung는 BE가 수능 D-day로 계산)
-  const res = await serverApi.get<ApiSubscription>('/api/subscription/status');
-  if (!res.success || !res.data) return unsubscribedFallback();
-  return toSubscriptionInfo(res.data);
+  const [meRes, planRes] = await Promise.all([
+    serverApi.get<ApiSubscriptionMe>('/api/subscriptions/me'),
+    serverApi.get<ApiSubscriptionPlan>('/api/subscriptions/plan'),
+  ]);
+  const me = meRes.success ? meRes.data : null;
+  const plan = planRes.success ? planRes.data : null;
+  if (!me && !plan) return unsubscribedFallback();
+
+  const subscribed = me?.subscribed ?? false;
+  return {
+    subscribed,
+    planName: plan?.name ?? mockSubscriptionStatus.planName,
+    benefits: plan?.benefits ?? SUBSCRIPTION_BENEFITS,
+    suneungDate: SUNEUNG_DATE,
+    // 구독 중: BE remainingDays(구독 만료까지) / 미구독: 수능 D-day(표시용, 가격은 plan.price 고정)
+    daysUntilSuneung: subscribed ? (me?.remainingDays ?? 0) : daysUntilSuneung(),
+    currentPrice: plan?.price ?? priceOn(),
+    paidAt: subscribed && me?.startedAt ? me.startedAt.split('T')[0] : null,
+    paidAmount: subscribed ? (me?.paidAmount ?? null) : null,
+  };
 }

@@ -213,8 +213,12 @@ export default function ProfileEditModal({
     await ensureMinimumDelay(start);
     setIsSubmitting(false);
     if (!res.success) {
-      // 409: 현재 비밀번호 불일치 — Step 1로 복귀해서 다시 입력받기 (비밀번호 변경 케이스에만 해당)
-      if (res.httpStatus === 409 && step === 'password') {
+      // 현재 비밀번호 불일치 — Step 1로 복귀해 다시 입력받기 (비밀번호 변경에만 해당).
+      // ⚠️ 실 BE는 401 AUTH_009로 응답(라이브 확인). 409도 방어적으로 함께 처리.
+      if (
+        (res.httpStatus === 401 || res.httpStatus === 409) &&
+        step === 'password'
+      ) {
         setStep('verify');
         setCurrentPw('');
         setVerifiedPassword('');

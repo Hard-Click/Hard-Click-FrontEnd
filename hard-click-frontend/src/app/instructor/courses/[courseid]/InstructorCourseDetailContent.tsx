@@ -8,12 +8,14 @@ import { toast } from 'sonner';
 import { deleteCourse, publishCourse } from '@/features/instructor/services';
 import type {
   CourseDetail,
-  Review,
   CurriculumLesson,
 } from '@/features/courses/types';
-import { StarRow, StarIcon } from '@/components/common/RatingStars';
+import { StarRow } from '@/components/common/RatingStars';
 import { CurriculumAccordion } from '@/features/instructor/components/InstructorCurriculumSection';
 import PreviewVideoModal from '@/features/learning/components/PreviewVideoModal';
+import CourseInstructorSection from '@/features/courses/components/CourseInstructorSection';
+import CourseIntroSection from '@/features/courses/components/CourseIntroSection';
+import CourseReviewSection from '@/features/courses/components/CourseReviewSection';
 
 /* ── 강의 에러 화면 공통 컴포넌트 ── */
 function CourseErrorScreen({
@@ -87,8 +89,11 @@ function SideNav({
 /* ── 메인 페이지 ── */
 export default function InstructorCourseDetailContent({
   initialCourse,
+  isOwner,
 }: {
   initialCourse: CourseDetail | null;
+  /** 로그인 강사가 이 강의의 담당(소유)인지 — 관리 컨트롤 노출 여부 */
+  isOwner: boolean;
 }) {
   const params = useParams();
   const router = useRouter();
@@ -106,9 +111,6 @@ export default function InstructorCourseDetailContent({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-
-  const [reviews] = useState<Review[]>(initialCourse?.reviews ?? []);
-  const [reviewPage, setReviewPage] = useState(1);
 
   /* 케밥 메뉴 외부 클릭 닫기 */
   useEffect(() => {
@@ -201,16 +203,6 @@ export default function InstructorCourseDetailContent({
     );
   }
 
-  const REVIEWS_PER_PAGE = 5;
-  const maxRatingCount = Math.max(
-    ...course.ratingDistribution.map((d) => d.count),
-    1
-  );
-  const totalReviewPages = Math.ceil(reviews.length / REVIEWS_PER_PAGE);
-  const displayedReviews = reviews.slice(
-    (reviewPage - 1) * REVIEWS_PER_PAGE,
-    reviewPage * REVIEWS_PER_PAGE
-  );
   // 공지 고정 맨 위, 나머지 최신순 정렬
   const sortedNotices = [...course.notices].sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1;
@@ -232,7 +224,7 @@ export default function InstructorCourseDetailContent({
             className="bg-white border border-[#D5D8DD] relative"
             style={{ padding: '33px 33px 1px' }}
           >
-            <div className="flex flex-col gap-6">
+            <div className={`flex flex-col gap-6${isOwner ? '' : ' pb-8'}`}>
               {/* Row 1: 썸네일 + 강의 정보 */}
               <div className="flex gap-6">
                 {/* 썸네일 */}
@@ -347,8 +339,14 @@ export default function InstructorCourseDetailContent({
                 </div>
               </div>
 
-              {/* 강사 케밥 메뉴 (우측 상단) */}
-              <div ref={menuRef} className="absolute top-[33px] right-[33px]">
+              {/* 관리 컨트롤(케밥 메뉴 + 공개 상태) — 내 강의(소유)일 때만 표시 */}
+              {isOwner && (
+                <>
+                  {/* 강사 케밥 메뉴 (우측 상단) */}
+                  <div
+                    ref={menuRef}
+                    className="absolute top-[33px] right-[33px]"
+                  >
                 <button
                   type="button"
                   onClick={() => setIsMenuOpen((v) => !v)}
@@ -406,6 +404,8 @@ export default function InstructorCourseDetailContent({
                   {isPublished ? '공개' : '비공개'}
                 </div>
               </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -486,279 +486,21 @@ export default function InstructorCourseDetailContent({
               </div>
             </section>
 
-            {/* ── 강사소개 ── */}
-            <section id="instructor" className="scroll-mt-6">
-              <div
-                className="bg-white border border-[#D5D8DD]"
-                style={{ padding: '33px 33px 1px' }}
-              >
-                <h2 className="text-2xl font-semibold text-[#1A1F2E] mb-6">
-                  강사소개
-                </h2>
+            {/* ── 강사소개 (공용 컴포넌트) ── */}
+            <CourseInstructorSection
+              instructor={course.instructor}
+              scrollMtClassName="scroll-mt-6"
+            />
 
-                <div className="flex items-start gap-6 pb-8">
-                  <div className="flex-shrink-0 w-28 h-28 rounded-full border-2 border-[#D5D8DD] overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="/image/Image (박지훈).svg"
-                      width={112}
-                      height={112}
-                      alt="박지훈"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xl font-semibold text-[#1A1F2E] mb-0.5">
-                      {course.instructor.name}
-                    </p>
-                    <p className="text-base text-[#1A1F2E] mb-3">
-                      {course.instructor.subtitle}
-                    </p>
-
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="flex-1 flex items-center gap-1.5">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src="/icons/studentsBlueIcon.svg"
-                          width={16}
-                          height={16}
-                          alt=""
-                        />
-                        <span className="text-sm text-[#1A1F2E]">
-                          수강생{' '}
-                          {course.instructor.instructorStudentCount.toLocaleString()}
-                          명
-                        </span>
-                      </div>
-                      <div className="flex-1 flex items-center gap-1.5">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src="/icons/bookIcon.svg"
-                          width={16}
-                          height={16}
-                          alt=""
-                        />
-                        <span className="text-sm text-[#1A1F2E]">
-                          강의 {course.instructor.instructorCourseCount}개
-                        </span>
-                      </div>
-                      <div className="flex-1 flex items-center gap-1.5">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src="/icons/starFilledIcon.svg"
-                          width={16}
-                          height={16}
-                          alt=""
-                        />
-                        <span className="text-sm text-[#1A1F2E]">
-                          평점 {course.instructor.instructorRating}
-                        </span>
-                      </div>
-                    </div>
-
-                    <p className="text-sm leading-[23px] text-[#1A1F2E] mb-4">
-                      {course.instructor.bio}
-                    </p>
-
-                    {/* 경력 */}
-                    <p className="text-sm font-semibold text-[#1A1F2E] mb-2">
-                      경력
-                    </p>
-                    <div className="flex flex-col gap-1 mb-4">
-                      {course.instructor.career.map((item, i) => (
-                        <div key={i} className="flex items-start gap-2">
-                          <span className="flex-shrink-0 text-sm leading-[20px] text-[#2F5DAA] select-none">
-                            •
-                          </span>
-                          <span className="text-sm leading-[20px] text-[#1A1F2E]">
-                            {item}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* 태그 — Figma: 하단 배치 */}
-                    <div className="flex flex-wrap gap-2">
-                      {course.instructor.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="px-3 py-1 bg-[rgba(47,93,170,0.1)] rounded-full text-xs font-medium text-[#2F5DAA]"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* ── 강의소개 ── */}
-            <section id="intro" className="scroll-mt-6">
-              <div
-                className="bg-white border border-[#D5D8DD]"
-                style={{ padding: '33px 33px 1px' }}
-              >
-                <h2 className="text-2xl font-semibold text-[#1A1F2E] mb-6">
-                  강의소개
-                </h2>
-
-                <div className="flex flex-col gap-8 pb-8">
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src="/icons/targetIcon.svg"
-                        width={20}
-                        height={20}
-                        alt=""
-                      />
-                      <h3 className="text-lg font-semibold text-[#1A1F2E]">
-                        학습목표
-                      </h3>
-                    </div>
-                    <ul className="flex flex-col gap-[10px]">
-                      {course.learningGoals.map((goal, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src="/icons/checkDarkIcon.svg"
-                            width={20}
-                            height={20}
-                            alt=""
-                            className="flex-shrink-0 mt-0.5"
-                          />
-                          <span className="text-sm leading-[23px] text-[#1A1F2E]">
-                            {goal}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src="/icons/studentsBlueIcon.svg"
-                        width={20}
-                        height={20}
-                        alt=""
-                      />
-                      <h3 className="text-lg font-semibold text-[#1A1F2E]">
-                        추천대상
-                      </h3>
-                    </div>
-                    <ul className="flex flex-col gap-[10px]">
-                      {course.targetAudience.map((t, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="flex-shrink-0 text-sm leading-[20px] text-[#2F5DAA] select-none">
-                            •
-                          </span>
-                          <span className="text-sm leading-[23px] text-[#1A1F2E]">
-                            {t}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src="/icons/bookIcon.svg"
-                        width={20}
-                        height={20}
-                        alt=""
-                      />
-                      <h3 className="text-lg font-semibold text-[#1A1F2E]">
-                        과목
-                      </h3>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {course.techTags.map((tag, i) => (
-                        <span
-                          key={i}
-                          className="h-9 px-4 flex items-center bg-[rgba(47,93,170,0.1)] rounded-2xl text-sm font-medium text-[#2F5DAA]"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-6">
-                    {[
-                      {
-                        icon: '/icons/clockBlueIcon.svg',
-                        label: '예상 학습 시간',
-                        value: course.totalDuration,
-                      },
-                      {
-                        icon: '/icons/trendUpBlueIcon.svg',
-                        label: '난이도',
-                        value: course.level,
-                      },
-                    ].map((stat) => (
-                      <div
-                        key={stat.label}
-                        className="flex-1 flex items-start gap-3"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={stat.icon}
-                          width={20}
-                          height={20}
-                          alt=""
-                          className="flex-shrink-0 mt-0.5"
-                        />
-                        <div className="flex flex-col gap-1">
-                          <span
-                            className="text-xs text-[#1A1F2E]"
-                            style={{ lineHeight: '16px' }}
-                          >
-                            {stat.label}
-                          </span>
-                          <span
-                            className="text-base font-semibold text-[#1A1F2E]"
-                            style={{
-                              lineHeight: '24px',
-                              letterSpacing: '-0.3125px',
-                            }}
-                          >
-                            {stat.value}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div>
-                    <div className="grid grid-cols-2 gap-3">
-                      {course.materialsProvided.map((item, i) => (
-                        <div
-                          key={i}
-                          className="bg-[#E8EAED] rounded-2xl flex items-center gap-3"
-                          style={{ padding: '12px 16px' }}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src="/icons/checkDarkIcon.svg"
-                            width={16}
-                            height={16}
-                            alt=""
-                            className="flex-shrink-0"
-                          />
-                          <span className="text-sm text-[#1A1F2E]">{item}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
+            {/* ── 강의소개 (공용 컴포넌트) ── */}
+            <CourseIntroSection
+              learningGoals={course.learningGoals}
+              targetAudience={course.targetAudience}
+              techTags={course.techTags}
+              totalDuration={course.totalDuration}
+              level={course.level}
+              scrollMtClassName="scroll-mt-6"
+            />
 
             {/* ── 커리큘럼 ── */}
             <section id="curriculum" className="scroll-mt-6">
@@ -787,211 +529,12 @@ export default function InstructorCourseDetailContent({
               </div>
             </section>
 
-            {/* ── 수강평 ── */}
-            <section id="reviews" className="scroll-mt-6 mb-10">
-              <div
-                className="bg-white border border-[#D5D8DD]"
-                style={{ padding: '33px 33px 1px' }}
-              >
-                <h2 className="text-2xl font-semibold text-[#1A1F2E] mb-6">
-                  수강평
-                </h2>
-
-                {reviews.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center pt-10 pb-12">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="/icons/emptyStateIcon.svg"
-                      width={80}
-                      height={80}
-                      alt=""
-                    />
-                    <p className="text-base font-semibold text-[#1A1F2E] mt-[41px] mb-[26.5px]">
-                      아직 등록된 수강평이 없습니다.
-                    </p>
-                    <p className="text-sm text-[#9CA3AF]">
-                      강의를 수강하고 리뷰를 작성해보세요.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    {/* 별점 요약 */}
-                    <div className="flex items-center gap-6 pb-8 border-b border-[#D5D8DD] mb-8">
-                      <div
-                        className="flex flex-col items-center justify-center gap-2 bg-[#E8EAED] rounded-2xl flex-shrink-0"
-                        style={{ width: 431, height: 160 }}
-                      >
-                        <span className="text-[48px] font-bold text-[#1A1F2E] leading-none">
-                          {course.averageRating}
-                        </span>
-                        <StarRow rating={course.averageRating} size={24} />
-                        <span className="text-sm text-[#1A1F2E]">
-                          총 {course.reviewCount.toLocaleString()}개 리뷰
-                        </span>
-                      </div>
-
-                      <div className="flex-1 flex flex-col gap-3">
-                        {[5, 4, 3, 2, 1].map((star) => {
-                          const dist = course.ratingDistribution.find(
-                            (d) => d.stars === star
-                          );
-                          const count = dist?.count ?? 0;
-                          const pct = Math.round(
-                            (count / maxRatingCount) * 100
-                          );
-                          return (
-                            <div key={star} className="flex items-center gap-3">
-                              <div className="flex items-center gap-1 w-20 flex-shrink-0">
-                                <StarIcon filled size={16} />
-                                <span className="text-sm font-medium text-[#1A1F2E]">
-                                  {star}
-                                </span>
-                              </div>
-                              <div className="flex-1 h-[10px] bg-[#E8EAED] rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-[#FFB800] rounded-full"
-                                  style={{ width: `${pct}%` }}
-                                />
-                              </div>
-                              <span className="text-sm text-[#1A1F2E] w-16 text-right flex-shrink-0">
-                                {count}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* 리뷰 목록 */}
-                    <div className="flex flex-col gap-4">
-                      {displayedReviews.map((review) => (
-                        <div
-                          key={review.reviewId}
-                          className="border border-[#D5D8DD] rounded-2xl"
-                          style={{ padding: '21px 21px 1px' }}
-                        >
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-full bg-[rgba(47,93,170,0.1)] flex items-center justify-center flex-shrink-0">
-                                <span className="text-lg font-semibold text-[#2F5DAA]">
-                                  {review.studentName[0]}
-                                </span>
-                              </div>
-                              <div>
-                                <p className="text-base font-medium text-[#1A1F2E]">
-                                  {review.studentName}
-                                </p>
-                                <p className="text-xs text-[#1A1F2E]">
-                                  {review.createdAt}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center gap-1">
-                                <StarRow rating={review.rating} size={16} />
-                                <span className="text-sm font-semibold text-[#FFB800]">
-                                  {review.rating}
-                                </span>
-                              </div>
-                              {/* 강사는 리뷰 신고만 가능 (수정/삭제는 학생 권한) */}
-                              <button
-                                className="w-7 h-7 flex items-center justify-center rounded-2xl hover:bg-red-50 transition-colors"
-                                title="신고"
-                              >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src="/icons/reportFlagIcon.svg"
-                                  width={14}
-                                  height={14}
-                                  alt=""
-                                />
-                              </button>
-                            </div>
-                          </div>
-                          <p className="text-sm leading-[23px] text-[#1A1F2E] pb-5">
-                            {review.content}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* 페이지네이션 */}
-                    {totalReviewPages > 1 && (
-                      <div className="flex justify-center items-center gap-1 pt-4 pb-6">
-                        {/* 이전 버튼 */}
-                        <button
-                          onClick={() =>
-                            setReviewPage((p) => Math.max(1, p - 1))
-                          }
-                          disabled={reviewPage === 1}
-                          className="w-9 h-9 flex items-center justify-center rounded-xl text-sm text-[#9CA3AF] hover:bg-[#F0F2F5] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                          >
-                            <path
-                              d="M10 4L6 8l4 4"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </button>
-
-                        {/* 페이지 번호 */}
-                        {Array.from(
-                          { length: totalReviewPages },
-                          (_, i) => i + 1
-                        ).map((page) => (
-                          <button
-                            key={page}
-                            onClick={() => setReviewPage(page)}
-                            className={`w-9 h-9 flex items-center justify-center rounded-xl text-sm font-medium transition-colors ${
-                              reviewPage === page
-                                ? 'bg-[#2F5DAA] text-white'
-                                : 'text-[#4B5563] hover:bg-[#F0F2F5]'
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        ))}
-
-                        {/* 다음 버튼 */}
-                        <button
-                          onClick={() =>
-                            setReviewPage((p) =>
-                              Math.min(totalReviewPages, p + 1)
-                            )
-                          }
-                          disabled={reviewPage === totalReviewPages}
-                          className="w-9 h-9 flex items-center justify-center rounded-xl text-sm text-[#9CA3AF] hover:bg-[#F0F2F5] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                          >
-                            <path
-                              d="M6 4l4 4-4 4"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            </section>
+            {/* ── 수강평 (공용 컴포넌트 — 라이브 로드). 강사는 리뷰 신고 불가(canReport=false) ── */}
+            <CourseReviewSection
+              courseId={courseId}
+              scrollMtClassName="scroll-mt-6"
+              canReport={false}
+            />
           </div>
         </div>
       </div>

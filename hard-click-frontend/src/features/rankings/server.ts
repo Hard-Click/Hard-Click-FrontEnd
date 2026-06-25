@@ -1,6 +1,6 @@
 import { serverApi } from '@/lib/api';
 import { maskName } from '@/lib/formatter';
-import { USE_MOCK } from '@/mocks/config';
+import { USE_MOCK, isMock } from '@/mocks/config';
 import {
   mockRankingBoard,
   mockMyRanking,
@@ -8,7 +8,12 @@ import {
   type RankingBoardApiItem,
   type MyRankingApiResponse,
 } from '@/mocks/rankings.mock';
-import type { RankingBoard, RankingUser, MyRankingSummary } from './types';
+import type {
+  RankingBoard,
+  RankingUser,
+  MyRankingSummary,
+  RankItem,
+} from './types';
 
 /** BE 보드 항목 → UI 계약 매퍼(격리막) */
 function toRankingUser(api: RankingBoardApiItem): RankingUser {
@@ -37,6 +42,36 @@ function toMyRanking(api: MyRankingApiResponse): MyRankingSummary {
   };
 }
 
+/** 실서버 GET /api/rankings/me/summary 응답(BE) — 격리막.
+ *  BE 필드는 studyTime/lesson/acceptedComment(FE는 ~Rank 접미사). ⚠️ 활동 시드 전엔
+ *  rank=null·전체 0명으로 옴 → rank는 0으로 파생(0위 표시). 시드되면 자동 채워짐. */
+interface BeRankSlot {
+  rank: number | null;
+  totalUsers: number;
+  topPercent: number;
+}
+interface BeMyRankingSummary {
+  studyTime: BeRankSlot;
+  lesson: BeRankSlot;
+  acceptedComment: BeRankSlot;
+}
+
+function toRankItem(slot: BeRankSlot): RankItem {
+  return {
+    rank: slot.rank ?? 0,
+    totalUsers: slot.totalUsers,
+    topPercent: slot.topPercent,
+  };
+}
+
+function toMyRankingFromApi(api: BeMyRankingSummary): MyRankingSummary {
+  return {
+    studyTimeRank: toRankItem(api.studyTime),
+    lessonRank: toRankItem(api.lesson),
+    acceptedCommentRank: toRankItem(api.acceptedComment),
+  };
+}
+
 /**
  * 탭별 랭킹 보드 조회 (Server Component 전용).
  * BE 미구현(노션 명세) → USE_MOCK. 연동 시 엔드포인트/매퍼만 맞추면 됨.
@@ -60,14 +95,16 @@ export async function getRankingBoardServer(): Promise<RankingBoard> {
  * 내 랭킹 요약 조회 (Server Component 전용) — 전체 N명 중 R위 · 상위 P%.
  */
 export async function getMyRankingServer(): Promise<MyRankingSummary> {
-  if (USE_MOCK) {
+  if (isMock('rankings')) {
     return toMyRanking(mockMyRanking);
   }
 
-  // TODO(API 연동): GET /api/rankings/me
-  const res = await serverApi.get<MyRankingApiResponse>('/api/rankings/me');
+  // 라이브: GET /api/rankings/me/summary (3개 지표 한 번에). ⚠️ 활동 시드 전엔 빈 값(0위).
+  const res = await serverApi.get<BeMyRankingSummary>(
+    '/api/rankings/me/summary',
+  );
   if (!res.success || !res.data) {
     throw new Error('내 랭킹을 불러오지 못했습니다.');
   }
-  return toMyRanking(res.data);
+  return toMyRankingFromApi(res.data);
 }

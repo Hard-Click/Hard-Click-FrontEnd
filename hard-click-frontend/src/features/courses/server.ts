@@ -113,15 +113,26 @@ export async function getCourseDetailServer(
   if (!res.success || !res.data) return null;
   const detail = toCourseDetail(res.data);
 
-  // 수강 여부 보강: 로그인 사용자만 조회한다.
-  // 비로그인이면 어차피 /api/enrollments/me가 401(isEnrolled=false 유지)이므로 호출 자체를 생략.
+  // 수강/찜/장바구니 여부 보강: 로그인 사용자만 조회한다.
+  // BE 상세 응답엔 isEnrolled/isWishlisted/isInCart가 없어 목록 API로 이 강의 포함 여부를 판정한다.
+  // 비로그인이면 세 API 모두 401이라 기본값(false) 유지 → 호출 자체를 생략.
   const user = await getCurrentUser();
   if (user) {
-    const enrolled = await serverApi.get<{ courseId: number }[]>(
-      '/api/enrollments/me?status=ALL',
-    );
+    const [enrolled, wishlist, cart] = await Promise.all([
+      serverApi.get<{ courseId: number }[]>('/api/enrollments/me?status=ALL'),
+      serverApi.get<{ items: { courseId: number }[] }>('/api/wishlist'),
+      serverApi.get<{ items: { courseId: number }[] }>('/api/cart'),
+    ]);
     if (enrolled.success && Array.isArray(enrolled.data)) {
       detail.isEnrolled = enrolled.data.some((e) => e.courseId === courseId);
+    }
+    if (wishlist.success && wishlist.data?.items) {
+      detail.isWishlisted = wishlist.data.items.some(
+        (i) => i.courseId === courseId,
+      );
+    }
+    if (cart.success && cart.data?.items) {
+      detail.isInCart = cart.data.items.some((i) => i.courseId === courseId);
     }
   }
   return detail;

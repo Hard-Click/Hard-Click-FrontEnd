@@ -53,7 +53,8 @@ export default function CourseListControls({
       if (value) params.set(key, value);
       else params.delete(key);
     });
-    router.push(`${pathname}?${params.toString()}`);
+    // scroll:false — 필터/검색 시 URL만 갱신하고 스크롤 위치 유지(기본값은 맨 위로 튐)
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
   /** 키워드 검색 적용 (특수문자만이면 무시) */
@@ -94,7 +95,12 @@ export default function CourseListControls({
         }
         onInstructorChange={(name) => pushWith({ instructor: name || undefined })}
         onSortChange={(s) => pushWith({ sort: s })}
-        onReset={() => router.push(pathname)}
+        onReset={() => {
+          // 대기 중 디바운스 취소 + 입력 초기화 — 안 하면 리셋 후 타이머가 이전 키워드를 재적용
+          if (debounceRef.current) clearTimeout(debounceRef.current);
+          setKeywordInput('');
+          router.push(pathname, { scroll: false });
+        }}
       />
     </div>
   );

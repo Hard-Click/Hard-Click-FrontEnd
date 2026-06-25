@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import CourseSearchBar from '@/features/courses/components/CourseSearchBar';
 import InstructorCourseFilterBar from '@/features/courses/components/InstructorCourseFilterBar';
@@ -33,27 +33,57 @@ export default function InstructorCourseListControls({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [keywordInput, setKeywordInput] = useState(keyword);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 디바운스 콜백이 늦게 실행돼도 항상 최신 searchParams로 push (학생 목록과 동일)
+  const searchParamsRef = useRef(searchParams);
+  useEffect(() => {
+    searchParamsRef.current = searchParams;
+  }, [searchParams]);
+  // 언마운트 시 대기 중 디바운스 타이머 정리
+  useEffect(
+    () => () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    },
+    [],
+  );
 
   function pushWith(next: Record<string, string | undefined>) {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParamsRef.current.toString());
     Object.entries(next).forEach(([key, value]) => {
       if (value) params.set(key, value);
       else params.delete(key);
     });
     const qs = params.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname);
+    // scroll:false — 필터/검색 시 URL만 갱신하고 스크롤 위치 유지(기본값은 맨 위로 튐)
+    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }
+
+  /** 키워드 검색 적용 (특수문자만이면 무시) */
+  function searchKeyword(raw: string) {
+    const trimmed = raw.trim();
+    if (trimmed && /^[^\w가-힣]+$/u.test(trimmed)) return;
+    pushWith({ keyword: trimmed || undefined });
+  }
+
+  /** 타이핑 → 150ms 디바운스 후 자동 검색 (학생 목록과 동일) */
+  function handleKeywordChange(value: string) {
+    setKeywordInput(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => searchKeyword(value), 150);
+  }
+
+  /** 검색 버튼/Enter → 즉시 검색 (대기 중 디바운스 취소) */
+  function handleSearchNow() {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    searchKeyword(keywordInput);
   }
 
   return (
     <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-[0_4px_10px_rgba(0,0,0,0.06)] p-6 mb-8 flex flex-col gap-4">
       <CourseSearchBar
         value={keywordInput}
-        onChange={setKeywordInput}
-        onSearch={() => {
-          const trimmed = keywordInput.trim();
-          if (trimmed && /^[^\w가-힣]+$/u.test(trimmed)) return;
-          pushWith({ keyword: trimmed || undefined });
-        }}
+        onChange={handleKeywordChange}
+        onSearch={handleSearchNow}
       />
       <InstructorCourseFilterBar
         subjects={subjects}
@@ -70,7 +100,12 @@ export default function InstructorCourseListControls({
         onMyCoursesToggle={() =>
           pushWith({ mine: myCoursesOnly ? undefined : 'true' })
         }
-        onReset={() => router.push(pathname)}
+        onReset={() => {
+          // 대기 중 디바운스 취소 + 입력 초기화 — 안 하면 리셋 후 타이머가 이전 키워드를 재적용
+          if (debounceRef.current) clearTimeout(debounceRef.current);
+          setKeywordInput('');
+          router.push(pathname, { scroll: false });
+        }}
       />
     </div>
   );

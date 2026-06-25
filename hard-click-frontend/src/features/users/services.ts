@@ -1,4 +1,4 @@
-import { USE_MOCK } from '@/mocks/config';
+import { USE_MOCK, isMock } from '@/mocks/config';
 import { api } from '@/services/api';
 import type {
   MyProfile,
@@ -12,7 +12,7 @@ import type {
 /* ───── 내 프로필 조회 (GET /api/members/me) ─────
  * 백엔드는 memberId 필드로 내려옴 — 프론트 타입(MyProfile)에 맞게 userId로 매핑한다. */
 export async function getMyProfile() {
-  if (USE_MOCK) {
+  if (isMock('mypage')) {
     return {
       success: true,
       httpStatus: 200,
@@ -42,7 +42,7 @@ export async function getMyProfile() {
 /* ───── 프로필 이미지 변경 (PATCH /api/members/me/profile-image) ─────
  * multipart/form-data 로 profileImage 필드만 전송. */
 export async function updateProfileImage(profileImage: File) {
-  if (USE_MOCK) {
+  if (isMock('mypage')) {
     return {
       success: true,
       httpStatus: 200,
@@ -62,9 +62,12 @@ export async function updateProfileImage(profileImage: File) {
 
 /* ───── 비밀번호 변경 (PATCH /api/members/me/password) ─────
  * body: { currentPassword, newPassword, newPasswordConfirm }
- * 401 인증 / 409 현재 비밀번호 불일치 / 400 newPassword·newPasswordConfirm 불일치 */
+ * 현재 비밀번호 불일치 = 401 AUTH_009 / 400 newPassword·newPasswordConfirm 불일치
+ * ✅ 라이브(config accountDestructive:false, 2026-06-25) — 실제 비번 변경됨. 틀린 현재비번 → 401
+ *    AUTH_009를 api.ts가 로그인리다이렉트에서 제외 → 모달이 "비밀번호 불일치"로 처리(Step1 복귀).
+ *    ⚠️ 공유 demo 계정에선 실제로 비번이 바뀌니 데모/발표 중 주의. */
 export async function changePassword(body: ChangePasswordRequest) {
-  if (USE_MOCK) {
+  if (isMock('accountDestructive')) {
     return {
       success: true,
       httpStatus: 200,
@@ -77,9 +80,12 @@ export async function changePassword(body: ChangePasswordRequest) {
 
 /* ───── 회원 탈퇴 (DELETE /api/members/me) ─────
  * 백엔드가 body로 currentPassword 필수 요구 — 본인 확인 후 받은 비밀번호 전달.
- * 401 인증 실패 / 404 회원 없음 / 409 이미 탈퇴한 회원 */
+ * 401 인증 실패(AUTH_009) / 404 회원 없음 / 409 이미 탈퇴한 회원
+ * ✅ 라이브(config accountDestructive:false, 2026-06-25) — 실제 탈퇴됨(복구불가). 틀린 비번 → 401
+ *    AUTH_009(api.ts가 로그인리다이렉트 제외 → 모달이 토스트로 처리).
+ *    ⚠️ 공유 demo 계정에선 실제로 영구 삭제되니 데모/발표 중 절대 올바른 비번으로 실행 금지. */
 export async function withdrawAccount(currentPassword: string) {
-  if (USE_MOCK) {
+  if (isMock('accountDestructive')) {
     return {
       success: true,
       httpStatus: 200,

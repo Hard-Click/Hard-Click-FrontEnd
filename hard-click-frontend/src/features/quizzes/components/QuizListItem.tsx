@@ -36,9 +36,9 @@ export default function QuizListItem({
         <button
           type="button"
           onClick={onView}
-          className="flex h-9 items-center gap-1.5 rounded-xl border border-[#E2E8F0] px-4 text-sm font-medium text-[#4B5563] transition hover:bg-[#F8FAFC]"
+          className="flex h-9 items-center gap-1.5 rounded-xl border border-[#E2E8F0] px-6.5 text-sm font-medium text-[#4B5563] transition hover:bg-[#F8FAFC]"
         >
-          조회하기
+          조회
         </button>
         <button
           type="button"
