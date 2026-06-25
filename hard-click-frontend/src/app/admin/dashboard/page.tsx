@@ -8,7 +8,7 @@ import AdminRecentNotices from '@/features/admin/components/AdminRecentNotices';
 import { getDashboardData } from '@/features/admin/server';
 
 export default async function AdminDashboardPage() {
-  const { recentReports, recentNotices } = await getDashboardData();
+  const { stats, recentReports, recentNotices } = await getDashboardData();
 
   return (
     <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
@@ -35,7 +35,7 @@ export default async function AdminDashboardPage() {
 
         {/* 통계 카드 영역 */}
         <div className="mb-8">
-          <AdminDashboardStats />
+          <AdminDashboardStats stats={stats} />
         </div>
 
         {/* 빠른 관리 영역 */}
