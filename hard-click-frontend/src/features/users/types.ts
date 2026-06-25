@@ -53,40 +53,39 @@ export interface CompletedCourse {
 }
 
 /* ───── 사용자 관리 (관리자) — GET /api/admin/members ─────
- * role: 수강생 STUDENT / 강사 INSTRUCTOR, status: 활성 ACTIVE / 잠김 LOCKED. */
+ * role: STUDENT / INSTRUCTOR, status: ACTIVE / SUSPENDED / WITHDRAWN */
 export type AdminUserRole = 'STUDENT' | 'INSTRUCTOR';
-export type AdminUserStatus = 'ACTIVE' | 'LOCKED';
-
-/** 누적 신고 이 횟수 이상이면 계정이 자동으로 잠긴다. */
-export const AUTO_LOCK_REPORT_THRESHOLD = 50;
+export type AdminUserStatus = 'ACTIVE' | 'SUSPENDED' | 'WITHDRAWN';
 
 /** 백엔드 응답 항목 (API 타입) */
 export interface AdminUserApiItem {
   memberId: number;
   name: string;
-  loginId: string;
+  username: string;
   email: string;
-  role: AdminUserRole;
-  status: AdminUserStatus;
-  joinedAt: string; // 가입일
-  lastLoginAt: string | null; // 최근 로그인 (없으면 null)
-  reportCount: number; // 누적 신고수
+  role: string;
+  status: string;
+  createdAt: string;
+  lastLoginAt: string | null;
+  reportCount: number;
 }
 
 export interface AdminUserListApiResponse {
   content: AdminUserApiItem[];
-  totalPages: number;
+  page: number;
+  size: number;
+  hasNext: boolean;
 }
 
 /** UI 표시용 사용자 타입 */
 export interface AdminUser {
   memberId: number;
   name: string;
-  loginId: string;
+  username: string;
   email: string;
   role: AdminUserRole;
   status: AdminUserStatus;
-  joinedAt: string;
+  createdAt: string;
   lastLoginAt: string | null;
   reportCount: number;
 }
@@ -96,14 +95,12 @@ export function toAdminUser(api: AdminUserApiItem): AdminUser {
   return {
     memberId: api.memberId,
     name: api.name,
-    loginId: api.loginId,
+    username: api.username,
     email: api.email,
-    role: api.role,
-    // 누적 신고 50회 이상이면 자동 잠김 (백엔드가 ACTIVE로 줘도 프론트에서 LOCKED 처리)
-    status:
-      api.reportCount >= AUTO_LOCK_REPORT_THRESHOLD ? 'LOCKED' : api.status,
-    joinedAt: api.joinedAt,
-    lastLoginAt: api.lastLoginAt,
+    role: (api.role === 'INSTRUCTOR' ? 'INSTRUCTOR' : 'STUDENT') as AdminUserRole,
+    status: (['ACTIVE', 'SUSPENDED', 'WITHDRAWN'].includes(api.status) ? api.status : 'ACTIVE') as AdminUserStatus,
+    createdAt: api.createdAt?.split('T')[0] ?? api.createdAt,
+    lastLoginAt: api.lastLoginAt ? api.lastLoginAt.replace('T', ' ').slice(0, 16) : null,
     reportCount: api.reportCount,
   };
 }

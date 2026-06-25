@@ -54,9 +54,10 @@ export async function getMyCompletedCoursesServer(): Promise<CompletedCourse[]> 
 
 /** 사용자 관리 — 전체 회원 목록 서버 조회 (GET /api/admin/members, 관리자) */
 export async function getAdminUsersServer(): Promise<AdminUser[]> {
-  if (USE_MOCK) return mockAdminUserList.content.map(toAdminUser);
   const res = await serverApi.get<AdminUserListApiResponse>(
     '/api/admin/members',
   );
-  return res.success && res.data ? res.data.content.map(toAdminUser) : [];
+  if (res.success && res.data) return res.data.content.map(toAdminUser);
+  if (USE_MOCK) return mockAdminUserList.content.map(toAdminUser);
+  return [];
 }
