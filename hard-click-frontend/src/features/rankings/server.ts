@@ -43,33 +43,19 @@ function toMyRanking(api: MyRankingApiResponse): MyRankingSummary {
   };
 }
 
-/** 실서버 GET /api/rankings/me/summary 응답(BE) — 격리막.
- *  BE 필드는 studyTime/lesson/acceptedComment(FE는 ~Rank 접미사). ⚠️ 활동 시드 전엔
- *  rank=null·전체 0명으로 옴 → rank는 0으로 파생(0위 표시). 시드되면 자동 채워짐. */
+/** GET /api/rankings/me?metric=&period= 응답 슬롯(BE) — 격리막.
+ *  {rank, totalUsers, topPercent}. ⚠️ 활동 시드 전/미랭크 시 rank=null → 0으로 파생(0위 표시). */
 interface BeRankSlot {
   rank: number | null;
   totalUsers: number;
   topPercent: number;
 }
-interface BeMyRankingSummary {
-  studyTime: BeRankSlot;
-  lesson: BeRankSlot;
-  acceptedComment: BeRankSlot;
-}
 
-function toRankItem(slot: BeRankSlot): RankItem {
+function toRankItem(slot: BeRankSlot | undefined): RankItem {
   return {
-    rank: slot.rank ?? 0,
-    totalUsers: slot.totalUsers,
-    topPercent: slot.topPercent,
-  };
-}
-
-function toMyRankingFromApi(api: BeMyRankingSummary): MyRankingSummary {
-  return {
-    studyTimeRank: toRankItem(api.studyTime),
-    lessonRank: toRankItem(api.lesson),
-    acceptedCommentRank: toRankItem(api.acceptedComment),
+    rank: slot?.rank ?? 0,
+    totalUsers: slot?.totalUsers ?? 0,
+    topPercent: slot?.topPercent ?? 0,
   };
 }
 
@@ -148,19 +134,34 @@ export async function getRankingBoardServer(
 }
 
 /**
- * 내 랭킹 요약 조회 (Server Component 전용) — 전체 N명 중 R위 · 상위 P%.
+ * 내 랭킹 요약 조회 (Server Component 전용) — period별 전체 N명 중 R위 · 상위 P%.
+ * /me/summary엔 period가 없어, 지표별 GET /api/rankings/me?metric=&period=를 3개 병렬 조회한다.
+ * (metric 값은 보드와 동일: study-time/lessons/accepted-comments)
  */
-export async function getMyRankingServer(): Promise<MyRankingSummary> {
+export async function getMyRankingServer(
+  period: RankingPeriod,
+): Promise<MyRankingSummary> {
   if (isMock('rankings')) {
     return toMyRanking(mockMyRanking);
   }
 
-  // 라이브: GET /api/rankings/me/summary (3개 지표 한 번에). ⚠️ 활동 시드 전엔 빈 값(0위).
-  const res = await serverApi.get<BeMyRankingSummary>(
-    '/api/rankings/me/summary',
-  );
-  if (!res.success || !res.data) {
+  const [st, ls, ac] = await Promise.all([
+    serverApi.get<BeRankSlot>(
+      `/api/rankings/me?metric=study-time&period=${period}`,
+    ),
+    serverApi.get<BeRankSlot>(
+      `/api/rankings/me?metric=lessons&period=${period}`,
+    ),
+    serverApi.get<BeRankSlot>(
+      `/api/rankings/me?metric=accepted-comments&period=${period}`,
+    ),
+  ]);
+  if (!st.success || !ls.success || !ac.success) {
     throw new Error('내 랭킹을 불러오지 못했습니다.');
   }
-  return toMyRankingFromApi(res.data);
+  return {
+    studyTimeRank: toRankItem(st.data),
+    lessonRank: toRankItem(ls.data),
+    acceptedCommentRank: toRankItem(ac.data),
+  };
 }

@@ -4,6 +4,7 @@ import {
 } from '@/features/rankings/server';
 import { getCurrentUser } from '@/features/auth/session';
 import RankingClient from '@/features/rankings/components/RankingClient';
+import RankingPeriodTabs from '@/features/rankings/components/RankingPeriodTabs';
 import type { RankingPeriod } from '@/features/rankings/types';
 
 const VALID_PERIODS: RankingPeriod[] = ['daily', 'weekly', 'monthly'];
@@ -30,20 +31,23 @@ export default async function RankingPage({
 
   const [board, myRanking] = await Promise.all([
     getRankingBoardServer(period, myMemberId),
-    getMyRankingServer(),
+    getMyRankingServer(period),
   ]);
 
   return (
     <div className="mx-auto max-w-[720px] px-4 py-8">
-      {/* 헤더 */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#1E293B]">랭킹</h1>
-        <p className="mt-1 text-sm text-[#64748B]">
-          열공한 수험생들을 확인해보세요!
-        </p>
+      {/* 헤더 — 제목(좌) + 기간 선택(우) */}
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1E293B]">랭킹</h1>
+          <p className="mt-1 text-sm text-[#64748B]">
+            열공한 수험생들을 확인해보세요!
+          </p>
+        </div>
+        <RankingPeriodTabs period={period} />
       </div>
 
-      <RankingClient board={board} myRanking={myRanking} period={period} />
+      <RankingClient board={board} myRanking={myRanking} />
     </div>
   );
 }
