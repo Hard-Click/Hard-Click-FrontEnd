@@ -1,17 +1,14 @@
 import { serverApi } from '@/lib/api';
-import { USE_MOCK, isMock } from '@/mocks/config';
+import { isMock } from '@/mocks/config';
 import { mockCart } from '@/mocks/cart.mock';
 import { mockCourseListResponse } from '@/mocks/courses.mock';
-import type { CourseDetailApiResponse } from '@/features/courses/types';
 import type { OrderSummary, OrderType } from './types';
 
-/** 데모용 주문번호 (연동 시 BE가 발급) */
+/** 데모용 주문번호 (FORCE_ALL_MOCK 프리뷰 전용 — 라이브는 BE가 발급) */
 const MOCK_ORDER_NO = 'ORD-20260614-001';
 
 /**
- * ⚠️ 임시: 구독권(#356)이 develop에 미머지라 `subscriptions.mock`의 `priceOn`/`PLAN_NAME`을
- * 쓸 수 없어 인라인으로 둠. #356 머지 후 그 모듈로 통합할 것.
- * (실서버 연동 시엔 BE가 주문 금액을 내려주므로 이 계산은 mock 전용)
+ * ⚠️ 구독 mock 가격 — FORCE_ALL_MOCK 프리뷰 전용. 라이브는 BE가 plan.price를 내려준다.
  */
 const SUNEUNG_DATE = Date.UTC(2026, 10, 19); // 2026-11-19 (2027학년도 수능)
 const PLAN_NAME = 'FLOWN 연간 패스';
@@ -19,15 +16,19 @@ function subscriptionPriceToday(): number {
   const now = new Date();
   const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
   const days = Math.max(0, Math.round((SUNEUNG_DATE - today) / 86400000));
-  return days * 10000; // 남은 일수 × 1만원/일
+  return days * 10000;
 }
 
-/** 백엔드 주문 응답(가정) — 격리막 */
+/**
+ * 백엔드 주문 응답 — GET /api/order/checkout (라이브 검증 2026-06-25).
+ * 단건/장바구니: type="COURSE", items=[{courseId,title,price}] / 구독: type="SUBSCRIPTION", items[0].courseId=null.
+ * ⚠️ 주문 응답엔 강사명(instructorName)이 없다(BE 미제공) → subtitle은 빈 값.
+ */
 interface ApiOrder {
   orderNo: string;
-  type: OrderType;
-  status: 'READY';
-  items: { id: number; title: string; subtitle: string; price: number }[];
+  type: string; // "COURSE" | "SUBSCRIPTION"
+  status: string; // "READY"
+  items: { courseId: number | null; title: string; price: number }[];
   totalAmount: number;
   finalAmount: number;
 }
@@ -35,12 +36,12 @@ interface ApiOrder {
 function toOrderSummary(api: ApiOrder): OrderSummary {
   return {
     orderNo: api.orderNo,
-    type: api.type,
-    status: api.status,
+    type: api.type.toUpperCase() === 'SUBSCRIPTION' ? 'subscription' : 'course',
+    status: 'READY',
     items: api.items.map((i) => ({
-      id: i.id,
+      id: i.courseId ?? 0, // 구독은 courseId=null → 0
       title: i.title,
-      subtitle: i.subtitle,
+      subtitle: '', // 주문 응답엔 강사명 없음(BE 미제공)
       price: i.price,
     })),
     totalAmount: api.totalAmount,
@@ -48,99 +49,72 @@ function toOrderSummary(api: ApiOrder): OrderSummary {
   };
 }
 
-/**
- * 단건 강의 주문 (유료 수강신청 → 결제). 강의 1개를 그대로 주문 1건으로 만든다.
- * 강의 정보는 라이브 `/api/courses/{id}`(courses 도메인 연동분)에서 가져온다.
- * orderNo는 토스 orderId 겸 표시번호로 사용 — 매 진입 고유(중복 결제 방지).
- */
-async function getSingleCourseOrder(
-  courseId: number,
-): Promise<OrderSummary | null> {
-  let title: string;
-  let instructorName: string;
-  let price: number;
-  let isFree: boolean;
-
-  if (isMock('courses')) {
-    const c = mockCourseListResponse.content.find((x) => x.courseId === courseId);
-    if (!c) return null;
-    title = c.title;
-    instructorName = c.instructorName;
-    price = c.price;
-    isFree = c.priceType === 'FREE';
-  } else {
-    const res = await serverApi.get<CourseDetailApiResponse>(
-      `/api/courses/${courseId}`,
-    );
-    if (!res.success || !res.data) return null;
-    title = res.data.title;
-    instructorName = res.data.instructorName;
-    price = res.data.price;
-    isFree = res.data.priceType === 'FREE';
-  }
-
-  // 무료 강의는 결제 대상이 아님 (수강신청에서 즉시 처리) — 방어
-  if (isFree || price <= 0) return null;
-
-  const orderNo = `ORD-${courseId}-${Date.now()}`;
+/** 단건 강의 주문 — mock 전용(FORCE_ALL_MOCK 프리뷰). 라이브는 /api/order/checkout이 처리. */
+function getSingleCourseOrderMock(courseId: number): OrderSummary | null {
+  const c = mockCourseListResponse.content.find((x) => x.courseId === courseId);
+  if (!c || c.priceType === 'FREE' || c.price <= 0) return null;
   return {
-    orderNo,
+    orderNo: `${MOCK_ORDER_NO}-${courseId}`,
     type: 'course',
     status: 'READY',
-    items: [{ id: courseId, title, subtitle: instructorName, price }],
-    totalAmount: price,
-    finalAmount: price,
+    items: [
+      { id: courseId, title: c.title, subtitle: c.instructorName, price: c.price },
+    ],
+    totalAmount: c.price,
+    finalAmount: c.price,
   };
 }
 
 /**
  * 주문/결제 정보 조회 (Server Component 전용).
- * - type=course + courseId → 단건 강의(유료 수강신청 결제)
- * - type=course (courseId 없음) → 장바구니 선택분 합계(mock — cart BE 미구현)
- * - type=subscription → FLOWN 연간 패스(수능 D-day 동적 가격, mock — subscription BE 미구현)
+ *
+ * 라이브: GET /api/order/checkout?type=<course|subscription>[&courseId=N]
+ *   - type=course + courseId → 단건 강의 / courseId 생략 → 장바구니 전체 / type=subscription → 연간 패스
+ *   - ⭐ BE가 **실 orderNo를 발급**한다. 이게 토스 orderId로 쓰여 결제 후 `/api/payments/confirm`이
+ *     이 orderNo로 주문을 검증·승인한다. (이전엔 FE가 orderNo를 조작해서 confirm이 C001로 실패했음 — 수정)
+ * mock(FORCE_ALL_MOCK 프리뷰)일 때만 아래 mock 분기.
  */
 export async function getCheckoutServer(
   type: OrderType,
   courseId?: number,
 ): Promise<OrderSummary | null> {
-  // 단건 강의 결제 — 유료 수강신청에서 진입
-  if (type === 'course' && courseId) {
-    return getSingleCourseOrder(courseId);
+  if (!isMock('orders')) {
+    const params = new URLSearchParams({ type });
+    if (type === 'course' && courseId) params.set('courseId', String(courseId));
+    const res = await serverApi.get<ApiOrder>(
+      `/api/order/checkout?${params.toString()}`,
+    );
+    if (!res.success || !res.data) return null;
+    const summary = toOrderSummary(res.data);
+    return summary.items.length > 0 ? summary : null;
   }
 
-  if (USE_MOCK) {
-    if (type === 'subscription') {
-      const price = subscriptionPriceToday();
-      return {
-        orderNo: MOCK_ORDER_NO,
-        type: 'subscription',
-        status: 'READY',
-        // id 0 = 구독 단일 플랜(mock; 연동 시 BE가 플랜 id 발급)
-        items: [{ id: 0, title: PLAN_NAME, subtitle: '이용 기간: 1년', price }],
-        totalAmount: price,
-        finalAmount: price,
-      };
-    }
-    // course — 장바구니 선택분
-    const items = mockCart.items.map((it) => ({
-      id: it.courseId,
-      title: it.courseTitle,
-      subtitle: it.instructorName,
-      price: it.price,
-    }));
-    if (items.length === 0) return null;
+  // ── mock (FORCE_ALL_MOCK 프리뷰 전용) ──
+  if (type === 'course' && courseId) return getSingleCourseOrderMock(courseId);
+  if (type === 'subscription') {
+    const price = subscriptionPriceToday();
     return {
       orderNo: MOCK_ORDER_NO,
-      type: 'course',
+      type: 'subscription',
       status: 'READY',
-      items,
-      totalAmount: mockCart.totalPrice,
-      finalAmount: mockCart.totalPrice,
+      items: [{ id: 0, title: PLAN_NAME, subtitle: '이용 기간: 1년', price }],
+      totalAmount: price,
+      finalAmount: price,
     };
   }
-
-  // TODO(API 연동): 주문/결제 정보 조회
-  const res = await serverApi.get<ApiOrder>(`/api/order/checkout?type=${type}`);
-  if (!res.success || !res.data) return null;
-  return toOrderSummary(res.data);
+  const items = mockCart.items.map((it) => ({
+    id: it.courseId,
+    title: it.courseTitle,
+    subtitle: it.instructorName,
+    price: it.price,
+  }));
+  if (items.length === 0) return null;
+  return {
+    orderNo: MOCK_ORDER_NO,
+    type: 'course',
+    status: 'READY',
+    items,
+    totalAmount: mockCart.totalPrice,
+    finalAmount: mockCart.totalPrice,
+  };
 }

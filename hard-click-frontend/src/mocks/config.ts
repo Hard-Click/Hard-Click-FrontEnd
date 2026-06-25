@@ -35,6 +35,7 @@ const MOCK_OVERRIDE: Record<string, boolean> = {
   reviews: false, // /api/courses/{id}/reviews — 목록/작성/수정/삭제 실서버 연동
   enrollments: false, // POST /api/enrollments, GET /api/enrollments/me — 수강신청 실서버 연동
   payments: false, // POST /api/payments/confirm — 토스 결제 승인 실서버 연동(Client Key 필요)
+  orders: false, // GET /api/order/checkout?type=&courseId= — 단건/장바구니/구독 주문 조회(실 orderNo 발급). 이 orderNo가 토스 orderId→confirm 검증에 쓰임. 이전엔 FE가 orderNo 조작→confirm C001 실패였음.
   reports: false, // POST /api/reports — 게시글/댓글/리뷰 신고 실서버 연동
   mypage: false, // /api/members/me(+/courses,/completed,/activities) — 마이페이지 프로필·수강·활동 실서버 연동
   grass: false, // /api/grass/{streak,study-time,lessons} — 마이페이지 잔디 실서버 연동(200·shape일치). ⚠️ /api/grass·/monthly·/yearly는 BE 500이라 yearly 모달은 mock(client services) 유지
