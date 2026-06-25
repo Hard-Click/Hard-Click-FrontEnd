@@ -136,6 +136,23 @@ function toHref(type: NotificationType, referenceId: number): string {
   }
 }
 
+/**
+ * BE가 준 redirectUrl을 **동일 출처 절대경로**만 허용한다(외부/스킴/프로토콜상대 URL 차단).
+ * 알림 클릭은 `<Link href>`로 이동하므로, 검증 안 된 BE 문자열이 오픈 리다이렉트가 되지 않게
+ * 막고, 부적합하면 type 기반 안전 경로로 폴백한다(방어적 — push payload 미검증, BE M3 6/26 전).
+ */
+function sanitizeHref(redirectUrl: string | undefined, fallback: string): string {
+  if (
+    redirectUrl &&
+    redirectUrl.startsWith('/') && // 동일 출처 절대경로만
+    !redirectUrl.startsWith('//') && // 프로토콜 상대 URL(//host) 차단
+    !redirectUrl.startsWith('/\\') // 백슬래시 트릭(/\host) 차단
+  ) {
+    return redirectUrl;
+  }
+  return fallback;
+}
+
 /** 백엔드 알림 항목 → UI 알림 항목 */
 export function toNotificationItem(a: NotificationApiItem): NotificationItem {
   const type = normalizeType(a.type);
@@ -145,9 +162,9 @@ export function toNotificationItem(a: NotificationApiItem): NotificationItem {
     category: TYPE_CATEGORY[type],
     message: a.message,
     isRead: a.isRead,
-    // BE는 redirectUrl을 직접 제공(라이브 검증 2026-06-25) → 그대로 사용.
-    // mock(referenceId만 있음)은 type 기반 toHref로 폴백.
-    href: a.redirectUrl ?? toHref(type, a.referenceId ?? 0),
+    // BE는 redirectUrl을 직접 제공(라이브 검증 2026-06-25) → 동일출처 검증 후 사용.
+    // mock(referenceId만 있음)·부적합 URL은 type 기반 toHref로 폴백.
+    href: sanitizeHref(a.redirectUrl, toHref(type, a.referenceId ?? 0)),
     createdAt: a.createdAt,
   };
 }

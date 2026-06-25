@@ -2,9 +2,19 @@
 
 import { serverApi } from '@/lib/api';
 import { isMock } from '@/mocks/config';
+import { getNotificationsServer, type NotificationsData } from './server';
 
 export interface NotiReadResult {
   success: boolean;
+}
+
+/**
+ * 알림 목록·미읽음수 재조회 (Server Action · BFF).
+ * SSE 실시간 이벤트 수신 시 NotificationProvider가 호출 — push payload를 파싱하지 않고
+ * **검증된 GET 엔드포인트로 권위 데이터를 다시 끌어온다**(push shape 미검증 의존 회피).
+ */
+export async function refreshNotificationsAction(): Promise<NotificationsData> {
+  return getNotificationsServer();
 }
 
 /**
