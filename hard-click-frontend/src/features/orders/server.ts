@@ -34,14 +34,16 @@ interface ApiOrder {
 }
 
 function toOrderSummary(api: ApiOrder): OrderSummary {
+  const isSubscription = api.type.toUpperCase() === 'SUBSCRIPTION';
   return {
     orderNo: api.orderNo,
-    type: api.type.toUpperCase() === 'SUBSCRIPTION' ? 'subscription' : 'course',
+    type: isSubscription ? 'subscription' : 'course',
     status: 'READY',
     items: api.items.map((i) => ({
       id: i.courseId ?? 0, // 구독은 courseId=null → 0
       title: i.title,
-      subtitle: '', // 주문 응답엔 강사명 없음(BE 미제공)
+      // 구독은 고정 라벨(BE 무관), 강의는 주문 응답에 강사명이 없어(BE 미제공) 빈 값 → 렌더 측에서 빈 값이면 숨김.
+      subtitle: isSubscription ? '이용 기간: 1년' : '',
       price: i.price,
     })),
     totalAmount: api.totalAmount,
