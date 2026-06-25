@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { serverApi } from '@/lib/api';
-import { USE_MOCK } from '@/mocks/config';
+import { isMock } from '@/mocks/config';
 import type { QuizFormPayload } from './types';
 
 export interface QuizActionState {
@@ -10,16 +10,46 @@ export interface QuizActionState {
   message?: string;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+ * 강사 퀴즈 쓰기(등록·수정·삭제) — 실 엔드포인트로 배선 완료. gate=isMock('quizzes')(=false 라이브).
+ * ⚠️ BE 쓰기가 아직 **stub**(비즈니스 로직 대기 — 201/200만 반환, 저장 안 됨). BE 로직이 오면:
+ *    - 삭제: 그대로 자동 동작 (엔드포인트 DELETE /api/instructor/quizzes/{id}, 바디 없음 — 검증된 계약).
+ *    - 등록/수정: 아래 toInstructorQuizRequest의 **가정 2개**(sectionId·correctOptionId)를 검증/조정해야 함.
+ * ───────────────────────────────────────────────────────────────────────── */
+
 /**
- * 퀴즈 삭제 (Server Action · BFF).
- * USE_MOCK 시: mock은 정적이라 서버 삭제·revalidate 없이 성공만 반환
- * (목록에서 사라지는 건 클라이언트가 낙관적 제거). API 연동 시 실삭제 + revalidate 동작.
+ * FE 폼(QuizFormPayload — 주차·정답index 기반) → BE InstructorQuizRequest(섹션·correctOptionId 기반) 매퍼.
+ * ⚠️ BE 쓰기 stub이라 아래 2개는 **가정(미검증, §0.1)** — BE 비즈니스 로직 오면 반드시 검증:
+ *   (가정1) sectionId ← week: BE는 sectionId를 요구하나 FE 폼은 "주차"만 받음 → 주차를 그대로 보냄.
+ *           실제 강의 섹션ID와 주차가 다르면 폼을 "섹션 선택"으로 개편 필요할 수 있음.
+ *   (가정2) correctOptionId ← answerIndex+1: 신규 옵션은 optionId가 없어 1~4 임시 부여, 정답=index+1.
+ *           BE가 정답을 옵션 순서/임시id 중 무엇으로 받는지 stub이라 미검증.
+ */
+function toInstructorQuizRequest(payload: QuizFormPayload) {
+  return {
+    quizTitle: payload.title,
+    courseId: payload.courseId,
+    sectionId: payload.week, // 가정1
+    questions: payload.questions.map((q) => ({
+      questionText: q.content,
+      explanation: q.explanation,
+      correctOptionId: q.answerIndex + 1, // 가정2
+      options: q.options.map((optionText, i) => ({
+        optionId: i + 1, // 임시 id (신규 옵션)
+        optionText,
+      })),
+    })),
+  };
+}
+
+/**
+ * 퀴즈 삭제 (Server Action · BFF). DELETE /api/instructor/quizzes/{quizId}.
+ * ✅ 계약 검증됨(바디 없음) — BE 로직 오면 자동으로 실삭제. 현재는 BE stub이라 성공만 반환.
  */
 export async function deleteQuizAction(
   quizId: number,
   courseId: number,
 ): Promise<QuizActionState> {
-  // 입력 검증 — 양의 정수만 허용 (잘못된 ID 조기 차단)
   if (
     !Number.isInteger(quizId) ||
     quizId <= 0 ||
@@ -29,7 +59,7 @@ export async function deleteQuizAction(
     return { success: false, message: '잘못된 요청입니다.' };
   }
 
-  if (USE_MOCK) {
+  if (isMock('quizzes')) {
     return { success: true, message: '퀴즈가 삭제되었습니다.' };
   }
 
@@ -88,21 +118,24 @@ function validatePayload(payload: QuizFormPayload): string | null {
   return null;
 }
 
-/** 퀴즈 등록 (Server Action · BFF). */
+/**
+ * 퀴즈 등록 (Server Action · BFF). POST /api/instructor/quizzes (body=InstructorQuizRequest).
+ * ⚠️ BE stub + 가정 매퍼(sectionId·correctOptionId) — BE 로직 오면 가정 검증 후 동작.
+ */
 export async function createQuizAction(
   payload: QuizFormPayload,
 ): Promise<QuizActionState> {
   const invalid = validatePayload(payload);
   if (invalid) return { success: false, message: invalid };
 
-  if (USE_MOCK) {
+  if (isMock('quizzes')) {
     return { success: true, message: '퀴즈가 등록되었습니다.' };
   }
 
   try {
     const res = await serverApi.post<null>(
-      `/api/instructor/courses/${payload.courseId}/quizzes`,
-      payload,
+      '/api/instructor/quizzes',
+      toInstructorQuizRequest(payload),
     );
     if (!res.success) {
       return { success: false, message: res.message ?? '등록에 실패했습니다.' };
@@ -114,7 +147,10 @@ export async function createQuizAction(
   }
 }
 
-/** 퀴즈 수정 (Server Action · BFF). */
+/**
+ * 퀴즈 수정 (Server Action · BFF). PUT /api/instructor/quizzes/{quizId} (body=InstructorQuizRequest).
+ * ⚠️ BE stub + 가정 매퍼 — BE 로직 오면 가정 검증(특히 기존 문항/옵션 id 처리) 후 동작.
+ */
 export async function updateQuizAction(
   quizId: number,
   payload: QuizFormPayload,
@@ -125,14 +161,14 @@ export async function updateQuizAction(
   const invalid = validatePayload(payload);
   if (invalid) return { success: false, message: invalid };
 
-  if (USE_MOCK) {
+  if (isMock('quizzes')) {
     return { success: true, message: '퀴즈가 수정되었습니다.' };
   }
 
   try {
     const res = await serverApi.put<null>(
       `/api/instructor/quizzes/${quizId}`,
-      payload,
+      toInstructorQuizRequest(payload),
     );
     if (!res.success) {
       return { success: false, message: res.message ?? '수정에 실패했습니다.' };
