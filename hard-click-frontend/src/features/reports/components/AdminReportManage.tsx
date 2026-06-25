@@ -4,8 +4,6 @@ import { useState, useMemo } from 'react';
 import AdminReportFilterBar from './AdminReportFilterBar';
 import AdminReportTable from './AdminReportTable';
 import Pagination from '@/features/admin/components/Pagination';
-import { mockReportList } from '@/mocks/reports.mock';
-import { toReportItem } from '../types';
 import type {
   ReportItem,
   ReportStatusFilter,
@@ -15,14 +13,14 @@ import type {
 const PAGE_SIZE = 10;
 
 export default function AdminReportManage({
+  initialReports,
   openReport,
 }: {
+  initialReports: ReportItem[];
   openReport?: string;
 }) {
   // 목록 원본 state (처리의 source of truth)
-  const [reports, setReports] = useState<ReportItem[]>(() =>
-    mockReportList.content.map(toReportItem)
-  );
+  const [reports, setReports] = useState<ReportItem[]>(initialReports);
   const [status, setStatus] = useState<ReportStatusFilter>('ALL');
   const [target, setTarget] = useState<ReportTargetFilter>('ALL');
 
@@ -62,17 +60,6 @@ export default function AdminReportManage({
     setPage(1);
   };
 
-  // 처리 메모만 저장 (상태는 '처리 대기' 그대로 유지) — 나중에 처리할 신고를 찜해둔다.
-  const handleSaveMemo = (report: ReportItem, memo: string) => {
-    setReports((prev) =>
-      prev.map((r) =>
-        r.targetType === report.targetType && r.targetId === report.targetId
-          ? { ...r, processMemo: memo }
-          : r
-      )
-    );
-  };
-
   // 신고 처리: 행을 제거하지 않고 그대로 두되, 대상(게시물/댓글/대댓글)은
   // 삭제 처리하고 상태를 '처리 완료'로 바꾼다. (입력한 메모가 있으면 함께 보존)
   const handleProcessReport = (report: ReportItem, memo?: string) => {
@@ -101,7 +88,6 @@ export default function AdminReportManage({
       <AdminReportTable
         reports={pagedReports}
         onProcessReport={handleProcessReport}
-        onSaveMemo={handleSaveMemo}
         openReportKey={openReport}
       />
       <Pagination

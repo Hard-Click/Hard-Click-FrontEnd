@@ -1,9 +1,27 @@
+export const dynamic = 'force-dynamic';
+
+import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import AdminNoticeTable from '@/features/admin/components/AdminNoticeTable';
 import AdminCourseNoticeWriteButton from '@/features/admin/components/AdminCourseNoticeWriteButton';
 import { getCourseDetailServer } from '@/features/courses/server';
-import { mockAdminNotices } from '@/mocks/admin.mock';
+import { serverApi } from '@/lib/api';
+import type { AdminNoticeRow } from '@/mocks/admin.mock';
+import type { NoticeApiItem, NoticeApiResponse } from '@/features/notices/types';
+
+function toAdminNoticeRow(item: NoticeApiItem): AdminNoticeRow {
+  return {
+    id: item.noticeId,
+    type: 'COURSE',
+    title: item.title,
+    createdAt: item.createdAt.split('T')[0] ?? item.createdAt,
+    content: '',
+    isPinned: item.isPinned,
+    isPublished: true,
+    courseTitle: item.courseName ?? undefined,
+  };
+}
 
 export default async function AdminCourseNoticesPage({
   params,
@@ -11,11 +29,20 @@ export default async function AdminCourseNoticesPage({
   params: Promise<{ courseId: string }>;
 }) {
   const { courseId } = await params;
-  const course = await getCourseDetailServer(Number(courseId));
-  const courseTitle = course?.title ?? '강의';
+  if (isNaN(Number(courseId))) notFound();
 
-  // 해당 강의 공지만 필터 (mock)
-  const notices = mockAdminNotices.filter((n) => n.type === 'COURSE');
+  const [course, noticesRes] = await Promise.all([
+    getCourseDetailServer(Number(courseId)),
+    serverApi.get<NoticeApiResponse>(
+      `/api/notices?type=COURSE&courseId=${courseId}&page=0&size=100`,
+    ),
+  ]);
+
+  const courseTitle = course?.title ?? '강의';
+  const notices: AdminNoticeRow[] =
+    noticesRes.success && noticesRes.data
+      ? noticesRes.data.content.map(toAdminNoticeRow)
+      : [];
 
   return (
     <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
@@ -49,7 +76,7 @@ export default async function AdminCourseNoticesPage({
             <Image src="/icons/back.svg" alt="back" width={16} height={16} />
             강의로 돌아가기
           </Link>
-          <AdminCourseNoticeWriteButton courseTitle={courseTitle} />
+          <AdminCourseNoticeWriteButton courseId={Number(courseId)} courseTitle={courseTitle} />
         </div>
 
         {/* 공지 목록 테이블 */}

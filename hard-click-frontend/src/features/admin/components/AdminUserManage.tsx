@@ -7,7 +7,7 @@ import AdminMemberTable from './AdminMemberTable';
 import MemberStatusChangeModal from './MemberStatusChangeModal';
 import Pagination from './Pagination';
 import type { AdminUser } from '@/features/users/types';
-import { AUTO_LOCK_REPORT_THRESHOLD } from '@/features/users/types';
+import { changeUserStatusAction } from '@/features/users/actions';
 import type {
   AdminUserRoleFilter,
   AdminUserStatusFilter,
@@ -33,7 +33,7 @@ export default function AdminUserManage({ users }: AdminUserManageProps) {
       if (role !== 'ALL' && u.role !== role) return false;
       if (status !== 'ALL' && u.status !== status) return false;
       if (q) {
-        const haystack = `${u.name} ${u.loginId} ${u.email}`.toLowerCase();
+        const haystack = `${u.name} ${u.username} ${u.email}`.toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       return true;
@@ -61,31 +61,21 @@ export default function AdminUserManage({ users }: AdminUserManageProps) {
     safePage * PAGE_SIZE
   );
 
-  const handleConfirmToggle = () => {
+  const handleConfirmToggle = async () => {
     if (!targetUser) return;
-    const nextStatus = targetUser.status === 'ACTIVE' ? 'LOCKED' : 'ACTIVE';
-    // 누적 신고 50회 이상은 자동 잠김 대상 — 수동 해제를 막는다.
-    if (
-      nextStatus === 'ACTIVE' &&
-      targetUser.reportCount >= AUTO_LOCK_REPORT_THRESHOLD
-    ) {
-      toast.error(
-        `누적 신고 ${AUTO_LOCK_REPORT_THRESHOLD}회 이상이라 잠금을 해제할 수 없습니다.`
-      );
+    const nextStatus = targetUser.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+    const result = await changeUserStatusAction(targetUser.memberId, nextStatus);
+    if (!result.success) {
+      toast.error(result.message);
       setTargetUser(null);
       return;
     }
-    // TODO: 상태 변경 API 연동 후 성공 시 갱신 (현재 mock — 로컬 상태 토글)
     setUserList((prev) =>
       prev.map((u) =>
         u.memberId === targetUser.memberId ? { ...u, status: nextStatus } : u
       )
     );
-    toast.success(
-      nextStatus === 'LOCKED'
-        ? `${targetUser.name}님의 계정을 잠갔습니다.`
-        : `${targetUser.name}님의 계정 잠금을 해제했습니다.`
-    );
+    toast.success(result.message);
     setTargetUser(null);
   };
 

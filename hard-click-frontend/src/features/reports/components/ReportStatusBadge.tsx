@@ -27,7 +27,8 @@ export default function ReportStatusBadge({
 }: {
   status: ReportStatus;
 }) {
-  const { label, className, icon } = STATUS_STYLE[status];
+  const style = STATUS_STYLE[status] ?? STATUS_STYLE['PENDING'];
+  const { label, className, icon } = style;
   return (
     <span
       className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${className}`}

@@ -1,5 +1,8 @@
-import { mockAdminCourseManage } from '@/mocks/admin.mock';
+export const dynamic = 'force-dynamic';
+
+import { notFound } from 'next/navigation';
 import AdminCourseCreateForm from '@/features/admin/components/AdminCourseCreateForm';
+import { getCourseDetailServer } from '@/features/courses/server';
 
 interface Props {
   params: Promise<{ courseId: string }>;
@@ -7,24 +10,21 @@ interface Props {
 
 export default async function AdminCourseEditPage({ params }: Props) {
   const { courseId } = await params;
-  const course = mockAdminCourseManage.find((c) => c.id === Number(courseId));
+  if (isNaN(Number(courseId))) notFound();
+  const course = await getCourseDetailServer(Number(courseId));
 
   if (!course) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-[#64748B]">
-        강의를 찾을 수 없습니다.
-      </div>
-    );
+    notFound();
   }
 
   return (
     <AdminCourseCreateForm
       mode="edit"
       initialData={{
-        courseId: course.id,
+        courseId: course.courseId,
         title: course.title,
-        subject: course.subject,
-        instructor: course.instructor,
+        subject: course.subjectName,
+        instructor: course.instructorName,
         description: course.description ?? '',
         priceType: course.isFree ? 'FREE' : 'PAID',
         price: String(course.price),

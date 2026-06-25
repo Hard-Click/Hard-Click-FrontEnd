@@ -1,9 +1,13 @@
+export const dynamic = 'force-dynamic';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import AdminCourseManage from '@/features/admin/components/AdminCourseManage';
-import { mockAdminCourseManage } from '@/mocks/admin.mock';
+import { fetchAllAdminCourses } from '@/features/admin/server';
 
-export default function AdminCourseManagePage() {
+export default async function AdminCourseManagePage() {
+  const courses = await fetchAllAdminCourses();
+
   return (
     <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
       <div className="mx-auto w-full max-w-[1152px]">
@@ -32,7 +36,7 @@ export default function AdminCourseManagePage() {
             강의 등록
           </Link>
         </div>
-        <AdminCourseManage initialCourses={mockAdminCourseManage} />
+        <AdminCourseManage initialCourses={courses} />
       </div>
     </div>
   );

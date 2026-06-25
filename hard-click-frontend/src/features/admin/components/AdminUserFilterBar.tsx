@@ -15,7 +15,8 @@ const ROLE_OPTIONS: { key: AdminUserRoleFilter; label: string }[] = [
 const STATUS_OPTIONS: { key: AdminUserStatusFilter; label: string }[] = [
   { key: 'ALL', label: '전체 상태' },
   { key: 'ACTIVE', label: '활성' },
-  { key: 'LOCKED', label: '잠김' },
+  { key: 'SUSPENDED', label: '이용제한' },
+  { key: 'WITHDRAWN', label: '탈퇴' },
 ];
 
 interface AdminUserFilterBarProps {

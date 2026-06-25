@@ -6,7 +6,7 @@ import type {
   NoticeApiResponse,
 } from './types';
 import { api } from '@/services/api';
-import { USE_MOCK } from '@/mocks/config';
+import { USE_MOCK_NOTICES as USE_MOCK } from '@/mocks/config';
 import { mockNoticesResponse } from '@/mocks/notices.mock';
 
 function toNotice(item: NoticeApiItem): Notice {

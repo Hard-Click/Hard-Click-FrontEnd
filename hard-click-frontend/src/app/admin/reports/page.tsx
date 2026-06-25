@@ -1,5 +1,8 @@
+export const dynamic = 'force-dynamic';
+
 import Image from 'next/image';
 import AdminReportManage from '@/features/reports/components/AdminReportManage';
+import { getAdminReportsServer } from '@/features/reports/server';
 
 interface AdminReportsPageProps {
   searchParams: Promise<{ openReport?: string }>;
@@ -9,6 +12,7 @@ export default async function AdminReportsPage({
   searchParams,
 }: AdminReportsPageProps) {
   const { openReport } = await searchParams;
+  const initialReports = await getAdminReportsServer();
 
   return (
     <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
@@ -32,7 +36,10 @@ export default async function AdminReportsPage({
         </div>
 
         {/* 필터 + 목록 (client 섬) */}
-        <AdminReportManage openReport={openReport} />
+        <AdminReportManage
+          initialReports={initialReports}
+          openReport={openReport}
+        />
       </div>
     </div>
   );

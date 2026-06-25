@@ -186,6 +186,7 @@ export default function AdminNoticeTable({
       {editingNotice && (
         <AdminNoticeFormModal
           mode="edit"
+          noticeId={editingNotice.id}
           courseTitle={editingNotice.courseTitle}
           initialTitle={editingNotice.title}
           initialContent={editingNotice.content}

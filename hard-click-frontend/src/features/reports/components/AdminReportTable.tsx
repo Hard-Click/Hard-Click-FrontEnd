@@ -2,10 +2,8 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { toast } from 'sonner';
 import ReportStatusBadge from './ReportStatusBadge';
 import AdminReportDetailModal from './AdminReportDetailModal';
-import DeleteConfirmModal from '@/features/admin/components/DeleteConfirmModal';
 import type { ReportItem, ReportTarget } from '../types';
 import AdminReportMemoModal from './AdminReportMemoModal';
 import { useRouter } from 'next/navigation';
@@ -25,14 +23,12 @@ const TARGET_STYLE: Record<ReportTarget, string> = {
 interface Props {
   reports: ReportItem[];
   onProcessReport: (report: ReportItem, memo?: string) => void;
-  onSaveMemo: (report: ReportItem, memo: string) => void;
   openReportKey?: string;
 }
 
 export default function AdminReportTable({
   reports,
   onProcessReport,
-  onSaveMemo,
   openReportKey,
 }: Props) {
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(() =>
@@ -42,26 +38,8 @@ export default function AdminReportTable({
         ) ?? null
       : null
   );
-  const [deletingReport, setDeletingReport] = useState<ReportItem | null>(null);
   const [memoReport, setMemoReport] = useState<ReportItem | null>(null);
   const router = useRouter();
-
-  const handleDeleteClick = (report: ReportItem) => {
-    if (report.isTargetDeleted) {
-      toast.error(`이미 삭제된 ${TARGET_LABEL[report.targetType]}입니다.`);
-      return;
-    }
-    setDeletingReport(report);
-  };
-
-  const handleDeleteConfirm = () => {
-    if (!deletingReport) return;
-    // TODO: 삭제 API 호출 후 성공 시 갱신 (현재 mock)
-    // 대상 콘텐츠는 삭제 처리하되 신고 행은 목록에 남기고 '처리 완료'로 전환한다.
-    onProcessReport(deletingReport);
-    toast.success('삭제되었습니다.');
-    setDeletingReport(null);
-  };
 
   return (
     <div className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white">
@@ -140,7 +118,7 @@ export default function AdminReportTable({
                   </td>
                   {/* 신고 사유 (가장 최근 접수된 사유) */}
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-[#64748B]">
-                    {report.reasonStats[0]?.reason ?? '-'}
+                    {report.reasonStats?.[0]?.reason ?? '-'}
                   </td>
                   {/* 신고 횟수 */}
                   <td className="px-6 py-4 text-center">
@@ -164,7 +142,7 @@ export default function AdminReportTable({
                   </td>
                   {/* 관리 */}
                   <td className="px-6 py-4">
-                    <div className="flex items-center justify-center gap-4">
+                    <div className="flex items-center justify-center">
                       <button
                         type="button"
                         onClick={() =>
@@ -186,17 +164,6 @@ export default function AdminReportTable({
                         />
                         {isPending ? '상세보기' : '메모보기'}
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteClick(report)}
-                      >
-                        <Image
-                          src="/icons/trashIcon.svg"
-                          alt="삭제"
-                          width={16}
-                          height={16}
-                        />
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -214,18 +181,6 @@ export default function AdminReportTable({
             if (openReportKey) router.replace('/admin/reports');
           }}
           onProcessReport={onProcessReport}
-          onSaveMemo={onSaveMemo}
-        />
-      )}
-
-      {deletingReport && (
-        <DeleteConfirmModal
-          title={`${TARGET_LABEL[deletingReport.targetType]} 삭제`}
-          message={`해당 ${
-            TARGET_LABEL[deletingReport.targetType]
-          }을(를) 삭제하시겠습니까?`}
-          onCancel={() => setDeletingReport(null)}
-          onConfirm={handleDeleteConfirm}
         />
       )}
 
