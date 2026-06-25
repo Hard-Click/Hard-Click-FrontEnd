@@ -14,12 +14,14 @@ const ROLE_STYLE: Record<AdminUserRole, string> = {
 
 const STATUS_LABEL: Record<AdminUserStatus, string> = {
   ACTIVE: '활성',
-  LOCKED: '잠김',
+  SUSPENDED: '이용제한',
+  WITHDRAWN: '탈퇴',
 };
 
 const STATUS_STYLE: Record<AdminUserStatus, string> = {
   ACTIVE: 'bg-[#DCFCE7] text-[#16A34A]',
-  LOCKED: 'bg-[#FEE2E2] text-[#DC2626]',
+  SUSPENDED: 'bg-[#FEE2E2] text-[#DC2626]',
+  WITHDRAWN: 'bg-[#F1F5F9] text-[#64748B]',
 };
 
 interface AdminMemberTableProps {
@@ -87,7 +89,7 @@ export default function AdminMemberTable({
                 </td>
                 {/* 아이디 */}
                 <td className="whitespace-nowrap px-6 py-4 text-sm text-[#64748B]">
-                  {user.loginId}
+                  {user.username}
                 </td>
                 {/* 이메일 */}
                 <td className="whitespace-nowrap py-4 pl-2 pr-6 text-sm text-center text-[#64748B]">
@@ -115,7 +117,7 @@ export default function AdminMemberTable({
                 </td>
                 {/* 가입일 */}
                 <td className="whitespace-nowrap px-6 py-4 text-center text-sm text-[#64748B]">
-                  {user.joinedAt}
+                  {user.createdAt}
                 </td>
                 {/* 최근 로그인 */}
                 <td className="whitespace-nowrap px-6 py-4 text-center text-sm text-[#64748B]">
@@ -134,25 +136,27 @@ export default function AdminMemberTable({
                 {/* 관리 — 잠금/해제 버튼 (동작은 후속 이슈) */}
                 <td className="px-6 py-4">
                   <div className="flex items-center justify-center">
-                    <button
-                      type="button"
-                      onClick={() => onToggleStatus(user)}
-                      aria-label={
-                        user.status === 'ACTIVE' ? '계정 잠금' : '잠금 해제'
-                      }
-                      className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[#F1F5F9]"
-                    >
-                      <Image
-                        src={
-                          user.status === 'ACTIVE'
-                            ? '/icons/OrangeLock.svg'
-                            : '/icons/AdminActive.svg'
+                    {user.status !== 'WITHDRAWN' && (
+                      <button
+                        type="button"
+                        onClick={() => onToggleStatus(user)}
+                        aria-label={
+                          user.status === 'ACTIVE' ? '계정 이용제한' : '이용제한 해제'
                         }
-                        alt=""
-                        width={36}
-                        height={36}
-                      />
-                    </button>
+                        className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[#F1F5F9]"
+                      >
+                        <Image
+                          src={
+                            user.status === 'ACTIVE'
+                              ? '/icons/OrangeLock.svg'
+                              : '/icons/AdminActive.svg'
+                          }
+                          alt=""
+                          width={36}
+                          height={36}
+                        />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

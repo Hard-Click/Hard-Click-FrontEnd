@@ -18,7 +18,7 @@ export default function MemberStatusChangeModal({
   onConfirm,
 }: MemberStatusChangeModalProps) {
   const isActive = user.status === 'ACTIVE';
-  const actionLabel = isActive ? '잠금' : '해제';
+  const actionLabel = isActive ? '이용제한' : '해제';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -44,8 +44,8 @@ export default function MemberStatusChangeModal({
           <br />
           <span className="text-sm text-[#64748B]">
             {isActive
-              ? '잠금 시 해당 사용자는 커뮤니티 이용에 제한됩니다.'
-              : '해제 시 해당 사용자는 커뮤니티 이용이 가능합니다.'}
+              ? '이용제한 시 해당 사용자는 서비스 이용에 제한됩니다.'
+              : '해제 시 해당 사용자는 서비스 이용이 가능합니다.'}
           </span>
         </p>
         <div className="mt-8 flex gap-3">
