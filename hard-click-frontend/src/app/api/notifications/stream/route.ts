@@ -45,28 +45,34 @@ function subscribe(token: string, signal: AbortSignal): Promise<Response> {
  * push payload를 파싱하지 않고 "이벤트 수신=재조회" 방식이라 그 shape에 의존하지 않는다.
  */
 export async function GET(req: NextRequest): Promise<Response> {
-  // 교차 사이트 요청 거부 (defense-in-depth — 동일 출처 EventSource만 허용)
+  // 교차 사이트 요청 거부 (defense-in-depth). same-site는 형제 서브도메인까지 통과하므로 제외 →
+  // 동일 출처 EventSource만 허용. (Sec-Fetch-Site 미지원 브라우저는 헤더가 없어 통과)
   const site = req.headers.get('sec-fetch-site');
-  if (site && site !== 'same-origin' && site !== 'same-site') {
+  if (site && site !== 'same-origin') {
     return sseError(403, 'cross-site');
   }
 
   const cookieStore = await cookies();
-  const token = cookieStore.get('accessToken')?.value;
-  if (!token) return sseError(401, 'no-token');
+  const refreshToken = cookieStore.get('refreshToken')?.value;
+  let token = cookieStore.get('accessToken')?.value;
+  let refreshedToken: string | null = null;
+
+  // accessToken이 비어 있어도(만료) refreshToken이 있으면 먼저 재발급 시도 → SSE 스스로 복구
+  if (!token) {
+    if (!refreshToken) return sseError(401, 'no-token');
+    refreshedToken = await refreshAccessToken(refreshToken);
+    if (!refreshedToken) return sseError(401, 'refresh-failed');
+    token = refreshedToken;
+  }
 
   let upstream: Response;
-  let refreshedToken: string | null = null;
   try {
     upstream = await subscribe(token, req.signal);
 
-    // accessToken 만료(401) → refreshToken으로 재발급 후 1회 재시도
-    if (upstream.status === 401) {
-      const refreshToken = cookieStore.get('refreshToken')?.value;
-      if (refreshToken) {
-        refreshedToken = await refreshAccessToken(refreshToken);
-        if (refreshedToken) upstream = await subscribe(refreshedToken, req.signal);
-      }
+    // accessToken은 있었지만 만료(401) → refreshToken으로 재발급 후 1회 재시도
+    if (upstream.status === 401 && refreshToken && !refreshedToken) {
+      refreshedToken = await refreshAccessToken(refreshToken);
+      if (refreshedToken) upstream = await subscribe(refreshedToken, req.signal);
     }
   } catch {
     return sseError(502, 'upstream-unreachable');

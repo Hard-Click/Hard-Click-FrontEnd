@@ -42,8 +42,11 @@ export async function getNotificationsServer(): Promise<NotificationsData> {
       ),
     ]);
 
-    const content: NotificationApiItem[] =
-      listRes.success && listRes.data ? listRes.data.content : [];
+    // 목록 실패 시 배지만 떠서 "배지는 있는데 목록 빈" 불일치가 생기지 않게 둘 다 빈 상태로.
+    if (!listRes.success || !listRes.data) {
+      return { notifications: [], unreadCount: 0 };
+    }
+    const content: NotificationApiItem[] = listRes.data.content;
     const notifications = content.map(toNotificationItem);
 
     // 미읽음수는 별도 엔드포인트 우선, 실패 시 목록에서 계산(폴백).

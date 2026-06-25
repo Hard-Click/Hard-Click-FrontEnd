@@ -16,6 +16,8 @@ export async function refreshAccessToken(
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
       cache: 'no-store',
+      // 인증 서버 지연 시 SSE 핸드셰이크가 무기한 걸리지 않게 5s 타임아웃
+      signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return null;
     const json = (await res.json().catch(() => null)) as {

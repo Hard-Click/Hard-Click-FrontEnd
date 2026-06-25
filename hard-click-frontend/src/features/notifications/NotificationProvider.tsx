@@ -56,6 +56,15 @@ export function NotificationProvider({
   const [notifications, setNotifications] = useState(value.notifications);
   const [unreadCount, setUnreadCount] = useState(value.unreadCount);
 
+  // 서버가 새 값을 내려주면(로그인/계정전환/router.refresh) 동기화 — 이전 사용자 알림 잔존 방지.
+  // (props로 파생된 state를 prop 변경 시 갱신하는 React 권장 패턴 — effect 아님)
+  const [seed, setSeed] = useState(value);
+  if (seed !== value) {
+    setSeed(value);
+    setNotifications(value.notifications);
+    setUnreadCount(value.unreadCount);
+  }
+
   /** 서버에서 목록·미읽음수를 다시 끌어와 동기화 (SSE 이벤트 트리거 + 토큰 회전 겸용). */
   const refresh = useCallback(async () => {
     try {
@@ -67,29 +76,27 @@ export function NotificationProvider({
     }
   }, []);
 
-  const markRead = useCallback((notiId: number) => {
-    let wasUnread = false;
-    setNotifications((prev) =>
-      prev.map((n) => {
-        if (n.notiId === notiId && !n.isRead) {
-          wasUnread = true;
-          return { ...n, isRead: true };
+  const markRead = useCallback(
+    (notiId: number) => {
+      // 읽음 여부를 현재 상태에서 먼저 판단 — setState updater 내부 부수효과 제거(동시성 렌더 안전).
+      const target = notifications.find((n) => n.notiId === notiId);
+      if (!target || target.isRead) return; // 없거나 이미 읽음 → 배지/요청 생략
+      setNotifications((prev) =>
+        prev.map((n) => (n.notiId === notiId ? { ...n, isRead: true } : n)),
+      );
+      setUnreadCount((c) => Math.max(0, c - 1));
+      // 실패 시 낙관적 갱신 롤백 (§0.1 — 가짜 성공으로 숨기지 않음)
+      void markNotificationReadAction(notiId).then((res) => {
+        if (!res.success) {
+          setNotifications((prev) =>
+            prev.map((n) => (n.notiId === notiId ? { ...n, isRead: false } : n)),
+          );
+          setUnreadCount((c) => c + 1);
         }
-        return n;
-      }),
-    );
-    if (!wasUnread) return; // 이미 읽음 → 배지/요청 생략
-    setUnreadCount((c) => Math.max(0, c - 1));
-    // 실패 시 낙관적 갱신 롤백 (§0.1 — 가짜 성공으로 숨기지 않음)
-    void markNotificationReadAction(notiId).then((res) => {
-      if (!res.success) {
-        setNotifications((prev) =>
-          prev.map((n) => (n.notiId === notiId ? { ...n, isRead: false } : n)),
-        );
-        setUnreadCount((c) => c + 1);
-      }
-    });
-  }, []);
+      });
+    },
+    [notifications],
+  );
 
   // 실시간 푸시 (SSE). EventSource는 브라우저 전용 스트림 구독이고 '초기 데이터 페칭'이 아니라
   // '실시간 구독'이라 §12(useEffect 데이터 페칭 금지) 대상이 아니다 — 초기 데이터는 서버 props에서 옴.
