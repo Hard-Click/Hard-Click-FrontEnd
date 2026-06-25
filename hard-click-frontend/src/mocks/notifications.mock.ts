@@ -12,12 +12,16 @@ export interface NotificationApiItem {
   type: string; // NOTICE, COURSE_NOTICE, COMMENT, ADOPTED, CHAT, REPORT, COURSE_REGISTER, NOTICE_REGISTER 등 ENUM
   message: string;
   isRead: boolean;
-  referenceId: number; // 연결된 타겟 데이터 ID (공지 id / 게시글 id / 강의 id 등)
+  /** BE 제공 — 클릭 시 이동 경로 (실서버는 이 값 사용). 라이브 검증(2026-06-25). */
+  redirectUrl?: string;
+  /** mock 전용 — 타겟 데이터 ID (BE는 redirectUrl을 직접 주므로 실연동에선 미사용). */
+  referenceId?: number;
   createdAt: string;
 }
 
 export interface NotificationListApiResponse {
   content: NotificationApiItem[];
+  hasNext?: boolean;
 }
 
 /**

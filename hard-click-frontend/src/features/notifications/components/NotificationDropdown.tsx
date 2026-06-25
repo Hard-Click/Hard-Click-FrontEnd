@@ -2,33 +2,28 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import { getNotifications, getUnreadCount } from '../services';
+import { useNotifications } from '../NotificationProvider';
 import {
   CATEGORY_ORDER,
   CATEGORY_LABEL,
   type NotificationCategory,
-  type NotificationRole,
 } from '../types';
 import NotificationItem from './NotificationItem';
 
-interface NotificationDropdownProps {
-  /** 역할 — mock에서 역할별 알림 목록을 고르기 위함 (STUDENT/INSTRUCTOR/ADMIN) */
-  role: NotificationRole;
-}
-
 type FilterKey = 'all' | NotificationCategory;
 
-/** 헤더 종 아이콘 + 알림 드롭다운 (학생/강사/관리자 공용) */
-export default function NotificationDropdown({
-  role,
-}: NotificationDropdownProps) {
+/**
+ * 헤더 종 아이콘 + 알림 드롭다운 (학생/강사/관리자 공용).
+ * 데이터는 NotificationProvider(루트 layout이 서버 조회) Context에서 받는다 — BE가 로그인 사용자 기준
+ * 으로 알림을 필터링하므로 역할 prop은 더 이상 필요 없다.
+ */
+export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState<FilterKey>('all');
   const ref = useRef<HTMLDivElement>(null);
 
-  // mock 동기 읽기 (useEffect 데이터 페칭 금지 — CLAUDE.md)
-  const items = useMemo(() => getNotifications(role), [role]);
-  const unreadCount = getUnreadCount(items);
+  // 데이터는 서버(루트 layout)가 조회해 Context로 내려준다 (NotificationProvider, §12 useEffect 페칭 회피)
+  const { notifications: items, unreadCount, markRead } = useNotifications();
 
   // 실제 존재하는 구분만 탭으로 노출한다 (없는 구분은 숨김)
   const categories = useMemo(() => {
@@ -125,7 +120,14 @@ export default function NotificationDropdown({
           {visible.length > 0 ? (
             <div className="max-h-[calc(100vh_-_190px)] divide-y divide-[#F1F5F9] overflow-y-auto">
               {visible.map((n) => (
-                <NotificationItem key={n.notiId} item={n} onNavigate={close} />
+                <NotificationItem
+                  key={n.notiId}
+                  item={n}
+                  onNavigate={() => {
+                    markRead(n.notiId); // 클릭 시 읽음(낙관적 + 서버 PATCH)
+                    close();
+                  }}
+                />
               ))}
             </div>
           ) : (

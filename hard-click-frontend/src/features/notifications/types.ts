@@ -145,7 +145,9 @@ export function toNotificationItem(a: NotificationApiItem): NotificationItem {
     category: TYPE_CATEGORY[type],
     message: a.message,
     isRead: a.isRead,
-    href: toHref(type, a.referenceId),
+    // BE는 redirectUrl을 직접 제공(라이브 검증 2026-06-25) → 그대로 사용.
+    // mock(referenceId만 있음)은 type 기반 toHref로 폴백.
+    href: a.redirectUrl ?? toHref(type, a.referenceId ?? 0),
     createdAt: a.createdAt,
   };
 }
