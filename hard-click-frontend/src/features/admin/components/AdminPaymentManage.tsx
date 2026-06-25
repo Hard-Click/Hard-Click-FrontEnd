@@ -10,6 +10,7 @@ import type {
   AdminPayment,
   AdminPaymentTypeFilter,
 } from '@/features/payment/types';
+import { refundPaymentAction } from '@/features/payment/actions';
 
 const PAGE_SIZE = 10;
 
@@ -49,17 +50,22 @@ export default function AdminPaymentManage({
     setPage(1);
   };
 
-  const handleConfirmRefund = () => {
+  const handleConfirmRefund = async () => {
     if (!refundTarget) return;
-    // TODO: 환불 API 연동 후 성공 시 갱신 (현재 mock — 로컬 상태 전환)
+    const result = await refundPaymentAction(refundTarget.paymentId);
+    if (!result.success) {
+      toast.error(result.message);
+      setRefundTarget(null);
+      return;
+    }
     setPaymentList((prev) =>
       prev.map((p) =>
         p.paymentId === refundTarget.paymentId
-          ? { ...p, status: 'REFUNDED' }
+          ? { ...p, status: 'REFUNDED', refundable: false }
           : p
       )
     );
-    toast.success(`${refundTarget.memberName}님의 결제를 환불 처리했습니다.`);
+    toast.success(result.message);
     setRefundTarget(null);
   };
 
