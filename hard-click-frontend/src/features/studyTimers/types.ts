@@ -1,4 +1,4 @@
-export type SessionStatus = 'RUNNING' | 'ENDED';
+export type SessionStatus = 'RUNNING' | 'PAUSED' | 'ENDED';
 
 export interface StudySession {
   sessionId: number;
@@ -6,7 +6,21 @@ export interface StudySession {
   status: SessionStatus;
   startedAt: string;
   endedAt: string | null;
-  studySeconds: number;
+  accumulatedStudySeconds: number;
+}
+
+/**
+ * 세션 시작/heartbeat/종료 요청 — BE는 ISO-8601 타임스탬프(타임존 오프셋 포함)를 요구한다.
+ * `new Date().toISOString()`(…Z)가 그대로 허용됨(라이브 검증 2026-06-25). BE가 경과시간으로 누적 계산.
+ */
+export interface StartSessionRequest {
+  startedAt: string;
+}
+export interface HeartbeatRequest {
+  heartbeatAt: string;
+}
+export interface EndSessionRequest {
+  endedAt: string;
 }
 
 export interface StartSessionResponse {
@@ -14,33 +28,23 @@ export interface StartSessionResponse {
   status: SessionStatus;
   startedAt: string;
 }
-
-export interface HeartbeatRequest {
-  studySeconds: number;
-}
-
 export interface HeartbeatResponse {
   sessionId: number;
-  studySeconds: number;
-  savedAt: string;
+  status: SessionStatus;
+  accumulatedStudySeconds: number;
+  heartbeatAt: string;
 }
-
-export interface EndSessionRequest {
-  studySeconds: number;
-}
-
 export interface EndSessionResponse {
   sessionId: number;
   status: SessionStatus;
-  studySeconds: number;
+  accumulatedStudySeconds: number;
   endedAt: string;
 }
-
 export interface CurrentSessionResponse {
   sessionId: number;
   status: SessionStatus;
   startedAt: string;
-  studySeconds: number;
+  accumulatedStudySeconds: number;
 }
 
 export interface DailyStudyStats {

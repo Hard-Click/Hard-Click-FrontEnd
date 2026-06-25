@@ -38,7 +38,7 @@ const MOCK_OVERRIDE: Record<string, boolean> = {
   reports: false, // POST /api/reports — 게시글/댓글/리뷰 신고 실서버 연동
   mypage: false, // /api/members/me(+/courses,/completed,/activities) — 마이페이지 프로필·수강·활동 실서버 연동
   grass: false, // /api/grass/{streak,study-time,lessons} — 마이페이지 잔디 실서버 연동(200·shape일치). ⚠️ /api/grass·/monthly·/yearly는 BE 500이라 yearly 모달은 mock(client services) 유지
-  studyTimers: false, // /api/study-timers/stats/daily — 마이페이지 "오늘 순공시간" 실서버(200·shape일치). ⚠️ 타이머 패널 세션은 services.ts USE_MOCK 별도(필드 불일치)
+  studyTimers: false, // stats/daily + 타이머 패널 세션 CRUD 라이브: POST /sessions(startedAt)·PATCH heartbeat(heartbeatAt)·end(endedAt)·GET current. ISO 타임스탬프(toISOString) 요구, BE가 경과시간 누적. ⚠️ pause/resume은 BE PATCH /pause가 C002(500) 버그라 라이브 미배선 → 패널 클라 사이드 유지(정지구간 누적 한계, BE 수정 시 서버 호출).
   cart: false, // /api/cart (GET·POST·DELETE/{courseId}) — 전체 CRUD 라이브 검증 완료(2026-06-24 재배포). 항목=minimal{courseId,title,instructorName,price}
   wishlist: false, // /api/wishlist (GET·POST·DELETE/{courseId}) — 전체 CRUD 라이브 검증 완료. 항목=풍부(썸네일·평점·과목·수강생수)
   rankings: false, // /api/rankings/me/summary — 마이페이지 내 랭킹 라이브(getMyRankingServer). ⚠️ 활동 시드 전엔 rank=null→"집계 전" 표시(BE 시드 후 자동 채워짐, 현재는 실값 옴). 보드(getRankingBoardServer)는 USE_MOCK 유지(3-metric 재작성 별도).

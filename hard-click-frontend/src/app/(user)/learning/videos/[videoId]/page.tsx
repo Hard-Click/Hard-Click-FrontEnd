@@ -201,8 +201,8 @@ export default function LearningVideoPage() {
     fetchCurrentSessionAction().then((session) => {
       if (!session) return;
       setTimerSessionId(session.sessionId);
-      setTimerSeconds(session.studySeconds);
-      timerSecondsRef.current = session.studySeconds;
+      setTimerSeconds(session.accumulatedStudySeconds);
+      timerSecondsRef.current = session.accumulatedStudySeconds;
       startTimerTicks(session.sessionId);
     });
     return () => stopTimerTicks();
@@ -215,7 +215,7 @@ export default function LearningVideoPage() {
       setTimerSeconds((s) => s + 1);
     }, 1000);
     heartbeatRef.current = setInterval(() => {
-      void heartbeatAction(sid, timerSecondsRef.current);
+      void heartbeatAction(sid);
     }, HEARTBEAT_INTERVAL_MS);
   };
 
@@ -250,7 +250,7 @@ export default function LearningVideoPage() {
       setTimerConfirmMode(null);
       if (!timerSessionId) return;
       stopTimerTicks();
-      const ok = await endTimerAction(timerSessionId, timerSecondsRef.current);
+      const ok = await endTimerAction(timerSessionId);
       if (!ok) return;
       setTimerSessionId(null);
       setTimerSeconds(0);

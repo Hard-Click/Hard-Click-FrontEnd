@@ -47,10 +47,10 @@ export default function StudyTimerPanel() {
         setResumeSession({
           sessionId: session.sessionId,
           startedAt: session.startedAt,
-          studySeconds: session.studySeconds,
+          studySeconds: session.accumulatedStudySeconds,
         });
-        setSeconds(session.studySeconds);
-        secondsRef.current = session.studySeconds;
+        setSeconds(session.accumulatedStudySeconds);
+        secondsRef.current = session.accumulatedStudySeconds;
       }
     });
   }, []);
@@ -65,7 +65,7 @@ export default function StudyTimerPanel() {
 
   const startHeartbeat = useCallback((sid: number) => {
     heartbeatRef.current = setInterval(async () => {
-      await heartbeatAction(sid, secondsRef.current);
+      await heartbeatAction(sid);
     }, HEARTBEAT_INTERVAL_MS);
   }, []);
 
@@ -101,7 +101,10 @@ export default function StudyTimerPanel() {
     startHeartbeat(resumeSession.sessionId);
   };
 
-  // 일시정지
+  // 일시정지 — 클라 인터벌만 정지(서버 pause 호출 안 함).
+  // ⚠️ BE PATCH /pause는 현재 C002(500) 버그라 호출 불가(라이브 검증 2026-06-25). 또한 BE는 경과시간
+  //   기준으로 누적해서, 정지 중 heartbeat가 멈춰도 종료 시 정지구간이 누적될 수 있다. BE pause 수정되면
+  //   여기서 서버 pause/resume을 호출해 정지구간을 정확히 제외할 것. [BE 요청 대상]
   const handlePause = () => {
     setIsPaused(true);
     stopIntervals();
@@ -120,7 +123,7 @@ export default function StudyTimerPanel() {
     const sid = sessionId ?? resumeSession?.sessionId;
     if (!sid) return;
     stopIntervals();
-    const success = await endTimerAction(sid, secondsRef.current);
+    const success = await endTimerAction(sid);
     if (success) {
       setIsRunning(false);
       setIsPaused(false);
