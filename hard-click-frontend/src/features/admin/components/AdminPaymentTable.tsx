@@ -18,12 +18,18 @@ const STATUS_LABEL: Record<AdminPaymentStatus, string> = {
   PAID: '결제 완료',
   REFUNDED: '환불 완료',
   FAILED: '결제 실패',
+  PENDING: '결제 대기',
+  READY: '결제 준비',
+  CANCELED: '결제 취소',
 };
 
 const STATUS_STYLE: Record<AdminPaymentStatus, string> = {
   PAID: 'bg-[#DCFCE7] text-[#16A34A]',
   REFUNDED: 'bg-[#F1F5F9] text-[#64748B]',
   FAILED: 'bg-[#FEE2E2] text-[#DC2626]',
+  PENDING: 'bg-[#FEF3C7] text-[#D97706]',
+  READY: 'bg-[#FEF3C7] text-[#D97706]',
+  CANCELED: 'bg-[#F1F5F9] text-[#64748B]',
 };
 
 interface AdminPaymentTableProps {
@@ -69,12 +75,6 @@ export default function AdminPaymentTable({
             </th>
             <th
               scope="col"
-              className="whitespace-nowrap px-6 py-4 text-left text-sm font-semibold text-[#374151]"
-            >
-              상품
-            </th>
-            <th
-              scope="col"
               className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]"
             >
               금액
@@ -109,7 +109,7 @@ export default function AdminPaymentTable({
           {payments.length === 0 ? (
             <tr>
               <td
-                colSpan={9}
+                colSpan={8}
                 className="py-16 text-center text-sm text-[#94A3B8]"
               >
                 결제 내역이 없습니다.
@@ -129,22 +129,18 @@ export default function AdminPaymentTable({
                 <td className="px-6 py-4 text-center">
                   <span
                     className={`inline-block whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${
-                      TYPE_STYLE[payment.type]
+                      TYPE_STYLE[payment.paymentType]
                     }`}
                   >
-                    {TYPE_LABEL[payment.type]}
+                    {TYPE_LABEL[payment.paymentType]}
                   </span>
                 </td>
                 {/* 사용자 */}
                 <td className="whitespace-nowrap px-6 py-4">
                   <p className="text-sm font-semibold text-[#1E293B]">
-                    {payment.userName}
+                    {payment.memberName}
                   </p>
-                  <p className="text-xs text-[#94A3B8]">{payment.userEmail}</p>
-                </td>
-                {/* 상품 */}
-                <td className="px-6 py-4 text-sm text-[#475569]">
-                  {payment.productName}
+                  <p className="text-xs text-[#94A3B8]">{payment.memberEmail}</p>
                 </td>
                 {/* 금액 */}
                 <td className="whitespace-nowrap px-6 py-4 text-center text-sm font-bold text-[#2F5DAA]">
@@ -152,7 +148,7 @@ export default function AdminPaymentTable({
                 </td>
                 {/* 결제수단 */}
                 <td className="whitespace-nowrap px-6 py-4 text-center text-sm text-[#64748B]">
-                  {payment.method}
+                  {payment.paymentMethod}
                 </td>
                 {/* 상태 */}
                 <td className="px-6 py-4 text-center">
@@ -168,9 +164,9 @@ export default function AdminPaymentTable({
                 <td className="whitespace-nowrap px-6 py-4 text-center text-sm text-[#64748B]">
                   {payment.paidAt}
                 </td>
-                {/* 관리 — 환불 버튼 (결제완료만, 동작은 후속 이슈) */}
+                {/* 관리 */}
                 <td className="px-6 py-4 text-center">
-                  {payment.status === 'PAID' ? (
+                  {payment.refundable ? (
                     <button
                       type="button"
                       onClick={() => onRefund(payment)}
