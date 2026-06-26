@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import SelectDropdown from '@/components/ui/SelectDropdown';
@@ -41,16 +42,21 @@ export default function QuizFormModal({
   withInstructorSelect = false,
   onClose,
   onSuccess,
+  createAction = createQuizAction,
+  updateAction = updateQuizAction,
 }: {
   courses: { courseId: number; title: string; instructor?: string }[];
   takenWeeksByCourse: Record<number, number[]>;
   withInstructorSelect?: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  createAction?: (payload: QuizFormPayload) => Promise<{ success: boolean; message?: string }>;
+  updateAction?: (quizId: number, payload: QuizFormPayload) => Promise<{ success: boolean; message?: string }>;
 } & (
   | { mode: 'create'; initialData?: undefined; presetCourseId?: number }
   | { mode: 'edit'; initialData: Quiz; presetCourseId?: undefined }
 )) {
+  const router = useRouter();
   const [title, setTitle] = useState(initialData?.title ?? '');
   const [courseId, setCourseId] = useState<number>(
     initialData?.courseId ?? presetCourseId ?? 0
@@ -194,12 +200,13 @@ export default function QuizFormModal({
       const payload: QuizFormPayload = { title, courseId, week, questions };
       const res =
         mode === 'edit' && initialData
-          ? await updateQuizAction(initialData.quizId, payload)
-          : await createQuizAction(payload);
+          ? await updateAction(initialData.quizId, payload)
+          : await createAction(payload);
       if (res.success) {
         toast.success(res.message ?? '저장되었습니다.');
         onSuccess?.();
         onClose();
+        router.refresh();
       } else {
         toast.error(res.message ?? '저장에 실패했습니다.');
       }

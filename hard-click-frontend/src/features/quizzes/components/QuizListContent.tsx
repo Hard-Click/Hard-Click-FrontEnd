@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import ConfirmModal from '@/components/ui/confirmModal';
@@ -9,7 +9,8 @@ import QuizListItem from './QuizListItem';
 import QuizEmptyState from './QuizEmptyState';
 import QuizFormModal from './QuizFormModal';
 import { deleteQuizAction } from '../actions';
-import type { Quiz } from '../types';
+import type { Quiz, QuizFormPayload } from '../types';
+import type { QuizActionState } from '../actions';
 
 /**
  * 강의별 퀴즈 목록 — 상호작용(주차 필터·삭제) 담당 client 컴포넌트.
@@ -23,6 +24,9 @@ export default function QuizListContent({
   takenWeeksByCourse,
   basePath = '/instructor/quizzes',
   withInstructorSelect = false,
+  deleteAction = deleteQuizAction,
+  createAction,
+  updateAction,
 }: {
   quizzes: Quiz[];
   courseId: number;
@@ -31,9 +35,16 @@ export default function QuizListContent({
   takenWeeksByCourse: Record<number, number[]>;
   basePath?: string;
   withInstructorSelect?: boolean;
+  deleteAction?: (quizId: number, courseId: number) => Promise<QuizActionState>;
+  createAction?: (payload: QuizFormPayload) => Promise<QuizActionState>;
+  updateAction?: (quizId: number, payload: QuizFormPayload) => Promise<QuizActionState>;
 }) {
   const [quizzes, setQuizzes] = useState<Quiz[]>(initialQuizzes);
   const [selectedWeek, setSelectedWeek] = useState<'all' | number>('all');
+
+  useEffect(() => {
+    setQuizzes(initialQuizzes);
+  }, [initialQuizzes]);
   const [deleting, setDeleting] = useState<Quiz | null>(null);
   const [editing, setEditing] = useState<Quiz | null>(null);
   const router = useRouter();
@@ -51,7 +62,7 @@ export default function QuizListContent({
 
   const handleDelete = async () => {
     if (!deleting) return;
-    const res = await deleteQuizAction(deleting.quizId, courseId);
+    const res = await deleteAction(deleting.quizId, courseId);
     if (res.success) {
       setQuizzes((prev) => prev.filter((q) => q.quizId !== deleting.quizId));
       toast.success(res.message ?? '삭제되었습니다.');
@@ -133,6 +144,8 @@ export default function QuizListContent({
           initialData={editing}
           withInstructorSelect={withInstructorSelect}
           onClose={() => setEditing(null)}
+          {...(createAction ? { createAction } : {})}
+          {...(updateAction ? { updateAction } : {})}
         />
       )}
     </>

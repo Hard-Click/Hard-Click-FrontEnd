@@ -3,6 +3,7 @@ import { isMock } from '@/mocks/config';
 import { mockQuizzes } from '@/mocks/quizzes.mock';
 import { getMockQuizScoreRows } from '@/mocks/quizScores.mock';
 import type { Quiz, QuizScoreBoard } from './types';
+import type { AdminCourseManageRow } from '@/mocks/admin.mock';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * 퀴즈 도메인 — 강사 읽기(목록·점수통계) 실서버 연동 (2026-06-25, 라이브 검증 완료).
@@ -126,6 +127,117 @@ export async function getQuizScoresServer(
 
   const res = await serverApi.get<ApiQuizStatistics>(
     `/api/instructors/me/quizzes/${quizId}/statistics`,
+  );
+  if (!res.success || !res.data) return null;
+  return {
+    quizId,
+    courseId,
+    week: sectionToWeek(res.data.sectionTitle),
+    title: res.data.quizTitle,
+    rows: res.data.students.map((s) => ({
+      studentId: s.userId,
+      name: s.name,
+      attended: s.submitted,
+      score: s.submitted ? s.score : null,
+      submittedDate: s.submittedAt ? s.submittedAt.split('T')[0] : null,
+    })),
+  };
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * 관리자 전용 퀴즈 조회 — GET /api/admin/quizzes/*
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/** GET /api/admin/quizzes/courses 응답 */
+interface ApiAdminQuizCourseItem {
+  courseId: number;
+  title: string;
+  instructorName?: string;
+  subjectName?: string;
+  studentCount?: number;
+  averageRating?: number;
+  reviewCount?: number;
+  price?: number;
+  priceType?: string;
+  status?: string;
+  createdAt?: string;
+}
+interface ApiAdminQuizCoursesResponse {
+  content: ApiAdminQuizCourseItem[];
+  totalPages?: number;
+}
+
+/** 관리자 퀴즈 관리용 강의 목록 (GET /api/admin/quizzes/courses). */
+export async function getAdminQuizCoursesServer(): Promise<AdminCourseManageRow[]> {
+  if (isMock('quizzes')) {
+    return [];
+  }
+  const res = await serverApi.get<ApiAdminQuizCoursesResponse>('/api/admin/quizzes/courses');
+  if (!res.success || !Array.isArray(res.data?.content)) return [];
+  return res.data.content.map((c) => ({
+    id: c.courseId,
+    title: c.title,
+    subject: c.subjectName ?? '',
+    instructor: c.instructorName ?? '',
+    studentCount: c.studentCount ?? 0,
+    rating: c.averageRating ?? 0,
+    reviewCount: c.reviewCount ?? 0,
+    price: c.price ?? 0,
+    isFree: c.priceType === 'FREE',
+    status: c.status === 'PUBLISHED' ? 'PUBLISHED' : 'HIDDEN',
+    createdAt: c.createdAt?.split('T')[0] ?? '',
+  }));
+}
+
+/** GET /api/admin/quizzes/courses/{courseId} 응답 — 강사 목록과 동일 구조 가정 */
+interface ApiAdminQuizList {
+  courseId: number;
+  quizzes: ApiInstructorQuizItem[];
+}
+
+/** 관리자 — 강의별 주차 퀴즈 목록 (GET /api/admin/quizzes/courses/{courseId}). */
+export async function getAdminCourseQuizzesServer(courseId: number): Promise<Quiz[]> {
+  if (isMock('quizzes')) {
+    return mockQuizzes.filter((q) => q.courseId === courseId).sort(byWeekAsc);
+  }
+  const res = await serverApi.get<ApiAdminQuizList>(
+    `/api/admin/quizzes/courses/${courseId}`,
+  );
+  if (!res.success || !res.data || !Array.isArray(res.data.quizzes)) return [];
+  const cid = res.data.courseId ?? courseId;
+  return res.data.quizzes
+    .map((item) => ({
+      quizId: item.quizId,
+      courseId: cid,
+      week: sectionToWeek(item.sectionTitle),
+      title: item.quizTitle,
+      questionCount: item.questionCount,
+      createdDate: item.createdAt ? item.createdAt.split('T')[0] : '',
+      questions: [],
+    }))
+    .sort(byWeekAsc);
+}
+
+/** 관리자 — 퀴즈 점수 현황 (GET /api/admin/quizzes/{quizId}/statistics). */
+export async function getAdminQuizScoresServer(
+  courseId: number,
+  quizId: number,
+): Promise<QuizScoreBoard | null> {
+  if (isMock('quizzes')) {
+    const quiz = mockQuizzes.find(
+      (q) => q.quizId === quizId && q.courseId === courseId,
+    );
+    if (!quiz) return null;
+    return {
+      quizId: quiz.quizId,
+      courseId: quiz.courseId,
+      week: quiz.week,
+      title: quiz.title,
+      rows: getMockQuizScoreRows(quizId),
+    };
+  }
+  const res = await serverApi.get<ApiQuizStatistics>(
+    `/api/admin/quizzes/${quizId}/statistics`,
   );
   if (!res.success || !res.data) return null;
   return {
