@@ -140,7 +140,7 @@ export default function MyCourseCard({
                   </p>
                 </>
               ) : (
-                <p className="text-[#94A3B8]">평점 없음</p>
+                <p className="text-[#64748B]">평점 없음</p>
               )}
             </div>
 

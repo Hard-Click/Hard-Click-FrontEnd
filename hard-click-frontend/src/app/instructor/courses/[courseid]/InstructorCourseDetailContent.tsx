@@ -279,7 +279,7 @@ export default function InstructorCourseDetailContent({
                         </span>
                       </>
                     ) : (
-                      <span className="text-base text-[#94A3B8]">평점 없음</span>
+                      <span className="text-base text-[#64748B]">평점 없음</span>
                     )}
                   </div>
 
