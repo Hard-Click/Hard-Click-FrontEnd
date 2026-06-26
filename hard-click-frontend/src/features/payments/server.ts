@@ -1,5 +1,5 @@
 import { serverApi } from '@/lib/api';
-import { USE_MOCK } from '@/mocks/config';
+import { USE_MOCK, isMock } from '@/mocks/config';
 import {
   mockMyPayments,
   mockOrderDetails,
@@ -34,11 +34,13 @@ function toPaymentHistory(api: MyPaymentHistoryItem): PaymentHistory {
  * 단건·구독 결제 내역을 최신순으로 반환. API 연동 시 엔드포인트/매퍼만 맞추면 됨.
  */
 export async function getMyPaymentsServer(): Promise<PaymentHistory[]> {
-  if (USE_MOCK) {
+  if (isMock('payments')) {
     return mockMyPayments.content.map(toPaymentHistory);
   }
 
-  // TODO(API 연동): GET /api/payment/me (MyPaymentHistoryPageResponse). 페이지네이션 추후.
+  // 라이브: GET /api/payment/me (MyPaymentHistoryPageResponse) — 라이브 검증 2026-06-26(200).
+  // ⚠️ 삭제된 강의 행은 orderId/orderNo/paymentType(+FAILED는 paidAt) null로 내려옴 → 매퍼·카드가 null 가드.
+  // 페이지네이션 미적용(첫 page=10건만 표시) — 추후.
   try {
     const res =
       await serverApi.get<MyPaymentHistoryPageResponse>('/api/payment/me');
@@ -71,12 +73,15 @@ function toOrderDetail(api: ApiOrderDetail): OrderDetail {
 export async function getOrderDetailServer(
   orderId: number,
 ): Promise<OrderDetail | null> {
+  // ⚠️ BE GET /api/order/{orderId}가 C001(400, OrderStatus enum 버그)로 깨져 있어 라이브 불가
+  //    → mock 유지(USE_MOCK). OrderDetailResponse에 환불/per-item 필드도 없어 환불 UI 데이터원도 부재.
+  //    BE 수정 후 isMock('payments') 전환 + ApiOrderDetail 매퍼 정합 필요. (라이브 재확인 2026-06-26)
   if (USE_MOCK) {
     const found = mockOrderDetails.find((o) => o.orderId === orderId);
     return found ? toOrderDetail(found) : null;
   }
 
-  // TODO(API 연동): GET /api/order/{orderId} (BE 상세 엔드포인트 추가 시 매퍼만 맞추면 됨)
+  // (BE order/{id} 수정 후) 라이브: GET /api/order/{orderId}
   try {
     const res = await serverApi.get<ApiOrderDetail>(`/api/order/${orderId}`);
     if (!res.success || !res.data) return null;
