@@ -10,7 +10,7 @@ const STATUS_STYLE: Record<
     className: 'bg-[#F59E0B]/10 text-[#F59E0B]',
     icon: '/icons/OrangePending.svg',
   },
-  COMPLETED: {
+  RESOLVED: {
     label: '처리 완료',
     className: 'bg-[#16A34A]/10 text-[#16A34A]',
     icon: '/icons/GreenCheck.svg',
