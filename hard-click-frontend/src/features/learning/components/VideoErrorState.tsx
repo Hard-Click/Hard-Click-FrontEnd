@@ -13,17 +13,14 @@ const STATUS_PRESET: Record<number, { title: string; description: string }> = {
     title: '로그인이 필요합니다',
     description: '이 영상을 시청하려면 로그인 후 이용해주세요.',
   },
+  // BE는 비공개 강의(L002)·수강권 없음(L003)을 모두 403으로 내려준다(구체 문구는 message로 덮어씀).
   403: {
-    title: '수강 권한이 없습니다',
-    description: '강의를 수강 신청하면 영상을 볼 수 있습니다.',
+    title: '시청 권한이 없습니다',
+    description: '수강 신청했거나 공개된 강의의 영상만 시청할 수 있습니다.',
   },
   404: {
     title: '영상을 찾을 수 없습니다',
     description: '요청하신 영상이 존재하지 않거나 삭제되었습니다.',
-  },
-  410: {
-    title: '비공개 영상입니다',
-    description: '강사가 이 영상을 비공개로 전환했습니다.',
   },
   500: {
     title: '재생 정보를 불러올 수 없습니다',

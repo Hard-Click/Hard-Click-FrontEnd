@@ -27,11 +27,11 @@ const SAMPLES = {
   akamaiBunny: { url: 'https://multiplatform-f.akamaihd.net/i/multi/will/bunny/big_buck_bunny_,640x360_400,640x360_700,640x360_1000,950x540_1500,.f4v.csmil/master.m3u8', duration: 596 },
 };
 
-/** 비공개 영상 (HTTP 410)
+/** 비공개 강의 (HTTP 403 / L002 — getVideoPlayInfo가 403으로 내려줌)
  *  - 수능 수학 섹션 1 마지막 (3)
  *  - React 섹션 4 (402) */
 export const PRIVATE_VIDEO_IDS = new Set([3, 402]);
-/** 삭제 영상 (HTTP 404)
+/** 삭제·없는 영상 (HTTP 404 / L001)
  *  - 수능 수학 섹션 2 마지막 (6)
  *  - React 섹션 5 (502) */
 export const DELETED_VIDEO_IDS = new Set([6, 502]);
