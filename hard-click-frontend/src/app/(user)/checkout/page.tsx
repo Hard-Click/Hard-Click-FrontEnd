@@ -83,9 +83,11 @@ export default async function CheckoutPage({
                   <h3 className="text-base font-semibold text-[#0F172A]">
                     {order.items[0].title}
                   </h3>
-                  <p className="mt-1 text-sm text-[#64748B]">
-                    {order.items[0].subtitle}
-                  </p>
+                  {order.items[0].subtitle && (
+                    <p className="mt-1 text-sm text-[#64748B]">
+                      {order.items[0].subtitle}
+                    </p>
+                  )}
                 </div>
                 <p className="flex-shrink-0 text-lg font-bold text-[#2F5DAA]">
                   {order.items[0].price.toLocaleString()}원
