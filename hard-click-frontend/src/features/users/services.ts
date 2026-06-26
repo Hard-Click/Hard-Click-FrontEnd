@@ -1,12 +1,10 @@
-import { USE_MOCK, isMock } from '@/mocks/config';
+import { isMock } from '@/mocks/config';
 import { api } from '@/services/api';
 import type {
   MyProfile,
   MyProfileApi,
   UpdateProfileImageResponse,
   ChangePasswordRequest,
-  MyCourse,
-  CompletedCourse,
 } from './types';
 
 /* ───── 내 프로필 조회 (GET /api/members/me) ─────
@@ -96,85 +94,4 @@ export async function withdrawAccount(currentPassword: string) {
   return api.delete<Record<string, never>>('/api/members/me', {
     currentPassword,
   });
-}
-
-/* ───── 내 수강 강의 목록 (GET /api/members/me/courses) ─────
- * 백엔드 MyEnrolledCourseController(@RequestMapping("/api/members/me/courses")) — query 파라미터 없이 전체 수강 강의 반환.
- * 수강 완료 강의는 클라이언트에서 progressRate === 100 으로 필터링한다. */
-export async function getMyCourses() {
-  if (USE_MOCK) {
-    return {
-      success: true,
-      httpStatus: 200,
-      message: '내 수강 강의 목록을 조회했습니다.',
-      data: [
-        {
-          courseId: 1,
-          courseTitle: 'React 완벽 가이드',
-          thumbnailUrl: '',
-          progressRate: 65,
-          lastVideoId: 101,
-          lastPositionSeconds: 420,
-          lastStudiedAt: '2026-05-10T21:30:00+09:00',
-        },
-        {
-          courseId: 2,
-          courseTitle: 'TypeScript 심화 학습',
-          thumbnailUrl: '',
-          progressRate: 40,
-          lastVideoId: 102,
-          lastPositionSeconds: 250,
-          lastStudiedAt: '2026-05-09T18:10:00+09:00',
-        },
-        {
-          courseId: 3,
-          courseTitle: 'Node.js 백엔드 개발',
-          thumbnailUrl: '',
-          progressRate: 25,
-          lastVideoId: 103,
-          lastPositionSeconds: 90,
-          lastStudiedAt: '2026-05-08T09:00:00+09:00',
-        },
-        {
-          courseId: 4,
-          courseTitle: 'HTML & CSS 완벽 가이드',
-          thumbnailUrl: '',
-          progressRate: 100,
-          lastVideoId: 104,
-          lastPositionSeconds: 0,
-          lastStudiedAt: '2026-03-28T00:00:00+09:00',
-        },
-      ] as MyCourse[],
-    };
-  }
-  return api.get<MyCourse[]>('/api/members/me/courses');
-}
-
-/* ───── 완료 강의 목록 (GET /api/members/me/courses/completed) ─────
- * 백엔드 MyCompletedCourseController 전용 endpoint. 완료 강의만 반환(클라 필터 불필요). */
-export async function getMyCompletedCourses() {
-  if (USE_MOCK) {
-    return {
-      success: true,
-      httpStatus: 200,
-      message: '수강 완료 강의 목록이 조회되었습니다.',
-      data: [
-        {
-          courseId: 4,
-          courseTitle: 'HTML & CSS 완벽 가이드',
-          thumbnailUrl: '',
-          progressRate: 100,
-          completedAt: '2026-03-28T00:00:00+09:00',
-        },
-        {
-          courseId: 5,
-          courseTitle: 'Git & GitHub 입문',
-          thumbnailUrl: '',
-          progressRate: 100,
-          completedAt: '2026-02-14T00:00:00+09:00',
-        },
-      ] as CompletedCourse[],
-    };
-  }
-  return api.get<CompletedCourse[]>('/api/members/me/courses/completed');
 }
