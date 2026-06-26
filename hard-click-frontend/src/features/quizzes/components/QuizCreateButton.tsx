@@ -4,16 +4,23 @@ import { useState } from 'react';
 import Image from 'next/image';
 import QuizFormModal from './QuizFormModal';
 
+import type { QuizFormPayload } from '../types';
+import type { QuizActionState } from '../actions';
+
 export default function QuizCreateButton({
   courses,
   takenWeeksByCourse,
   presetCourseId,
   withInstructorSelect = false,
+  createAction,
+  updateAction,
 }: {
   courses: { courseId: number; title: string; instructor?: string }[];
   takenWeeksByCourse: Record<number, number[]>;
   presetCourseId?: number;
   withInstructorSelect?: boolean;
+  createAction?: (payload: QuizFormPayload) => Promise<QuizActionState>;
+  updateAction?: (quizId: number, payload: QuizFormPayload) => Promise<QuizActionState>;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -36,6 +43,8 @@ export default function QuizCreateButton({
           presetCourseId={presetCourseId}
           withInstructorSelect={withInstructorSelect}
           onClose={() => setOpen(false)}
+          {...(createAction ? { createAction } : {})}
+          {...(updateAction ? { updateAction } : {})}
         />
       )}
     </>

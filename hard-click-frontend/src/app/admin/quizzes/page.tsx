@@ -2,14 +2,19 @@ export const dynamic = 'force-dynamic';
 
 import AdminQuizCourseManage from '@/features/admin/components/AdminQuizCourseManage';
 import QuizCreateButton from '@/features/quizzes/components/QuizCreateButton';
-import { getTakenWeeksByCourseServer } from '@/features/quizzes/server';
+import { getTakenWeeksByCourseServer, getAdminQuizCoursesServer } from '@/features/quizzes/server';
+import { createAdminQuizAction, updateAdminQuizAction } from '@/features/quizzes/actions';
 import { fetchAllAdminCourses } from '@/features/admin/server';
 
 export default async function AdminQuizzesPage() {
-  const [courses, takenWeeksByCourse] = await Promise.all([
+  const [adminQuizCourses, fallbackCourses, takenWeeksByCourse] = await Promise.all([
+    getAdminQuizCoursesServer(),
     fetchAllAdminCourses(),
     getTakenWeeksByCourseServer(),
   ]);
+
+  // admin quiz courses API가 데이터를 반환하면 사용, 없으면 전체 강의 목록으로 폴백
+  const courses = adminQuizCourses.length > 0 ? adminQuizCourses : fallbackCourses;
 
   const quizFormCourses = courses.map((c) => ({
     courseId: c.id,
@@ -51,6 +56,8 @@ export default async function AdminQuizzesPage() {
             courses={quizFormCourses}
             takenWeeksByCourse={takenWeeksByCourse}
             withInstructorSelect
+            createAction={createAdminQuizAction}
+            updateAction={updateAdminQuizAction}
           />
         </div>
 

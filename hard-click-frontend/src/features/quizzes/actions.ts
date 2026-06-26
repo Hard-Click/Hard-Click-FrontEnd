@@ -197,3 +197,93 @@ export async function updateQuizAction(
     return { success: false, message: '수정에 실패했습니다.' };
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * 관리자 퀴즈 CUD — /api/admin/quizzes/*
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/** 퀴즈 등록 (관리자). POST /api/admin/quizzes. */
+export async function createAdminQuizAction(
+  payload: QuizFormPayload,
+): Promise<QuizActionState> {
+  const invalid = validatePayload(payload);
+  if (invalid) return { success: false, message: invalid };
+
+  if (isMock('quizzes')) {
+    return { success: true, message: '퀴즈가 등록되었습니다.' };
+  }
+
+  try {
+    const res = await serverApi.post<null>(
+      '/api/admin/quizzes',
+      toInstructorQuizRequest(payload),
+    );
+    if (!res.success) {
+      return { success: false, message: res.message ?? '등록에 실패했습니다.' };
+    }
+    revalidatePath(`/admin/quizzes/${payload.courseId}`);
+    return { success: true, message: '퀴즈가 등록되었습니다.' };
+  } catch {
+    return { success: false, message: '등록에 실패했습니다.' };
+  }
+}
+
+/** 퀴즈 수정 (관리자). PUT /api/admin/quizzes/{quizId}. */
+export async function updateAdminQuizAction(
+  quizId: number,
+  payload: QuizFormPayload,
+): Promise<QuizActionState> {
+  if (!Number.isInteger(quizId) || quizId <= 0) {
+    return { success: false, message: '잘못된 요청입니다.' };
+  }
+  const invalid = validatePayload(payload);
+  if (invalid) return { success: false, message: invalid };
+
+  if (isMock('quizzes')) {
+    return { success: true, message: '퀴즈가 수정되었습니다.' };
+  }
+
+  try {
+    const res = await serverApi.put<null>(
+      `/api/admin/quizzes/${quizId}`,
+      toInstructorQuizRequest(payload),
+    );
+    if (!res.success) {
+      return { success: false, message: res.message ?? '수정에 실패했습니다.' };
+    }
+    revalidatePath(`/admin/quizzes/${payload.courseId}`);
+    return { success: true, message: '퀴즈가 수정되었습니다.' };
+  } catch {
+    return { success: false, message: '수정에 실패했습니다.' };
+  }
+}
+
+/** 퀴즈 삭제 (관리자). DELETE /api/admin/quizzes/{quizId}. */
+export async function deleteAdminQuizAction(
+  quizId: number,
+  courseId: number,
+): Promise<QuizActionState> {
+  if (
+    !Number.isInteger(quizId) ||
+    quizId <= 0 ||
+    !Number.isInteger(courseId) ||
+    courseId <= 0
+  ) {
+    return { success: false, message: '잘못된 요청입니다.' };
+  }
+
+  if (isMock('quizzes')) {
+    return { success: true, message: '퀴즈가 삭제되었습니다.' };
+  }
+
+  try {
+    const res = await serverApi.delete<null>(`/api/admin/quizzes/${quizId}`);
+    if (!res.success) {
+      return { success: false, message: res.message ?? '삭제에 실패했습니다.' };
+    }
+    revalidatePath(`/admin/quizzes/${courseId}`);
+    return { success: true, message: '퀴즈가 삭제되었습니다.' };
+  } catch {
+    return { success: false, message: '삭제에 실패했습니다.' };
+  }
+}
