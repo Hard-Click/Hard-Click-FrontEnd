@@ -131,11 +131,17 @@ export default function MyCourseCard({
             </div>
 
             <div className="flex items-center gap-1">
-              <Image src="/icons/star.svg" alt="star" width={14} height={14} />
+              {reviewCount > 0 ? (
+                <>
+                  <Image src="/icons/star.svg" alt="star" width={14} height={14} />
 
-              <p>
-                {rating} ({reviewCount})
-              </p>
+                  <p>
+                    {rating} ({reviewCount})
+                  </p>
+                </>
+              ) : (
+                <p className="text-[#64748B]">평점 없음</p>
+              )}
             </div>
 
             <p>등록일: {createdAt}</p>
