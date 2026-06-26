@@ -102,7 +102,7 @@ export default function CourseCard({ course, hrefPrefix = '/courses' }: Props) {
               <span className="text-[#4B5563] text-sm">({course.reviewCount.toLocaleString()})</span>
             </>
           ) : (
-            <span className="text-[#94A3B8] text-sm">평점 없음</span>
+            <span className="text-[#64748B] text-sm">평점 없음</span>
           )}
         </div>
 
