@@ -472,7 +472,7 @@ export default function CourseCreateForm({
                 value={learningGoalInput}
                 onChange={(e) => setLearningGoalInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                     e.preventDefault();
                     const trimmed = learningGoalInput.trim();
                     if (trimmed && !learningGoals.includes(trimmed)) {
@@ -546,7 +546,7 @@ export default function CourseCreateForm({
                 value={targetAudienceInput}
                 onChange={(e) => setTargetAudienceInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                     e.preventDefault();
                     const trimmed = targetAudienceInput.trim();
                     if (trimmed && !targetAudience.includes(trimmed)) {
