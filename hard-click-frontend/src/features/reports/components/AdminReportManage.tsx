@@ -68,7 +68,7 @@ export default function AdminReportManage({
         r.targetType === report.targetType && r.targetId === report.targetId
           ? {
               ...r,
-              status: 'COMPLETED',
+              status: 'RESOLVED',
               isTargetDeleted: true,
               processMemo: memo ?? r.processMemo,
             }

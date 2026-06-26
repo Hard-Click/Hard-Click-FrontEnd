@@ -6,7 +6,7 @@ import type { ReportStatusFilter, ReportTargetFilter } from '../types';
 const STATUS_OPTIONS: { key: ReportStatusFilter; label: string }[] = [
   { key: 'ALL', label: '전체' },
   { key: 'PENDING', label: '처리 대기' },
-  { key: 'COMPLETED', label: '처리 완료' },
+  { key: 'RESOLVED', label: '처리 완료' },
   { key: 'REJECTED', label: '반려' },
 ];
 

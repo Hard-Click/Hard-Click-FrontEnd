@@ -6,6 +6,7 @@ import ReportStatusBadge from './ReportStatusBadge';
 import AdminReportDetailModal from './AdminReportDetailModal';
 import type { ReportItem, ReportTarget } from '../types';
 import AdminReportMemoModal from './AdminReportMemoModal';
+import { fetchReportDetailAction } from '../actions';
 import { useRouter } from 'next/navigation';
 
 const TARGET_LABEL: Record<ReportTarget, string> = {
@@ -31,15 +32,17 @@ export default function AdminReportTable({
   onProcessReport,
   openReportKey,
 }: Props) {
-  const [selectedReport, setSelectedReport] = useState<ReportItem | null>(() =>
-    openReportKey
-      ? reports.find(
-          (r) => `${r.targetType}-${r.targetId}` === openReportKey
-        ) ?? null
-      : null
-  );
+  const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
   const [memoReport, setMemoReport] = useState<ReportItem | null>(null);
+  const [loadingId, setLoadingId] = useState<number | null>(null);
   const router = useRouter();
+
+  const handleOpenDetail = async (report: ReportItem) => {
+    setLoadingId(report.reportId);
+    const enriched = await fetchReportDetailAction(report.reportId, report);
+    setLoadingId(null);
+    setSelectedReport(enriched);
+  };
 
   return (
     <div className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white">
@@ -147,10 +150,11 @@ export default function AdminReportTable({
                         type="button"
                         onClick={() =>
                           isPending
-                            ? setSelectedReport(report)
+                            ? handleOpenDetail(report)
                             : setMemoReport(report)
                         }
-                        className="flex items-center gap-1 whitespace-nowrap rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-sm font-medium text-[#2F5DAA] hover:bg-[#F8FAFC]"
+                        disabled={loadingId === report.reportId}
+                        className="flex items-center gap-1 whitespace-nowrap rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-sm font-medium text-[#2F5DAA] hover:bg-[#F8FAFC] disabled:opacity-50"
                       >
                         <Image
                           src={
@@ -162,7 +166,7 @@ export default function AdminReportTable({
                           width={16}
                           height={16}
                         />
-                        {isPending ? '상세보기' : '메모보기'}
+                        {loadingId === report.reportId ? '로딩 중...' : isPending ? '상세보기' : '메모보기'}
                       </button>
                     </div>
                   </td>

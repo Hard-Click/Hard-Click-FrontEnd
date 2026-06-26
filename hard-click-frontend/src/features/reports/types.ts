@@ -13,7 +13,7 @@ export interface ReportApiItem {
   targetAuthorId?: number;
   targetAuthorName?: string;
   reportCount: number;
-  status: 'PENDING' | 'COMPLETED' | 'REJECTED';
+  status: 'PENDING' | 'RESOLVED' | 'REJECTED';
   reportedAt: string;
 }
 
@@ -22,7 +22,7 @@ export interface ReportListApiResponse {
   totalPages: number;
 }
 
-export type ReportStatus = 'PENDING' | 'COMPLETED' | 'REJECTED';
+export type ReportStatus = 'PENDING' | 'RESOLVED' | 'REJECTED';
 export type ReportTarget = 'POST' | 'COMMENT' | 'REVIEW';
 
 /** 처리 상태 필터 ('ALL' = 전체) */
@@ -45,7 +45,6 @@ export interface ReportItem {
   authorName: string;
   reporterName: string;
   reportCount: number;
-  /** 최근 접수순 정렬된 사유별 횟수 */
   reasonStats: ReportReasonStatItem[];
   status: ReportStatus;
   createdAt: string;
@@ -88,21 +87,58 @@ export function toReportItem(api: ReportApiItem): ReportItem {
   };
 }
 
+/** 신고 상세 API 응답 타입 — GET /api/admin/reports/{reportId} */
+export interface AdminReportDetailApiResponse {
+  reportId: number;
+  targetType: string;
+  targetId: number;
+  targetTitle: string | null;
+  targetContent: string | null;
+  targetAuthorId: number | null;
+  targetAuthorName: string | null;
+  reportCount: number;
+  reasonCounts: { reason: string; count: number }[];
+  reporterId: number | null;
+  reporterName: string | null;
+  reporterUsername: string | null;
+  status: string;
+  memo: string | null;
+}
+
+/** 신고 상세 API 응답 → ReportItem 변환 */
+export function toReportItemFromDetail(
+  api: AdminReportDetailApiResponse,
+  base: ReportItem,
+): ReportItem {
+  return {
+    ...base,
+    targetContent: api.targetContent ?? base.targetContent,
+    authorName: api.targetAuthorName ?? base.authorName,
+    reporterName: api.reporterName ?? base.reporterName,
+    reportCount: api.reportCount,
+    reasonStats: (api.reasonCounts ?? []).map((r) => ({
+      reason: REASON_LABEL[r.reason] ?? r.reason,
+      count: r.count,
+    })),
+    status: (['PENDING', 'RESOLVED', 'REJECTED'].includes(api.status)
+      ? api.status
+      : base.status) as ReportStatus,
+    processMemo: api.memo ?? base.processMemo,
+  };
+}
+
 /* ───── 신고 제출 (사용자가 게시글/댓글 신고) ───── */
 
-/** 신고 대상 (무엇을 신고하는지) */
 export interface ReportTargetRef {
   targetType: ReportTarget;
   targetId: number;
 }
 
-/** 신고 제출 입력 — POST /api/reports body (신고자는 토큰으로 식별) */
 export interface SubmitReportInput extends ReportTargetRef {
   reasons: string[];
   detail?: string;
 }
 
-/** 신고 제출 결과 */
 export interface ReportActionResult {
   success: boolean;
   message: string;

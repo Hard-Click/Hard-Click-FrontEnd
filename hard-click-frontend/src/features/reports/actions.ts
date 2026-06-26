@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { isMock } from '@/mocks/config';
 import { serverApi } from '@/lib/api';
-import type { SubmitReportInput, ReportActionResult } from './types';
+import type { SubmitReportInput, ReportActionResult, ReportItem, AdminReportDetailApiResponse } from './types';
+import { toReportItemFromDetail } from './types';
 
 export type ReportDecision = 'REJECT' | 'DELETE';
 
@@ -41,6 +42,24 @@ export async function processReportDecisionAction(
     success: true,
     message: input.decision === 'REJECT' ? '신고가 반려되었습니다.' : '신고가 처리되었습니다.',
   };
+}
+
+/** 신고 상세 조회 — GET /api/admin/reports/{reportId} */
+export async function fetchReportDetailAction(
+  reportId: number,
+  base: ReportItem,
+): Promise<ReportItem> {
+  try {
+    const res = await serverApi.get<AdminReportDetailApiResponse>(
+      `/api/admin/reports/${reportId}`,
+    );
+    if (res.success && res.data) {
+      return toReportItemFromDetail(res.data, base);
+    }
+  } catch {
+    // 상세 조회 실패 시 기존 base 데이터로 폴백
+  }
+  return base;
 }
 
 /** FE 신고 사유 → BE `reportTypes` enum (1:1 대응, ReportModal 라벨과 일치). */

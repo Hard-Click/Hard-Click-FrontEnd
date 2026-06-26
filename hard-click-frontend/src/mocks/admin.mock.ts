@@ -11,7 +11,7 @@ const REPORT_TYPE_LABEL: Record<ReportApiItem['targetType'], string> = {
 };
 const REPORT_STATUS_LABEL: Record<ReportApiItem['status'], string> = {
   PENDING: '대기 중',
-  COMPLETED: '처리 완료',
+  RESOLVED: '처리 완료',
   REJECTED: '반려',
 };
 
