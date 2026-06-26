@@ -26,7 +26,7 @@ export default function Error({
       {isAuthError ? (
         <button
           type="button"
-          onClick={() => router.push('/login')}
+          onClick={() => router.push('/auth/login')}
           className="rounded-xl bg-[#2F5DAA] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#244C8F]"
         >
           로그인하기
