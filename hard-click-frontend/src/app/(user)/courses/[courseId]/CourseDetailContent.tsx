@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import CourseNoticeSection from '@/features/courses/components/CourseNoticeSection';
 import { toast } from 'sonner';
 import { useAuth } from '@/features/auth/AuthProvider';
 // TODO: 수강신청 모달 — 팀원 결제 모달 확인 후 연결
@@ -338,14 +339,6 @@ export default function CourseDetailContent({
     { length: reviewBlockEnd - reviewBlockStart + 1 },
     (_, i) => reviewBlockStart + i,
   );
-  // 공지 고정 맨 위, 나머지 최신순 정렬
-  const sortedNotices = [...course.notices].sort((a, b) => {
-    if (a.isPinned && !b.isPinned) return -1;
-    if (!a.isPinned && b.isPinned) return 1;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
-  const displayedNotices = sortedNotices.slice(0, 3);
-
   return (
     <div className="min-h-screen bg-[#F0F2F5]">
       {/* 토스트는 sonner Toaster가 layout.tsx에서 처리 */}
@@ -593,85 +586,13 @@ export default function CourseDetailContent({
           {/* ── 메인 콘텐츠 (풀 너비) ── */}
           <div className="flex flex-col gap-8">
             {/* ── 공지사항 ── */}
-            <section id="notices" className="scroll-mt-20">
-              <div
-                className="bg-white border border-[#E2E8F0] shadow-[0_4px_10px_rgba(0,0,0,0.06)] rounded-2xl flex flex-col gap-6"
-                style={{ padding: '33px' }}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="/icons/bellBlueIcon.svg"
-                      width={20}
-                      height={20}
-                      alt=""
-                    />
-                    <h2 className="text-xl font-bold text-[#1F2937]">
-                      강의 공지사항
-                    </h2>
-                  </div>
-                  <Link
-                    href={`/courses/${courseId}/notices`}
-                    onClick={(e) => {
-                      if (!requireLogin()) e.preventDefault();
-                    }}
-                    className="w-20 h-10 border border-[#E2E8F0] rounded-2xl text-sm font-medium text-[#4B5563] hover:bg-[#F8FAFC] transition-colors flex items-center justify-center"
-                  >
-                    전체보기
-                  </Link>
-                </div>
-
-                {course.notices.length === 0 ? (
-                  <p className="text-sm text-[#9CA3AF] text-center py-4">
-                    공지사항이 없습니다.
-                  </p>
-                ) : (
-                  <div className="flex flex-col gap-3">
-                    {displayedNotices.map((notice) => (
-                      <Link
-                        key={notice.noticeId}
-                        href={`/notices/${notice.noticeId}`}
-                        onClick={(e) => {
-                          if (!requireLogin()) e.preventDefault();
-                        }}
-                        className={`rounded-[20px] h-[89px] overflow-hidden flex flex-col hover:opacity-80 transition-opacity ${
-                          notice.isPinned
-                            ? 'bg-[rgba(47,93,170,0.05)] border border-[#2F5DAA]'
-                            : 'bg-white border border-[#E2E8F0]'
-                        }`}
-                        style={{ padding: '17px 17px 1px' }}
-                      >
-                        <div className="flex items-center gap-2 mb-2">
-                          {notice.isPinned && (
-                            <span className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 bg-[#2F5DAA] text-white text-xs font-semibold rounded-[4px]">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src="/icons/pinIcon.svg"
-                                width={11}
-                                height={11}
-                                alt=""
-                                style={{ filter: 'brightness(0) invert(1)' }}
-                              />
-                              공지
-                            </span>
-                          )}
-                          <p className="text-[18px] font-semibold text-[#1F2937] leading-[27px] line-clamp-1 flex-1">
-                            {notice.title}
-                          </p>
-                          <span className="text-xs text-[#9CA3AF] flex-shrink-0">
-                            {notice.createdAt}
-                          </span>
-                        </div>
-                        <p className="text-sm text-[#4B5563] line-clamp-1">
-                          {notice.content}
-                        </p>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
+            <CourseNoticeSection
+              notices={course.notices}
+              listHref={`/courses/${courseId}/notices`}
+              noticeHref={(id) => `/notices/${id}`}
+              scrollMtClassName="scroll-mt-20"
+              onLinkClick={(e) => { if (!requireLogin()) e.preventDefault(); }}
+            />
 
             {/* ── 강사소개 (공용 컴포넌트) ── */}
             <CourseInstructorSection instructor={course.instructor} />
