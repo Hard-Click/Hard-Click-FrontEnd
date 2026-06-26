@@ -34,8 +34,7 @@ export default function CourseNoticeSection({
   return (
     <section id="notices" className={scrollMtClassName}>
       <div
-        className="bg-white border border-[#E2E8F0] shadow-[0_4px_10px_rgba(0,0,0,0.06)] rounded-2xl flex flex-col gap-6"
-        style={{ padding: '33px' }}
+        className="bg-white border border-[#E2E8F0] shadow-[0_4px_10px_rgba(0,0,0,0.06)] rounded-2xl flex flex-col gap-6 p-[33px]"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -63,12 +62,11 @@ export default function CourseNoticeSection({
                 key={notice.noticeId}
                 href={noticeHref(notice.noticeId)}
                 onClick={onLinkClick}
-                className={`rounded-[20px] h-[89px] overflow-hidden flex flex-col hover:opacity-80 transition-opacity ${
+                className={`rounded-[20px] h-[89px] overflow-hidden flex flex-col hover:opacity-80 transition-opacity px-[17px] pt-[17px] pb-[1px] ${
                   notice.isPinned
                     ? 'bg-[rgba(47,93,170,0.05)] border border-[#2F5DAA]'
                     : 'bg-white border border-[#E2E8F0]'
                 }`}
-                style={{ padding: '17px 17px 1px' }}
               >
                 <div className="flex items-center gap-2 mb-2">
                   {notice.isPinned && (
@@ -79,7 +77,7 @@ export default function CourseNoticeSection({
                         width={11}
                         height={11}
                         alt=""
-                        style={{ filter: 'brightness(0) invert(1)' }}
+                        className="brightness-0 invert"
                       />
                       공지
                     </span>

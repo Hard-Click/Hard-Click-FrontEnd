@@ -47,8 +47,6 @@ const NAV_ITEMS = [
   { id: 'reviews', label: '수강평' },
 ];
 
-const REVIEWS_PER_PAGE = 5;
-
 function SideNav({
   activeId,
   onNav,
@@ -749,6 +747,7 @@ export default function AdminCourseDetailContent({
               courseId={courseId}
               scrollMtClassName="scroll-mt-6"
               canReport={false}
+              highlightReviewId={highlightReviewId}
             />
           </div>
         </div>

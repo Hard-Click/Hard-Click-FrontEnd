@@ -20,6 +20,8 @@ interface CourseReviewSectionProps {
   scrollMtClassName?: string;
   /** 타인 리뷰 신고 버튼 노출 여부 — 학생 true(기본) / 강사 false(강사는 리뷰 신고 불가) */
   canReport?: boolean;
+  /** 신고 관리에서 특정 리뷰로 이동 시 하이라이트할 reviewId (관리자 전용) */
+  highlightReviewId?: number;
 }
 
 /**
@@ -32,6 +34,7 @@ export default function CourseReviewSection({
   requireLogin = () => true,
   scrollMtClassName = 'scroll-mt-20',
   canReport = true,
+  highlightReviewId,
 }: CourseReviewSectionProps) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewPage, setReviewPage] = useState(1);
@@ -195,7 +198,11 @@ export default function CourseReviewSection({
                 {displayedReviews.map((review) => (
                   <div
                     key={review.reviewId}
-                    className="border border-[#D5D8DD] rounded-2xl"
+                    className={`rounded-2xl border ${
+                      highlightReviewId === review.reviewId
+                        ? 'border-[#F59E0B] shadow-[0_0_0_3px_rgba(245,158,11,0.2)]'
+                        : 'border-[#D5D8DD]'
+                    }`}
                     style={{ padding: '21px 21px 1px' }}
                   >
                     <div className="flex items-start justify-between mb-3">
