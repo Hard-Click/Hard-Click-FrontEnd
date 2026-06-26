@@ -52,7 +52,13 @@ export async function getDashboardData(): Promise<{
 }> {
   const res = await serverApi.get<AdminDashboardApiResponse>('/api/admin/dashboard');
 
-  if (!res.success || !res.data) throw new Error(res.message ?? '대시보드 조회에 실패했습니다.');
+  if (!res.success || !res.data) {
+    return {
+      stats: { totalMemberCount: 0, pendingReportCount: 0, totalCourseCount: 0, totalNoticeCount: 0 },
+      recentReports: [],
+      recentNotices: [],
+    };
+  }
 
   const d = res.data;
 
@@ -152,8 +158,6 @@ export async function getAdminNoticesPageData(): Promise<{
     serverApi.get<CourseListApiResponse>('/api/courses?page=0&size=100'),
   ]);
 
-  if (!globalRes.success) throw new Error(globalRes.message ?? '전체 공지 조회에 실패했습니다.');
-
   const courseItems = coursesRes.success && coursesRes.data ? coursesRes.data.content : [];
   const courseMetaMap = new Map(
     courseItems.map((c) => [
@@ -165,10 +169,10 @@ export async function getAdminNoticesPageData(): Promise<{
     ]),
   );
 
-  const globalNotices = globalRes.data
+  const globalNotices = globalRes.success && globalRes.data
     ? globalRes.data.content.map((n) => toAdminNoticeRow(n, courseMetaMap))
     : [];
-  const courseNoticeRows = courseRes.data
+  const courseNoticeRows = courseRes.success && courseRes.data
     ? courseRes.data.content.map((n) => toAdminNoticeRow(n, courseMetaMap))
     : [];
   const notices = [...globalNotices, ...courseNoticeRows];
