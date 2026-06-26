@@ -94,6 +94,20 @@ export async function getCheckoutServer(
     );
     if (!res.success || !res.data) return null;
     const summary = toOrderSummary(res.data);
+
+    // ⚠️ BE가 courseIds를 무시하고 장바구니 전체를 돌려주는 경우(BE 요청 中) 대비:
+    //   선택분만 클라에서 거른다 → 체크아웃 표시·금액이 "장바구니에서 고른 것"과 일치.
+    //   (BE가 courseIds를 지원하면 이미 선택분만 와서 no-op.)
+    //   orderNo는 BE 발급분이라, BE 미지원 시 결제 confirm은 금액 불일치로 실패할 수 있음
+    //   (= 선택 안 한 항목까지 과금되는 사고는 막힘 — 라이브 완성은 BE courseIds 지원 후).
+    if (type === 'course' && courseIds && courseIds.length > 0) {
+      const wanted = new Set(courseIds);
+      const picked = summary.items.filter((it) => wanted.has(it.id));
+      if (picked.length === 0) return null;
+      const total = picked.reduce((sum, it) => sum + it.price, 0);
+      return { ...summary, items: picked, totalAmount: total, finalAmount: total };
+    }
+
     return summary.items.length > 0 ? summary : null;
   }
 
