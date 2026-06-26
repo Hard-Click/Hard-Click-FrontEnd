@@ -176,13 +176,13 @@ interface UploadFileResponse {
   fileUrl: string;
 }
 
-/** 썸네일 파일 업로드 (POST /api/files/upload?fileType=POST) */
+/** 썸네일 파일 업로드 (POST /api/files/upload?fileType=course) */
 export async function uploadCourseThumbnail(file: File) {
   const formData = new FormData();
   formData.append('file', file);
 
   // 인증은 BFF 프록시(app/api/[...path])가 쿠키→Authorization 으로 주입
-  const res = await fetch('/api/files/upload?fileType=POST', {
+  const res = await fetch('/api/files/upload?fileType=course', {
     method: 'POST',
     body: formData,
   });
