@@ -40,10 +40,10 @@ export default function StudyTimerPanel() {
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const secondsRef = useRef(0);
 
-  // 페이지 진입 시 실행 중인 세션 복원
+  // 페이지 진입 시 실행 중인 세션 복원 — RUNNING만 이어하기 대상(PAUSED·ENDED는 tick 금지)
   useEffect(() => {
     fetchCurrentSessionAction().then((session) => {
-      if (session) {
+      if (session && session.status === 'RUNNING') {
         setResumeSession({
           sessionId: session.sessionId,
           startedAt: session.startedAt,
@@ -65,7 +65,12 @@ export default function StudyTimerPanel() {
 
   const startHeartbeat = useCallback((sid: number) => {
     heartbeatRef.current = setInterval(async () => {
-      await heartbeatAction(sid);
+      const serverSeconds = await heartbeatAction(sid);
+      // 서버가 확정한 누적시간으로 로컬 카운터 보정 — 백그라운드 탭 throttle 등 드리프트 해소
+      if (serverSeconds != null) {
+        secondsRef.current = serverSeconds;
+        setSeconds(serverSeconds);
+      }
     }, HEARTBEAT_INTERVAL_MS);
   }, []);
 
@@ -79,7 +84,20 @@ export default function StudyTimerPanel() {
   // 타이머 시작 (UA-P1-145)
   const handleStart = async () => {
     const result = await startTimerAction();
-    if (!result) return;
+    if (!result) {
+      // 시작 실패(예: 409 이미 실행 중) → 현재 세션 재조회해 이어하기 제안(stuck 방지)
+      const session = await fetchCurrentSessionAction();
+      if (session && session.status === 'RUNNING') {
+        setResumeSession({
+          sessionId: session.sessionId,
+          startedAt: session.startedAt,
+          studySeconds: session.accumulatedStudySeconds,
+        });
+        setSeconds(session.accumulatedStudySeconds);
+        secondsRef.current = session.accumulatedStudySeconds;
+      }
+      return;
+    }
     setSessionId(result.sessionId);
     setIsRunning(true);
     setIsPaused(false);
@@ -132,6 +150,10 @@ export default function StudyTimerPanel() {
       setResumeSession(null);
       setSeconds(0);
       secondsRef.current = 0;
+    } else if (isRunning && !isPaused) {
+      // 종료 실패 → 세션은 서버에서 아직 RUNNING → 인터벌 재가동(패널이 멈춘 죽은 상태 방지, 재시도 가능)
+      startTick();
+      startHeartbeat(sid);
     }
   };
 

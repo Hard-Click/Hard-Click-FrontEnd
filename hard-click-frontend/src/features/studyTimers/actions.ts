@@ -30,16 +30,20 @@ export async function startTimerAction(): Promise<{
 }
 
 // 순공시간 heartbeat 저장 — BE는 heartbeatAt(타임스탬프)로 경과시간을 누적(studySeconds 미사용).
-export async function heartbeatAction(sessionId: number): Promise<boolean> {
-  if (isMock('studyTimers')) return true;
+// 반환: 서버가 확정한 누적 초(accumulatedStudySeconds). 클라 카운터를 이 값으로 보정해
+//       백그라운드 탭 throttle 등으로 인한 화면-저장 시간 드리프트를 해소한다. 실패 시 null.
+export async function heartbeatAction(
+  sessionId: number,
+): Promise<number | null> {
+  if (isMock('studyTimers')) return null;
   const res = await saveHeartbeat(sessionId, {
     heartbeatAt: new Date().toISOString(),
   });
   if (!res.success) {
     console.warn('[Heartbeat] 저장 실패:', res.message);
-    return false;
+    return null;
   }
-  return true;
+  return res.data.accumulatedStudySeconds;
 }
 
 const timerToastStyle = {
