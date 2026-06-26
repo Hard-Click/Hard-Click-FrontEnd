@@ -38,7 +38,7 @@ export default function AdminHeader() {
     setIsDropdownOpen(false);
     await logout();
     await clearSession();
-    router.push('/auth/login');
+    router.push('/courses');
   };
 
   return (

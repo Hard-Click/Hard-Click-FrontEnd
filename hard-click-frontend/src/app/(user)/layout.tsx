@@ -39,7 +39,7 @@ export default function UserLayout({
       {!isAuthPage &&
         (role === 'INSTRUCTOR' ? <InstructorHeader /> : <UserHeader />)}
       {blocked ? <NotFoundView code="401" /> : children}
-      {!isAuthPage && !isLearningPage && !blocked && <StudyTimerPanel />}
+      {!isAuthPage && !isLearningPage && isLoggedIn && <StudyTimerPanel />}
     </>
   );
 }
