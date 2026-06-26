@@ -1,6 +1,6 @@
 /** 영상학습/진도 도메인 API — 백엔드 controller 매칭
  *  base: /api/learning */
-import { USE_MOCK } from '@/mocks/config';
+import { isMock } from '@/mocks/config';
 import { api } from '@/services/api';
 import {
   getMockVideoEntry,
@@ -20,22 +20,23 @@ import type {
 } from './types';
 
 /* ───── 강의 영상 재생 정보 조회 (GET /api/learning/videos/{videoId}/play) ─────
- * 401 / 403 (수강 권한 없음) / 404 / 410 (비공개·삭제) / 500 */
+ * BE 실제 에러: 403 L002(비공개 강의)·403 L003(수강권 없음) / 404 L001(영상 없음)·404 L005(재생 URL 없음) / 401 / 500.
+ * (BE엔 410 경로 없음 — mock 코드를 BE 실제값에 맞춤.) */
 export async function getVideoPlayInfo(videoId: number) {
-  if (USE_MOCK) {
+  if (isMock('learning')) {
     if (PRIVATE_VIDEO_IDS.has(videoId)) {
       return {
         success: false,
-        httpStatus: 410,
-        message: '비공개 처리된 영상입니다.',
+        httpStatus: 403, // L002 비공개 강의
+        message: '비공개 처리된 강의입니다.',
         data: undefined as unknown as VideoPlayInfo,
       };
     }
     if (DELETED_VIDEO_IDS.has(videoId)) {
       return {
         success: false,
-        httpStatus: 404,
-        message: '삭제된 영상입니다.',
+        httpStatus: 404, // L001 존재하지 않는 영상
+        message: '존재하지 않는 영상입니다.',
         data: undefined as unknown as VideoPlayInfo,
       };
     }
@@ -70,7 +71,7 @@ export async function getVideoPlayInfo(videoId: number) {
  * body { watchTimeSeconds }. Response: void
  * 400 / 401 / 403 / 404 / 500 */
 export async function saveWatchTime(videoId: number, body: WatchTimeRequest) {
-  if (USE_MOCK) {
+  if (isMock('learning')) {
     if (typeof window !== 'undefined') {
       const key = `learning:watchedSeconds:${videoId}`;
       const stored = Number(window.localStorage.getItem(key) || 0);
@@ -97,7 +98,7 @@ export async function saveLastPosition(
   videoId: number,
   body: LastPositionRequest,
 ) {
-  if (USE_MOCK) {
+  if (isMock('learning')) {
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(
         `learning:lastPosition:${videoId}`,
@@ -119,7 +120,7 @@ export async function saveLastPosition(
 
 /* ───── 이어보기 위치 조회 (GET /api/learning/videos/{videoId}/progress/position) ───── */
 export async function getLastPosition(videoId: number) {
-  if (USE_MOCK) {
+  if (isMock('learning')) {
     const entry = getMockVideoEntry(videoId);
     let pos = entry.lastPositionSeconds;
     if (typeof window !== 'undefined') {
@@ -143,7 +144,7 @@ export async function getLastPosition(videoId: number) {
 /* ───── 단일 영상 진도 조회 (GET /api/learning/videos/{videoId}/progress) ─────
  * 401 / 403 / 404 / 500 */
 export async function getVideoProgress(videoId: number) {
-  if (USE_MOCK) {
+  if (isMock('learning')) {
     const entry = getMockVideoEntry(videoId);
     const watchTimeSec = (() => {
       if (typeof window === 'undefined') return 0;
@@ -179,10 +180,11 @@ export async function getVideoProgress(videoId: number) {
 
 /* ───── 영상 완료 처리 (PATCH /api/learning/videos/{videoId}/progress/complete) ─────
  * Request: body 없음. Response: void
- * 백엔드 검증: watchTimeSeconds >= ceil(durationSeconds * 0.9). 미충족 시 415 (VIDEO_COMPLETION_CONDITION_NOT_MET)
- * 400 / 401 / 403 / 404 / 415 / 500 */
+ * 백엔드 검증: watchTimeSeconds >= ceil(durationSeconds * 0.9). 미충족 시 **409 CONFLICT / errorCode L004**
+ *   (VIDEO_COMPLETION_CONDITION_NOT_MET) — 라이브 전환 시 호출부에서 409/L004를 "90% 시청 후 완료" 안내로 처리.
+ * 400 / 401 / 403 / 404 / 409(L004) / 500 */
 export async function completeVideo(videoId: number) {
-  if (USE_MOCK) {
+  if (isMock('learning')) {
     return {
       success: true,
       httpStatus: 200,
@@ -198,7 +200,7 @@ export async function completeVideo(videoId: number) {
 /* ───── 강의 전체 진도 조회 (GET /api/learning/courses/{courseId}/progress) ─────
  * 401 / 403 / 404 / 500 */
 export async function getCourseProgress(courseId: number) {
-  if (USE_MOCK) {
+  if (isMock('learning')) {
     const filtered = Object.values(VIDEO_MOCK_MAP).filter(
       (v) => v.courseId === courseId,
     );

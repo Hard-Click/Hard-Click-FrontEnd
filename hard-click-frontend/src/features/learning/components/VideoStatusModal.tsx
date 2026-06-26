@@ -1,7 +1,8 @@
 'use client';
 
 interface VideoStatusModalProps {
-  /** 404=삭제, 410=비공개, 403=권한 없음, 401=로그인 필요 */
+  /** BE 코드: 403=비공개(L002)·수강권 없음(L003), 404=영상 없음(L001)·재생 URL 없음(L005), 401=로그인, 500=오류.
+   *  구체 문구는 services가 message로 내려 preset description을 덮어쓴다. */
   status: number;
   message?: string;
   onClose: () => void;
@@ -9,9 +10,11 @@ interface VideoStatusModalProps {
 
 const PRESETS: Record<number, { title: string; description: string }> = {
   401: { title: '로그인 필요', description: '이 영상을 시청하려면 로그인이 필요해요.' },
-  403: { title: '수강 권한 없음', description: '수강신청이 필요합니다.' },
-  404: { title: '영상 오류', description: '삭제된 영상입니다.' },
-  410: { title: '비공개 영상', description: '비공개 처리된 영상입니다.' },
+  403: {
+    title: '시청 권한 없음',
+    description: '수강신청 또는 공개된 강의에서만 시청할 수 있어요.',
+  },
+  404: { title: '영상 오류', description: '존재하지 않는 영상입니다.' },
   500: { title: '영상 오류', description: '영상을 불러오지 못했습니다.' },
 };
 

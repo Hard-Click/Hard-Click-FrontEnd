@@ -21,6 +21,11 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'picsum.photos',
       },
+      {
+        // BE 프로필 이미지 S3 presigned URL (예: hard-click-files-*.s3.ap-northeast-2.amazonaws.com)
+        protocol: 'https',
+        hostname: '*.s3.ap-northeast-2.amazonaws.com',
+      },
     ],
   },
   experimental: {
