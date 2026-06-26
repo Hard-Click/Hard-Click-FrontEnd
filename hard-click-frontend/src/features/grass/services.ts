@@ -1,4 +1,4 @@
-import { USE_MOCK } from '@/mocks/config';
+import { isMock } from '@/mocks/config';
 import { api } from '@/services/api';
 import type {
   StreakResponse,
@@ -10,7 +10,7 @@ import type {
 
 /* ───── 연속 학습일 조회 (GET /api/grass/streak) ───── */
 export async function getStreak() {
-  if (USE_MOCK) {
+  if (isMock('grass')) {
     return {
       success: true,
       httpStatus: 200,
@@ -24,7 +24,7 @@ export async function getStreak() {
 /* ───── 순공시간 잔디 조회 (GET /api/grass/study-time?year=&month=) ─────
  * 마이페이지 학습 시간 잔디에서 사용 */
 export async function getStudyTimeGrass(query: GrassQuery) {
-  if (USE_MOCK) {
+  if (isMock('grass')) {
     return {
       success: true,
       httpStatus: 200,
@@ -39,7 +39,7 @@ export async function getStudyTimeGrass(query: GrassQuery) {
 /* ───── 수강량 잔디 조회 (GET /api/grass/lessons?year=&month=) ─────
  * 마이페이지 수강량 잔디에서 사용 */
 export async function getLessonsGrass(query: GrassQuery) {
-  if (USE_MOCK) {
+  if (isMock('grass')) {
     return {
       success: true,
       httpStatus: 200,
@@ -54,7 +54,7 @@ export async function getLessonsGrass(query: GrassQuery) {
 /* ───── 특정 날짜 잔디 상세 조회 (GET /api/grass/days/{date}) ─────
  * 잔디 셀 hover/click 툴팁에서 사용 */
 export async function getGrassDayDetail(date: string) {
-  if (USE_MOCK) {
+  if (isMock('grass')) {
     return {
       success: true,
       httpStatus: 200,

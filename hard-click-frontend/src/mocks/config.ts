@@ -38,7 +38,7 @@ const MOCK_OVERRIDE: Record<string, boolean> = {
   orders: false, // GET /api/order/checkout?type=&courseId= — 단건/장바구니/구독 주문 조회(실 orderNo 발급). 이 orderNo가 토스 orderId→confirm 검증에 쓰임. 이전엔 FE가 orderNo 조작→confirm C001 실패였음.
   reports: false, // POST /api/reports — 게시글/댓글/리뷰 신고 실서버 연동
   mypage: false, // /api/members/me(+/courses,/completed,/activities) — 마이페이지 프로필·수강·활동 실서버 연동
-  grass: false, // /api/grass/{streak,study-time,lessons} — 마이페이지 잔디 실서버 연동(200·shape일치). ⚠️ /api/grass·/monthly·/yearly는 BE 500이라 yearly 모달은 mock(client services) 유지
+  grass: false, // /api/grass/{streak,study-time,lessons,days} — 마이페이지 잔디 실서버 연동(200·shape일치). 연간 모달(client services.ts)도 라이브 전환 완료(2026-06-25 재검증: study-time/lessons?year= 200·365일, 이전 500은 해소됨).
   studyTimers: false, // /api/study-timers/stats/daily — 마이페이지 "오늘 순공시간" 실서버(200·shape일치). ⚠️ 타이머 패널 세션은 services.ts USE_MOCK 별도(필드 불일치)
   cart: false, // /api/cart (GET·POST·DELETE/{courseId}) — 전체 CRUD 라이브 검증 완료(2026-06-24 재배포). 항목=minimal{courseId,title,instructorName,price}
   wishlist: false, // /api/wishlist (GET·POST·DELETE/{courseId}) — 전체 CRUD 라이브 검증 완료. 항목=풍부(썸네일·평점·과목·수강생수)
