@@ -4,8 +4,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
-import { authStore } from '@/store/auth.store';
 import { logout } from '@/features/auth/services';
+import { clearSession } from '@/features/auth/session';
+import NotificationDropdown from '@/features/notifications/components/NotificationDropdown';
 
 const NAV_ITEMS = [
   { label: '강의', href: '/instructor/courses' },
@@ -37,7 +38,7 @@ export default function InstructorHeader() {
   const handleLogout = async () => {
     setIsDropdownOpen(false);
     await logout();
-    authStore.clear();
+    await clearSession();
     router.push('/courses');
   };
 
@@ -58,7 +59,18 @@ export default function InstructorHeader() {
         {/* 네비게이션 */}
         <nav className="flex items-center gap-[40px]">
           {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.href;
+            // 강의에서 진입하는 공지(강의별 공지 상세 = /instructor/courses/.../notices,
+            // 전체공지 = /instructor/notices/global)는 '강의' active.
+            // '공지' nav는 공지 관리(/instructor/notices, 그 상세 /instructor/notices/[id])에서 active.
+            const isActive =
+              item.href === '/instructor/courses'
+                ? pathname.startsWith('/instructor/courses') ||
+                  pathname.startsWith('/instructor/notices/global')
+                : item.href === '/instructor/notices'
+                  ? pathname.startsWith('/instructor/notices') &&
+                    !pathname.startsWith('/instructor/notices/global')
+                  : pathname === item.href ||
+                    pathname.startsWith(`${item.href}/`);
             return (
               <Link
                 key={item.label}
@@ -76,36 +88,16 @@ export default function InstructorHeader() {
         {/* 우측 */}
         <div className="flex-1 flex items-center gap-6 justify-end">
           {/* 알림 */}
-          <Link
-            href="/notifications"
-            className="relative w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-colors"
-          >
-            <Image
-              src="/icons/bellIcon.svg"
-              alt="알림"
-              width={20}
-              height={20}
-            />
-            <span className="absolute top-[-2px] left-[23px] min-w-[16px] h-4 bg-[#EF4444] rounded-full flex items-center justify-center px-[3px]">
-              <span className="text-white font-bold text-[10px] leading-none">
-                3
-              </span>
-            </span>
-          </Link>
+          <NotificationDropdown />
 
-          {/* 프로필 드롭다운 */}
+          {/* 강사 드롭다운 */}
           <div className="relative" ref={dropdownRef}>
             <button
               type="button"
               onClick={() => setIsDropdownOpen((prev) => !prev)}
-              className="w-9 h-9 rounded-full bg-white/50 flex items-center justify-center hover:bg-white/30 transition-colors overflow-hidden"
+              className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/30"
             >
-              <Image
-                src="/icons/headerPerson.svg"
-                alt="프로필"
-                width={28}
-                height={28}
-              />
+              강사
             </button>
 
             {isDropdownOpen && (

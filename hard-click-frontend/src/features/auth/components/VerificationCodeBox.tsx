@@ -1,15 +1,17 @@
 'use client';
 
-interface VerificationCodeBoxProps {
-  email: string;
-  onSuccess: (passwordChangeToken: string) => void;
-}
-
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { verifyAccountLockCodeAction } from '../actions';
+import { sendAccountLockEmailAction } from '../actions';
+import { useResendCooldown } from '@/hooks/useResendCooldown';
+
+interface VerificationCodeBoxProps {
+  email: string;
+  onSuccess: (passwordChangeToken: string) => void;
+}
 
 export default function VerificationCodeBox({
   email,
@@ -21,6 +23,7 @@ export default function VerificationCodeBox({
 
   const toastShownRef = useRef(false);
   const isFormValid = code.trim().length === 6;
+  const { cooldown, isCoolingDown, startCooldown } = useResendCooldown();
 
   // 마운트 시 발송 완료 toast (StrictMode 두 번 실행 방지)
   useEffect(() => {
@@ -47,15 +50,26 @@ export default function VerificationCodeBox({
 
     setIsLoading(false);
 
-    if (!result.success || !result.data?.passwordChangeToken) {
+    if (
+      !result.success ||
+      !('data' in result) ||
+      !result.data?.passwordChangeToken
+    ) {
       setCodeError(result.message ?? '유효하지 않은 인증코드입니다.');
       return;
     }
 
-    onSuccess(result.data.passwordChangeToken);
+    const passwordChangeToken = result.data.passwordChangeToken;
+    onSuccess(passwordChangeToken);
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
+    const result = await sendAccountLockEmailAction(email);
+    if (!result.success) {
+      toast.error(result.message || '재발송에 실패했습니다.');
+      return;
+    }
+    startCooldown();
     toast.success('인증번호가 재발송되었습니다.');
   };
 
@@ -64,7 +78,12 @@ export default function VerificationCodeBox({
       {/* icon */}
       <div className="mb-6 flex justify-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(185,28,28,0.1)]">
-          <Image src="/icons/security.svg" alt="security" width={32} height={32} />
+          <Image
+            src="/icons/security.svg"
+            alt="security"
+            width={32}
+            height={32}
+          />
         </div>
       </div>
 
@@ -108,9 +127,10 @@ export default function VerificationCodeBox({
         <button
           type="button"
           onClick={handleResend}
-          className="text-xs font-medium text-[#2F5DAA]"
+          disabled={isCoolingDown}
+          className={`text-xs font-medium ${isCoolingDown ? 'text-[#9CA3AF]' : 'text-[#2F5DAA]'}`}
         >
-          인증번호 재발송
+          {isCoolingDown ? `재발송 (${cooldown}초)` : '인증번호 재발송'}
         </button>
       </div>
 
@@ -130,7 +150,9 @@ export default function VerificationCodeBox({
         onClick={handleVerifyCode}
         disabled={isLoading}
         className={`mt-2 h-12 w-full rounded-xl text-base font-semibold text-white transition ${
-          isFormValid && !isLoading ? 'bg-[#2F5DAA] opacity-100' : 'bg-[#2F5DAA] opacity-50'
+          isFormValid && !isLoading
+            ? 'bg-[#2F5DAA] opacity-100'
+            : 'bg-[#2F5DAA] opacity-50'
         }`}
       >
         {isLoading ? '확인 중...' : '인증 확인'}

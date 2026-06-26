@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation';
 
 import CourseCreateForm from '@/features/instructor/components/CourseCreateForm';
 import { getCourseDetail } from '@/features/courses/services';
+import { SUBJECTS } from '@/features/courses/subjects';
+import type { CurriculumSection, CurriculumLesson } from '@/features/courses/types';
 
 export default function EditCoursePage() {
   const params = useParams();
@@ -19,27 +21,31 @@ export default function EditCoursePage() {
       return;
     }
 
-    // API에서 강의 상세 조회 (실패 시 localStorage 폴백)
     getCourseDetail(courseId)
       .then((data) => {
         if (data) {
+          const matched = SUBJECTS.find((s) => s.value === data.subjectName);
           setCourse({
+            courseId,
             title: data.title,
-            category: data.subjectName,
-            description: data.description,
-            priceType: data.isFree ? '무료' : '유료',
+            subjectId: matched?.subjectId ?? 0,
+            priceType: data.isFree ? 'FREE' : 'PAID',
             price: data.isFree ? '' : String(data.price),
             thumbnailUrl: data.thumbnailUrl,
             thumbnailName: '',
-            curriculum: data.curriculum,
+            learningGoals: data.learningGoals ?? [],
+            targetAudience: data.targetAudience ?? [],
+            level: data.level ?? '',
+            curriculum: (data.curriculum ?? []).map((section: CurriculumSection) => ({
+              id: String(section.sectionId),
+              title: section.title,
+              lectures: (section.lessons ?? []).map((lesson: CurriculumLesson) => ({
+                id: String(lesson.lessonId),
+                fileName: lesson.title,
+                duration: lesson.duration,
+              })),
+            })),
           });
-        } else {
-          // 폴백: localStorage
-          const savedCourses = JSON.parse(localStorage.getItem('myCourses') || '[]');
-          const foundCourse = savedCourses.find(
-            (item: any) => item.id === courseId,
-          );
-          setCourse(foundCourse);
         }
       })
       .finally(() => setIsLoading(false));
@@ -57,13 +63,16 @@ export default function EditCoursePage() {
     <CourseCreateForm
       mode="edit"
       initialData={{
+        courseId: course.courseId,
         title: course.title,
-        subject: course.category,
-        description: course.description,
+        subjectId: course.subjectId,
         priceType: course.priceType,
-        price: course.price === '무료' ? '' : String(course.price).replace('원', ''),
+        price: course.price,
         thumbnailUrl: course.thumbnailUrl,
         thumbnailName: course.thumbnailName,
+        learningGoals: course.learningGoals,
+        targetAudience: course.targetAudience,
+        level: course.level,
         curriculum: course.curriculum,
       }}
     />

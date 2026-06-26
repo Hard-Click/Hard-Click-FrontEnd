@@ -4,21 +4,30 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
+import { toast } from 'sonner';
 import { getMyProfile } from '@/features/users/services';
-import { authStore } from '@/store/auth.store';
 import { logout } from '@/features/auth/services';
+import { clearSession } from '@/features/auth/session';
+import { useAuth } from '@/features/auth/AuthProvider';
+import NotificationDropdown from '@/features/notifications/components/NotificationDropdown';
 
-const NAV_ITEMS = [
-  { label: '강의', href: '/courses' },
+// match: href 외에 이 prefix들에서도 active 처리 (예: 공지는 강의 영역에서 진입)
+const NAV_ITEMS: { label: string; href: string; match?: string[] }[] = [
+  { label: '강의', href: '/courses', match: ['/notices'] },
+  { label: '퀴즈', href: '/quizzes' },
   { label: '커뮤니티', href: '/community' },
   { label: '랭킹', href: '/rankings' },
   { label: '마이페이지', href: '/mypage' },
 ];
 
+/** 비로그인 사용자에게 허용되는 메뉴 (그 외는 로그인 페이지로 이동) */
+const PUBLIC_NAV_HREFS = new Set<string>(['/courses']);
+
 const DROPDOWN_ITEMS = [
   { label: '찜한 강의', href: '/mypage/wishlist' },
   { label: '장바구니', href: '/cart' },
-  { label: '결제 내역', href: '/mypage/orders' },
+  { label: '결제 내역', href: '/orders' },
+  { label: '구독권', href: '/subscriptions' },
 ];
 
 export default function UserHeader() {
@@ -28,7 +37,8 @@ export default function UserHeader() {
   const [profileImageUrl, setProfileImageUrl] = useState('');
 
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // 인증 상태는 서버 쿠키 기반 Context에서 (localStorage 대체)
+  const { isLoggedIn } = useAuth();
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -45,28 +55,33 @@ export default function UserHeader() {
   }, []);
 
   useEffect(() => {
+    // 비로그인 상태에선 /api/members/me를 호출하지 않는다.
+    // (호출 시 401 → 전역 401 핸들러가 /auth/login으로 리다이렉트 → 공개 페이지 브라우징 차단)
+    if (!isLoggedIn) return;
+    // 로그아웃 직후 늦게 도착한 이전 응답이 상태를 덮어쓰지 않도록 가드
+    let cancelled = false;
     getMyProfile().then((result) => {
-      if (result.success && result.data?.profileImageUrl) {
-        setProfileImageUrl(result.data.profileImageUrl);
-      }
+      if (cancelled) return;
+      setProfileImageUrl(
+        result.success ? (result.data?.profileImageUrl ?? '') : '',
+      );
     });
-  }, []);
-
-  useEffect(() => {
-    setIsLoggedIn(authStore.isLoggedIn());
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn]);
 
   const handleLogout = async () => {
     setIsDropdownOpen(false);
     await logout();
-    authStore.clear();
-    setIsLoggedIn(false);
+    await clearSession();
     router.push('/courses');
+    router.refresh();
   };
 
   return (
     <header className="sticky top-0 z-50 w-full h-16 bg-[#2F5DAA] shadow-[0_2px_8px_rgba(0,0,0,0.15),0_1px_2px_rgba(0,0,0,0.08)] flex-shrink-0">
-      <div className="w-full max-w-[1440px] mx-auto px-8 h-full grid grid-cols-3 items-center">
+      <div className="w-full max-w-[1440px] mx-auto px-8 h-full grid grid-cols-[1fr_auto_1fr] items-center">
         {/* 로고 */}
         <Link href="/courses" className="flex items-center gap-3">
           <Image src="/logos/logo.svg" alt="logo" width={28} height={28} />
@@ -76,11 +91,21 @@ export default function UserHeader() {
         {/* 네비게이션 */}
         <nav className="flex items-center justify-center gap-[60px]">
           {NAV_ITEMS.map((item) => {
-            const isActive = pathname.startsWith(item.href);
+            const isActive =
+              pathname.startsWith(item.href) ||
+              (item.match?.some((m) => pathname.startsWith(m)) ?? false);
+            const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+              // 비로그인 + 비공개 메뉴 → 토스트만 (페이지 이동 X)
+              if (!isLoggedIn && !PUBLIC_NAV_HREFS.has(item.href)) {
+                e.preventDefault();
+                toast.error('로그인이 필요합니다');
+              }
+            };
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={handleClick}
                 className={`h-10 px-4 flex items-center font-medium text-base text-white rounded-2xl transition-colors whitespace-nowrap ${
                   isActive ? 'bg-[#1D3E75]' : 'hover:bg-white/10'
                 }`}
@@ -96,22 +121,7 @@ export default function UserHeader() {
           {isLoggedIn ? (
             <>
               {/* 알림 */}
-              <Link
-                href="/notifications"
-                className="relative w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-colors"
-              >
-                <Image
-                  src="/icons/bellIcon.svg"
-                  alt="알림"
-                  width={20}
-                  height={20}
-                />
-                <span className="absolute top-[-2px] left-[23px] min-w-[16px] h-4 bg-[#EF4444] rounded-full flex items-center justify-center px-[3px]">
-                  <span className="text-white font-bold text-[10px] leading-none">
-                    3
-                  </span>
-                </span>
-              </Link>
+              <NotificationDropdown />
 
               {/* 프로필 */}
               <div className="relative" ref={dropdownRef}>

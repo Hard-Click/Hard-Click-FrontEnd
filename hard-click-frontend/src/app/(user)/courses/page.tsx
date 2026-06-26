@@ -1,160 +1,92 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import CourseSearchBar from '@/features/courses/components/CourseSearchBar';
-import CourseFilterBar from '@/features/courses/components/CourseFilterBar';
 import CourseList from '@/features/courses/components/CourseList';
-import { getCourses, getSubjects, getInstructors } from '@/features/courses/services';
-import { getPinnedNotices } from '@/features/notices/services';
-import type { CourseListItem, Subject, CourseSortType } from '@/features/courses/types';
-import type { Notice } from '@/features/notices/types';
+import CourseListControls from '@/features/courses/components/CourseListControls';
+import CourseNoticeBanner from '@/features/courses/components/CourseNoticeBanner';
+import { getCoursesServer, getSubjectsServer } from '@/features/courses/server';
+import { getPinnedNoticesServer } from '@/features/notices/server';
+import type { CourseSortType } from '@/features/courses/types';
 
-type ListStatus = 'loading' | 'error' | 'empty' | 'no-results' | 'idle';
+interface CoursesPageProps {
+  // Next.js 15+ : searchParams 는 Promise
+  searchParams: Promise<{
+    keyword?: string;
+    subjectId?: string;
+    instructor?: string;
+    sort?: string;
+  }>;
+}
 
-export default function CoursesPage() {
-  const [courses, setCourses] = useState<CourseListItem[]>([]);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [status, setStatus] = useState<ListStatus>('loading');
-  const [notices, setNotices] = useState<Notice[]>([]);
-  const [noticeIndex, setNoticeIndex] = useState(0);
+// Server Component: 데이터를 서버에서 가져와 렌더 (useEffect 없음)
+export default async function CoursesPage({ searchParams }: CoursesPageProps) {
+  const sp = await searchParams;
+  const keyword = sp.keyword ?? '';
+  const subjectId = sp.subjectId ? Number(sp.subjectId) : undefined;
+  const instructor = sp.instructor ?? '';
+  const sort = (sp.sort as CourseSortType) ?? 'latest';
 
-  const [keyword, setKeyword] = useState('');
-  const [submittedKeyword, setSubmittedKeyword] = useState('');
-  const [selectedSubjectId, setSelectedSubjectId] = useState<number | undefined>();
-  const [selectedInstructor, setSelectedInstructor] = useState('');
-  const [sort, setSort] = useState<CourseSortType>('latest');
-
-  const instructors = getInstructors();
-
-  useEffect(() => {
-    getSubjects().then(setSubjects);
-    getPinnedNotices().then(setNotices);
-  }, []);
-
-  useEffect(() => {
-    setStatus('loading');
-    getCourses({
-      keyword: submittedKeyword || undefined,
-      subjectId: selectedSubjectId,
-      instructor: selectedInstructor || undefined,
+  // ⚠️ 강사 필터는 빼고 조회한다(과목·검색·정렬만).
+  // 강사 드롭다운 옵션을 이 결과에서 뽑으므로, 강사 선택에 따라 옵션이 줄어들지 않는다.
+  const [baseCourses, subjects, notices] = await Promise.all([
+    getCoursesServer({
+      keyword: keyword || undefined,
+      subjectId,
       sort,
-    })
-      .then(data => {
-        setCourses(data);
-        if (data.length === 0) {
-          const hasFilter = submittedKeyword || selectedSubjectId || selectedInstructor;
-          setStatus(hasFilter ? 'no-results' : 'empty');
-        } else {
-          setStatus('idle');
-        }
-      })
-      .catch(() => setStatus('error'));
-  }, [submittedKeyword, selectedSubjectId, selectedInstructor, sort]);
+    }),
+    getSubjectsServer(),
+    getPinnedNoticesServer(),
+  ]);
+  // 강사 드롭다운 옵션 = (현재 과목·검색에 해당하는) 전체 강사. 강사 선택과 무관하게 고정.
+  // (BE에 강사 목록 API 없음 → 조회된 강의들의 강사명에서 파생)
+  const instructors = Array.from(
+    new Set(baseCourses.map((c) => c.instructorName).filter(Boolean)),
+  ).sort();
+  // 화면 표시용 강의 = 선택된 강사로 한 번 더 거른다 (BE에 강사 필터 없음 → 여기서)
+  const courses = instructor
+    ? baseCourses.filter((c) => c.instructorName === instructor)
+    : baseCourses;
 
-  const handleSearch = () => {
-    const trimmed = keyword.trim();
-    if (trimmed && /^[^\w가-힣]+$/u.test(trimmed)) return;
-    setSubmittedKeyword(trimmed);
-  };
-
-  const handleReset = () => {
-    setKeyword('');
-    setSubmittedKeyword('');
-    setSelectedSubjectId(undefined);
-    setSelectedInstructor('');
-    setSort('latest');
-  };
+  const hasFilter = Boolean(keyword || subjectId || instructor);
+  const status: 'empty' | 'no-results' | 'idle' =
+    courses.length === 0 ? (hasFilter ? 'no-results' : 'empty') : 'idle';
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-
-      {/* 공지 배너 */}
-      {notices.length > 0 && (
-        <div className="w-full bg-[#FEF3E2] border-b border-[#F5D9A8]">
-          <div className="w-full max-w-[1440px] mx-auto px-8 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Image src="/icons/notice.svg" alt="공지" width={20} height={20} className="flex-shrink-0" />
-              <span className="text-[#1F2937] font-medium text-sm">{notices[noticeIndex].title}</span>
-            </div>
-            {notices.length > 1 && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setNoticeIndex(i => (i - 1 + notices.length) % notices.length)}
-                  className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-black/5 transition-colors"
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M10 4L6 8l4 4" stroke="#4B5563" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-                <div className="flex items-center gap-1.5">
-                  {notices.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setNoticeIndex(i)}
-                      className="w-1.5 h-1.5 rounded-full transition-colors"
-                      style={{ background: i === noticeIndex ? '#F97316' : 'rgba(75,85,99,0.3)' }}
-                    />
-                  ))}
-                </div>
-                <button
-                  onClick={() => setNoticeIndex(i => (i + 1) % notices.length)}
-                  className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-black/5 transition-colors"
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M6 4l4 4-4 4" stroke="#4B5563" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* 공지 배너 (client 잎사귀) */}
+      <CourseNoticeBanner notices={notices} />
 
       {/* 히어로 */}
-      <div
-        className="w-full"
-        style={{ backgroundColor: '#2F5DAA' }}
-      >
+      <div className="w-full" style={{ backgroundColor: '#2F5DAA' }}>
         <div className="w-full max-w-[1440px] mx-auto px-8 py-20">
           <h1 className="text-white font-semibold text-5xl leading-[60px] tracking-wide mb-6">
-            2027 수능<br />1등급을 향한 여정
+            2027 수능
+            <br />1등급을 향한 여정
           </h1>
           <p className="text-white/95 text-lg leading-relaxed max-w-2xl">
-            최고의 강사진과 체계적인 커리큘럼으로 목표 달성을 이루세요. 학습 타이머로 공부 습관을 만들어보세요.
+            최고의 강사진과 체계적인 커리큘럼으로 목표 달성을 이루세요. 학습
+            타이머로 공부 습관을 만들어보세요.
           </p>
         </div>
       </div>
 
       {/* 메인 콘텐츠 */}
       <div className="w-full max-w-[1440px] mx-auto px-8 pt-10 pb-16">
-        {/* 섹션 헤더 */}
         <div className="mb-6">
-          <h2 className="text-[#1F2937] font-bold text-3xl leading-9 mb-2">강의</h2>
+          <h2 className="text-[#1F2937] font-bold text-3xl leading-9 mb-2">
+            강의
+          </h2>
           <p className="text-[#4B5563] text-base">원하는 강의를 찾아보세요.</p>
         </div>
 
-        {/* 검색 + 필터 박스 */}
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-[0_4px_10px_rgba(0,0,0,0.06)] p-6 mb-8 flex flex-col gap-4">
-          <CourseSearchBar
-            value={keyword}
-            onChange={setKeyword}
-            onSearch={handleSearch}
-          />
-          <CourseFilterBar
-            subjects={subjects}
-            instructors={instructors}
-            selectedSubjectId={selectedSubjectId}
-            selectedInstructor={selectedInstructor}
-            sort={sort}
-            onSubjectChange={setSelectedSubjectId}
-            onInstructorChange={setSelectedInstructor}
-            onSortChange={setSort}
-            onReset={handleReset}
-          />
-        </div>
+        {/* 검색 + 필터 (client 잎사귀) */}
+        <CourseListControls
+          subjects={subjects}
+          instructors={instructors}
+          keyword={keyword}
+          selectedSubjectId={subjectId}
+          selectedInstructor={instructor}
+          sort={sort}
+        />
 
-        {/* 강의 목록 */}
+        {/* 강의 목록 (server) */}
         <CourseList courses={courses} status={status} />
       </div>
     </div>

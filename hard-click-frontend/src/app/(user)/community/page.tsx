@@ -1,51 +1,70 @@
 import Image from 'next/image';
-import CommunityFilterTabs from '@/features/community/components/CommunityFilterTabs';
-import CommunityToolBar from '@/features/community/components/CommunityToolBar';
 import PostActionButtons from '@/features/community/components/PostActionButtons';
+import CommunityListControls from '@/features/community/components/CommunityListControls';
+import CommunityPostList from '@/features/community/components/CommunityPostList';
+import { getCommunityPosts, getSubjects } from '@/features/community/server';
+import type {
+  BoardType,
+  PostListItem,
+  SubjectItem,
+} from '@/features/community/types';
+import { TAB_TO_BOARD_TYPE } from '@/features/community/types';
+import CommunityPagination from '@/features/community/components/CommunityPagination';
 
-export default function CommunityPage() {
-  // 임의 데이터!! 나중에 연동 하고 지우깅
-  const mockPosts = [
-    {
-      id: 1,
-      category: '질문게시판',
-      title: 'React Hook useEffect 사용 시 무한 루프 문제 해결 방법',
-      author: '이*호',
-      time: '2시간 전',
-      views: 145,
-      comments: 12,
-      status: '채택 완료',
-    },
-    {
-      id: 2,
-      category: '자유게시판',
-      title: '프론트엔드 개발자 로드맵 공유합니다',
-      author: '박*영',
-      time: '5시간 전',
-      views: 321,
-      comments: 23,
-    },
-    {
-      id: 3,
-      category: '질문게시판',
-      title: '가나다라',
-      author: '이*윤',
-      time: '8시간 전',
-      views: 120,
-      comments: 60,
-      status: '답변 대기',
-    },
-  ];
+const SORT_MAP: Record<string, string> = {
+  최신순: 'latest',
+  조회순: 'views',
+  댓글순: 'comments',
+};
+
+interface CommunityPageProps {
+  // Next.js 15+ : searchParams 는 Promise → await 필요
+  searchParams: Promise<{
+    tab?: string;
+    sort?: string;
+    keyword?: string;
+    page?: string;
+    subject?: string;
+  }>;
+}
+
+// Server Component: 데이터를 서버에서 가져와 렌더한다 (useEffect 없음)
+export default async function CommunityPage({
+  searchParams,
+}: CommunityPageProps) {
+  const sp = await searchParams;
+  const tab = sp.tab ?? '전체';
+  const sort = sp.sort ?? '최신순';
+  const keyword = sp.keyword ?? '';
+  const pageNum = Number(sp.page ?? '0');
+
+  const boardType = TAB_TO_BOARD_TYPE[tab] ?? 'ALL';
+  const apiSort = SORT_MAP[sort] ?? 'latest';
+  const subject = sp.subject || undefined;
+
+  const [result, subjectsResult] = await Promise.all([
+    getCommunityPosts(
+      boardType,
+      Number.isNaN(pageNum) ? 0 : pageNum,
+      keyword || undefined,
+      apiSort,
+      subject
+    ),
+    getSubjects(),
+  ]);
+  const posts: PostListItem[] =
+    result.success && result.data ? result.data.content ?? [] : [];
+  const totalPages = result.success && result.data ? result.data.totalPages : 1;
+  const subjects: SubjectItem[] =
+    subjectsResult.success && subjectsResult.data ? subjectsResult.data : [];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] px-8 py-10">
       <div className="mx-auto w-full max-w-[1152px]">
-        {/* top */}
         <div className="mb-8 flex items-start justify-between">
-          {/* left */}
           <div>
             <div className="mb-3 flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-[20px] bg-[#2F5DAA]">
+              <div className="flex h-12 w-12 pl-[2px] justify-center rounded-[20px] bg-[#2F5DAA]">
                 <Image
                   src="/icons/commu.svg"
                   alt="community"
@@ -53,20 +72,30 @@ export default function CommunityPage() {
                   height={30}
                 />
               </div>
-
               <h1 className="text-4xl font-bold text-[#1E293B]">커뮤니티</h1>
             </div>
-
             <p className="text-base text-[#4B5563]">
               함께 성장하는 학습 커뮤니티에 참여하세요
             </p>
           </div>
-
-          {/* right */}
           <PostActionButtons />
         </div>
 
-        <CommunityFilterTabs posts={mockPosts} />
+        <CommunityListControls
+          activeTab={tab}
+          sortType={sort}
+          keyword={keyword}
+          subject={sp.subject ?? ''}
+          subjects={subjects}
+        />
+        <CommunityPostList posts={posts} isStudyTab={boardType === 'STUDY'} />
+
+        <div className="mt-6">
+          <CommunityPagination
+            page={Number.isNaN(pageNum) ? 0 : pageNum}
+            totalPages={totalPages}
+          />
+        </div>
       </div>
     </div>
   );

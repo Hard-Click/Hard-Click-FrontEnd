@@ -1,11 +1,11 @@
-'use client';
-
+// 게시글 카드 — 표시 전용 Server Component (상호작용 없음)
 import Image from 'next/image';
 import Link from 'next/link';
 
 interface CommunityPostCardProps {
   id: number;
   category: string;
+  subjectName?: string;
   title: string;
   author: string;
   time: string;
@@ -13,23 +13,26 @@ interface CommunityPostCardProps {
   comments: number;
   status?: string;
   recruit?: string;
+  hrefPrefix?: string;
 }
 
 export default function CommunityPostCard({
   id,
   category,
+  subjectName,
   title,
   author,
   time,
   views,
   comments,
   status,
+  hrefPrefix = '/community',
 }: CommunityPostCardProps) {
   const isQuestion = category === '질문게시판';
 
   return (
     <Link
-      href={`/community/${id}`}
+      href={`${hrefPrefix}/${id}`}
       className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm block"
     >
       {/* top badges */}
@@ -45,6 +48,12 @@ export default function CommunityPostCard({
         >
           {category}
         </span>
+
+        {subjectName && (
+          <span className="rounded-full bg-[#EEF2FF] px-3 py-1 text-xs font-semibold text-[#2F5DAA]">
+            {subjectName}
+          </span>
+        )}
 
         {isQuestion && status && (
           <span

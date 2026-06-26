@@ -1,19 +1,32 @@
-import type { NextConfig } from "next";
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   /**
-   * 개발 환경에서 CORS 우회용 프록시
-   * 프론트의 /api/* 요청 → 백엔드 BACKEND_URL/api/* 로 프록시
+   * `/api/*` 요청은 app/api/[...path]/route.ts (BFF 프록시)가 처리한다.
+   * - 쿠키의 accessToken을 Authorization 헤더로 주입해 백엔드로 중계
+   * - CORS 회피 + 클라이언트 localStorage 불필요
+   * 따라서 별도 rewrites 가 필요 없다.
    */
-  async rewrites() {
-    return [
+  turbopack: {
+    // 상위 폴더에 package-lock.json이 있어 루트를 잘못 인식하는 문제 수정
+    root: __dirname,
+  },
+  images: {
+    remotePatterns: [
       {
-        source: "/api/:path*",
-        destination: `${BACKEND_URL}/api/:path*`,
+        protocol: 'https',
+        hostname: 'cdn.example.com',
       },
-    ];
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+      },
+    ],
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
   },
 };
 

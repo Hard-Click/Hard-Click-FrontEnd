@@ -1,8 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import UserHeader from '@/components/layout/headers/UserHeader';
+import { useRouter, usePathname } from 'next/navigation';
 
 type ErrorCode = '404' | '403' | '401' | '500';
 
@@ -31,8 +30,16 @@ const ERROR_PRESETS: Record<ErrorCode, { title: string; description: string }> =
   },
 };
 
+function useHomeHref(): string {
+  const pathname = usePathname();
+  if (pathname.startsWith('/admin')) return '/admin/dashboard';
+  if (pathname.startsWith('/instructor')) return '/instructor/dashboard';
+  return '/courses';
+}
+
 export default function NotFoundView({ code = '404', title, description }: ErrorViewProps) {
   const router = useRouter();
+  const homeHref = useHomeHref();
 
   const preset = ERROR_PRESETS[code];
   const displayTitle = title ?? preset.title;
@@ -40,8 +47,6 @@ export default function NotFoundView({ code = '404', title, description }: Error
 
   return (
     <div className="min-h-screen bg-[#F0F2F5] flex flex-col">
-      <UserHeader />
-
       <div className="flex-1 bg-[#F8FAFC] flex items-center justify-center px-4">
         <div className="w-[448px] flex flex-col items-center gap-8">
 
@@ -106,14 +111,23 @@ export default function NotFoundView({ code = '404', title, description }: Error
               이전 페이지로
             </button>
 
-            <Link
-              href="/courses"
-              className="w-full h-12 bg-[#2F5DAA] rounded-[10px] flex items-center justify-center gap-2 text-base font-semibold text-white hover:bg-[#264a87] transition-colors"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icons/homeWhiteIcon.svg" width={20} height={20} alt="" />
-              홈으로 이동
-            </Link>
+            {code === '401' || code === '403' ? (
+              <Link
+                href="/auth/login"
+                className="w-full h-12 bg-[#2F5DAA] rounded-[10px] flex items-center justify-center gap-2 text-base font-semibold text-white hover:bg-[#264a87] transition-colors"
+              >
+                로그인 페이지로 이동
+              </Link>
+            ) : (
+              <Link
+                href={homeHref}
+                className="w-full h-12 bg-[#2F5DAA] rounded-[10px] flex items-center justify-center gap-2 text-base font-semibold text-white hover:bg-[#264a87] transition-colors"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/homeWhiteIcon.svg" width={20} height={20} alt="" />
+                홈으로 이동
+              </Link>
+            )}
           </div>
 
         </div>

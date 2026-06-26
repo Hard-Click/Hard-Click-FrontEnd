@@ -1,13 +1,40 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import CommunityWriteForm from '@/features/community/components/CommunityWriteForm';
-import { MOCK_POSTS } from '@/features/community/mock';
+import { getPostDetailAction } from '@/features/community/actions';
+import type { PostDetail } from '@/features/community/types';
+import { BOARD_TYPE_LABEL } from '@/features/community/types';
 
 export default function CommunityEditPage() {
   const { postid } = useParams();
-  const post = MOCK_POSTS[Number(postid)] ?? MOCK_POSTS[1];
+  const router = useRouter();
+  const [post, setPost] = useState<PostDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const postId = Number(postid);
+    if (!postId) return;
+    getPostDetailAction(postId).then((result) => {
+      if (result.success && result.data) {
+        setPost(result.data);
+      } else {
+        router.push('/community');
+      }
+      setIsLoading(false);
+    });
+  }, [postid, router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-20 text-[#64748B]">
+        불러오는 중...
+      </div>
+    );
+  }
+  if (!post) return null;
 
   return (
     <div>
@@ -25,10 +52,11 @@ export default function CommunityEditPage() {
 
       <CommunityWriteForm
         mode="edit"
-        initialCategory={post.category}
+        initialCategory={BOARD_TYPE_LABEL[post.boardType]}
         initialTitle={post.title}
         initialContent={post.content}
-        postId={Number(postid)}
+        initialFileUrls={post.fileUrls}
+        postId={post.postId}
       />
     </div>
   );

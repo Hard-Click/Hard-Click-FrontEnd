@@ -10,10 +10,11 @@ interface PasswordInputProps {
   onChange: (value: string) => void;
   error?: string;
   showErrorBorder?: boolean;
+  name?: string;
 }
 
 const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
-  ({ value, onChange, error, showErrorBorder }, ref) => {
+  ({ value, onChange, error, showErrorBorder, name }, ref) => {
     const [showPassword, setShowPassword] = useState(false);
 
     return (
@@ -36,6 +37,7 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
 
           <input
             ref={ref}
+            name={name}
             type={showPassword ? 'text' : 'password'}
             placeholder="비밀번호를 입력하세요"
             value={value}

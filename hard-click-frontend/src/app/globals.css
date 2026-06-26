@@ -24,7 +24,11 @@
 [data-sonner-toast] {
   border-radius: 16px !important;
 
-  min-width: 320px !important;
+  min-width: 280px !important;
+  max-width: 420px !important;
+  width: max-content !important;
+
+  padding: 12px 20px !important;
 
   display: flex !important;
   align-items: center !important;
@@ -79,4 +83,32 @@ button {
 
 button:disabled {
   cursor: not-allowed;
+}
+
+/* 강의 시청 페이지 — 볼륨 슬라이더 디자인 명세 (108x4, track white, thumb white) */
+input[type='range'].volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: #ffffff;
+  border-radius: 16px;
+  outline: none;
+}
+input[type='range'].volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+input[type='range'].volume-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
 }

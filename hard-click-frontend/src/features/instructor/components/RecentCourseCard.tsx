@@ -6,6 +6,10 @@ interface RecentCourseCardProps {
   isPublic: boolean;
   students: number;
   createdAt: string;
+  /** 우측 버튼 라벨 (기본: 관리) */
+  actionLabel?: string;
+  /** 우측 버튼 이동 경로 (기본: 강의 관리 페이지) */
+  actionHref?: string;
 }
 
 export default function RecentCourseCard({
@@ -14,6 +18,8 @@ export default function RecentCourseCard({
   isPublic,
   students,
   createdAt,
+  actionLabel = '관리',
+  actionHref = `/instructor/myCourses?courseId=${courseId}`,
 }: RecentCourseCardProps) {
   return (
     <div className="flex items-center justify-between rounded-2xl border border-[#E2E8F0] bg-white px-6 py-5">
@@ -28,7 +34,7 @@ export default function RecentCourseCard({
                 : 'bg-[#FFF4E5] text-[#F97316]'
             }`}
           >
-            {isPublic ? '공개' : '숨김'}
+            {isPublic ? '공개' : '비공개'}
           </span>
         </div>
         <div className="flex items-center gap-3 text-sm text-[#64748B]">
@@ -39,12 +45,12 @@ export default function RecentCourseCard({
       </div>
 
       {/* button */}
-      <Link href={`/instructor/myCourses?courseId=${courseId}`}>
+      <Link href={actionHref}>
         <button
           type="button"
           className="rounded-xl border border-[#E2E8F0] px-5 py-2 text-sm font-medium text-[#4B5563] transition hover:bg-[#F8FAFC]"
         >
-          관리
+          {actionLabel}
         </button>
       </Link>
     </div>

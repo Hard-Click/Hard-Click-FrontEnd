@@ -2,152 +2,54 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 
 import PasswordInput from './PasswordInput';
-import LoginErrorMessage from './LoginErrorMessage';
 import ConfirmModal from '@/components/ui/confirmModal';
-import { loginAction } from '../actions';
-import { authStore } from '@/store/auth.store';
+import { loginAction, type LoginActionState } from '../login.action';
+
+const initialState: LoginActionState = { success: false };
+
+/** 제출 버튼 — form 내부에서 useFormStatus로 전송 중 상태 감지 */
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className={`h-16 w-full rounded-2xl text-lg font-semibold text-white transition ${
+        pending ? 'bg-[#2F5DAA] opacity-50' : 'bg-[#2F5DAA] opacity-100'
+      }`}
+    >
+      {pending ? '로그인 중...' : '로그인'}
+    </button>
+  );
+}
 
 export default function LoginForm() {
+  const router = useRouter();
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
-
-  const [errors, setErrors] = useState({
-    loginId: '',
-    password: '',
-  });
-
-  const [errorBorder, setErrorBorder] = useState({
-    loginId: false,
-    password: false,
-  });
-
-  const [loginFailCount, setLoginFailCount] = useState(0);
-
-  const idInputRef = useRef<HTMLInputElement>(null);
-  const passwordInputRef = useRef<HTMLInputElement>(null);
-
-  const isFormValid = loginId.trim() && password.trim();
-
+  // 수업 자료 패턴: useActionState로 Server Action 결과 관리
+  const [state, formAction] = useActionState(loginAction, initialState);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const router = useRouter();
+  const [failCount, setFailCount] = useState(0);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    // 둘 다 비어있음
-    if (!loginId.trim() && !password.trim()) {
-      setErrors({
-        loginId: '아이디를 입력해주세요',
-        password: '비밀번호를 입력해주세요',
-      });
-
-      setErrorBorder({
-        loginId: true,
-        password: false,
-      });
-
-      idInputRef.current?.focus();
-
-      return;
+  // 5회 실패 잠금(423) → 계정 보호 인증 모달
+  useEffect(() => {
+    if (state.isLocked) {
+      setIsConfirmModalOpen(true);
+    } else if (state.message && !state.success) {
+      setFailCount((prev) => prev + 1);
     }
+  }, [state]);
 
-    // 아이디만 비어있음
-    if (!loginId.trim()) {
-      setErrors({
-        loginId: '아이디를 입력해주세요',
-        password: '',
-      });
-
-      setErrorBorder({
-        loginId: true,
-        password: false,
-      });
-
-      idInputRef.current?.focus();
-
-      return;
-    }
-
-    // 비밀번호만 비어있음
-    if (!password.trim()) {
-      setErrors({
-        loginId: '',
-        password: '비밀번호를 입력해주세요',
-      });
-
-      setErrorBorder({
-        loginId: false,
-        password: true,
-      });
-
-      passwordInputRef.current?.focus();
-
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    const result = await loginAction({
-      username: loginId,
-      password,
-    });
-
-    setIsSubmitting(false);
-
-    if (!result.success || !result.data) {
-      // 423 Locked → 백엔드가 계정 잠금 처리 (5회 실패로 인증번호 발송됨)
-      if (result.isLocked) {
-        setErrors({
-          loginId: '',
-          password: result.message ?? '계정이 잠겼습니다',
-        });
-        setErrorBorder({ loginId: false, password: true });
-        setIsConfirmModalOpen(true);
-        passwordInputRef.current?.focus();
-        return;
-      }
-
-      const nextCount = loginFailCount + 1;
-      setLoginFailCount(nextCount);
-      // 성공 메시지가 새어들어오는 경우 방어 (백엔드가 200 + data null로 보낼 때)
-      const safeMessage =
-        result.message && !result.message.includes('로그인되었습니다')
-          ? result.message
-          : '아이디 또는 비밀번호가 올바르지 않습니다';
-      setErrors({
-        loginId: '',
-        password: `${safeMessage} (${nextCount} / 5)`,
-      });
-      setErrorBorder({
-        loginId: false,
-        password: true,
-      });
-
-      if (nextCount >= 5) {
-        setIsConfirmModalOpen(true);
-      }
-      passwordInputRef.current?.focus();
-      return;
-    }
-
-    // 로그인 성공 → 토큰 + memberId + role 저장 후 강의 전체 조회 페이지로 이동
-    authStore.setAuth({
-      accessToken: result.data.accessToken,
-      refreshToken: result.data.refreshToken,
-      memberId: result.data.memberId,
-      role: result.data.role,
-    });
-    if (result.data.role === 'INSTRUCTOR') {
-      router.push('/instructor/dashboard');
-    } else {
-      router.push('/courses');
-    }
-  };
+  const hasError = !!state.message;
+  const errorMessage = state.message && !state.isLocked && failCount > 0
+    ? `${state.message} (${failCount} / 5)`
+    : state.message;
 
   return (
     <div className="flex min-h-screen">
@@ -247,7 +149,8 @@ export default function LoginForm() {
             계정 정보를 입력하고 FLOWN을 시작하세요.
           </p>
 
-          <form onSubmit={handleSubmit}>
+          {/* 수업 자료 패턴: <form action={Server Action}> */}
+          <form action={formAction}>
             {/* ID */}
             <div className="mb-8">
               <label className="mb-3 block text-lg font-semibold text-[#1F2937]">
@@ -256,7 +159,7 @@ export default function LoginForm() {
 
               <div
                 className={`flex h-16 items-center rounded-2xl border px-5 transition-colors ${
-                  errorBorder.loginId ? 'border-[#B91C1C]' : 'border-[#E2E8F0]'
+                  hasError ? 'border-[#B91C1C]' : 'border-[#E2E8F0]'
                 }`}
               >
                 <Image
@@ -267,50 +170,24 @@ export default function LoginForm() {
                 />
 
                 <input
-                  ref={idInputRef}
+                  name="username"
                   type="text"
                   placeholder="아이디를 입력하세요"
                   value={loginId}
-                  onChange={(e) => {
-                    setLoginId(e.target.value);
-
-                    setErrors((prev) => ({
-                      ...prev,
-                      loginId: '',
-                    }));
-
-                    setErrorBorder((prev) => ({
-                      ...prev,
-                      loginId: false,
-                    }));
-                  }}
+                  onChange={(e) => setLoginId(e.target.value)}
                   className="ml-4 w-full bg-transparent text-lg outline-none placeholder:text-[#9CA3AF]"
                 />
               </div>
-
-              <LoginErrorMessage message={errors.loginId} />
             </div>
 
             {/* PASSWORD */}
             <div className="mb-4">
               <PasswordInput
-                ref={passwordInputRef}
+                name="password"
                 value={password}
-                error={errors.password}
-                showErrorBorder={errorBorder.password}
-                onChange={(value) => {
-                  setPassword(value);
-
-                  setErrors((prev) => ({
-                    ...prev,
-                    password: '',
-                  }));
-
-                  setErrorBorder((prev) => ({
-                    ...prev,
-                    password: false,
-                  }));
-                }}
+                error={errorMessage}
+                showErrorBorder={hasError}
+                onChange={setPassword}
               />
             </div>
 
@@ -325,17 +202,7 @@ export default function LoginForm() {
             </div>
 
             {/* submit */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`h-16 w-full rounded-2xl text-lg font-semibold text-white transition ${
-                isFormValid && !isSubmitting
-                  ? 'bg-[#2F5DAA] opacity-100'
-                  : 'bg-[#2F5DAA] opacity-50'
-              }`}
-            >
-              {isSubmitting ? '로그인 중...' : '로그인'}
-            </button>
+            <SubmitButton />
           </form>
 
           {/* divider */}

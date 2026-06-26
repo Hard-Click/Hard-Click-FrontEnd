@@ -25,3 +25,20 @@ export interface MyRankingDetail {
   totalUsers: number;
   topPercent: number;
 }
+
+/* ───── 랭킹 보드 (탭별 순위 목록) — 포디움/테이블 표시용 UI 계약 ───── */
+export type RankingTabType = 'studyTime' | 'lessonCount' | 'acceptedCount';
+
+export interface RankingUser {
+  rank: number;
+  name: string;
+  /** 과목 · 학년 등 부가정보 (BE 보드 미제공 시 빈 값) */
+  subtitle: string;
+  /** 표시 값(예: "334시간" / "330회" / "67회") */
+  value: string;
+  /** 본인 행 여부 — 강조 표시용 (BE memberId == 내 memberId) */
+  isMe?: boolean;
+}
+
+/** 탭별 순위 목록 */
+export type RankingBoard = Record<RankingTabType, RankingUser[]>;

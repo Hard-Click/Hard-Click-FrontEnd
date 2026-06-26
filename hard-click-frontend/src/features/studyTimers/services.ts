@@ -1,5 +1,7 @@
+import { isMock } from '@/mocks/config';
 import { api } from '@/services/api';
 import type {
+  StartSessionRequest,
   StartSessionResponse,
   HeartbeatRequest,
   HeartbeatResponse,
@@ -10,17 +12,15 @@ import type {
   DailyStatsQuery,
 } from './types';
 
-const USE_MOCK = false;
+// 순공시간 세션 시작 (RUNNING 상태로 생성) — body.startedAt 필수(ISO 타임스탬프)
+export const startStudySession = (body: StartSessionRequest) =>
+  api.post<StartSessionResponse>('/api/study-timers/sessions', body);
 
-// 순공시간 세션 시작 (RUNNING 상태로 생성)
-export const startStudySession = () =>
-  api.post<StartSessionResponse>('/api/study-timers/sessions');
-
-// 순공시간 heartbeat 저장 (비정상 종료 대비 주기적 저장)
+// 순공시간 heartbeat 저장 (비정상 종료 대비 주기적 저장) — body.heartbeatAt 필수
 export const saveHeartbeat = (sessionId: number, body: HeartbeatRequest) =>
   api.patch<HeartbeatResponse>(`/api/study-timers/sessions/${sessionId}/heartbeat`, body);
 
-// 순공시간 세션 종료 (ENDED 상태로 변경)
+// 순공시간 세션 종료 (ENDED 상태로 변경) — body.endedAt 필수
 export const endStudySession = (sessionId: number, body: EndSessionRequest) =>
   api.patch<EndSessionResponse>(`/api/study-timers/sessions/${sessionId}/end`, body);
 
@@ -30,7 +30,7 @@ export const getCurrentSession = () =>
 
 // 일별 순공시간 통계 조회
 export async function getDailyStudyStats(query: DailyStatsQuery) {
-  if (USE_MOCK) {
+  if (isMock('studyTimers')) {
     // 오늘 날짜 2시간 30분 = 9000초 mock
     return {
       success: true,

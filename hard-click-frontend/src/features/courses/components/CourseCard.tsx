@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import type { CourseListItem } from '../types';
 
-const SUBJECT_GRADIENTS: Record<string, [string, string]> = {
+export const SUBJECT_GRADIENTS: Record<string, [string, string]> = {
   '국어':       ['#059669', '#34D399'],
+  '수학':       ['#2563EB', '#60A5FA'],
   '수학Ⅰ':     ['#2563EB', '#60A5FA'],
   '수학Ⅱ':     ['#3730A3', '#818CF8'],
   '영어':       ['#7C3AED', '#C084FC'],

@@ -1,28 +1,19 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { getMyCourses } from '@/features/users/services';
-import type { MyCourse } from '@/features/users/types';
+import { getMyCoursesServer } from '@/features/users/server';
+import BackButton from '@/components/common/BackButton';
 
 /** ISO 날짜 → YYYY.MM.DD */
-function formatDisplayDate(iso: string): string {
+function formatDisplayDate(iso: string | null): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export default function InProgressCoursesPage() {
-  const router = useRouter();
-  const [courses, setCourses] = useState<MyCourse[]>([]);
-
-  useEffect(() => {
-    getMyCourses('recent').then((res) => {
-      if (res.success) setCourses(res.data);
-    });
-  }, []);
+export default async function InProgressCoursesPage() {
+  // 서버에서 데이터 확보 — 진행 중(progressRate < 100) 강의만 필터링
+  const all = await getMyCoursesServer();
+  const courses = all.filter((c) => c.progressRate < 100);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -31,10 +22,8 @@ export default function InProgressCoursesPage() {
         <div className="max-w-[1280px] mx-auto px-8 pt-9 pb-32">
           {/* 페이지 히어로 */}
           <div className="flex items-center gap-4 mb-8">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              aria-label="뒤로가기"
+            <BackButton
+              ariaLabel="뒤로가기"
               className="w-6 h-6 flex items-center justify-center text-[#4B5563] hover:text-[#1F2937]"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -46,7 +35,7 @@ export default function InProgressCoursesPage() {
                   strokeLinejoin="round"
                 />
               </svg>
-            </button>
+            </BackButton>
 
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3">
@@ -86,11 +75,20 @@ export default function InProgressCoursesPage() {
 
                   {/* 우측 컨텐츠 */}
                   <div className="flex-1 flex flex-col gap-[15px]">
-                    <div>
+                    {/* 제목 + 커리큘럼 페이지 이동(>) */}
+                    <div className="flex items-center justify-between gap-3">
                       <h3 className="text-lg font-semibold leading-7 text-[#1F2937]">
                         {course.courseTitle}
                       </h3>
-                      <p className="text-sm text-[#4B5563] mt-0.5">{course.instructorName}</p>
+                      <Link
+                        href={`/learning/${course.courseId}`}
+                        aria-label="강의 커리큘럼 보기"
+                        className="w-6 h-6 flex items-center justify-center text-[#4B5563] hover:text-[#2F5DAA] transition-colors flex-shrink-0"
+                      >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                          <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </Link>
                     </div>
 
                     {/* 진도바 */}
@@ -114,8 +112,11 @@ export default function InProgressCoursesPage() {
                         최근 학습: {formatDisplayDate(course.lastStudiedAt)}
                       </span>
                       <Link
-                        href={`/learning/videos/${course.courseId}`}
-                        className="w-[95px] h-10 bg-[#2F5DAA] rounded-[10px] flex items-center justify-center text-white text-base font-semibold hover:bg-[#1D3E75] transition-colors"
+                        href={course.lastVideoId ? `/learning/videos/${course.lastVideoId}` : '#'}
+                        aria-disabled={!course.lastVideoId}
+                        className={`w-[95px] h-10 rounded-[10px] flex items-center justify-center text-white text-base font-semibold transition-colors ${
+                          course.lastVideoId ? 'bg-[#2F5DAA] hover:bg-[#1D3E75]' : 'bg-[#9CA3AF] pointer-events-none'
+                        }`}
                       >
                         이어보기
                       </Link>

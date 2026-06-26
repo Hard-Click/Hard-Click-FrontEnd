@@ -11,7 +11,7 @@ import {
 } from '../actions';
 import FocusModeOverlay from './FocusModeOverlay';
 import CurrentSessionAlert from './CurrentSessionAlert';
-import { authStore } from '@/store/auth.store';
+import { useAuth } from '@/features/auth/AuthProvider';
 
 // Heartbeat 간격: 60초마다 서버에 저장 (UA-P1-147)
 const HEARTBEAT_INTERVAL_MS = 60_000;
@@ -21,11 +21,8 @@ const AUTH_PATHS = ['/auth', '/community/new'];
 export default function StudyTimerPanel() {
   const pathname = usePathname();
   const isAuthPage = AUTH_PATHS.some((path) => pathname.startsWith(path));
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    setIsLoggedIn(authStore.isLoggedIn());
-  }, []);
+  // 인증 상태는 서버 쿠키 기반 Context에서 (localStorage 대체)
+  const { isLoggedIn } = useAuth();
 
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -43,17 +40,17 @@ export default function StudyTimerPanel() {
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const secondsRef = useRef(0);
 
-  // 페이지 진입 시 실행 중인 세션 복원
+  // 페이지 진입 시 실행 중인 세션 복원 — RUNNING만 이어하기 대상(PAUSED·ENDED는 tick 금지)
   useEffect(() => {
     fetchCurrentSessionAction().then((session) => {
-      if (session) {
+      if (session && session.status === 'RUNNING') {
         setResumeSession({
           sessionId: session.sessionId,
           startedAt: session.startedAt,
-          studySeconds: session.studySeconds,
+          studySeconds: session.accumulatedStudySeconds,
         });
-        setSeconds(session.studySeconds);
-        secondsRef.current = session.studySeconds;
+        setSeconds(session.accumulatedStudySeconds);
+        secondsRef.current = session.accumulatedStudySeconds;
       }
     });
   }, []);
@@ -68,7 +65,12 @@ export default function StudyTimerPanel() {
 
   const startHeartbeat = useCallback((sid: number) => {
     heartbeatRef.current = setInterval(async () => {
-      await heartbeatAction(sid, secondsRef.current);
+      const serverSeconds = await heartbeatAction(sid);
+      // 서버가 확정한 누적시간으로 로컬 카운터 보정 — 백그라운드 탭 throttle 등 드리프트 해소
+      if (serverSeconds != null) {
+        secondsRef.current = serverSeconds;
+        setSeconds(serverSeconds);
+      }
     }, HEARTBEAT_INTERVAL_MS);
   }, []);
 
@@ -82,7 +84,20 @@ export default function StudyTimerPanel() {
   // 타이머 시작 (UA-P1-145)
   const handleStart = async () => {
     const result = await startTimerAction();
-    if (!result) return;
+    if (!result) {
+      // 시작 실패(예: 409 이미 실행 중) → 현재 세션 재조회해 이어하기 제안(stuck 방지)
+      const session = await fetchCurrentSessionAction();
+      if (session && session.status === 'RUNNING') {
+        setResumeSession({
+          sessionId: session.sessionId,
+          startedAt: session.startedAt,
+          studySeconds: session.accumulatedStudySeconds,
+        });
+        setSeconds(session.accumulatedStudySeconds);
+        secondsRef.current = session.accumulatedStudySeconds;
+      }
+      return;
+    }
     setSessionId(result.sessionId);
     setIsRunning(true);
     setIsPaused(false);
@@ -104,7 +119,10 @@ export default function StudyTimerPanel() {
     startHeartbeat(resumeSession.sessionId);
   };
 
-  // 일시정지
+  // 일시정지 — 클라 인터벌만 정지(서버 pause 호출 안 함).
+  // ⚠️ BE PATCH /pause는 현재 C002(500) 버그라 호출 불가(라이브 검증 2026-06-25). 또한 BE는 경과시간
+  //   기준으로 누적해서, 정지 중 heartbeat가 멈춰도 종료 시 정지구간이 누적될 수 있다. BE pause 수정되면
+  //   여기서 서버 pause/resume을 호출해 정지구간을 정확히 제외할 것. [BE 요청 대상]
   const handlePause = () => {
     setIsPaused(true);
     stopIntervals();
@@ -123,7 +141,7 @@ export default function StudyTimerPanel() {
     const sid = sessionId ?? resumeSession?.sessionId;
     if (!sid) return;
     stopIntervals();
-    const success = await endTimerAction(sid, secondsRef.current);
+    const success = await endTimerAction(sid);
     if (success) {
       setIsRunning(false);
       setIsPaused(false);
@@ -132,6 +150,10 @@ export default function StudyTimerPanel() {
       setResumeSession(null);
       setSeconds(0);
       secondsRef.current = 0;
+    } else if (isRunning && !isPaused) {
+      // 종료 실패 → 세션은 서버에서 아직 RUNNING → 인터벌 재가동(패널이 멈춘 죽은 상태 방지, 재시도 가능)
+      startTick();
+      startHeartbeat(sid);
     }
   };
 

@@ -50,19 +50,13 @@ export default function MyCourseCard({
       const result = await deleteCourse(id);
 
       if (!result.success) {
-        // 실패 시 localStorage 폴백
-        const savedCourses = JSON.parse(
-          localStorage.getItem('myCourses') || '[]',
-        );
-        const updatedCourses = savedCourses.filter(
-          (course: any) => course.id !== id,
-        );
-        localStorage.setItem('myCourses', JSON.stringify(updatedCourses));
+        setIsLoading(false);
+        toast.error('강의 삭제에 실패했습니다.');
+        return;
       }
 
       setIsLoading(false);
       setIsDeleted(true);
-
       toast.success('강의 삭제가 완료되었습니다.', { duration: 2000 });
     } catch (error) {
       setIsLoading(false);
@@ -73,19 +67,19 @@ export default function MyCourseCard({
   const handleTogglePublic = async () => {
     const newPublicState = !publicState;
     const result = await publishCourse(id, newPublicState);
-
+  
     if (!result.success) {
       toast.error('상태 변경에 실패했습니다.');
       return;
     }
-
+  
     setPublicState(newPublicState);
     toast.success(
       newPublicState ? '강의가 공개되었습니다.' : '강의가 비공개되었습니다.',
       { duration: 2000 },
     );
+    router.refresh(); // 추가
   };
-  if (isDeleted) return null;
 
   return (
     <div
@@ -120,7 +114,6 @@ export default function MyCourseCard({
                   ? 'bg-[#EAF7EE] text-[#16A34A]'
                   : 'bg-[#FFF4E5] text-[#F97316]'
               }`}
-              onClick={handleTogglePublic}
             >
               {publicState ? '공개' : '비공개'}
             </span>

@@ -1,109 +1,91 @@
-import axios from 'axios';
+import { USE_MOCK, isMock } from '@/mocks/config';
 import { api } from '@/services/api';
-import { authStore } from '@/store/auth.store';
 import type {
   MyProfile,
-  UpdateProfileRequest,
-  UpdateProfileResponse,
+  MyProfileApi,
+  UpdateProfileImageResponse,
+  ChangePasswordRequest,
   MyCourse,
-  MyCourseSort,
-  MyCompletedCourse,
+  CompletedCourse,
 } from './types';
 
-const USE_MOCK = false;
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
-
-/* ───── 내 프로필 조회 (GET /api/users/me) ───── */
+/* ───── 내 프로필 조회 (GET /api/members/me) ─────
+ * 백엔드는 memberId 필드로 내려옴 — 프론트 타입(MyProfile)에 맞게 userId로 매핑한다. */
 export async function getMyProfile() {
-  if (USE_MOCK) {
+  if (isMock('mypage')) {
     return {
       success: true,
       httpStatus: 200,
       message: '내 프로필을 조회했습니다.',
       data: {
         userId: 7,
+        name: '안현',
         email: 'hyun030514@naver.com',
-        nickname: '안현',
-        profileImageUrl: '',
+        profileImageUrl: null,
       } as MyProfile,
     };
   }
-  return api.get<MyProfile>('/api/users/me');
+  const res = await api.get<MyProfileApi>('/api/members/me');
+  return {
+    ...res,
+    data: res.data
+      ? ({
+          userId: res.data.memberId,
+          name: res.data.name,
+          email: res.data.email,
+          profileImageUrl: res.data.profileImageUrl,
+        } as MyProfile)
+      : res.data,
+  };
 }
 
-/* ───── 내 프로필 수정 (PATCH /api/users/me) ─────
- * 파일 업로드가 포함되면 multipart/form-data, 없으면 application/json */
-export async function updateMyProfile(body: UpdateProfileRequest) {
-  if (USE_MOCK) {
+/* ───── 프로필 이미지 변경 (PATCH /api/members/me/profile-image) ─────
+ * multipart/form-data 로 profileImage 필드만 전송. */
+export async function updateProfileImage(profileImage: File) {
+  if (isMock('mypage')) {
     return {
       success: true,
       httpStatus: 200,
-      message: '회원 정보가 수정되었습니다.',
-      data: {
-        userId: 7,
-        nickname: body.nickname ?? '안현',
-        profileImageUrl: '',
-      } as UpdateProfileResponse,
+      message: '프로필 이미지가 변경되었습니다.',
+      data: {} as UpdateProfileImageResponse,
     };
   }
 
-  // 파일 포함 시 multipart 별도 처리 (axios interceptor가 'Content-Type'을 덮어쓰지 않도록)
-  if (body.profileImage) {
-    const formData = new FormData();
-    if (body.nickname !== undefined) formData.append('nickname', body.nickname);
-    if (body.currentPassword !== undefined)
-      formData.append('currentPassword', body.currentPassword);
-    if (body.newPassword !== undefined)
-      formData.append('newPassword', body.newPassword);
-    formData.append('profileImage', body.profileImage);
+  const formData = new FormData();
+  formData.append('profileImage', profileImage);
+  // 인증은 BFF 프록시가 쿠키→Authorization 주입, FormData boundary는 자동 설정
+  return api.patch<UpdateProfileImageResponse>(
+    '/api/members/me/profile-image',
+    formData,
+  );
+}
 
-    try {
-      const token = authStore.getAccessToken();
-      const memberId = authStore.getMemberId();
-      const response = await axios.patch(`${BASE_URL}/api/users/me`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          ...(memberId ? { 'X-Member-Id': String(memberId) } : {}),
-        },
-      });
-      return {
-        success: true,
-        httpStatus: response.data?.httpStatus ?? response.status,
-        message: response.data?.message ?? '회원 정보가 수정되었습니다.',
-        data: response.data?.data as UpdateProfileResponse,
-      };
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        const body = error.response.data as {
-          httpStatus?: number;
-          message?: string;
-        };
-        return {
-          success: false,
-          httpStatus: body?.httpStatus ?? error.response.status,
-          message: body?.message ?? '회원 정보 수정에 실패했습니다.',
-          data: undefined as unknown as UpdateProfileResponse,
-        };
-      }
-      return {
-        success: false,
-        httpStatus: 500,
-        message: '서버와 연결할 수 없습니다',
-        data: undefined as unknown as UpdateProfileResponse,
-      };
-    }
+/* ───── 비밀번호 변경 (PATCH /api/members/me/password) ─────
+ * body: { currentPassword, newPassword, newPasswordConfirm }
+ * 현재 비밀번호 불일치 = 401 AUTH_009 / 400 newPassword·newPasswordConfirm 불일치
+ * ✅ 라이브(config accountDestructive:false, 2026-06-25) — 실제 비번 변경됨. 틀린 현재비번 → 401
+ *    AUTH_009를 api.ts가 로그인리다이렉트에서 제외 → 모달이 "비밀번호 불일치"로 처리(Step1 복귀).
+ *    ⚠️ 공유 demo 계정에선 실제로 비번이 바뀌니 데모/발표 중 주의. */
+export async function changePassword(body: ChangePasswordRequest) {
+  if (isMock('accountDestructive')) {
+    return {
+      success: true,
+      httpStatus: 200,
+      message: '비밀번호가 변경되었습니다.',
+      data: {} as Record<string, never>,
+    };
   }
-
-  // 파일 없으면 JSON
-  const { profileImage, ...jsonBody } = body;
-  return api.patch<UpdateProfileResponse>('/api/users/me', jsonBody);
+  return api.patch<Record<string, never>>('/api/members/me/password', body);
 }
 
 /* ───── 회원 탈퇴 (DELETE /api/members/me) ─────
- * 401 인증 실패 / 404 회원 없음 / 409 이미 탈퇴한 회원 */
-export async function withdrawAccount() {
-  if (USE_MOCK) {
+ * 백엔드가 body로 currentPassword 필수 요구 — 본인 확인 후 받은 비밀번호 전달.
+ * 401 인증 실패(AUTH_009) / 404 회원 없음 / 409 이미 탈퇴한 회원
+ * ✅ 라이브(config accountDestructive:false, 2026-06-25) — 실제 탈퇴됨(복구불가). 틀린 비번 → 401
+ *    AUTH_009(api.ts가 로그인리다이렉트 제외 → 모달이 토스트로 처리).
+ *    ⚠️ 공유 demo 계정에선 실제로 영구 삭제되니 데모/발표 중 절대 올바른 비번으로 실행 금지. */
+export async function withdrawAccount(currentPassword: string) {
+  if (isMock('accountDestructive')) {
     return {
       success: true,
       httpStatus: 200,
@@ -111,11 +93,15 @@ export async function withdrawAccount() {
       data: {} as Record<string, never>,
     };
   }
-  return api.delete<Record<string, never>>('/api/members/me');
+  return api.delete<Record<string, never>>('/api/members/me', {
+    currentPassword,
+  });
 }
 
-/* ───── 내 수강 강의 목록 (GET /api/users/me/courses?sort=) ───── */
-export async function getMyCourses(sort?: MyCourseSort) {
+/* ───── 내 수강 강의 목록 (GET /api/members/me/courses) ─────
+ * 백엔드 MyEnrolledCourseController(@RequestMapping("/api/members/me/courses")) — query 파라미터 없이 전체 수강 강의 반환.
+ * 수강 완료 강의는 클라이언트에서 progressRate === 100 으로 필터링한다. */
+export async function getMyCourses() {
   if (USE_MOCK) {
     return {
       success: true,
@@ -126,7 +112,6 @@ export async function getMyCourses(sort?: MyCourseSort) {
           courseId: 1,
           courseTitle: 'React 완벽 가이드',
           thumbnailUrl: '',
-          instructorName: '신노을',
           progressRate: 65,
           lastVideoId: 101,
           lastPositionSeconds: 420,
@@ -136,7 +121,6 @@ export async function getMyCourses(sort?: MyCourseSort) {
           courseId: 2,
           courseTitle: 'TypeScript 심화 학습',
           thumbnailUrl: '',
-          instructorName: '신노을',
           progressRate: 40,
           lastVideoId: 102,
           lastPositionSeconds: 250,
@@ -146,43 +130,51 @@ export async function getMyCourses(sort?: MyCourseSort) {
           courseId: 3,
           courseTitle: 'Node.js 백엔드 개발',
           thumbnailUrl: '',
-          instructorName: '신노을',
           progressRate: 25,
           lastVideoId: 103,
           lastPositionSeconds: 90,
           lastStudiedAt: '2026-05-08T09:00:00+09:00',
         },
+        {
+          courseId: 4,
+          courseTitle: 'HTML & CSS 완벽 가이드',
+          thumbnailUrl: '',
+          progressRate: 100,
+          lastVideoId: 104,
+          lastPositionSeconds: 0,
+          lastStudiedAt: '2026-03-28T00:00:00+09:00',
+        },
       ] as MyCourse[],
     };
   }
-  const query = sort ? `?sort=${sort}` : '';
-  return api.get<MyCourse[]>(`/api/users/me/courses${query}`);
+  return api.get<MyCourse[]>('/api/members/me/courses');
 }
 
-/* ───── 완료 강의 목록 (GET /api/users/me/courses/completed) ───── */
+/* ───── 완료 강의 목록 (GET /api/members/me/courses/completed) ─────
+ * 백엔드 MyCompletedCourseController 전용 endpoint. 완료 강의만 반환(클라 필터 불필요). */
 export async function getMyCompletedCourses() {
   if (USE_MOCK) {
     return {
       success: true,
       httpStatus: 200,
-      message: '완료 강의 목록을 조회했습니다.',
+      message: '수강 완료 강의 목록이 조회되었습니다.',
       data: [
-        {
-          courseId: 1,
-          courseTitle: 'JavaScript 기초',
-          completedAt: '2026-04-15T00:00:00+09:00',
-          progressRate: 100,
-          hasReview: false,
-        },
         {
           courseId: 4,
           courseTitle: 'HTML & CSS 완벽 가이드',
-          completedAt: '2026-03-28T00:00:00+09:00',
+          thumbnailUrl: '',
           progressRate: 100,
-          hasReview: false,
+          completedAt: '2026-03-28T00:00:00+09:00',
         },
-      ] as MyCompletedCourse[],
+        {
+          courseId: 5,
+          courseTitle: 'Git & GitHub 입문',
+          thumbnailUrl: '',
+          progressRate: 100,
+          completedAt: '2026-02-14T00:00:00+09:00',
+        },
+      ] as CompletedCourse[],
     };
   }
-  return api.get<MyCompletedCourse[]>('/api/users/me/courses/completed');
+  return api.get<CompletedCourse[]>('/api/members/me/courses/completed');
 }

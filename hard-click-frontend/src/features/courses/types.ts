@@ -104,3 +104,85 @@ export interface CourseDetail {
   ratingDistribution: { stars: number; count: number }[];
 }
 
+/* ───── 백엔드 응답 (실제 Hard-Click-BackEnd 코드 DTO 기준) ───── */
+
+export type PriceType = 'FREE' | 'PAID';
+export type ApiCourseStatus = 'DRAFT' | 'PUBLISHED';
+
+// GET /api/subjects → List<SubjectResponse>
+export interface SubjectApiItem {
+  subjectId: number;
+  subjectName: string;
+}
+
+// GET /api/courses → CourseListResponse.content[] (CourseListItemResponse)
+export interface CourseListApiItem {
+  courseId: number;
+  title: string;
+  subjectName: string;
+  thumbnailUrl: string;
+  priceLabel: string; // "무료" | "89,000원"
+  priceType: PriceType;
+  price: number;
+  instructorName: string;
+  averageRating: number;
+  reviewCount: number;
+  studentCount: number;
+  createdAt: string; // Instant
+  status: ApiCourseStatus;
+}
+
+// GET /api/courses → CourseListResponse
+export interface CourseListApiResponse {
+  content: CourseListApiItem[];
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+}
+
+// GET /api/courses/{courseId} → CourseDetailResponse.sections[].lessons[]
+export interface CourseLessonApiItem {
+  lessonId: number;
+  title: string;
+  description: string;
+  orderIndex: number;
+  durationSeconds: number | null;
+  isPreview: boolean;
+}
+
+// GET /api/courses/{courseId} → CourseDetailResponse.sections[]
+export interface CourseSectionApiItem {
+  sectionId: number;
+  title: string;
+  orderIndex: number;
+  lessons: CourseLessonApiItem[];
+}
+
+// GET /api/courses/{courseId} → CourseDetailResponse
+export interface CourseDetailApiResponse {
+  courseId: number;
+  title: string;
+  subjectName: string;
+  description: string;
+  thumbnailUrl: string;
+  priceType: PriceType;
+  price: number;
+  priceLabel: string;
+  status: ApiCourseStatus;
+  instructorName: string;
+  averageRating: number;
+  reviewCount: number;
+  studentCount: number;
+  sections: CourseSectionApiItem[];
+  learningObjectives: string[];
+  targetAudience: string[];
+  techTags: string[];
+  level: string;
+  instructorStudentCount: number;
+  instructorCourseCount: number;
+  instructorRating: number;
+  instructorOneLineIntro: string | null; // 강사 한줄소개 (현재 BE 전부 null — 시드 대기)
+  instructorIntroduction: string | null; // 강사 자기소개
+  instructorCareer: string | null; // 강사 경력 (BE는 단일 string)
+}
+

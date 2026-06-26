@@ -3,13 +3,14 @@
 import Image from 'next/image';
 
 interface ConfirmModalProps {
-  icon: string;
+  icon?: string; // 선택 — 없으면 아이콘 영역 미표시
   iconBgColor?: string;
   title: string;
   description: string;
   subDescription?: string;
   cancelText: string;
   confirmText: string;
+  confirmVariant?: 'primary' | 'danger'; // primary=파랑(기본) / danger=빨강(파괴적)
   onCancel: () => void;
   onConfirm: () => void;
 }
@@ -22,38 +23,41 @@ export default function ConfirmModal({
   subDescription,
   cancelText,
   confirmText,
+  confirmVariant = 'primary',
   onCancel,
   onConfirm,
 }: ConfirmModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-[520px] rounded-[28px] bg-white px-8 py-8 shadow-xl">
-        {/* icon */}
-        <div className="mb-8 flex justify-center">
-          <div
-            className="flex h-16 w-16 items-center justify-center rounded-full"
-            style={{ backgroundColor: iconBgColor }}
-          >
-            <Image src={icon} alt="modal icon" width={32} height={32} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-[400px] rounded-3xl bg-white px-8 py-8 shadow-xl">
+        {/* icon (선택) */}
+        {icon && (
+          <div className="mb-6 flex justify-center">
+            <div
+              className="flex h-16 w-16 items-center justify-center rounded-full"
+              style={{ backgroundColor: iconBgColor }}
+            >
+              <Image src={icon} alt="modal icon" width={32} height={32} />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* title */}
-        <h2 className="mb-4 text-center text-[32px] font-bold text-[#1F2937]">
+        <h2 className="mb-3 text-center text-2xl font-bold text-[#1F2937]">
           {title}
         </h2>
 
         {/* description */}
-        <p className="mb-8 whitespace-pre-line text-center text-lg leading-relaxed text-[#4B5563]">
+        <p className="mb-6 whitespace-pre-line text-center text-base leading-relaxed text-[#4B5563]">
           {description}
         </p>
 
         {/* buttons */}
-        <div className="flex gap-4">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="h-14 flex-1 rounded-xl border border-[#E2E8F0] bg-white text-xl font-semibold text-[#4B5563]"
+            className="h-10 flex-1 rounded-[12px] border border-[#E2E8F0] bg-white text-base font-semibold text-[#4B5563] transition-colors hover:bg-[#F8FAFC]"
           >
             {cancelText}
           </button>
@@ -61,7 +65,11 @@ export default function ConfirmModal({
           <button
             type="button"
             onClick={onConfirm}
-            className="h-14 flex-1 rounded-xl bg-[#2F5DAA] text-xl font-semibold text-white"
+            className={`h-10 flex-1 rounded-[12px] text-base font-semibold text-white transition-colors ${
+              confirmVariant === 'danger'
+                ? 'bg-[#B91C1C] hover:bg-[#991B1B]'
+                : 'bg-[#3563B7] hover:bg-[#274B8A]'
+            }`}
           >
             {confirmText}
           </button>
