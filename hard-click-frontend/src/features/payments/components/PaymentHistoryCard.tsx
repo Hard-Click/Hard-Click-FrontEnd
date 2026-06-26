@@ -29,7 +29,12 @@ export default function PaymentHistoryCard({
 }: {
   payment: PaymentHistory;
 }) {
-  const status = STATUS_STYLE[payment.status];
+  // 라이브가 enum에 없는 status를 주면(미래값 등) STATUS_STYLE 조회가 undefined가 되어
+  // 카드 렌더 전체가 크래시(error.tsx) → 중립 배지로 폴백(실제 status 값을 라벨로 노출).
+  const status = STATUS_STYLE[payment.status] ?? {
+    label: payment.status ?? '알 수 없음',
+    className: 'bg-[#4B5563]/10 text-[#4B5563]',
+  };
   const items = payment.displayName
     .split(',')
     .map((s) => s.trim())
