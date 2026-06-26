@@ -49,6 +49,7 @@ export async function fetchReportDetailAction(
   reportId: number,
   base: ReportItem,
 ): Promise<ReportItem> {
+  if (!Number.isInteger(reportId) || reportId <= 0) return base;
   try {
     const res = await serverApi.get<AdminReportDetailApiResponse>(
       `/api/admin/reports/${reportId}`,
