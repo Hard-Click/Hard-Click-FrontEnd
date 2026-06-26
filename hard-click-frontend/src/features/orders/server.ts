@@ -80,12 +80,18 @@ export async function getCheckoutServer(
   type: OrderType,
   courseId?: number,
   courseIds?: number[],
+  /**
+   * 표시용 선택분 필터. 기본 true(체크아웃 화면이 선택분만 보이게).
+   * ⚠️ 결제 발급 경로(createCheckoutOrderAction)는 **false**로 호출해 BE 원본을 받아야 한다.
+   *    BE가 courseIds(복수)를 무시하고 장바구니 전체를 돌려주는지 거기서 검증해 토스 전에 차단하기 때문.
+   */
+  filterToSelection = true,
 ): Promise<OrderSummary | null> {
   if (!isMock('orders')) {
     const params = new URLSearchParams({ type });
     if (type === 'course' && courseId) params.set('courseId', String(courseId));
     // ⚠️ 가정(BE 요청 中): 장바구니 선택분 결제 — courseIds 리스트 지원 시 선택분만 주문 발급.
-    //   BE 미지원이면 이 파라미터를 무시 → 장바구니 전체 주문 반환(graceful, 깨지지 않음).
+    //   BE 미지원이면 이 파라미터를 무시 → 장바구니 전체 주문 반환.
     if (type === 'course' && courseIds && courseIds.length > 0) {
       params.set('courseIds', courseIds.join(','));
     }
@@ -94,6 +100,24 @@ export async function getCheckoutServer(
     );
     if (!res.success || !res.data) return null;
     const summary = toOrderSummary(res.data);
+
+    // 체크아웃 "표시"용 필터: BE가 courseIds를 무시하고 장바구니 전체를 돌려줘도 선택분만 보이게.
+    //   (BE가 courseIds를 지원하면 이미 선택분만 와서 no-op.)
+    //   ⚠️ 결제 발급 경로는 filterToSelection=false라 여기를 타지 않고 BE 원본 그대로 받는다 →
+    //      createCheckoutOrderAction이 "원본 항목 == 요청 선택분"인지 검증(다건 미지원 시 null→토스 전 차단).
+    if (
+      filterToSelection &&
+      type === 'course' &&
+      courseIds &&
+      courseIds.length > 0
+    ) {
+      const wanted = new Set(courseIds);
+      const picked = summary.items.filter((it) => wanted.has(it.id));
+      if (picked.length === 0) return null;
+      const total = picked.reduce((sum, it) => sum + it.price, 0);
+      return { ...summary, items: picked, totalAmount: total, finalAmount: total };
+    }
+
     return summary.items.length > 0 ? summary : null;
   }
 

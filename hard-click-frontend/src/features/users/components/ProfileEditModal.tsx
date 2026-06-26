@@ -11,6 +11,7 @@ import {
   updateProfileImage,
   changePassword,
   withdrawAccount,
+  verifyMyPassword,
 } from '@/features/users/services';
 import { clearSession } from '@/features/auth/session';
 import { PwField, type PwCheck } from './PwField';
@@ -87,21 +88,34 @@ export default function ProfileEditModal({
 
   /* 진행 상태 */
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false); // 본인확인(verify) 전용 — 저장용 LoadingModal과 분리
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   /* ── 본인 확인 ──
-   * 백엔드에 별도 verify API가 없으므로 Step 1에서는 형식 검증만 진행하고,
-   * 실제 비밀번호 일치 여부는 PATCH /api/members/me(이미지) 또는
-   * PATCH /api/members/me/password(비밀번호) 응답(409)으로 확인. */
+   * POST /api/members/me/password/verify로 현재 비밀번호를 선검증한다(비파괴).
+   * 일치(200) → 다음 스텝 / 불일치(401 AUTH_009) → 인라인 에러로 Step 1 유지.
+   * (이후 PATCH(이미지/비번)도 BE가 currentPassword를 재검증 — 이중 안전망.) */
   const handleCurrentPwChange = (value: string) => {
     setCurrentPw(value);
     if (currentPwCheck) setCurrentPwCheck(null);
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (!currentPw) {
       setCurrentPwCheck({ type: 'error', text: '현재 비밀번호를 입력하세요' });
+      currentPwRef.current?.focus();
+      return;
+    }
+    setIsVerifying(true);
+    const res = await verifyMyPassword(currentPw);
+    setIsVerifying(false);
+    if (!res.success) {
+      // 401 AUTH_009 = 현재 비밀번호 불일치 (api.ts가 로그인 리다이렉트에서 제외)
+      setCurrentPwCheck({
+        type: 'error',
+        text: res.message || '현재 비밀번호가 일치하지 않습니다',
+      });
       currentPwRef.current?.focus();
       return;
     }
@@ -308,6 +322,7 @@ export default function ProfileEditModal({
                   check={currentPwCheck}
                   onCancel={onClose}
                   onConfirm={handleVerify}
+                  pending={isVerifying}
                 />
               )}
 
@@ -432,6 +447,7 @@ interface VerifyStepProps {
   check: PwCheck;
   onCancel: () => void;
   onConfirm: () => void;
+  pending: boolean;
 }
 
 function VerifyStep({
@@ -443,8 +459,9 @@ function VerifyStep({
   check,
   onCancel,
   onConfirm,
+  pending,
 }: VerifyStepProps) {
-  const canConfirm = value.length > 0;
+  const canConfirm = value.length > 0 && !pending;
   return (
     <>
       <div className="flex flex-col items-center">
@@ -476,20 +493,22 @@ function VerifyStep({
         <button
           type="button"
           onClick={onCancel}
-          className="h-12 flex-1 rounded-[10px] border border-[#E2E8F0] bg-white text-base font-semibold text-[#4B5563] hover:bg-[#F8FAFC] transition-colors"
+          disabled={pending}
+          className="h-12 flex-1 rounded-[10px] border border-[#E2E8F0] bg-white text-base font-semibold text-[#4B5563] hover:bg-[#F8FAFC] transition-colors disabled:opacity-60"
         >
           취소
         </button>
         <button
           type="button"
           onClick={onConfirm}
+          disabled={!canConfirm}
           className={`h-12 flex-1 rounded-[10px] text-base font-semibold transition-colors ${
             canConfirm
               ? 'bg-[#2F5DAA] text-white hover:bg-[#1D3E75]'
               : 'bg-[#E2E8F0] text-[#9CA3AF]'
           }`}
         >
-          확인
+          {pending ? '확인 중…' : '확인'}
         </button>
       </div>
     </>
