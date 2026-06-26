@@ -93,11 +93,17 @@ export default function CourseCard({ course, hrefPrefix = '/courses' }: Props) {
         {/* 강사명 */}
         <p className="text-[#4B5563] text-sm mb-3">{course.instructorName}</p>
 
-        {/* 별점 */}
+        {/* 별점 — 리뷰 0개(새 강의)면 "평점 없음"(0.0점처럼 보이지 않게). reviewCount>0 가드가 평점 null도 방어. */}
         <div className="flex items-center gap-1 mb-2">
-          <StarIcon />
-          <span className="text-[#1F2937] font-semibold text-sm">{course.averageRating.toFixed(1)}</span>
-          <span className="text-[#4B5563] text-sm">({course.reviewCount.toLocaleString()})</span>
+          {course.reviewCount > 0 ? (
+            <>
+              <StarIcon />
+              <span className="text-[#1F2937] font-semibold text-sm">{course.averageRating.toFixed(1)}</span>
+              <span className="text-[#4B5563] text-sm">({course.reviewCount.toLocaleString()})</span>
+            </>
+          ) : (
+            <span className="text-[#94A3B8] text-sm">평점 없음</span>
+          )}
         </div>
 
         {/* 수강생 수 */}
