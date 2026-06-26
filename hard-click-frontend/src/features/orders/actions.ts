@@ -15,7 +15,13 @@ import type { OrderType } from './types';
 export async function createCheckoutOrderAction(
   type: OrderType,
   courseIds: number[],
-): Promise<{ orderNo: string; amount: number; orderName: string } | null> {
+): Promise<{
+  orderNo: string;
+  amount: number;
+  orderName: string;
+  /** 실제 주문에 담긴 강의들 — successUrl·수강등록은 요청값이 아닌 이 값을 쓴다 */
+  courseIds: number[];
+} | null> {
   if (!Array.isArray(courseIds) || courseIds.length === 0) return null;
   const safe = [...new Set(courseIds)].filter(
     (n) => Number.isInteger(n) && n > 0,
@@ -34,5 +40,10 @@ export async function createCheckoutOrderAction(
     order.items.length === 1
       ? order.items[0].title
       : `${order.items[0].title} 외 ${order.items.length - 1}건`;
-  return { orderNo: order.orderNo, amount: order.finalAmount, orderName };
+  return {
+    orderNo: order.orderNo,
+    amount: order.finalAmount,
+    orderName,
+    courseIds: order.items.map((i) => i.id),
+  };
 }

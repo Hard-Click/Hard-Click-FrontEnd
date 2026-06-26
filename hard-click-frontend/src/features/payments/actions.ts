@@ -68,12 +68,21 @@ export async function confirmPaymentAction(
   }
 
   // 결제 성공 시 수강 등록까지 마쳐야 학습 가능. 선택분 전체를 등록한다.
-  // (BE confirm이 enrollment를 자동 생성하지 않을 경우 대비 — 이미 수강 중이면 BE가 멱등 처리)
-  await Promise.all(
-    courseIds.map((courseId) =>
-      serverApi.post('/api/enrollments', { courseId }),
-    ),
-  );
+  // - 중복 승인(성공 URL 새로고침 등)이면 첫 승인 때 이미 등록됨 → 재등록 생략(멱등).
+  // - serverApi.post는 throw하지 않고 {success:false}를 반환하므로, Promise.all 결과를 확인해
+  //   일부 등록 실패를 감지하고 사용자에게 알린다(§0.1④ — 결제됐는데 미등록을 조용히 숨기지 않음).
+  let enrollWarning: string | undefined;
+  if (!res.data.duplicate) {
+    const results = await Promise.all(
+      courseIds.map((courseId) =>
+        serverApi.post('/api/enrollments', { courseId }),
+      ),
+    );
+    const failed = results.filter((r) => !r.success).length;
+    if (failed > 0) {
+      enrollWarning = `결제는 완료됐지만 ${failed}개 강의의 수강 등록에 실패했어요. 고객센터로 문의해주세요.`;
+    }
+  }
   revalidatePath('/mypage/courses/in-progress');
 
   return {
@@ -81,6 +90,7 @@ export async function confirmPaymentAction(
     message: '결제가 완료되었습니다.',
     status: res.data.status,
     duplicate: res.data.duplicate,
+    enrollWarning,
   };
 }
 

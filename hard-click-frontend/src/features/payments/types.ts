@@ -87,8 +87,9 @@ export type RefundResult =
 /* ── 결제 승인 (Toss 결제 후 백엔드 confirm) ── */
 
 /**
- * 결제 최종 승인 입력 — 토스 successUrl 쿼리(`paymentKey`/`orderId`/`amount`) + 강의 식별자.
- * (BE `PaymentConfirmRequest`는 OpenAPI상 courseId/amount만이지만 실제론 paymentKey도 사용)
+ * 결제 최종 승인 입력 — 토스 successUrl 쿼리(`paymentKey`/`orderId`/`amount`) + 등록할 강의들.
+ * BE `/api/payments/confirm`은 `{paymentKey, orderId, amount}`(orderId 기반)만 받고, courseIds는
+ * 승인 성공 후 FE가 `/api/enrollments`로 각각 수강 등록하는 데 쓴다(confirm 바디엔 미포함).
  */
 export interface PaymentConfirmInput {
   paymentKey: string;
@@ -111,4 +112,6 @@ export interface PaymentConfirmResult {
   message: string;
   status?: string;
   duplicate?: boolean;
+  /** 결제는 됐으나 일부 강의 수강 등록이 실패한 경우 안내(결과 화면에 노출) */
+  enrollWarning?: string;
 }

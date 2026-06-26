@@ -73,7 +73,9 @@ export default function PaymentButton({
         }
         const toss = await getTossPayments(TOSS_CLIENT_KEY);
         const origin = window.location.origin;
-        const ids = courseIds!.join(',');
+        // 요청값이 아니라 **실제 발급된 주문에 담긴 강의들**로 successUrl을 구성 →
+        // BE가 다른 구성을 돌려줘도 결제 후 등록이 주문과 어긋나지 않음
+        const ids = order.courseIds.join(',');
         // successUrl/failUrl엔 type·courseIds만 싣고, 토스가 paymentKey·orderId·amount를 덧붙임
         await toss.requestPayment('카드', {
           amount: order.amount,
