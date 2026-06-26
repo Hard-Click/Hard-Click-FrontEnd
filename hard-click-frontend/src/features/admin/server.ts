@@ -2,10 +2,9 @@ import { serverApi } from '@/lib/api';
 import { SUBJECTS } from '@/features/courses/subjects';
 import type { AdminRecentReport, AdminRecentNotice } from './types';
 import type { AdminNoticeRow, AdminCourseRow, AdminCourseManageRow } from '@/mocks/admin.mock';
-import type { ReportListApiResponse } from '@/features/reports/types';
-import { REASON_LABEL } from '@/features/reports/types';
 import type { NoticeApiItem, NoticeApiResponse } from '@/features/notices/types';
 import type { CourseListApiItem, CourseListApiResponse } from '@/features/courses/types';
+import { REASON_LABEL } from '@/features/reports/types';
 
 const REPORT_TYPE_LABEL: Record<string, string> = {
   POST: '게시글',
@@ -18,39 +17,69 @@ const REPORT_STATUS_LABEL: Record<string, string> = {
   REJECTED: '반려',
 };
 
+interface AdminDashboardApiResponse {
+  totalMemberCount: number;
+  pendingReportCount: number;
+  totalCourseCount: number;
+  totalNoticeCount: number;
+  recentReports: {
+    reportId: number;
+    targetType: string;
+    targetTitle: string | null;
+    reason: string | null;
+    status: string;
+    reportedAt: string;
+  }[];
+  recentNotices: {
+    noticeId: number;
+    title: string;
+    isImportant: boolean;
+    createdAt: string;
+  }[];
+}
+
+export interface DashboardStats {
+  totalMemberCount: number;
+  pendingReportCount: number;
+  totalCourseCount: number;
+  totalNoticeCount: number;
+}
+
 export async function getDashboardData(): Promise<{
+  stats: DashboardStats;
   recentReports: AdminRecentReport[];
   recentNotices: AdminRecentNotice[];
 }> {
-  const [reportsRes, noticesRes] = await Promise.all([
-    serverApi.get<ReportListApiResponse>('/api/admin/reports?page=0&size=3'),
-    serverApi.get<NoticeApiResponse>('/api/notices?type=GLOBAL&page=0&size=3'),
-  ]);
+  const res = await serverApi.get<AdminDashboardApiResponse>('/api/admin/dashboard');
 
-  if (!reportsRes.success) throw new Error(reportsRes.message ?? '신고 조회에 실패했습니다.');
-  if (!noticesRes.success) throw new Error(noticesRes.message ?? '공지 조회에 실패했습니다.');
+  if (!res.success || !res.data) throw new Error(res.message ?? '대시보드 조회에 실패했습니다.');
 
-  const recentReports: AdminRecentReport[] = reportsRes.data
-    ? reportsRes.data.content.slice(0, 3).map((r, idx) => ({
-        id: idx + 1,
-        type: REPORT_TYPE_LABEL[r.targetType] ?? r.targetType,
-        status: REPORT_STATUS_LABEL[r.status] ?? r.status,
-        title: (r.reason ? (REASON_LABEL[r.reason] ?? r.reason) : null) ?? r.targetContentPreview?.slice(0, 20) ?? '',
-        date: r.reportedAt,
-        reportKey: `${r.targetType}-${r.targetId}`,
-      }))
-    : [];
+  const d = res.data;
 
-  const recentNotices: AdminRecentNotice[] = noticesRes.data
-    ? noticesRes.data.content.slice(0, 3).map((n) => ({
-        id: n.noticeId,
-        badge: n.isPinned ? '중요' : '일반',
-        title: n.title,
-        date: n.createdAt.split('T')[0] ?? n.createdAt,
-      }))
-    : [];
+  const stats: DashboardStats = {
+    totalMemberCount: d.totalMemberCount,
+    pendingReportCount: d.pendingReportCount,
+    totalCourseCount: d.totalCourseCount,
+    totalNoticeCount: d.totalNoticeCount,
+  };
 
-  return { recentReports, recentNotices };
+  const recentReports: AdminRecentReport[] = d.recentReports.map((r) => ({
+    id: r.reportId,
+    type: REPORT_TYPE_LABEL[r.targetType] ?? r.targetType,
+    status: REPORT_STATUS_LABEL[r.status] ?? r.status,
+    title: (r.reason ? (REASON_LABEL[r.reason] ?? r.reason) : null) ?? r.targetTitle?.slice(0, 20) ?? '',
+    date: r.reportedAt?.replace('T', ' ').slice(0, 16) ?? '',
+    reportKey: `${r.targetType}-${r.reportId}`,
+  }));
+
+  const recentNotices: AdminRecentNotice[] = d.recentNotices.map((n) => ({
+    id: n.noticeId,
+    badge: n.isImportant ? '중요' : '일반',
+    title: n.title,
+    date: n.createdAt?.split('T')[0] ?? n.createdAt,
+  }));
+
+  return { stats, recentReports, recentNotices };
 }
 
 function toCourseManageRow(item: CourseListApiItem): AdminCourseManageRow {
