@@ -75,7 +75,7 @@ export default function AdminHeader() {
 
         {/* 우측 */}
         <div className="flex flex-1 items-center justify-end gap-6">
-          <NotificationDropdown role="ADMIN" />
+          <NotificationDropdown />
 
           {/* 관리자 드롭다운 */}
           <div className="relative" ref={dropdownRef}>

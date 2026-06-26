@@ -65,21 +65,51 @@ function formatDate(d: Date) {
 export default function GrassYearlyModal({ type, year = 2026, onClose }: GrassYearlyModalProps) {
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
   const [cells, setCells] = useState<CellData[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const valueLabel = type === 'green' ? '수강량' : '순공시간';
 
   useEffect(() => {
-    const fetcher = type === 'green'
-      ? getLessonsGrass({ year })
-      : getStudyTimeGrass({ year });
-    fetcher.then((res) => {
-      if (res.success) setCells(apiToYearlyCells(type, year, res.data));
-    });
+    let cancelled = false;
+    const fetcher =
+      type === 'green' ? getLessonsGrass({ year }) : getStudyTimeGrass({ year });
+    fetcher
+      .then((res) => {
+        if (cancelled) return;
+        if (res.success) setCells(apiToYearlyCells(type, year, res.data));
+        setLoaded(true); // 성공·실패 모두 로딩 종료 (실패 시 cells는 빈 채로)
+      })
+      .catch(() => {
+        if (!cancelled) setLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [type, year]);
 
+  // 로딩 중(스피너)·실패(빈 데이터) — 어느 경우든 backdrop 클릭으로 닫을 수 있게(이전엔 닫기 불가였음).
   if (cells.length === 0) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-        <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+        onClick={onClose}
+      >
+        {loaded ? (
+          <div
+            className="rounded-2xl bg-white px-8 py-6 text-center shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm text-[#64748B]">연간 기록을 불러오지 못했어요.</p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-3 rounded-lg bg-[#2F5DAA] px-4 py-1.5 text-sm font-semibold text-white"
+            >
+              닫기
+            </button>
+          </div>
+        ) : (
+          <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        )}
       </div>
     );
   }

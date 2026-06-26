@@ -61,9 +61,11 @@ export default function OrderCourseList({
                 <span className="block truncate text-base font-semibold text-[#0F172A]">
                   {item.title}
                 </span>
-                <span className="mt-1 block text-sm text-[#64748B]">
-                  {item.subtitle}
-                </span>
+                {item.subtitle && (
+                  <span className="mt-1 block text-sm text-[#64748B]">
+                    {item.subtitle}
+                  </span>
+                )}
               </span>
               {/* 가격 */}
               <span className="flex-shrink-0 text-lg font-bold text-[#2F5DAA]">

@@ -5,7 +5,7 @@ import {
   getMyCompletedCoursesServer,
 } from '@/features/users/server';
 import { getMyActivitiesServer } from '@/features/mypage/server';
-import { getMyRankingServer } from '@/features/rankings/server';
+import { getMyRankingSummaryServer } from '@/features/rankings/server';
 import {
   getStreakServer,
   getStudyTimeGrassServer,
@@ -22,7 +22,8 @@ const HEATMAP_MONTH = 5;
  * 데이터는 서버에서 조회해 client 섬(MyPageContent)에 props로 전달한다. (CLAUDE.md §0·§4)
  * - 라이브(실서버): 프로필·내 수강·완료 강의·활동(members/me) · 랭킹요약(rankings/me/summary) · 연속일·순공/수강량 잔디(grass) · 오늘 순공시간(study-timers/stats/daily)
  * - ⚠️ 라이브지만 BE 데이터가 비거나 출렁임: 랭킹 rank=null → MyPageContent가 "집계 전" 표시 / 잔디 lessons는 BE 200↔500 출렁이라 500이면 빈 셀 폴백
- * - mock 유지: 채팅(BE 없음) · 잔디 월/연간 '전체보기' 모달(grass/services.ts USE_MOCK 별도) · 비번변경/회원탈퇴(accountDestructive — demo 보호)
+ * - 잔디 '전체보기'(월/연간) 모달도 라이브 — grass/services.ts가 isMock('grass')로 실 /api/grass/* 호출(2026-06-25 라이브 전환)
+ * - mock 유지: 채팅(BE 없음) · 비번변경/회원탈퇴(accountDestructive — demo 보호)
  * BE 출렁 대비 모든 라이브 조회를 .catch 폴백(섹션만 비고 페이지는 정상) — error.tsx는 치명 오류만.
  */
 export default async function MyPage() {
@@ -44,7 +45,7 @@ export default async function MyPage() {
     getMyCoursesServer().catch(() => []),
     getMyCompletedCoursesServer().catch(() => []),
     getMyActivitiesServer().catch(() => null),
-    getMyRankingServer().catch(() => null), // 라이브 /api/rankings/me/summary (rank=null이면 MyPageContent가 "집계 전")
+    getMyRankingSummaryServer().catch(() => null), // 라이브 /api/rankings/me/summary 전체 요약 (rank=null이면 MyPageContent가 "집계 전")
     getStreakServer().catch(() => ({ streak: 0 })), // 라이브 /api/grass/streak
     getDailyStudyStatsServer({ startDate: todayStr, endDate: todayStr }).catch(
       () => [],

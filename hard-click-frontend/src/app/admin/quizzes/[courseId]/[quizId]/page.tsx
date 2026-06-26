@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { getQuizScoresServer } from '@/features/quizzes/server';
+import { getAdminQuizScoresServer } from '@/features/quizzes/server';
 import { summarizeScores } from '@/features/quizzes/scoreboard';
 import QuizScoreOverview from '@/features/quizzes/components/QuizScoreOverview';
 import QuizScoresTable from '@/features/quizzes/components/QuizScoresTable';
@@ -18,7 +18,7 @@ export default async function AdminQuizScoresPage({
   if (Number.isNaN(courseId) || Number.isNaN(quizId)) notFound();
 
   const [board, courseDetail] = await Promise.all([
-    getQuizScoresServer(courseId, quizId),
+    getAdminQuizScoresServer(courseId, quizId),
     getCourseDetailServer(courseId),
   ]);
   if (!board) notFound();

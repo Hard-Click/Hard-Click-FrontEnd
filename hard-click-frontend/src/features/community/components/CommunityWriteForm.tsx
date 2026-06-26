@@ -183,18 +183,15 @@ export default function CommunityWriteForm({
       (activeTab === '질문게시판' || activeTab === '스터디모집') && subject
         ? subject
         : undefined;
-    const filesToUpload = selectedFiles.length > 0 ? selectedFiles : undefined;
-
     if (mode === 'edit' && postId) {
-      const result = await updatePostAction(
-        postId,
-        {
-          title,
-          content,
-          ...(subjectName !== undefined ? { subject: subjectName } : {}),
-        },
-        filesToUpload
-      );
+      const fd = new FormData();
+      fd.append('data', JSON.stringify({
+        title,
+        content,
+        ...(subjectName !== undefined ? { subject: subjectName } : {}),
+      }));
+      selectedFiles.forEach((f) => fd.append('files', f));
+      const result = await updatePostAction(postId, fd);
       setIsSubmitting(false);
       if (!result.success) {
         toast.error(result.message || '게시글 수정에 실패했습니다.');
@@ -203,15 +200,25 @@ export default function CommunityWriteForm({
       toast.success('게시글이 수정되었습니다.');
       router.push(`/community/${postId}`);
     } else {
-      const result = await createPostAction(
-        {
+      const fd = new FormData();
+      if (boardType === 'STUDY') {
+        fd.append('data', JSON.stringify({
+          boardType,
+          title,
+          content: description,
+          ...(subjectName !== undefined ? { subject: subjectName } : {}),
+          maxCount: Number(recruit),
+        }));
+      } else {
+        fd.append('data', JSON.stringify({
           boardType,
           title,
           content,
           ...(subjectName !== undefined ? { subject: subjectName } : {}),
-        },
-        filesToUpload
-      );
+        }));
+        selectedFiles.forEach((f) => fd.append('files', f));
+      }
+      const result = await createPostAction(fd);
       setIsSubmitting(false);
       if (!result.success || !('data' in result) || !result.data?.postId) {
         toast.error(result.message || '게시글 등록에 실패했습니다.');

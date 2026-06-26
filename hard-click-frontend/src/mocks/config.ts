@@ -35,16 +35,18 @@ const MOCK_OVERRIDE: Record<string, boolean> = {
   reviews: false, // /api/courses/{id}/reviews — 목록/작성/수정/삭제 실서버 연동
   enrollments: false, // POST /api/enrollments, GET /api/enrollments/me — 수강신청 실서버 연동
   payments: false, // POST /api/payments/confirm — 토스 결제 승인 실서버 연동(Client Key 필요)
+  orders: false, // GET /api/order/checkout?type=&courseId= — 단건/장바구니/구독 주문 조회(실 orderNo 발급). 이 orderNo가 토스 orderId→confirm 검증에 쓰임. 이전엔 FE가 orderNo 조작→confirm C001 실패였음.
   reports: false, // POST /api/reports — 게시글/댓글/리뷰 신고 실서버 연동
   mypage: false, // /api/members/me(+/courses,/completed,/activities) — 마이페이지 프로필·수강·활동 실서버 연동
-  grass: false, // /api/grass/{streak,study-time,lessons} — 마이페이지 잔디 실서버 연동(200·shape일치). ⚠️ /api/grass·/monthly·/yearly는 BE 500이라 yearly 모달은 mock(client services) 유지
-  studyTimers: false, // stats/daily + 타이머 패널 세션 CRUD 라이브: POST /sessions(startedAt)·PATCH heartbeat(heartbeatAt)·end(endedAt)·GET current. ISO 타임스탬프(toISOString) 요구, BE가 경과시간 누적. ⚠️ pause/resume은 BE PATCH /pause가 C002(500) 버그라 라이브 미배선 → 패널 클라 사이드 유지(정지구간 누적 한계, BE 수정 시 서버 호출).
+  grass: false, // /api/grass/{streak,study-time,lessons,days} — 마이페이지 잔디 실서버 연동(200·shape일치). 연간 모달(client services.ts)도 라이브 전환 완료(2026-06-25 재검증: study-time/lessons?year= 200·365일, 이전 500은 해소됨).
+  studyTimers: false, // stats/daily(마이페이지) + 타이머 패널/학습영상 세션 CRUD 라이브: POST /sessions(startedAt)·PATCH heartbeat(heartbeatAt)·end(endedAt)·GET current. ISO 타임스탬프(toISOString)·BE 경과시간 누적·heartbeat 응답으로 로컬 보정. ⚠️ pause/resume은 BE PATCH /pause가 C002(500) 버그라 라이브 미배선 → 클라 사이드 유지(정지구간 누적 한계, BE 수정 시 서버 호출).
   cart: false, // /api/cart (GET·POST·DELETE/{courseId}) — 전체 CRUD 라이브 검증 완료(2026-06-24 재배포). 항목=minimal{courseId,title,instructorName,price}
   wishlist: false, // /api/wishlist (GET·POST·DELETE/{courseId}) — 전체 CRUD 라이브 검증 완료. 항목=풍부(썸네일·평점·과목·수강생수)
-  rankings: false, // /api/rankings/me/summary — 마이페이지 내 랭킹 라이브(getMyRankingServer). ⚠️ 활동 시드 전엔 rank=null→"집계 전" 표시(BE 시드 후 자동 채워짐, 현재는 실값 옴). 보드(getRankingBoardServer)는 USE_MOCK 유지(3-metric 재작성 별도).
+  rankings: false, // /api/rankings/me/summary(내 랭킹) + 보드 3지표(study-time/lessons/accepted-comments?period=daily|weekly|monthly) 라이브. ⚠️ 보드는 BE가 이름 안 줘서(memberId만) "나"/"학습자" 익명화(BE 닉네임 추가 시 자동개선). 활동 시드 전엔 rank=null→0위.
   accountDestructive: false, // PATCH /api/members/me/password · DELETE /api/members/me — 비번변경·회원탈퇴 라이브(BE 정상, 틀린비번→401 AUTH_009; api.ts가 AUTH_009는 로그인리다이렉트 제외). ⚠️ 공유 demo 계정에선 실제로 비번 변경·영구 삭제되니 데모/발표 중 주의 — 안현 결정(2026-06-25).
-  quizzes: false, // 강사 퀴즈 "읽기"만 라이브(server.ts): GET /api/instructor/quizzes(목록)·/api/instructors/me/quizzes/{id}/statistics(점수통계). 섹션→주차 매핑. ⚠️ 작성/수정/삭제(actions.ts)·학생 흐름(studentServer/Actions)은 아직 USE_MOCK(전역)이라 mock — Phase 2(섹션 모델 정리 후 연동).
+  quizzes: false, // 강사 읽기(server.ts: 목록·점수통계)·학생 흐름(studentServer/studentActions: 목록·응시·리뷰 reports/me·제출) 전부 라이브. 섹션→주차 매핑. ⚠️ 강사 쓰기(actions.ts 등록/수정/삭제)는 실엔드포인트로 배선됐으나 BE 비즈니스 로직이 stub(201/200만 반환·저장 안 됨) — BE 구현 시 매퍼 가정(sectionId←week·correctOptionId←answerIndex+1) 검증 필요.
   subscriptions: false, // GET /api/subscriptions/me(상태)+/plan(가격) 라이브 합성 → 구독 상태/플랜. ⚠️ 가격은 BE 고정 plan.price(FE 수능 D-day 동적가격은 placeholder였음). 구독하기(POST)는 결제 흐름(mock 규칙) 경유.
+  notifications: false, // 헤더 종 알림 — GET /api/notifications(목록,data={content,hasNext})·/unread-count(미읽음수)·PATCH /api/notifications/{id}/read(읽음). 루트 layout에서 서버조회→NotificationProvider(AuthProvider 패턴 미러). 라이브 검증(2026-06-25). ⚠️ SSE 실시간(/subscribe)은 BE M3 완료(6/26) 후 — 지금은 조회+읽음만(읽음=Provider 낙관적 갱신).
   // ⚠️ 잔디 lessons/yearly/monthly는 콜드(첫호출) 200 후 연속 500 출렁(BE 작업중). members/me/profile-image=항상 500. subscriptions/me=500. quiz는 배포됨(미연동 도메인). chat=BE 없음.
   // 공지·커뮤니티·인증은 팀이 별도 플래그(USE_MOCK_NOTICES/COMMUNITY/AUTH)로 관리 → 여기서 관여하지 않음.
 };

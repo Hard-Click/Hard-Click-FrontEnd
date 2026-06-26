@@ -4,9 +4,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import {
-  getQuizzesServer,
+  getAdminCourseQuizzesServer,
   getTakenWeeksByCourseServer,
 } from '@/features/quizzes/server';
+import {
+  createAdminQuizAction,
+  updateAdminQuizAction,
+  deleteAdminQuizAction,
+} from '@/features/quizzes/actions';
 import QuizListContent from '@/features/quizzes/components/QuizListContent';
 import QuizCreateButton from '@/features/quizzes/components/QuizCreateButton';
 import { fetchAllAdminCourses } from '@/features/admin/server';
@@ -21,7 +26,7 @@ export default async function AdminCourseQuizzesPage({
   if (Number.isNaN(courseId)) notFound();
 
   const [quizzes, takenWeeksByCourse, courses] = await Promise.all([
-    getQuizzesServer(courseId),
+    getAdminCourseQuizzesServer(courseId),
     getTakenWeeksByCourseServer(),
     fetchAllAdminCourses(),
   ]);
@@ -68,6 +73,8 @@ export default async function AdminCourseQuizzesPage({
           courses={quizFormCourses}
           takenWeeksByCourse={takenWeeksByCourse}
           presetCourseId={courseId}
+          createAction={createAdminQuizAction}
+          updateAction={updateAdminQuizAction}
         />
       </header>
 
@@ -88,6 +95,9 @@ export default async function AdminCourseQuizzesPage({
         takenWeeksByCourse={takenWeeksByCourse}
         basePath="/admin/quizzes"
         withInstructorSelect
+        deleteAction={deleteAdminQuizAction}
+        createAction={createAdminQuizAction}
+        updateAction={updateAdminQuizAction}
       />
     </div>
   );
