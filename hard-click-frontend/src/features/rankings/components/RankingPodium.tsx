@@ -39,8 +39,14 @@ function PodiumCard({ user, isFirst }: { user: RankingUser; isFirst: boolean }) 
       </div>
 
       {/* 이름 */}
-      <p className="mt-4 text-sm font-bold text-[#1E293B]">{user.name}</p>
-      <p className="mt-0.5 text-xs text-[#94A3B8]">{user.subtitle}</p>
+      <p
+        className={`mt-4 text-sm font-bold ${user.isMe ? 'text-[#2F5DAA]' : 'text-[#1E293B]'}`}
+      >
+        {user.name}
+      </p>
+      {user.subtitle && (
+        <p className="mt-0.5 text-xs text-[#94A3B8]">{user.subtitle}</p>
+      )}
 
       {/* 점수 */}
       <div

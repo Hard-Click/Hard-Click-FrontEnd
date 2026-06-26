@@ -42,7 +42,7 @@ const MOCK_OVERRIDE: Record<string, boolean> = {
   studyTimers: false, // /api/study-timers/stats/daily — 마이페이지 "오늘 순공시간" 실서버(200·shape일치). ⚠️ 타이머 패널 세션은 services.ts USE_MOCK 별도(필드 불일치)
   cart: false, // /api/cart (GET·POST·DELETE/{courseId}) — 전체 CRUD 라이브 검증 완료(2026-06-24 재배포). 항목=minimal{courseId,title,instructorName,price}
   wishlist: false, // /api/wishlist (GET·POST·DELETE/{courseId}) — 전체 CRUD 라이브 검증 완료. 항목=풍부(썸네일·평점·과목·수강생수)
-  rankings: false, // /api/rankings/me/summary — 마이페이지 내 랭킹 라이브(getMyRankingServer). ⚠️ 활동 시드 전엔 rank=null→"집계 전" 표시(BE 시드 후 자동 채워짐, 현재는 실값 옴). 보드(getRankingBoardServer)는 USE_MOCK 유지(3-metric 재작성 별도).
+  rankings: false, // /api/rankings/me/summary(내 랭킹) + 보드 3지표(study-time/lessons/accepted-comments?period=daily|weekly|monthly) 라이브. ⚠️ 보드는 BE가 이름 안 줘서(memberId만) "나"/"학습자" 익명화(BE 닉네임 추가 시 자동개선). 활동 시드 전엔 rank=null→0위.
   accountDestructive: false, // PATCH /api/members/me/password · DELETE /api/members/me — 비번변경·회원탈퇴 라이브(BE 정상, 틀린비번→401 AUTH_009; api.ts가 AUTH_009는 로그인리다이렉트 제외). ⚠️ 공유 demo 계정에선 실제로 비번 변경·영구 삭제되니 데모/발표 중 주의 — 안현 결정(2026-06-25).
   quizzes: false, // 강사 읽기(server.ts: 목록·점수통계)·학생 흐름(studentServer/studentActions: 목록·응시·리뷰 reports/me·제출) 전부 라이브. 섹션→주차 매핑. ⚠️ 강사 쓰기(actions.ts 등록/수정/삭제)는 실엔드포인트로 배선됐으나 BE 비즈니스 로직이 stub(201/200만 반환·저장 안 됨) — BE 구현 시 매퍼 가정(sectionId←week·correctOptionId←answerIndex+1) 검증 필요.
   subscriptions: false, // GET /api/subscriptions/me(상태)+/plan(가격) 라이브 합성 → 구독 상태/플랜. ⚠️ 가격은 BE 고정 plan.price(FE 수능 D-day 동적가격은 placeholder였음). 구독하기(POST)는 결제 흐름(mock 규칙) 경유.

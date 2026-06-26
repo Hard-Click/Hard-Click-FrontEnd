@@ -6,7 +6,13 @@ interface RankingRowProps {
 
 export default function RankingRow({ user }: RankingRowProps) {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-[#E2E8F0] bg-white px-5 py-3 shadow-sm">
+    <div
+      className={`flex items-center gap-4 rounded-xl border px-5 py-3 shadow-sm ${
+        user.isMe
+          ? 'border-[#2F5DAA] bg-[#EFF6FF] ring-1 ring-[#2F5DAA]'
+          : 'border-[#E2E8F0] bg-white'
+      }`}
+    >
       {/* 순위 */}
       <span className="w-6 text-center text-sm font-bold text-[#64748B]">{user.rank}</span>
 
@@ -18,7 +24,9 @@ export default function RankingRow({ user }: RankingRowProps) {
       {/* 이름 + 서브타이틀 */}
       <div className="flex-1">
         <p className="text-sm font-semibold text-[#1E293B]">{user.name}</p>
-        <p className="text-xs text-[#94A3B8]">{user.subtitle}</p>
+        {user.subtitle && (
+          <p className="text-xs text-[#94A3B8]">{user.subtitle}</p>
+        )}
       </div>
 
       {/* 값 */}

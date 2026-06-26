@@ -5,7 +5,7 @@ import {
   getMyCompletedCoursesServer,
 } from '@/features/users/server';
 import { getMyActivitiesServer } from '@/features/mypage/server';
-import { getMyRankingServer } from '@/features/rankings/server';
+import { getMyRankingSummaryServer } from '@/features/rankings/server';
 import {
   getStreakServer,
   getStudyTimeGrassServer,
@@ -45,7 +45,7 @@ export default async function MyPage() {
     getMyCoursesServer().catch(() => []),
     getMyCompletedCoursesServer().catch(() => []),
     getMyActivitiesServer().catch(() => null),
-    getMyRankingServer().catch(() => null), // 라이브 /api/rankings/me/summary (rank=null이면 MyPageContent가 "집계 전")
+    getMyRankingSummaryServer().catch(() => null), // 라이브 /api/rankings/me/summary 전체 요약 (rank=null이면 MyPageContent가 "집계 전")
     getStreakServer().catch(() => ({ streak: 0 })), // 라이브 /api/grass/streak
     getDailyStudyStatsServer({ startDate: todayStr, endDate: todayStr }).catch(
       () => [],
