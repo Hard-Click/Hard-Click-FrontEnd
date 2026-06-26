@@ -54,22 +54,28 @@ export default function PaymentResultClient() {
   const paymentKey = sp.get('paymentKey');
   const orderId = sp.get('orderId');
   const amountParam = sp.get('amount');
+  const courseIdsParam = sp.get('courseIds');
   const courseIdParam = sp.get('courseId');
   const type = sp.get('type');
   const status = sp.get('status');
   const failMessage = sp.get('message');
 
   const amountNum = amountParam ? Number(amountParam) : NaN;
-  const courseId = courseIdParam ? Number(courseIdParam) : NaN;
+  // 장바구니=courseIds(콤마), 단건=courseId 둘 다 수용 → 결제 후 수강 등록할 강의 목록
+  const courseIds = (courseIdsParam ?? courseIdParam ?? '')
+    .split(',')
+    .map((s) => Number(s.trim()))
+    .filter((n) => Number.isInteger(n) && n > 0);
+  const courseIdsKey = courseIds.join(',');
   const isSubscription = type === 'subscription';
   const orderNo = sp.get('orderNo') ?? orderId ?? '';
 
-  // 토스 success 진입(paymentKey+orderId+amount+courseId 전부 유효) → 승인 단계
+  // 토스 success 진입(paymentKey+orderId+amount+courseIds 전부 유효) → 승인 단계
   const canConfirm =
     !!paymentKey &&
     !!orderId &&
     Number.isFinite(amountNum) &&
-    Number.isInteger(courseId);
+    courseIds.length > 0;
 
   const [phase, setPhase] = useState<Phase>(() => {
     if (status === 'fail') return 'fail';
@@ -91,7 +97,7 @@ export default function PaymentResultClient() {
       paymentKey: paymentKey!,
       orderId: orderId!,
       amount: amountNum,
-      courseId,
+      courseIds: courseIdsKey.split(',').map(Number),
     })
       .then((res) => {
         if (res.success) {
@@ -105,7 +111,7 @@ export default function PaymentResultClient() {
         setErrorMsg('결제 승인 중 오류가 발생했습니다.');
         setPhase('fail');
       });
-  }, [phase, canConfirm, paymentKey, orderId, amountNum, courseId]);
+  }, [phase, canConfirm, paymentKey, orderId, amountNum, courseIdsKey]);
 
   if (phase === 'confirming') {
     return (
@@ -123,8 +129,8 @@ export default function PaymentResultClient() {
 
   if (phase === 'fail') {
     const backHref =
-      type === 'course' && Number.isInteger(courseId)
-        ? `/checkout?type=course&courseId=${courseId}`
+      type === 'course' && courseIds.length > 0
+        ? `/checkout?type=course&courseIds=${courseIdsKey}`
         : '/courses';
     return (
       <Card>

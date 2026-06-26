@@ -30,9 +30,17 @@ const SparkleIcon = (
 export default async function CheckoutPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string; courseId?: string }>;
+  searchParams: Promise<{
+    type?: string;
+    courseId?: string;
+    courseIds?: string;
+  }>;
 }) {
-  const { type: typeParam, courseId: courseIdParam } = await searchParams;
+  const {
+    type: typeParam,
+    courseId: courseIdParam,
+    courseIds: courseIdsParam,
+  } = await searchParams;
   const type: OrderType =
     typeParam === 'subscription' ? 'subscription' : 'course';
   // 유료 수강신청에서 ?courseId=N으로 진입하면 단건 강의 결제.
@@ -42,7 +50,17 @@ export default async function CheckoutPage({
     if (!/^[1-9]\d*$/.test(courseIdParam)) notFound();
     courseId = Number(courseIdParam);
   }
-  const order = await getCheckoutServer(type, courseId);
+  // 장바구니에서 선택분 결제로 진입하면 ?courseIds=1,2,3 (선택분만 주문).
+  let courseIds: number[] | undefined;
+  if (courseIdsParam !== undefined) {
+    const parsed = courseIdsParam
+      .split(',')
+      .map((s) => Number(s.trim()))
+      .filter((n) => Number.isInteger(n) && n > 0);
+    if (parsed.length === 0) notFound();
+    courseIds = [...new Set(parsed)];
+  }
+  const order = await getCheckoutServer(type, courseId, courseIds);
   if (!order) notFound();
 
   // 구독 결제는 항상 단일 상품(FLOWN 연간 패스) — 빈 배열은 비정상이므로 방어
@@ -105,7 +123,7 @@ export default async function CheckoutPage({
             </div>
           </div>
         ) : (
-          <CheckoutCourseClient order={order} courseId={courseId} />
+          <CheckoutCourseClient order={order} />
         )}
       </div>
     </div>

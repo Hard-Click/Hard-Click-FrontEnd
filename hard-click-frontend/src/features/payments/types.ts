@@ -94,7 +94,8 @@ export interface PaymentConfirmInput {
   paymentKey: string;
   orderId: string;
   amount: number;
-  courseId: number;
+  /** 결제 후 수강 등록할 강의들 — 단건이면 1개, 장바구니면 선택분 전체 */
+  courseIds: number[];
 }
 
 /** 백엔드 결제 승인 응답 data (`PaymentConfirmResponse`) */

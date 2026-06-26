@@ -79,10 +79,16 @@ function getSingleCourseOrderMock(courseId: number): OrderSummary | null {
 export async function getCheckoutServer(
   type: OrderType,
   courseId?: number,
+  courseIds?: number[],
 ): Promise<OrderSummary | null> {
   if (!isMock('orders')) {
     const params = new URLSearchParams({ type });
     if (type === 'course' && courseId) params.set('courseId', String(courseId));
+    // ⚠️ 가정(BE 요청 中): 장바구니 선택분 결제 — courseIds 리스트 지원 시 선택분만 주문 발급.
+    //   BE 미지원이면 이 파라미터를 무시 → 장바구니 전체 주문 반환(graceful, 깨지지 않음).
+    if (type === 'course' && courseIds && courseIds.length > 0) {
+      params.set('courseIds', courseIds.join(','));
+    }
     const res = await serverApi.get<ApiOrder>(
       `/api/order/checkout?${params.toString()}`,
     );
@@ -104,19 +110,26 @@ export async function getCheckoutServer(
       finalAmount: price,
     };
   }
-  const items = mockCart.items.map((it) => ({
-    id: it.courseId,
-    title: it.courseTitle,
-    subtitle: it.instructorName,
-    price: it.price,
-  }));
+  const items = mockCart.items
+    // courseIds가 오면 선택분만(프리뷰 일관성), 없으면 장바구니 전체
+    .filter(
+      (it) =>
+        !courseIds || courseIds.length === 0 || courseIds.includes(it.courseId),
+    )
+    .map((it) => ({
+      id: it.courseId,
+      title: it.courseTitle,
+      subtitle: it.instructorName,
+      price: it.price,
+    }));
   if (items.length === 0) return null;
+  const total = items.reduce((sum, it) => sum + it.price, 0);
   return {
     orderNo: MOCK_ORDER_NO,
     type: 'course',
     status: 'READY',
     items,
-    totalAmount: mockCart.totalPrice,
-    finalAmount: mockCart.totalPrice,
+    totalAmount: total,
+    finalAmount: total,
   };
 }

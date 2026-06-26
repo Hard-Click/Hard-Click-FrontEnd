@@ -24,6 +24,9 @@ export async function confirmPaymentAction(
   input: PaymentConfirmInput,
 ): Promise<PaymentConfirmResult> {
   // 입력 검증 (Server Action 경계)
+  const courseIds = Array.isArray(input?.courseIds)
+    ? [...new Set(input.courseIds)].filter((n) => Number.isInteger(n) && n > 0)
+    : [];
   if (
     typeof input?.paymentKey !== 'string' ||
     input.paymentKey.length === 0 ||
@@ -31,8 +34,7 @@ export async function confirmPaymentAction(
     input.orderId.length === 0 ||
     !Number.isFinite(input.amount) ||
     input.amount <= 0 ||
-    !Number.isInteger(input.courseId) ||
-    input.courseId <= 0
+    courseIds.length === 0
   ) {
     return { success: false, message: '결제 정보가 올바르지 않습니다.' };
   }
@@ -46,13 +48,14 @@ export async function confirmPaymentAction(
     };
   }
 
+  // BE PaymentConfirmRequest = { paymentKey, orderId, amount } (orderId 기반 검증·승인).
+  // 주문이 여러 강의(장바구니 선택분)를 담아도 confirm은 orderId 1건으로 처리된다.
   const res = await serverApi.post<PaymentConfirmResponseData>(
     '/api/payments/confirm',
     {
       paymentKey: input.paymentKey,
       orderId: input.orderId,
       amount: input.amount,
-      courseId: input.courseId,
     },
     { 'Idempotency-Key': randomUUID() },
   );
@@ -64,9 +67,13 @@ export async function confirmPaymentAction(
     };
   }
 
-  // 결제 성공 시 수강 등록까지 마쳐야 학습 가능.
+  // 결제 성공 시 수강 등록까지 마쳐야 학습 가능. 선택분 전체를 등록한다.
   // (BE confirm이 enrollment를 자동 생성하지 않을 경우 대비 — 이미 수강 중이면 BE가 멱등 처리)
-  await serverApi.post('/api/enrollments', { courseId: input.courseId });
+  await Promise.all(
+    courseIds.map((courseId) =>
+      serverApi.post('/api/enrollments', { courseId }),
+    ),
+  );
   revalidatePath('/mypage/courses/in-progress');
 
   return {
