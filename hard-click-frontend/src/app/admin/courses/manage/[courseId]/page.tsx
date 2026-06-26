@@ -1,5 +1,5 @@
 import { getCourseDetailServer } from '@/features/courses/server';
-import { getCourseNoticesServer } from '@/features/notices/server';
+import { getCourseNoticePreviewServer } from '@/features/notices/server';
 import AdminCourseDetailContent from '@/features/admin/components/AdminCourseDetailContent';
 
 export default async function AdminCourseDetailPage({
@@ -19,11 +19,11 @@ export default async function AdminCourseDetailPage({
 
   const [course, courseNotices] = await Promise.all([
     getCourseDetailServer(Number(courseId)),
-    getCourseNoticesServer(Number(courseId), { page: 0 }),
+    getCourseNoticePreviewServer(Number(courseId)),
   ]);
 
   const initialCourse = course
-    ? { ...course, notices: courseNotices.notices }
+    ? { ...course, notices: courseNotices }
     : course;
 
   const fromReport = from === 'report';

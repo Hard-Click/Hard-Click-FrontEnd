@@ -6,9 +6,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { deleteCourse, publishCourse } from '@/features/instructor/services';
+import CourseReviewSection from '@/features/courses/components/CourseReviewSection';
+import CourseNoticeSection from '@/features/courses/components/CourseNoticeSection';
 import type {
   CourseDetail,
-  Review,
   CurriculumLesson,
 } from '@/features/courses/types';
 import { StarRow, StarIcon } from '@/components/common/RatingStars';
@@ -45,8 +46,6 @@ const NAV_ITEMS = [
   { id: 'curriculum', label: '커리큘럼' },
   { id: 'reviews', label: '수강평' },
 ];
-
-const REVIEWS_PER_PAGE = 5;
 
 function SideNav({
   activeId,
@@ -117,29 +116,6 @@ export default function AdminCourseDetailContent({
   const [isMutating, setIsMutating] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const [reviews, setReviews] = useState<Review[]>(
-    initialCourse?.reviews ?? []
-  );
-  const [deletingReviewId, setDeletingReviewId] = useState<number | null>(null);
-
-  const handleDeleteReview = (reviewId: number) => {
-    setReviews((prev) => prev.filter((r) => r.reviewId !== reviewId));
-    setDeletingReviewId(null);
-    toast.success('수강평이 삭제되었습니다.');
-  };
-  const [reviewPage, setReviewPage] = useState(() => {
-    if (!highlightReviewId) return 1;
-    const idx = (initialCourse?.reviews ?? []).findIndex(
-      (r) => r.reviewId === highlightReviewId
-    );
-    return idx >= 0 ? Math.floor(idx / REVIEWS_PER_PAGE) + 1 : 1;
-  });
-
-  // 리뷰 삭제로 페이지 수가 줄면 마지막 페이지로 보정 (빈 페이지 방지)
-  useEffect(() => {
-    const lastPage = Math.max(1, Math.ceil(reviews.length / REVIEWS_PER_PAGE));
-    setReviewPage((prev) => (prev > lastPage ? lastPage : prev));
-  }, [reviews.length]);
 
   /* 케밥 메뉴 외부 클릭 닫기 */
   useEffect(() => {
@@ -244,23 +220,6 @@ export default function AdminCourseDetailContent({
       />
     );
   }
-
-  const maxRatingCount = Math.max(
-    ...course.ratingDistribution.map((d) => d.count),
-    1
-  );
-  const totalReviewPages = Math.ceil(reviews.length / REVIEWS_PER_PAGE);
-  const displayedReviews = reviews.slice(
-    (reviewPage - 1) * REVIEWS_PER_PAGE,
-    reviewPage * REVIEWS_PER_PAGE
-  );
-  // 공지 고정 맨 위, 나머지 최신순 정렬
-  const sortedNotices = [...course.notices].sort((a, b) => {
-    if (a.isPinned && !b.isPinned) return -1;
-    if (!a.isPinned && b.isPinned) return 1;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
-  const displayedNotices = sortedNotices.slice(0, 3);
 
   return (
     <div className="min-h-screen bg-[#F0F2F5]">
@@ -476,79 +435,11 @@ export default function AdminCourseDetailContent({
           {/* ── 메인 콘텐츠 (풀 너비) ── */}
           <div className="flex flex-col gap-8">
             {/* ── 공지사항 ── */}
-            <section id="notices" className="scroll-mt-6">
-              <div
-                className="bg-white border border-[#E2E8F0] shadow-[0_4px_10px_rgba(0,0,0,0.06)] rounded-2xl flex flex-col gap-6"
-                style={{ padding: '33px' }}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="/icons/bellBlueIcon.svg"
-                      width={20}
-                      height={20}
-                      alt=""
-                    />
-                    <h2 className="text-xl font-bold text-[#1F2937]">
-                      강의 공지사항
-                    </h2>
-                  </div>
-                  <Link
-                    href={`/admin/courses/manage/${courseId}/notices`}
-                    className="w-20 h-10 border border-[#E2E8F0] rounded-2xl text-sm font-medium text-[#4B5563] hover:bg-[#F8FAFC] transition-colors flex items-center justify-center"
-                  >
-                    전체보기
-                  </Link>
-                </div>
-
-                {course.notices.length === 0 ? (
-                  <p className="text-sm text-[#9CA3AF] text-center py-4">
-                    공지사항이 없습니다.
-                  </p>
-                ) : (
-                  <div className="flex flex-col gap-3">
-                    {displayedNotices.map((notice) => (
-                      <Link
-                        key={notice.noticeId}
-                        href={`/admin/courses/manage/${courseId}/notices/${notice.noticeId}`}
-                        className={`rounded-[20px] h-[89px] overflow-hidden flex flex-col hover:opacity-80 transition-opacity ${
-                          notice.isPinned
-                            ? 'bg-[rgba(47,93,170,0.05)] border border-[#2F5DAA]'
-                            : 'bg-white border border-[#E2E8F0]'
-                        }`}
-                        style={{ padding: '17px 17px 1px' }}
-                      >
-                        <div className="flex items-center gap-2 mb-2">
-                          {notice.isPinned && (
-                            <span className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 bg-[#2F5DAA] text-white text-xs font-semibold rounded-[4px]">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src="/icons/pinIcon.svg"
-                                width={11}
-                                height={11}
-                                alt=""
-                                style={{ filter: 'brightness(0) invert(1)' }}
-                              />
-                              공지
-                            </span>
-                          )}
-                          <p className="text-[18px] font-semibold text-[#1F2937] leading-[27px] line-clamp-1 flex-1">
-                            {notice.title}
-                          </p>
-                          <span className="text-xs text-[#9CA3AF] flex-shrink-0">
-                            {notice.createdAt}
-                          </span>
-                        </div>
-                        <p className="text-sm text-[#4B5563] line-clamp-1">
-                          {notice.content}
-                        </p>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
+            <CourseNoticeSection
+              notices={course.notices}
+              listHref={`/admin/courses/manage/${courseId}/notices`}
+              noticeHref={(id) => `/admin/courses/manage/${courseId}/notices/${id}`}
+            />
 
             {/* ── 강사소개 ── */}
             <section id="instructor" className="scroll-mt-6">
@@ -851,221 +742,13 @@ export default function AdminCourseDetailContent({
               </div>
             </section>
 
-            {/* ── 수강평 ── */}
-            <section id="reviews" className="scroll-mt-6 mb-10">
-              <div
-                className="bg-white border border-[#D5D8DD]"
-                style={{ padding: '33px 33px 1px' }}
-              >
-                <h2 className="text-2xl font-semibold text-[#1A1F2E] mb-6">
-                  수강평
-                </h2>
-
-                {reviews.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center pt-10 pb-12">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="/icons/emptyStateIcon.svg"
-                      width={80}
-                      height={80}
-                      alt=""
-                    />
-                    <p className="text-base font-semibold text-[#1A1F2E] mt-[41px] mb-[26.5px]">
-                      아직 등록된 수강평이 없습니다.
-                    </p>
-                    <p className="text-sm text-[#9CA3AF]">
-                      강의를 수강하고 리뷰를 작성해보세요.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    {/* 별점 요약 */}
-                    <div className="flex items-center gap-6 pb-8 border-b border-[#D5D8DD] mb-8">
-                      <div
-                        className="flex flex-col items-center justify-center gap-2 bg-[#E8EAED] rounded-2xl flex-shrink-0"
-                        style={{ width: 431, height: 160 }}
-                      >
-                        <span className="text-[48px] font-bold text-[#1A1F2E] leading-none">
-                          {course.averageRating}
-                        </span>
-                        <StarRow rating={course.averageRating} size={24} />
-                        <span className="text-sm text-[#1A1F2E]">
-                          총 {course.reviewCount.toLocaleString()}개 리뷰
-                        </span>
-                      </div>
-
-                      <div className="flex-1 flex flex-col gap-3">
-                        {[5, 4, 3, 2, 1].map((star) => {
-                          const dist = course.ratingDistribution.find(
-                            (d) => d.stars === star
-                          );
-                          const count = dist?.count ?? 0;
-                          const pct = Math.round(
-                            (count / maxRatingCount) * 100
-                          );
-                          return (
-                            <div key={star} className="flex items-center gap-3">
-                              <div className="flex items-center gap-1 w-20 flex-shrink-0">
-                                <StarIcon filled size={16} />
-                                <span className="text-sm font-medium text-[#1A1F2E]">
-                                  {star}
-                                </span>
-                              </div>
-                              <div className="flex-1 h-[10px] bg-[#E8EAED] rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-[#FFB800] rounded-full"
-                                  style={{ width: `${pct}%` }}
-                                />
-                              </div>
-                              <span className="text-sm text-[#1A1F2E] w-16 text-right flex-shrink-0">
-                                {count}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* 리뷰 목록 */}
-                    <div className="flex flex-col gap-4">
-                      {displayedReviews.map((review) => (
-                        <div
-                          key={review.reviewId}
-                          className={`rounded-2xl border ${
-                            highlightReviewId === review.reviewId
-                              ? 'border-[#F59E0B] shadow-[0_0_0_3px_rgba(245,158,11,0.2)]'
-                              : 'border-[#D5D8DD]'
-                          }`}
-                          style={{ padding: '21px 21px 1px' }}
-                        >
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-full bg-[rgba(47,93,170,0.1)] flex items-center justify-center flex-shrink-0">
-                                <span className="text-lg font-semibold text-[#2F5DAA]">
-                                  {review.studentName[0]}
-                                </span>
-                              </div>
-                              <div>
-                                <p className="text-base font-medium text-[#1A1F2E]">
-                                  {review.studentName}
-                                </p>
-                                <p className="text-xs text-[#1A1F2E]">
-                                  {review.createdAt}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center gap-1">
-                                <StarRow rating={review.rating} size={16} />
-                                <span className="text-sm font-semibold text-[#FFB800]">
-                                  {review.rating}
-                                </span>
-                              </div>
-                              {/* 관리자는 리뷰 삭제 가능 */}
-                              {!readOnly && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setDeletingReviewId(review.reviewId)
-                                  }
-                                  className="w-7 h-7 flex items-center justify-center rounded-2xl hover:bg-red-50 transition-colors"
-                                  title="삭제"
-                                >
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
-                                    src="/icons/trashIcon.svg"
-                                    width={14}
-                                    height={14}
-                                    alt="삭제"
-                                  />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                          <p className="text-sm leading-[23px] text-[#1A1F2E] pb-5">
-                            {review.content}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* 페이지네이션 */}
-                    {totalReviewPages > 1 && (
-                      <div className="flex justify-center items-center gap-1 pt-4 pb-6">
-                        {/* 이전 버튼 */}
-                        <button
-                          onClick={() =>
-                            setReviewPage((p) => Math.max(1, p - 1))
-                          }
-                          disabled={reviewPage === 1}
-                          className="w-9 h-9 flex items-center justify-center rounded-xl text-sm text-[#9CA3AF] hover:bg-[#F0F2F5] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                          >
-                            <path
-                              d="M10 4L6 8l4 4"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </button>
-
-                        {/* 페이지 번호 */}
-                        {Array.from(
-                          { length: totalReviewPages },
-                          (_, i) => i + 1
-                        ).map((page) => (
-                          <button
-                            key={page}
-                            onClick={() => setReviewPage(page)}
-                            className={`w-9 h-9 flex items-center justify-center rounded-xl text-sm font-medium transition-colors ${
-                              reviewPage === page
-                                ? 'bg-[#2F5DAA] text-white'
-                                : 'text-[#4B5563] hover:bg-[#F0F2F5]'
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        ))}
-
-                        {/* 다음 버튼 */}
-                        <button
-                          onClick={() =>
-                            setReviewPage((p) =>
-                              Math.min(totalReviewPages, p + 1)
-                            )
-                          }
-                          disabled={reviewPage === totalReviewPages}
-                          className="w-9 h-9 flex items-center justify-center rounded-xl text-sm text-[#9CA3AF] hover:bg-[#F0F2F5] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                          >
-                            <path
-                              d="M6 4l4 4-4 4"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            </section>
+            {/* ── 수강평 (공용 컴포넌트 — 라이브 로드). 관리자는 신고·수정·삭제 불가(canReport=false) ── */}
+            <CourseReviewSection
+              courseId={courseId}
+              scrollMtClassName="scroll-mt-6"
+              canReport={false}
+              highlightReviewId={highlightReviewId}
+            />
           </div>
         </div>
       </div>
@@ -1112,17 +795,6 @@ export default function AdminCourseDetailContent({
         />
       )}
 
-      {/* 수강평 삭제 확인 모달 */}
-      {deletingReviewId !== null && (
-        <ConfirmModal
-          icon="warning"
-          title="수강평 삭제"
-          description="해당 수강평을 삭제하시겠습니까?"
-          confirmText="삭제"
-          onCancel={() => setDeletingReviewId(null)}
-          onConfirm={() => handleDeleteReview(deletingReviewId)}
-        />
-      )}
 
       {/* 미리보기 영상 모달 (학생 강의상세와 동일) */}
       {previewLesson && (
