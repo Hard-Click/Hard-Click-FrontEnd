@@ -63,8 +63,10 @@ function toRankItem(slot: BeRankSlot | undefined): RankItem {
 interface RankingViewItem {
   rank: number;
   memberId: number;
-  /** ⭐ BE가 닉네임 필드를 추가하면 자동으로 이 값이 표시된다(현재 미제공 → 익명). 필드명은 BE 확정 시 맞춤. */
-  nickname?: string;
+  /** BE 표시 이름 (라이브 검증 2026-06-26: '시연학생'·'학생17' 등). 이전엔 미제공이라 '학습자'로 익명이었음. */
+  memberName: string;
+  /** 연속 학습일 (BE 제공, 라이브 검증 2026-06-26). subtitle "연속 N일"로 표시(0이면 숨김). */
+  currentStreakDays: number;
 }
 interface StudyTimeRankingView {
   rankings: (RankingViewItem & { studySeconds: number })[];
@@ -84,25 +86,31 @@ function formatStudyTime(seconds: number): string {
 
 /**
  * BE 보드 항목 → UI 항목.
- * ⚠️ BE가 회원 **이름을 안 주고 memberId만** 준다(타 회원 이름 조회 API도 없음) →
- *   본인(myMemberId 일치)은 "나", 나머지는 "학습자"로 **익명화**(§0.1#2: memberId를 이름인 척 노출 ❌).
- *   BE가 닉네임 필드를 추가하면 name을 그 값으로 바꾸면 끝(안현 결정 2026-06-25).
+ * BE가 memberName(표시 이름)을 제공(2026-06-26 라이브 확인) → 본인은 "나"(찾기 쉽게),
+ *   나머지는 **마스킹**(가운데 *, maskName)해 표시(개인정보 보호 — BE가 실명을 raw로 줘서 FE에서 가림).
+ *   빈 이름은 '학습자' 폴백.
  */
 function toLiveUser(
   item: RankingViewItem,
   value: string,
   myMemberId: number,
+  showStreak: boolean,
 ): RankingUser {
   const isMe = item.memberId === myMemberId;
-  // 본인은 "나"(찾기 쉽게), 타인은 BE 닉네임이 오면 그 값, 아직 없으면 "학습자"로 익명.
-  // → BE가 nickname 필드만 추가하면 FE 수정 없이 자동으로 실제 닉네임 표시.
-  const name = isMe ? '나' : (item.nickname ?? '학습자');
-  return { rank: item.rank, name, subtitle: '', value, isMe };
+  // 개인정보 보호: 본인은 "나", 타인은 BE 실명을 마스킹(가운데 *)해 표시. 빈/공백 이름은 '학습자' 폴백.
+  const masked = item.memberName?.trim() ? maskName(item.memberName) : '학습자';
+  const name = isMe ? '나' : masked;
+  // 연속일(순공 streak)은 순공시간 탭에서만 표시 — 수강/채택 탭은 그 탭 지표(횟수)가 중심.
+  const subtitle =
+    showStreak && item.currentStreakDays > 0
+      ? `연속 ${item.currentStreakDays}일`
+      : '';
+  return { rank: item.rank, name, subtitle, value, isMe };
 }
 
 /**
  * 탭별 랭킹 보드 조회 (Server Component 전용). period=daily|weekly|monthly.
- * 라이브: 3개 지표 엔드포인트를 해당 period로 병렬 조회 → 익명화 매핑.
+ * 라이브: 3개 지표 엔드포인트를 해당 period로 병렬 조회 → 본인="나"·타인 이름 마스킹 매핑.
  * 실패는 빈 보드로 숨기지 않고 전파 → error.tsx.
  */
 export async function getRankingBoardServer(
@@ -126,14 +134,15 @@ export async function getRankingBoardServer(
     throw new Error('랭킹을 불러오지 못했습니다.');
   }
   return {
+    // 순공시간 탭만 연속일(streak) subtitle 표시 / 수강·채택 탭은 횟수 value만.
     studyTime: (st.data?.rankings ?? []).map((i) =>
-      toLiveUser(i, formatStudyTime(i.studySeconds), myMemberId),
+      toLiveUser(i, formatStudyTime(i.studySeconds), myMemberId, true),
     ),
     lessonCount: (ls.data?.rankings ?? []).map((i) =>
-      toLiveUser(i, `${i.watchedLessonCount}회`, myMemberId),
+      toLiveUser(i, `${i.watchedLessonCount}회`, myMemberId, false),
     ),
     acceptedCount: (ac.data?.rankings ?? []).map((i) =>
-      toLiveUser(i, `${i.acceptedCommentCount}회`, myMemberId),
+      toLiveUser(i, `${i.acceptedCommentCount}회`, myMemberId, false),
     ),
   };
 }
