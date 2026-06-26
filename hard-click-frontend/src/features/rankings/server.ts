@@ -97,8 +97,8 @@ function toLiveUser(
   showStreak: boolean,
 ): RankingUser {
   const isMe = item.memberId === myMemberId;
-  // 개인정보 보호: 본인은 "나", 타인은 BE 실명을 마스킹(가운데 *)해 표시. 빈 이름은 '학습자' 폴백.
-  const masked = item.memberName ? maskName(item.memberName) : '학습자';
+  // 개인정보 보호: 본인은 "나", 타인은 BE 실명을 마스킹(가운데 *)해 표시. 빈/공백 이름은 '학습자' 폴백.
+  const masked = item.memberName?.trim() ? maskName(item.memberName) : '학습자';
   const name = isMe ? '나' : masked;
   // 연속일(순공 streak)은 순공시간 탭에서만 표시 — 수강/채택 탭은 그 탭 지표(횟수)가 중심.
   const subtitle =
@@ -110,7 +110,7 @@ function toLiveUser(
 
 /**
  * 탭별 랭킹 보드 조회 (Server Component 전용). period=daily|weekly|monthly.
- * 라이브: 3개 지표 엔드포인트를 해당 period로 병렬 조회 → 익명화 매핑.
+ * 라이브: 3개 지표 엔드포인트를 해당 period로 병렬 조회 → 본인="나"·타인 이름 마스킹 매핑.
  * 실패는 빈 보드로 숨기지 않고 전파 → error.tsx.
  */
 export async function getRankingBoardServer(
