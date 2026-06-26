@@ -41,10 +41,11 @@ export async function getEnrolledCoursesServer(): Promise<
   return res.data.map((c) => ({ courseId: c.courseId, title: c.courseTitle }));
 }
 
-/** GET /api/members/me/quizzes 응답 (라이브 검증). courseId 없음 — courseTitle만. */
+/** GET /api/members/me/quizzes 응답 (라이브 검증 2026-06-26 — courseId 추가됨). */
 interface ApiMyQuizItem {
   quizId: number;
   quizTitle: string;
+  courseId: number;
   courseTitle: string;
   sectionTitle: string;
   questionCount: number;
@@ -58,8 +59,10 @@ interface ApiMyQuizList {
 }
 
 /**
- * 수강생 퀴즈 목록 + 본인 응시 상태 — GET /api/members/me/quizzes (내 전체 퀴즈).
- * ⚠️ BE에 courseId가 없어 과목별 필터 불가 → 전체 반환, courseId 인자는 카드 링크용으로 부착.
+ * 수강생 퀴즈 목록 + 본인 응시 상태 — GET /api/members/me/quizzes.
+ * BE가 응답에 courseId를 제공(2026-06-26 추가)하므로 해당 강의 퀴즈만 필터한다.
+ * ⚠️ 서버측 `?courseId=` 쿼리 필터는 아직 미동작(전체 반환)이라 클라에서 한 번 더 필터한다.
+ *    (BE가 서버 필터를 구현하면 이 클라 필터는 무영향 — 이미 걸러진 목록을 다시 거를 뿐)
  */
 export async function getStudentQuizzesServer(
   courseId: number,
@@ -84,13 +87,14 @@ export async function getStudentQuizzesServer(
   }
 
   const res = await serverApi.get<ApiMyQuizList>(
-    '/api/members/me/quizzes?page=0&size=100',
+    `/api/members/me/quizzes?courseId=${courseId}&page=0&size=100`,
   );
   if (!res.success || !res.data) return [];
   return res.data.quizzes
+    .filter((q) => q.courseId === courseId) // 해당 강의 퀴즈만(서버 필터 미동작 대비)
     .map((q) => ({
       quizId: q.quizId,
-      courseId, // BE 미제공 → 라우트 courseId로 채움(take 링크용)
+      courseId: q.courseId,
       week: sectionToWeek(q.sectionTitle),
       title: q.quizTitle,
       questionCount: q.questionCount,
