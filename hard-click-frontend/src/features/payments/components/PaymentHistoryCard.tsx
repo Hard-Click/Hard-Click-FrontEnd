@@ -11,8 +11,9 @@ const STATUS_STYLE: Record<PaymentStatus, { label: string; className: string }> 
     CANCELED: { label: '취소', className: 'bg-[#4B5563]/10 text-[#4B5563]' },
   };
 
-/** "2026-06-10T14:30:00" → "2026.06.10 14:30" */
-function formatPaidAt(iso: string): string {
+/** "2026-06-10T14:30:00" → "2026.06.10 14:30" (실패/삭제 행은 paidAt=null → '-') */
+function formatPaidAt(iso: string | null): string {
+  if (!iso) return '-';
   const [date, time] = iso.split('T');
   if (!date) return iso;
   const d = date.replace(/-/g, '.');
@@ -34,18 +35,14 @@ export default function PaymentHistoryCard({
     .map((s) => s.trim())
     .filter(Boolean);
 
-  return (
-    <li>
-      <Link
-        href={`/orders/${payment.orderId}`}
-        className="block rounded-[20px] border border-[#E2E8F0] p-6 transition hover:border-[#CBD5E1] hover:bg-[#FAFBFC]"
-      >
-        {/* 상단: 주문번호 + 상태 / 금액 */}
+  const body = (
+    <>
+      {/* 상단: 주문번호 + 상태 / 금액 */}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
             <h3 className="text-lg font-semibold text-[#1F2937]">
-              {payment.orderNo}
+              {payment.orderNo ?? '주문번호 없음'}
             </h3>
             <span
               className={`flex-shrink-0 rounded-full px-3 py-1 text-sm font-semibold ${status.className}`}
@@ -76,7 +73,28 @@ export default function PaymentHistoryCard({
           ))}
         </ul>
       </div>
-      </Link>
+    </>
+  );
+
+  const cardClass = 'block rounded-[20px] border border-[#E2E8F0] p-6';
+
+  return (
+    <li>
+      {/*
+        orderId 없는 결제(삭제된 강의)는 상세 이동 불가 → 비클릭 카드.
+        ⚠️ orderId 있는 행도 상세(GET /api/order/{id})가 현재 BE C001(400, OrderStatus enum 버그)로
+           깨져 있어 클릭 시 404 — 알려진 동작(BE 수정 시 자동 복구, getOrderDetailServer 주석 참고).
+      */}
+      {payment.orderId != null ? (
+        <Link
+          href={`/orders/${payment.orderId}`}
+          className={`${cardClass} transition hover:border-[#CBD5E1] hover:bg-[#FAFBFC]`}
+        >
+          {body}
+        </Link>
+      ) : (
+        <div className={cardClass}>{body}</div>
+      )}
     </li>
   );
 }

@@ -17,18 +17,18 @@ export type PaymentStatus =
 export interface PaymentHistory {
   /** 결제 식별자 */
   paymentId: number;
-  /** 주문 식별자(상세 이동용) */
-  orderId: number;
-  /** 주문번호 — 예: ORD-20260610-001 / SUB-20260520-001 */
-  orderNo: string;
-  /** 결제 유형 — 단건 강의 / 구독 */
-  paymentType: PaymentType;
+  /** 주문 식별자(상세 이동용) — 삭제된 강의 결제는 null(상세 이동 불가) */
+  orderId: number | null;
+  /** 주문번호 — 예: ORD-20260610-001 / SUB-20260520-001 (삭제 행은 null) */
+  orderNo: string | null;
+  /** 결제 유형 — 단건 강의 / 구독 (삭제 행은 null) */
+  paymentType: PaymentType | null;
   /** 결제 상태 */
   status: PaymentStatus;
   /** 결제 금액(원) */
   amount: number;
-  /** 결제 일시(ISO LocalDateTime) — 예: 2026-06-10T14:30:00 */
-  paidAt: string;
+  /** 결제 일시(ISO LocalDateTime) — 예: 2026-06-10T14:30:00 (실패/삭제 행은 null) */
+  paidAt: string | null;
   /** 표시명 — 강의명(복수면 ", "로 연결) 또는 구독 플랜명 */
   displayName: string;
 }

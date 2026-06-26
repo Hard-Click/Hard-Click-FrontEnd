@@ -18,13 +18,15 @@ export type PaymentStatus =
 
 export interface MyPaymentHistoryItem {
   paymentId: number;
-  orderId: number;
-  orderNo: string;
-  paymentType: PaymentType;
+  // ⚠️ 삭제된 강의 결제 행은 orderId/orderNo/paymentType가 null (라이브 검증 2026-06-26),
+  // FAILED 행은 paidAt도 null. UI는 null 가드로 처리한다.
+  orderId: number | null;
+  orderNo: string | null;
+  paymentType: PaymentType | null;
   amount: number;
   status: PaymentStatus;
-  paidAt: string; // LocalDateTime
-  displayName: string; // 강의명 또는 구독 플랜명
+  paidAt: string | null; // LocalDateTime (실패/삭제 행은 null)
+  displayName: string; // 강의명 또는 구독 플랜명 (삭제 시 '(삭제된 강의)')
 }
 
 export interface MyPaymentHistoryPageResponse {
