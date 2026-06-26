@@ -65,6 +65,8 @@ interface RankingViewItem {
   memberId: number;
   /** BE 표시 이름 (라이브 검증 2026-06-26: '시연학생'·'학생17' 등). 이전엔 미제공이라 '학습자'로 익명이었음. */
   memberName: string;
+  /** 연속 학습일 (BE 제공, 라이브 검증 2026-06-26). subtitle "연속 N일"로 표시(0이면 숨김). */
+  currentStreakDays: number;
 }
 interface StudyTimeRankingView {
   rankings: (RankingViewItem & { studySeconds: number })[];
@@ -94,7 +96,9 @@ function toLiveUser(
 ): RankingUser {
   const isMe = item.memberId === myMemberId;
   const name = isMe ? '나' : item.memberName || '학습자';
-  return { rank: item.rank, name, subtitle: '', value, isMe };
+  const subtitle =
+    item.currentStreakDays > 0 ? `연속 ${item.currentStreakDays}일` : '';
+  return { rank: item.rank, name, subtitle, value, isMe };
 }
 
 /**
