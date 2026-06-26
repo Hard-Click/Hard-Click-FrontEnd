@@ -121,7 +121,7 @@ export default function UserHeader() {
           {isLoggedIn ? (
             <>
               {/* 알림 */}
-              <NotificationDropdown role="STUDENT" />
+              <NotificationDropdown />
 
               {/* 프로필 */}
               <div className="relative" ref={dropdownRef}>

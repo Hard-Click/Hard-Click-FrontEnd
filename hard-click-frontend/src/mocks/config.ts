@@ -45,6 +45,7 @@ const MOCK_OVERRIDE: Record<string, boolean> = {
   accountDestructive: false, // PATCH /api/members/me/password · DELETE /api/members/me — 비번변경·회원탈퇴 라이브(BE 정상, 틀린비번→401 AUTH_009; api.ts가 AUTH_009는 로그인리다이렉트 제외). ⚠️ 공유 demo 계정에선 실제로 비번 변경·영구 삭제되니 데모/발표 중 주의 — 안현 결정(2026-06-25).
   quizzes: false, // 강사 퀴즈 "읽기"만 라이브(server.ts): GET /api/instructor/quizzes(목록)·/api/instructors/me/quizzes/{id}/statistics(점수통계). 섹션→주차 매핑. ⚠️ 작성/수정/삭제(actions.ts)·학생 흐름(studentServer/Actions)은 아직 USE_MOCK(전역)이라 mock — Phase 2(섹션 모델 정리 후 연동).
   subscriptions: false, // GET /api/subscriptions/me(상태)+/plan(가격) 라이브 합성 → 구독 상태/플랜. ⚠️ 가격은 BE 고정 plan.price(FE 수능 D-day 동적가격은 placeholder였음). 구독하기(POST)는 결제 흐름(mock 규칙) 경유.
+  notifications: false, // 헤더 종 알림 — GET /api/notifications(목록,data={content,hasNext})·/unread-count(미읽음수)·PATCH /api/notifications/{id}/read(읽음). 루트 layout에서 서버조회→NotificationProvider(AuthProvider 패턴 미러). 라이브 검증(2026-06-25). ⚠️ SSE 실시간(/subscribe)은 BE M3 완료(6/26) 후 — 지금은 조회+읽음만(읽음=Provider 낙관적 갱신).
   // ⚠️ 잔디 lessons/yearly/monthly는 콜드(첫호출) 200 후 연속 500 출렁(BE 작업중). members/me/profile-image=항상 500. subscriptions/me=500. quiz는 배포됨(미연동 도메인). chat=BE 없음.
   // 공지·커뮤니티·인증은 팀이 별도 플래그(USE_MOCK_NOTICES/COMMUNITY/AUTH)로 관리 → 여기서 관여하지 않음.
 };

@@ -88,7 +88,7 @@ export default function InstructorHeader() {
         {/* 우측 */}
         <div className="flex-1 flex items-center gap-6 justify-end">
           {/* 알림 */}
-          <NotificationDropdown role="INSTRUCTOR" />
+          <NotificationDropdown />
 
           {/* 강사 드롭다운 */}
           <div className="relative" ref={dropdownRef}>
