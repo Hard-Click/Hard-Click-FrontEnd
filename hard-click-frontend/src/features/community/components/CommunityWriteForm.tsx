@@ -201,13 +201,23 @@ export default function CommunityWriteForm({
       router.push(`/community/${postId}`);
     } else {
       const fd = new FormData();
-      fd.append('data', JSON.stringify({
-        boardType,
-        title,
-        content,
-        ...(subjectName !== undefined ? { subject: subjectName } : {}),
-      }));
-      selectedFiles.forEach((f) => fd.append('files', f));
+      if (boardType === 'STUDY') {
+        fd.append('data', JSON.stringify({
+          boardType,
+          title,
+          content: description,
+          ...(subjectName !== undefined ? { subject: subjectName } : {}),
+          maxCount: Number(recruit),
+        }));
+      } else {
+        fd.append('data', JSON.stringify({
+          boardType,
+          title,
+          content,
+          ...(subjectName !== undefined ? { subject: subjectName } : {}),
+        }));
+        selectedFiles.forEach((f) => fd.append('files', f));
+      }
       const result = await createPostAction(fd);
       setIsSubmitting(false);
       if (!result.success || !('data' in result) || !result.data?.postId) {

@@ -176,8 +176,27 @@ interface UploadFileResponse {
   fileUrl: string;
 }
 
+interface UploadCourseThumbnailResult {
+  httpStatus: number;
+  message: string;
+  success: boolean;
+  data?: UploadFileResponse;
+}
+
+function toUploadCourseThumbnailResult(
+  body: Record<string, unknown>,
+  ok: boolean
+): UploadCourseThumbnailResult {
+  return {
+    httpStatus: typeof body.httpStatus === 'number' ? body.httpStatus : (ok ? 200 : 500),
+    message: typeof body.message === 'string' ? body.message : '',
+    success: ok && typeof body.httpStatus === 'number' && body.httpStatus < 400,
+    data: body.data as UploadFileResponse | undefined,
+  };
+}
+
 /** 썸네일 파일 업로드 (POST /api/files/upload?fileType=course) */
-export async function uploadCourseThumbnail(file: File) {
+export async function uploadCourseThumbnail(file: File): Promise<UploadCourseThumbnailResult> {
   const formData = new FormData();
   formData.append('file', file);
 
@@ -188,16 +207,7 @@ export async function uploadCourseThumbnail(file: File) {
   });
 
   const body = await res.json();
-
-  return {
-    ...body,
-    success: res.ok && body.httpStatus < 400,
-  } as {
-    httpStatus: number;
-    message: string;
-    success: boolean;
-    data?: UploadFileResponse;
-  };
+  return toUploadCourseThumbnailResult(body, res.ok);
 }
 
 /** 강의 공개/비공개 전환 (PATCH /api/courses/{courseId}/status) */
