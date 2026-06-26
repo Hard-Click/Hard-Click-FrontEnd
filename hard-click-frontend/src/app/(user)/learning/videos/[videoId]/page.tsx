@@ -199,10 +199,11 @@ export default function LearningVideoPage() {
   /* 페이지 진입 시 실행 중 세션 복원 */
   useEffect(() => {
     fetchCurrentSessionAction().then((session) => {
-      if (!session) return;
+      // RUNNING만 복원(PAUSED·ENDED는 tick 금지)
+      if (!session || session.status !== 'RUNNING') return;
       setTimerSessionId(session.sessionId);
-      setTimerSeconds(session.studySeconds);
-      timerSecondsRef.current = session.studySeconds;
+      setTimerSeconds(session.accumulatedStudySeconds);
+      timerSecondsRef.current = session.accumulatedStudySeconds;
       startTimerTicks(session.sessionId);
     });
     return () => stopTimerTicks();
@@ -214,8 +215,13 @@ export default function LearningVideoPage() {
       timerSecondsRef.current += 1;
       setTimerSeconds((s) => s + 1);
     }, 1000);
-    heartbeatRef.current = setInterval(() => {
-      void heartbeatAction(sid, timerSecondsRef.current);
+    heartbeatRef.current = setInterval(async () => {
+      const serverSeconds = await heartbeatAction(sid);
+      // 서버 확정 누적시간으로 보정(드리프트 해소)
+      if (serverSeconds != null) {
+        timerSecondsRef.current = serverSeconds;
+        setTimerSeconds(serverSeconds);
+      }
     }, HEARTBEAT_INTERVAL_MS);
   };
 
@@ -240,7 +246,17 @@ export default function LearningVideoPage() {
     if (timerConfirmMode === 'start') {
       setTimerConfirmMode(null);
       const res = await startTimerAction();
-      if (!res) return;
+      if (!res) {
+        // 시작 실패(409 이미 실행 중 등) → 현재 세션 재조회해 이어서 진행(stuck 방지)
+        const session = await fetchCurrentSessionAction();
+        if (session && session.status === 'RUNNING') {
+          setTimerSessionId(session.sessionId);
+          setTimerSeconds(session.accumulatedStudySeconds);
+          timerSecondsRef.current = session.accumulatedStudySeconds;
+          startTimerTicks(session.sessionId);
+        }
+        return;
+      }
       setTimerSessionId(res.sessionId);
       setTimerSeconds(0);
       timerSecondsRef.current = 0;
@@ -250,8 +266,12 @@ export default function LearningVideoPage() {
       setTimerConfirmMode(null);
       if (!timerSessionId) return;
       stopTimerTicks();
-      const ok = await endTimerAction(timerSessionId, timerSecondsRef.current);
-      if (!ok) return;
+      const ok = await endTimerAction(timerSessionId);
+      if (!ok) {
+        // 종료 실패 → 세션 아직 RUNNING → 틱 재가동(죽은 상태 방지, 재시도 가능)
+        startTimerTicks(timerSessionId);
+        return;
+      }
       setTimerSessionId(null);
       setTimerSeconds(0);
       timerSecondsRef.current = 0;

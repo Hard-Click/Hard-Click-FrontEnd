@@ -39,7 +39,7 @@ const MOCK_OVERRIDE: Record<string, boolean> = {
   reports: false, // POST /api/reports — 게시글/댓글/리뷰 신고 실서버 연동
   mypage: false, // /api/members/me(+/courses,/completed,/activities) — 마이페이지 프로필·수강·활동 실서버 연동
   grass: false, // /api/grass/{streak,study-time,lessons,days} — 마이페이지 잔디 실서버 연동(200·shape일치). 연간 모달(client services.ts)도 라이브 전환 완료(2026-06-25 재검증: study-time/lessons?year= 200·365일, 이전 500은 해소됨).
-  studyTimers: false, // /api/study-timers/stats/daily — 마이페이지 "오늘 순공시간" 실서버(200·shape일치). ⚠️ 타이머 패널 세션은 services.ts USE_MOCK 별도(필드 불일치)
+  studyTimers: false, // stats/daily(마이페이지) + 타이머 패널/학습영상 세션 CRUD 라이브: POST /sessions(startedAt)·PATCH heartbeat(heartbeatAt)·end(endedAt)·GET current. ISO 타임스탬프(toISOString)·BE 경과시간 누적·heartbeat 응답으로 로컬 보정. ⚠️ pause/resume은 BE PATCH /pause가 C002(500) 버그라 라이브 미배선 → 클라 사이드 유지(정지구간 누적 한계, BE 수정 시 서버 호출).
   cart: false, // /api/cart (GET·POST·DELETE/{courseId}) — 전체 CRUD 라이브 검증 완료(2026-06-24 재배포). 항목=minimal{courseId,title,instructorName,price}
   wishlist: false, // /api/wishlist (GET·POST·DELETE/{courseId}) — 전체 CRUD 라이브 검증 완료. 항목=풍부(썸네일·평점·과목·수강생수)
   rankings: false, // /api/rankings/me/summary(내 랭킹) + 보드 3지표(study-time/lessons/accepted-comments?period=daily|weekly|monthly) 라이브. ⚠️ 보드는 BE가 이름 안 줘서(memberId만) "나"/"학습자" 익명화(BE 닉네임 추가 시 자동개선). 활동 시드 전엔 rank=null→0위.
