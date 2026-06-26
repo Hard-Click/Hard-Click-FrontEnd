@@ -54,7 +54,9 @@ export default function CartClient({ cart }: { cart: Cart }) {
 
   const handleCheckout = () => {
     if (selectedCount === 0) return;
-    router.push('/checkout?type=course');
+    // 선택분 courseIds만 체크아웃으로 — 선택분 주문/결제로 이어짐
+    const ids = selectedItems.map((it) => it.courseId).join(',');
+    router.push(`/checkout?type=course&courseIds=${ids}`);
   };
 
   const handleConfirmRemove = async () => {

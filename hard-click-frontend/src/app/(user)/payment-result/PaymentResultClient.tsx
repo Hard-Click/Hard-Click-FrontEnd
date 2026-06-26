@@ -44,9 +44,10 @@ const XCircleIcon = (
 /**
  * 결제 결과 (client) — 토스 successUrl/failUrl 리다이렉트 처리.
  *
- * - successUrl: 쿼리의 `paymentKey/orderId/amount` + `courseId`로 백엔드 승인(confirm) → 성공/실패
+ * - successUrl: 쿼리의 `paymentKey/orderId/amount` + `courseIds`로 백엔드 승인(confirm, orderId 기반)
+ *   → 성공/실패. 승인 후 confirmPaymentAction이 courseIds 각각 수강 등록(일부 실패 시 enrollWarning).
  * - failUrl: 쿼리의 `code/message`로 실패 안내 → 주문서로 복귀
- * - mock 흐름(구독·장바구니): `status=success`면 승인 없이 완료 화면
+ * - mock 흐름(구독): `status=success`면 승인 없이 완료 화면
  */
 export default function PaymentResultClient() {
   const sp = useSearchParams();
@@ -54,22 +55,28 @@ export default function PaymentResultClient() {
   const paymentKey = sp.get('paymentKey');
   const orderId = sp.get('orderId');
   const amountParam = sp.get('amount');
+  const courseIdsParam = sp.get('courseIds');
   const courseIdParam = sp.get('courseId');
   const type = sp.get('type');
   const status = sp.get('status');
   const failMessage = sp.get('message');
 
   const amountNum = amountParam ? Number(amountParam) : NaN;
-  const courseId = courseIdParam ? Number(courseIdParam) : NaN;
+  // 장바구니=courseIds(콤마), 단건=courseId 둘 다 수용 → 결제 후 수강 등록할 강의 목록
+  const courseIds = (courseIdsParam ?? courseIdParam ?? '')
+    .split(',')
+    .map((s) => Number(s.trim()))
+    .filter((n) => Number.isInteger(n) && n > 0);
+  const courseIdsKey = courseIds.join(',');
   const isSubscription = type === 'subscription';
   const orderNo = sp.get('orderNo') ?? orderId ?? '';
 
-  // 토스 success 진입(paymentKey+orderId+amount+courseId 전부 유효) → 승인 단계
+  // 토스 success 진입(paymentKey+orderId+amount+courseIds 전부 유효) → 승인 단계
   const canConfirm =
     !!paymentKey &&
     !!orderId &&
     Number.isFinite(amountNum) &&
-    Number.isInteger(courseId);
+    courseIds.length > 0;
 
   const [phase, setPhase] = useState<Phase>(() => {
     if (status === 'fail') return 'fail';
@@ -80,6 +87,8 @@ export default function PaymentResultClient() {
   const [errorMsg, setErrorMsg] = useState<string>(
     failMessage || '결제가 정상적으로 처리되지 않았습니다.',
   );
+  // 결제는 됐으나 일부 강의 수강 등록 실패 시 안내(성공 화면에 노출)
+  const [enrollWarning, setEnrollWarning] = useState<string | null>(null);
 
   // confirm은 토스 success 진입 시 1회만 호출 (setState는 전부 비동기 콜백에서 → effect 동기 setState 회피)
   const confirmedRef = useRef(false);
@@ -91,10 +100,11 @@ export default function PaymentResultClient() {
       paymentKey: paymentKey!,
       orderId: orderId!,
       amount: amountNum,
-      courseId,
+      courseIds: courseIdsKey.split(',').map(Number),
     })
       .then((res) => {
         if (res.success) {
+          if (res.enrollWarning) setEnrollWarning(res.enrollWarning);
           setPhase('success');
         } else {
           setErrorMsg(res.message || '결제 승인에 실패했습니다.');
@@ -105,7 +115,7 @@ export default function PaymentResultClient() {
         setErrorMsg('결제 승인 중 오류가 발생했습니다.');
         setPhase('fail');
       });
-  }, [phase, canConfirm, paymentKey, orderId, amountNum, courseId]);
+  }, [phase, canConfirm, paymentKey, orderId, amountNum, courseIdsKey]);
 
   if (phase === 'confirming') {
     return (
@@ -123,8 +133,8 @@ export default function PaymentResultClient() {
 
   if (phase === 'fail') {
     const backHref =
-      type === 'course' && Number.isInteger(courseId)
-        ? `/checkout?type=course&courseId=${courseId}`
+      type === 'course' && courseIds.length > 0
+        ? `/checkout?type=course&courseIds=${courseIdsKey}`
         : '/courses';
     return (
       <Card>
@@ -165,6 +175,12 @@ export default function PaymentResultClient() {
       <p className="mt-2 text-[15px] text-[#64748B]">
         주문이 정상적으로 처리되었어요.
       </p>
+
+      {enrollWarning && (
+        <p className="mt-4 break-keep rounded-lg bg-[#FEF3C7] px-4 py-3 text-sm font-medium text-[#92400E]">
+          {enrollWarning}
+        </p>
+      )}
 
       <div className="mt-8 rounded-xl bg-[#F8FAFC] p-5 text-left">
         <div className="flex items-center justify-between">

@@ -10,18 +10,15 @@ export default function OrderAmountSummary({
   type,
   totalAmount,
   finalAmount,
-  courseId,
-  orderName,
+  courseIds,
   disabled = false,
 }: {
   orderNo: string;
   type: OrderType;
   totalAmount: number;
   finalAmount: number;
-  /** 단건 강의 결제 시 강의 식별자(토스 실결제 흐름용) */
-  courseId?: number;
-  /** 상품명(토스 orderName) */
-  orderName?: string;
+  /** 결제할 강의들(선택분) — 토스 실결제 흐름용. 구독은 미전달 */
+  courseIds?: number[];
   disabled?: boolean;
 }) {
   return (
@@ -49,8 +46,7 @@ export default function OrderAmountSummary({
           orderNo={orderNo}
           type={type}
           amount={finalAmount}
-          courseId={courseId}
-          orderName={orderName}
+          courseIds={courseIds}
           disabled={disabled}
         />
       </div>

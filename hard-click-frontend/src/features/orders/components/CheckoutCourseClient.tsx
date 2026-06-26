@@ -17,11 +17,8 @@ const CheckIcon = (
  */
 export default function CheckoutCourseClient({
   order,
-  courseId,
 }: {
   order: OrderSummary;
-  /** 단건 강의 결제일 때만 전달(checkout page에서 검증). 장바구니 결제면 undefined */
-  courseId?: number;
 }) {
   const [selected, setSelected] = useState<boolean[]>(() =>
     order.items.map(() => true),
@@ -41,14 +38,11 @@ export default function CheckoutCourseClient({
     setSelected(order.items.map(() => next));
   };
 
-  // 단건 강의 결제 여부는 item 개수가 아니라 checkout page에서 검증한 courseId로 판단
-  // (장바구니에 1건만 담긴 경우를 단건 결제로 오인하지 않도록).
-  const singleCourse =
-    courseId !== undefined
-      ? order.items.find((it) => it.id === courseId)
-      : undefined;
-  const payCourseId = singleCourse && selectedCount > 0 ? courseId : undefined;
-  const orderName = singleCourse?.title;
+  // 결제 시점에 주문을 재발급할 선택분 courseIds (item.id = courseId).
+  // 단건·장바구니 공통 — PaymentButton이 이 목록으로 orderNo를 새로 발급한다.
+  const selectedCourseIds = order.items
+    .filter((_, i) => selected[i])
+    .map((it) => it.id);
 
   return (
     <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-start">
@@ -89,8 +83,7 @@ export default function CheckoutCourseClient({
           type={order.type}
           totalAmount={selectedTotal}
           finalAmount={selectedTotal}
-          courseId={payCourseId}
-          orderName={orderName}
+          courseIds={selectedCourseIds}
           disabled={selectedCount === 0}
         />
       </div>

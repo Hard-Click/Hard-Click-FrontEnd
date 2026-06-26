@@ -253,6 +253,8 @@ export default function CourseDetailContent({
         setIsInCart(false);
         setCartItemId(null);
         toast.success(result.message);
+        // 서버 컴포넌트 재요청 → 다시 들어와도 담김 상태 유지(라우터 캐시 stale 방지)
+        router.refresh();
       } else {
         toast.error(result.message);
       }
@@ -262,6 +264,7 @@ export default function CourseDetailContent({
         setIsInCart(true);
         if (result.cartItemId) setCartItemId(result.cartItemId);
         toast.success(result.message);
+        router.refresh();
       } else {
         toast.error(result.message);
       }
@@ -557,6 +560,8 @@ export default function CourseDetailContent({
                             ? '찜 목록에 추가되었습니다.'
                             : '찜이 해제되었습니다.'
                         );
+                        // 다시 들어와도 찜 상태 유지(라우터 캐시 stale 방지)
+                        router.refresh();
                       } else {
                         setIsWishlisted(!next); // 실패 복구
                         toast.error(res.message);
