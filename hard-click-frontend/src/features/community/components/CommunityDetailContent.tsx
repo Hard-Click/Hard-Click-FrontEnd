@@ -466,7 +466,8 @@ export default function CommunityDetailContent({
                     {category === '질문게시판' &&
                       post.isMine &&
                       !isAccepted &&
-                      !comment.isAccepted && (
+                      !comment.isAccepted &&
+                      !comment.isMine && (
                         <button
                           type="button"
                           onClick={() => handleAccept(comment.commentId)}
