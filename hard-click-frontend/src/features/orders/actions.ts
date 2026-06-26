@@ -28,13 +28,26 @@ export async function createCheckoutOrderAction(
   );
   if (safe.length === 0) return null;
 
-  // 단건이면 courseId 경로(검증된 라이브), 다건이면 courseIds 경로(가정) — server가 URL 구성
+  // 단건이면 courseId 경로(검증된 라이브), 다건이면 courseIds 경로(가정) — server가 URL 구성.
+  // 결제 발급이므로 filterToSelection=false → BE 원본을 받아 honor 여부를 직접 검증한다.
   const order = await getCheckoutServer(
     type,
     safe.length === 1 ? safe[0] : undefined,
     safe,
+    false,
   );
   if (!order || order.items.length === 0) return null;
+
+  // BE가 courseIds(복수)를 무시하고 장바구니 전체를 돌려주면 부분 선택결제가 불가능하다.
+  // 발급된 주문의 강의 집합이 요청 선택분과 정확히 일치할 때만 진행 → 아니면 null로 토스 전에 차단.
+  // (PaymentButton이 null이면 "주문 생성 실패"로 막아 과금 시도/늦은 confirm 실패를 방지.
+  //  단건은 courseId 경로를 BE가 honor하므로 일치, BE가 courseIds를 지원하면 다건도 일치한다.)
+  const returnedIds = order.items.map((i) => i.id).sort((a, b) => a - b);
+  const requestedIds = [...safe].sort((a, b) => a - b);
+  const honored =
+    returnedIds.length === requestedIds.length &&
+    returnedIds.every((id, i) => id === requestedIds[i]);
+  if (!honored) return null;
 
   const orderName =
     order.items.length === 1
