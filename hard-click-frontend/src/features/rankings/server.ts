@@ -86,8 +86,9 @@ function formatStudyTime(seconds: number): string {
 
 /**
  * BE 보드 항목 → UI 항목.
- * BE가 memberName(표시 이름)을 제공(2026-06-26 라이브 확인) → 본인은 "나"(찾기 쉽게), 나머지는 memberName 표시.
- *   (안현 결정 2026-06-25: BE 이름 오면 그 값 그대로. 라이브 경로는 마스킹 안 함. 빈 값이면 '학습자' 폴백.)
+ * BE가 memberName(표시 이름)을 제공(2026-06-26 라이브 확인) → 본인은 "나"(찾기 쉽게),
+ *   나머지는 **마스킹**(가운데 *, maskName)해 표시(개인정보 보호 — BE가 실명을 raw로 줘서 FE에서 가림).
+ *   빈 이름은 '학습자' 폴백.
  */
 function toLiveUser(
   item: RankingViewItem,
@@ -96,7 +97,9 @@ function toLiveUser(
   showStreak: boolean,
 ): RankingUser {
   const isMe = item.memberId === myMemberId;
-  const name = isMe ? '나' : item.memberName || '학습자';
+  // 개인정보 보호: 본인은 "나", 타인은 BE 실명을 마스킹(가운데 *)해 표시. 빈 이름은 '학습자' 폴백.
+  const masked = item.memberName ? maskName(item.memberName) : '학습자';
+  const name = isMe ? '나' : masked;
   // 연속일(순공 streak)은 순공시간 탭에서만 표시 — 수강/채택 탭은 그 탭 지표(횟수)가 중심.
   const subtitle =
     showStreak && item.currentStreakDays > 0
