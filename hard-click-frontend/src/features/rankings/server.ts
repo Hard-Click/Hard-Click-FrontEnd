@@ -93,11 +93,15 @@ function toLiveUser(
   item: RankingViewItem,
   value: string,
   myMemberId: number,
+  showStreak: boolean,
 ): RankingUser {
   const isMe = item.memberId === myMemberId;
   const name = isMe ? '나' : item.memberName || '학습자';
+  // 연속일(순공 streak)은 순공시간 탭에서만 표시 — 수강/채택 탭은 그 탭 지표(횟수)가 중심.
   const subtitle =
-    item.currentStreakDays > 0 ? `연속 ${item.currentStreakDays}일` : '';
+    showStreak && item.currentStreakDays > 0
+      ? `연속 ${item.currentStreakDays}일`
+      : '';
   return { rank: item.rank, name, subtitle, value, isMe };
 }
 
@@ -127,14 +131,15 @@ export async function getRankingBoardServer(
     throw new Error('랭킹을 불러오지 못했습니다.');
   }
   return {
+    // 순공시간 탭만 연속일(streak) subtitle 표시 / 수강·채택 탭은 횟수 value만.
     studyTime: (st.data?.rankings ?? []).map((i) =>
-      toLiveUser(i, formatStudyTime(i.studySeconds), myMemberId),
+      toLiveUser(i, formatStudyTime(i.studySeconds), myMemberId, true),
     ),
     lessonCount: (ls.data?.rankings ?? []).map((i) =>
-      toLiveUser(i, `${i.watchedLessonCount}회`, myMemberId),
+      toLiveUser(i, `${i.watchedLessonCount}회`, myMemberId, false),
     ),
     acceptedCount: (ac.data?.rankings ?? []).map((i) =>
-      toLiveUser(i, `${i.acceptedCommentCount}회`, myMemberId),
+      toLiveUser(i, `${i.acceptedCommentCount}회`, myMemberId, false),
     ),
   };
 }
