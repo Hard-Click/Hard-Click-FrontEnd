@@ -266,15 +266,21 @@ export default function InstructorCourseDetailContent({
                     </span>
                   </p>
 
-                  {/* 별점 */}
+                  {/* 별점 — 리뷰 0개(새 강의)면 "평점 없음". reviewCount>0 가드가 평점 null도 방어. */}
                   <div className="flex items-center gap-2">
-                    <StarRow rating={course.averageRating} size={20} />
-                    <span className="text-lg font-semibold text-[#1A1F2E]">
-                      {course.averageRating}
-                    </span>
-                    <span className="text-base text-[#1A1F2E]">
-                      ({course.reviewCount.toLocaleString()}개 리뷰)
-                    </span>
+                    {course.reviewCount > 0 ? (
+                      <>
+                        <StarRow rating={course.averageRating} size={20} />
+                        <span className="text-lg font-semibold text-[#1A1F2E]">
+                          {course.averageRating}
+                        </span>
+                        <span className="text-base text-[#1A1F2E]">
+                          ({course.reviewCount.toLocaleString()}개 리뷰)
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-base text-[#94A3B8]">평점 없음</span>
+                    )}
                   </div>
 
                   {/* 통계 행: 수강생 수 · 총 강의시간 · 난이도 */}
