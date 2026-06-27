@@ -42,7 +42,7 @@ export default function LoginForm() {
     if (state.isLocked) {
       setIsConfirmModalOpen(true);
     } else if (state.message && !state.success) {
-      setFailCount((prev) => prev + 1);
+      setFailCount((prev) => Math.min(prev + 1, 5));
     }
   }, [state]);
 
