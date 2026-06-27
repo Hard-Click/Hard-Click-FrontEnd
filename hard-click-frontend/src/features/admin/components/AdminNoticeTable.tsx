@@ -94,7 +94,9 @@ export default function AdminNoticeTable({
                         />
                       )}
                       <span className="text-sm font-medium text-[#1E293B] hover:text-[#2F5DAA] hover:underline">
-                        {notice.title}
+                        {notice.type === 'COURSE' && notice.courseTitle
+                          ? `${notice.courseTitle} - ${notice.title}`
+                          : notice.title}
                       </span>
                     </div>
                   </Link>
