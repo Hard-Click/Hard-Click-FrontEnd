@@ -93,7 +93,8 @@ export async function getCoursesServer(
   if (!res.success || !res.data) return [];
 
   let courses = res.data.content.map(toCourseListItem);
-  // 강사 필터는 BE 미지원 → client-side (응답 강사명 기준).
+  // 강사 필터: BE가 ?instructorName= 를 honor함(라이브 확인 2026-06-27, '김민수'→4개 전부 일치).
+  //   현재는 over-fetch 후 client-side 필터 유지. ⚡최적화 대상: query.instructor를 BE 파라미터로 전달.
   if (query?.instructor) {
     courses = courses.filter((c) => c.instructorName === query.instructor);
   }

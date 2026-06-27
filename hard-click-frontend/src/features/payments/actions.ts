@@ -98,7 +98,8 @@ export async function confirmPaymentAction(
  * 환불 요청 (Server Action).
  * 결과: 성공 / 규칙상 불가(모달) / 처리 오류(토스트).
  * mock: 선택 항목이 모두 refundable이면 성공, 불가 항목 포함 시 blocked.
- * 연동: POST /api/payment/{orderId}/refund 로 교체 (BE 환불 엔드포인트 추가 시).
+ * 연동: POST /api/order/{orderId}/items/{courseId}/refund (per-item, Idempotency-Key 헤더).
+ *   ⚠️ BE는 항목별(courseId 1개씩) 환불 모델 — courseIds 배열은 항목마다 반복 호출(부분환불=여러 번). (라이브 검증 2026-06-27)
  */
 export async function refundAction(
   orderId: number,
@@ -137,7 +138,8 @@ export async function refundAction(
     return { ok: true };
   }
 
-  // TODO(API 연동): POST /api/payment/${orderId}/refund { courseIds, reason }
+  // TODO(API 연동): per-item — courseIds.forEach → POST /api/order/${orderId}/items/${courseId}/refund (Idempotency-Key 헤더)
+  // ⚠️ BE는 항목별 단건 모델이라 부분환불은 항목 수만큼 반복 호출. 또 order/{id} 자체가 현재 400 C001(OrderStatus enum 버그)이라 BE 수정 전엔 연동 불가.
   // 성공 → { ok:true } / 규칙 위반 → { ok:false, kind:'blocked', reason } / 그 외 → { ok:false, kind:'error' }
   return { ok: false, kind: 'error' };
 }
