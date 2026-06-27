@@ -1,7 +1,7 @@
 /** 리뷰(reviews) 도메인 타입 — 백엔드 RestAPI 명세 매칭 */
 
 /* ───── 수강 리뷰 작성 (POST /api/courses/{courseId}/reviews) ─────
- * rating: 0.5 단위 (0.5~5.0), content: 10~300자
+ * rating: 정수 1~5 (스웨거 CreateReviewRequest.rating=integer, 별 클릭 정수만 — half-star 미구현), content: 10~300자
  * 응답: { reviewId } (201 Created) */
 export interface CreateReviewRequest {
   rating: number;
