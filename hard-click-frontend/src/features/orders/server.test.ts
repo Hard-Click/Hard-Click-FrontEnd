@@ -180,6 +180,17 @@ describe('getCheckoutServer — 폴백 (라이브)', () => {
     mockGet.mockResolvedValue(fail());
     expect(await getCheckoutServer('course', 1)).toBeNull();
   });
+
+  it('EN001 아닌 다른 409 충돌은 null (이미 수강 중으로 오분류 안 함)', async () => {
+    mockGet.mockResolvedValue({
+      success: false,
+      httpStatus: 409,
+      message: '다른 충돌',
+      errorCode: 'SOME_OTHER',
+      data: null,
+    });
+    expect(await getCheckoutServer('course', 1)).toBeNull();
+  });
 });
 
 describe('getCheckoutServer — courseIds 표시필터 (filterToSelection)', () => {

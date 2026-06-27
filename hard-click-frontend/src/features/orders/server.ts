@@ -98,10 +98,10 @@ export async function getCheckoutServer(
     const res = await serverApi.get<ApiOrder>(
       `/api/order/checkout?${params.toString()}`,
     );
-    // BE는 이미 수강 중인 강의가 포함되면 409 EN001로 주문을 거부한다(이중결제 방지, 라이브 2026-06-27).
-    // → null(generic 실패)과 구분해 "이미 수강 중" 안내를 띄울 수 있게 전달.
+    // BE는 이미 수강 중인 강의가 포함되면 EN001로 주문을 거부한다(이중결제 방지, 라이브 2026-06-27: 409 EN001).
+    // → "이미 수강 중"(EN001)만 blocked로 구분하고, 그 외 오류(다른 409 포함)는 generic(null)로 둔다(오분류 방지).
     if (!res.success) {
-      if (res.httpStatus === 409 || res.errorCode === 'EN001') {
+      if (res.errorCode === 'EN001') {
         return { blocked: 'ALREADY_ENROLLED' };
       }
       return null;
