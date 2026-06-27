@@ -9,6 +9,7 @@
  */
 import { serverApi } from '@/lib/api';
 import { getCheckoutServer } from './server';
+import type { OrderSummary } from './types';
 
 // 라이브 분기 강제 (isMock('orders') === false)
 jest.mock('@/mocks/config', () => ({
@@ -28,6 +29,11 @@ jest.mock('@/lib/api', () => ({
 }));
 
 const mockGet = serverApi.get as jest.Mock;
+
+// getCheckoutServer는 OrderSummary | CheckoutBlocked | null 반환 — 이 테스트들은 정상 주문(OrderSummary)
+// 케이스만 검증하므로 좁혀서 호출한다. (CheckoutBlocked=이미 수강 중 케이스는 별도 검증 영역)
+const getOrder = (...args: Parameters<typeof getCheckoutServer>) =>
+  getCheckoutServer(...args) as Promise<OrderSummary | null>;
 
 /** 성공 envelope 헬퍼 (BE 봉투 모양 그대로) */
 function ok<T>(data: T) {
@@ -55,7 +61,7 @@ describe('getCheckoutServer — toOrderSummary 매핑 (라이브)', () => {
       }),
     );
 
-    const result = await getCheckoutServer('subscription');
+    const result = await getOrder('subscription');
 
     expect(result).not.toBeNull();
     expect(result!.type).toBe('subscription');
@@ -81,7 +87,7 @@ describe('getCheckoutServer — toOrderSummary 매핑 (라이브)', () => {
       }),
     );
 
-    const result = await getCheckoutServer('course', 42);
+    const result = await getOrder('course', 42);
 
     expect(result).not.toBeNull();
     expect(result!.type).toBe('course');
@@ -102,7 +108,7 @@ describe('getCheckoutServer — toOrderSummary 매핑 (라이브)', () => {
       }),
     );
 
-    const result = await getCheckoutServer('subscription');
+    const result = await getOrder('subscription');
 
     expect(result!.type).toBe('subscription');
     expect(result!.items[0].id).toBe(0);
@@ -124,7 +130,7 @@ describe('getCheckoutServer — toOrderSummary 매핑 (라이브)', () => {
       }),
     );
 
-    const result = await getCheckoutServer('course');
+    const result = await getOrder('course');
 
     expect(result!.items.map((i) => i.id)).toEqual([1, 2]);
     expect(result!.items.every((i) => i.subtitle === '')).toBe(true);
@@ -135,12 +141,12 @@ describe('getCheckoutServer — toOrderSummary 매핑 (라이브)', () => {
 describe('getCheckoutServer — 폴백 (라이브)', () => {
   it('응답 success=false면 null', async () => {
     mockGet.mockResolvedValue(fail());
-    expect(await getCheckoutServer('course')).toBeNull();
+    expect(await getOrder('course')).toBeNull();
   });
 
   it('응답 data=null이면 null', async () => {
     mockGet.mockResolvedValue({ success: true, httpStatus: 200, data: null });
-    expect(await getCheckoutServer('course')).toBeNull();
+    expect(await getOrder('course')).toBeNull();
   });
 
   it('items가 빈 배열이면 null (표시할 게 없음)', async () => {
@@ -154,7 +160,7 @@ describe('getCheckoutServer — 폴백 (라이브)', () => {
         finalAmount: 0,
       }),
     );
-    expect(await getCheckoutServer('course')).toBeNull();
+    expect(await getOrder('course')).toBeNull();
   });
 });
 
@@ -178,7 +184,7 @@ describe('getCheckoutServer — courseIds 표시필터 (filterToSelection)', () 
   it('filterToSelection=true(기본): 선택분만 남기고 total/final 재계산', async () => {
     mockGet.mockResolvedValue(wholeCartResponse());
 
-    const result = await getCheckoutServer('course', undefined, [1, 3]);
+    const result = await getOrder('course', undefined, [1, 3]);
 
     expect(result!.items.map((i) => i.id)).toEqual([1, 3]);
     expect(result!.totalAmount).toBe(400); // 100 + 300
@@ -189,7 +195,7 @@ describe('getCheckoutServer — courseIds 표시필터 (filterToSelection)', () 
   it('선택 1건만 골라도 그 항목/금액만', async () => {
     mockGet.mockResolvedValue(wholeCartResponse());
 
-    const result = await getCheckoutServer('course', undefined, [2]);
+    const result = await getOrder('course', undefined, [2]);
 
     expect(result!.items).toHaveLength(1);
     expect(result!.items[0].id).toBe(2);
@@ -200,7 +206,7 @@ describe('getCheckoutServer — courseIds 표시필터 (filterToSelection)', () 
   it('선택분이 응답에 하나도 없으면 null', async () => {
     mockGet.mockResolvedValue(wholeCartResponse());
 
-    const result = await getCheckoutServer('course', undefined, [999]);
+    const result = await getOrder('course', undefined, [999]);
 
     expect(result).toBeNull();
   });
@@ -208,7 +214,7 @@ describe('getCheckoutServer — courseIds 표시필터 (filterToSelection)', () 
   it('filterToSelection=false: BE 원본 그대로 (필터/재계산 안 함)', async () => {
     mockGet.mockResolvedValue(wholeCartResponse());
 
-    const result = await getCheckoutServer('course', undefined, [1, 3], false);
+    const result = await getOrder('course', undefined, [1, 3], false);
 
     expect(result!.items.map((i) => i.id)).toEqual([1, 2, 3]); // 전체 보존
     expect(result!.totalAmount).toBe(600); // 원본 유지
@@ -218,7 +224,7 @@ describe('getCheckoutServer — courseIds 표시필터 (filterToSelection)', () 
   it('courseIds 빈 배열이면 필터 미적용(전체 반환)', async () => {
     mockGet.mockResolvedValue(wholeCartResponse());
 
-    const result = await getCheckoutServer('course', undefined, []);
+    const result = await getOrder('course', undefined, []);
 
     expect(result!.items).toHaveLength(3);
     expect(result!.totalAmount).toBe(600);
@@ -227,7 +233,7 @@ describe('getCheckoutServer — courseIds 표시필터 (filterToSelection)', () 
   it('courseIds 미전달이면 필터 미적용(전체 반환)', async () => {
     mockGet.mockResolvedValue(wholeCartResponse());
 
-    const result = await getCheckoutServer('course');
+    const result = await getOrder('course');
 
     expect(result!.items).toHaveLength(3);
     expect(result!.totalAmount).toBe(600);
@@ -245,7 +251,7 @@ describe('getCheckoutServer — courseIds 표시필터 (filterToSelection)', () 
       }),
     );
 
-    const result = await getCheckoutServer('subscription', undefined, [1, 2]);
+    const result = await getOrder('subscription', undefined, [1, 2]);
 
     expect(result!.type).toBe('subscription');
     expect(result!.items).toHaveLength(1);
@@ -255,7 +261,7 @@ describe('getCheckoutServer — courseIds 표시필터 (filterToSelection)', () 
   it('요청 URL에 courseIds 파라미터가 join되어 들어간다', async () => {
     mockGet.mockResolvedValue(wholeCartResponse());
 
-    await getCheckoutServer('course', undefined, [1, 3]);
+    await getOrder('course', undefined, [1, 3]);
 
     const calledUrl = mockGet.mock.calls[0][0] as string;
     expect(calledUrl).toContain('type=course');
@@ -274,7 +280,7 @@ describe('getCheckoutServer — courseIds 표시필터 (filterToSelection)', () 
       }),
     );
 
-    await getCheckoutServer('course', 7);
+    await getOrder('course', 7);
 
     const calledUrl = mockGet.mock.calls[0][0] as string;
     expect(calledUrl).toContain('courseId=7');
