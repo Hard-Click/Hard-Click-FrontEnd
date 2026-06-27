@@ -236,6 +236,8 @@ export default function CourseCreateForm({
   const targetAudienceRef = useRef<HTMLDivElement>(null);
   const levelRef = useRef<HTMLDivElement>(null);
   const thumbnailRef = useRef<HTMLDivElement>(null);
+  const isComposingGoalRef = useRef(false);
+  const isComposingTargetRef = useRef(false);
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -488,8 +490,10 @@ export default function CourseCreateForm({
                 type="text"
                 value={learningGoalInput}
                 onChange={(e) => setLearningGoalInput(e.target.value)}
+                onCompositionStart={() => { isComposingGoalRef.current = true; }}
+                onCompositionEnd={() => { isComposingGoalRef.current = false; }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                  if (e.key === 'Enter' && !isComposingGoalRef.current) {
                     e.preventDefault();
                     const trimmed = learningGoalInput.trim();
                     if (trimmed && !learningGoals.includes(trimmed)) {
@@ -562,8 +566,10 @@ export default function CourseCreateForm({
                 type="text"
                 value={targetAudienceInput}
                 onChange={(e) => setTargetAudienceInput(e.target.value)}
+                onCompositionStart={() => { isComposingTargetRef.current = true; }}
+                onCompositionEnd={() => { isComposingTargetRef.current = false; }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                  if (e.key === 'Enter' && !isComposingTargetRef.current) {
                     e.preventDefault();
                     const trimmed = targetAudienceInput.trim();
                     if (trimmed && !targetAudience.includes(trimmed)) {
