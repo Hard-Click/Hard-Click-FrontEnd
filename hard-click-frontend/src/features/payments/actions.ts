@@ -89,7 +89,10 @@ export async function confirmPaymentAction(
       enrollWarning = `결제는 완료됐지만 ${failed}개 강의의 수강 등록에 실패했어요. 고객센터로 문의해주세요.`;
     }
   }
+  // 결제 후 상태가 바뀌는 페이지 갱신: 수강중 강의 + 결제내역(/orders) + 구독 상태(/subscriptions)
   revalidatePath('/mypage/courses/in-progress');
+  revalidatePath('/orders');
+  revalidatePath('/subscriptions');
 
   return {
     success: true,
