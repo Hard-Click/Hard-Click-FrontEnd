@@ -44,6 +44,7 @@ interface Section {
 interface CourseDetail {
   courseId?: number;
   title: string;
+  description?: string;
   subjectId?: number;
   priceType: 'FREE' | 'PAID';
   price: string;
@@ -193,6 +194,7 @@ export default function CourseCreateForm({
   const [subjects] = useState<Subject[]>(
     SUBJECTS.map((s) => ({ subjectId: s.subjectId, name: s.name }))
   );
+  const [description, setDescription] = useState(initialData?.description ?? '');
   const [subjectId, setSubjectId] = useState<number>(initialData?.subjectId ?? 0);
   const [priceType, setPriceType] = useState<'FREE' | 'PAID'>(
     initialData?.priceType ?? 'FREE'
@@ -392,6 +394,20 @@ export default function CourseCreateForm({
                 </div>
               )}
             </div>
+          </div>
+
+          {/* 강의 소개 */}
+          <div className="mb-8">
+            <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
+              강의 소개
+            </label>
+            <textarea
+              placeholder="강의 소개를 입력하세요"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              className="w-full rounded-2xl border border-[#E2E8F0] px-5 py-4 text-base outline-none transition focus:border-[#2F5DAA] resize-none"
+            />
           </div>
 
           {/* 과목 */}
@@ -990,6 +1006,7 @@ export default function CourseCreateForm({
 
                 const payload = {
                   title,
+                  description,
                   subjectId,
                   thumbnailUrl,
                   priceType,

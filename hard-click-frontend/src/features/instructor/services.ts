@@ -2,6 +2,7 @@ import { api } from '@/services/api';
 import { isMock } from '@/mocks/config';
 const USE_MOCK = isMock('instructor');
 import { mockInstructorCourses } from '@/mocks/instructor.mock';
+import { subjectValueById } from '@/features/courses/subjects';
 import type {
   CourseListApiItem,
   CourseListApiResponse,
@@ -81,8 +82,8 @@ export async function getInstructorCourses(page = 0, size = 20) {
  */
 export async function createCourse(payload: {
   title: string;
-  subjectId: number;
   description?: string;
+  subjectId: number;
   thumbnailUrl?: string;
   priceType: 'FREE' | 'PAID';
   price: number;
@@ -115,7 +116,11 @@ export async function createCourse(payload: {
     };
   }
 
-  return api.post<{ courseId: number }>('/api/courses', payload);
+  const { subjectId, ...rest } = payload;
+  return api.post<{ courseId: number }>('/api/courses', {
+    ...rest,
+    subject: subjectValueById(subjectId),
+  });
 }
 
 /**
@@ -125,8 +130,8 @@ export async function updateCourse(
   courseId: number,
   payload: {
     title: string;
-    subjectId: number;
     description?: string;
+    subjectId: number;
     thumbnailUrl?: string;
     priceType: 'FREE' | 'PAID';
     price: number;
@@ -154,7 +159,11 @@ export async function updateCourse(
       message: '강의 수정 완료',
     };
   }
-  return api.patch<{ courseId: number }>(`/api/courses/${courseId}`, payload);
+  const { subjectId, ...rest } = payload;
+  return api.patch<{ courseId: number }>(`/api/courses/${courseId}`, {
+    ...rest,
+    subject: subjectValueById(subjectId),
+  });
 }
 
 /** 강의 삭제 (DELETE /api/courses/{courseId}) */
@@ -188,7 +197,8 @@ function toUploadCourseThumbnailResult(
   ok: boolean
 ): UploadCourseThumbnailResult {
   return {
-    httpStatus: typeof body.httpStatus === 'number' ? body.httpStatus : (ok ? 200 : 500),
+    httpStatus:
+      typeof body.httpStatus === 'number' ? body.httpStatus : ok ? 200 : 500,
     message: typeof body.message === 'string' ? body.message : '',
     success: ok && typeof body.httpStatus === 'number' && body.httpStatus < 400,
     data: body.data as UploadFileResponse | undefined,
@@ -196,7 +206,9 @@ function toUploadCourseThumbnailResult(
 }
 
 /** 썸네일 파일 업로드 (POST /api/files/upload?fileType=course) */
-export async function uploadCourseThumbnail(file: File): Promise<UploadCourseThumbnailResult> {
+export async function uploadCourseThumbnail(
+  file: File
+): Promise<UploadCourseThumbnailResult> {
   const formData = new FormData();
   formData.append('file', file);
 
