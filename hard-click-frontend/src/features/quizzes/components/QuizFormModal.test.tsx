@@ -293,7 +293,7 @@ describe('QuizFormModal — 퀴즈 등록 모달 통합', () => {
       await user.click(within(dialog).getByRole('button', { name: '확인' }));
 
       expect(createAction).toHaveBeenCalledTimes(1);
-      const payload = createAction.mock.calls[0][0] as QuizFormPayload;
+      const payload = (createAction.mock.calls[0] as unknown[])[0] as QuizFormPayload;
       expect(payload.title).toBe('1주차 퀴즈');
       expect(payload.courseId).toBe(1);
       expect(payload.week).toBe(1);
@@ -341,7 +341,7 @@ describe('QuizFormModal — 퀴즈 등록 모달 통합', () => {
       const dialog = await screen.findByRole('dialog', { name: '퀴즈 등록' });
       await user.click(within(dialog).getByRole('button', { name: '확인' }));
 
-      const payload = createAction.mock.calls[0][0] as QuizFormPayload;
+      const payload = (createAction.mock.calls[0] as unknown[])[0] as QuizFormPayload;
       expect(payload.questions).toHaveLength(2);
     });
   });
