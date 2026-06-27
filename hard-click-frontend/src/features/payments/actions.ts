@@ -3,7 +3,7 @@
 import { randomUUID } from 'crypto';
 import { revalidatePath } from 'next/cache';
 import { serverApi } from '@/lib/api';
-import { USE_MOCK, isMock } from '@/mocks/config';
+import { isMock } from '@/mocks/config';
 import { mockOrderDetails } from '@/mocks/payments.mock';
 import type {
   RefundResult,
@@ -115,7 +115,7 @@ export async function refundAction(
     return { ok: false, kind: 'error' };
   }
 
-  if (USE_MOCK) {
+  if (isMock('payments')) {
     const order = mockOrderDetails.find((o) => o.orderId === orderId);
     if (!order) return { ok: false, kind: 'error' };
     // 결제완료(PAID) 주문만 환불 가능 — UI 우회 호출 방어
@@ -143,8 +143,28 @@ export async function refundAction(
     return { ok: true };
   }
 
-  // TODO(API 연동): per-item — courseIds.forEach → POST /api/order/${orderId}/items/${courseId}/refund (Idempotency-Key 헤더)
-  // ⚠️ BE는 항목별 단건 모델이라 부분환불은 항목 수만큼 반복 호출. 또 order/{id} 자체가 현재 400 C001(OrderStatus enum 버그)이라 BE 수정 전엔 연동 불가.
-  // 성공 → { ok:true } / 규칙 위반 → { ok:false, kind:'blocked', reason } / 그 외 → { ok:false, kind:'error' }
-  return { ok: false, kind: 'error' };
+  // 라이브: 항목별(per-item) POST /api/order/{orderId}/items/{courseId}/refund (Idempotency-Key 헤더, body 없음).
+  // ⚠️ BE는 "본인이 결제한 PAID 주문의 refundable 항목"만 정상 처리(그 외엔 BE 오류) → UI(OrderRefundView)가
+  //    refundable 항목만 보내고 불가 항목은 호출 전 "환불 불가" 모달로 차단한다. 여기선 그 항목들만 호출.
+  // reason은 BE가 받지 않음(엔드포인트 body 없음) — FE 입력용. 부분환불은 항목 수만큼 반복(per-item).
+  const ids = [...new Set(courseIds)].filter((n) => Number.isInteger(n) && n > 0);
+  if (ids.length === 0) return { ok: false, kind: 'error' };
+  const results = await Promise.all(
+    ids.map((courseId) =>
+      serverApi.post(`/api/order/${orderId}/items/${courseId}/refund`, undefined, {
+        'Idempotency-Key': randomUUID(),
+      }),
+    ),
+  );
+  if (results.every((r) => r.success)) {
+    revalidatePath(`/orders/${orderId}`);
+    return { ok: true };
+  }
+  // 일부/전부 실패 — 환불 규칙 위반(400/409)은 안내(blocked), 그 외는 처리 오류(error)
+  const ruleViolation = results.some(
+    (r) => !r.success && (r.httpStatus === 400 || r.httpStatus === 409),
+  );
+  return ruleViolation
+    ? { ok: false, kind: 'blocked', reason: '환불 조건을 충족하지 않는 항목이 있어요.' }
+    : { ok: false, kind: 'error' };
 }
