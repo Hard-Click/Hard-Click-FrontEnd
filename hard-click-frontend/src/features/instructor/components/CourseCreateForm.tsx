@@ -215,6 +215,8 @@ export default function CourseCreateForm({
     initialData?.targetAudience ?? []
   );
   const [targetAudienceInput, setTargetAudienceInput] = useState('');
+  const [techTags, setTechTags] = useState<string[]>([]);
+  const [techTagInput, setTechTagInput] = useState('');
   const [level, setLevel] = useState(initialData?.level ?? '');
   const router = useRouter();
 
@@ -229,6 +231,7 @@ export default function CourseCreateForm({
   });
   const [firstErrorField, setFirstErrorField] = useState('');
 
+
   const titleRef = useRef<HTMLInputElement>(null);
   const subjectRef = useRef<HTMLSelectElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
@@ -238,6 +241,8 @@ export default function CourseCreateForm({
   const thumbnailRef = useRef<HTMLDivElement>(null);
   const isComposingGoalRef = useRef(false);
   const isComposingTargetRef = useRef(false);
+  const techTagsRef = useRef<HTMLDivElement>(null);
+  const isComposingTagRef = useRef(false);
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -275,6 +280,7 @@ export default function CourseCreateForm({
       thumbnail: '',
       learningGoals: '',
       targetAudience: '',
+      techTags: '',
       level: '',
     };
 
@@ -321,6 +327,7 @@ export default function CourseCreateForm({
         subject: subjectRef,
         learningGoals: learningGoalsRef,
         targetAudience: targetAudienceRef,
+        techTags: techTagsRef,
         level: levelRef,
         thumbnail: thumbnailRef,
         price: priceRef,
@@ -632,6 +639,80 @@ export default function CourseCreateForm({
             </div>
           </div>
 
+          {/* 연관 과목 */}
+          <div className="mb-8" ref={techTagsRef}>
+            <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
+              연관 과목 <span className="text-[#DC2626]">*</span>
+            </label>
+            <div className="mb-3 flex gap-2">
+              <input
+                type="text"
+                value={techTagInput}
+                onChange={(e) => setTechTagInput(e.target.value)}
+                onCompositionStart={() => { isComposingTagRef.current = true; }}
+                onCompositionEnd={() => { isComposingTagRef.current = false; }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !isComposingTagRef.current) {
+                    e.preventDefault();
+                    const trimmed = techTagInput.trim();
+                    if (trimmed && !techTags.includes(trimmed)) {
+                      setTechTags((prev) => [...prev, trimmed]);
+                      setErrors((prev) => ({ ...prev, techTags: '' }));
+                      if (firstErrorField === 'techTags') setFirstErrorField('');
+                    }
+                    setTechTagInput('');
+                  }
+                }}
+                placeholder="연관 과목을 입력하세요"
+                className="h-12 flex-1 rounded-2xl border border-[#E2E8F0] px-5 text-sm outline-none focus:border-[#2F5DAA]"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const trimmed = techTagInput.trim();
+                  if (trimmed && !techTags.includes(trimmed)) {
+                    setTechTags((prev) => [...prev, trimmed]);
+                    setErrors((prev) => ({ ...prev, techTags: '' }));
+                    if (firstErrorField === 'techTags') setFirstErrorField('');
+                  }
+                  setTechTagInput('');
+                }}
+                className="h-12 rounded-2xl border border-[#2F5DAA] px-5 text-sm font-semibold text-[#2F5DAA] transition hover:bg-[#EEF4FF]"
+              >
+                추가
+              </button>
+            </div>
+            {techTags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {techTags.map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className="flex items-center gap-2 rounded-full bg-[#EEF4FF] px-4 py-2 text-sm text-[#2F5DAA]"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setTechTags((prev) => prev.filter((_, i) => i !== idx))
+                      }
+                      className="text-[#2F5DAA] opacity-60 hover:opacity-100"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="mt-2 min-h-[20px]">
+              {errors.techTags && (
+                <div className="flex items-center gap-1">
+                  <Image src="/icons/error.svg" alt="error" width={14} height={14} />
+                  <p className="text-sm text-[#B91C1C]">{errors.techTags}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* 난이도 */}
           <div className="mb-8" ref={levelRef}>
             <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
@@ -640,9 +721,9 @@ export default function CourseCreateForm({
             <div className="flex gap-3">
               {(
                 [
-                  { value: 'BEGINNER', label: '입문' },
-                  { value: 'INTERMEDIATE', label: '중급' },
-                  { value: 'ADVANCED', label: '심화' },
+                  { value: '입문', label: '입문' },
+                  { value: '중급', label: '중급' },
+                  { value: '심화', label: '심화' },
                 ] as const
               ).map(({ value, label }) => (
                 <button
@@ -1013,20 +1094,21 @@ export default function CourseCreateForm({
 
                 const payload = {
                   title,
-                  description,
+                  description: description || undefined,
                   subjectId,
-                  thumbnailUrl,
+                  thumbnailUrl: thumbnailUrl || undefined,
                   priceType,
                   price: priceType === 'FREE' ? 0 : Number(price),
                   learningObjectives: learningGoals,
                   targetAudience,
+                  techTags,
                   level: level || undefined,
                   sections: sections.map((sec, sIdx) => ({
                     title: sec.title,
                     orderIndex: sIdx,
                     lessons: sec.lectures.map((lec, lIdx) => ({
                       title: lec.fileName,
-                      description: '',
+                      description: lec.fileName || undefined,
                       orderIndex: lIdx,
                       durationSeconds: lec.duration
                         ? (() => {
