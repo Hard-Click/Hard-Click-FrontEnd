@@ -36,7 +36,8 @@ export async function createCheckoutOrderAction(
     safe,
     false,
   );
-  if (!order || order.items.length === 0) return null;
+  // 'blocked'(이미 수강 중)이면 주문 발급 불가 → null(결제 진행 차단). 페이지가 선차단하므로 보통 여기 안 옴.
+  if (!order || 'blocked' in order || order.items.length === 0) return null;
 
   // BE가 courseIds(복수)를 무시하고 장바구니 전체를 돌려주면 부분 선택결제가 불가능하다.
   // 발급된 주문의 강의 집합이 요청 선택분과 정확히 일치할 때만 진행 → 아니면 null로 토스 전에 차단.
