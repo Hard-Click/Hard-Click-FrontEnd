@@ -78,7 +78,12 @@ export async function confirmPaymentAction(
         serverApi.post('/api/enrollments', { courseId }),
       ),
     );
-    const failed = results.filter((r) => !r.success).length;
+    // 409 EN001('이미 수강 중')은 실패가 아니다 — 이미 보유한 강의를 재결제했거나 BE가
+    // 결제 승인 때 자동 등록한 경우. 사용자는 강의에 접근 가능하므로 경고하지 않는다(멱등 처리).
+    // (라이브 확인 2026-06-27: 보유 강의 재등록 → 409 EN001 "이미 수강 중인 강의입니다.")
+    const failed = results.filter(
+      (r) => !r.success && r.httpStatus !== 409 && r.errorCode !== 'EN001',
+    ).length;
     if (failed > 0) {
       enrollWarning = `결제는 완료됐지만 ${failed}개 강의의 수강 등록에 실패했어요. 고객센터로 문의해주세요.`;
     }
@@ -98,7 +103,8 @@ export async function confirmPaymentAction(
  * 환불 요청 (Server Action).
  * 결과: 성공 / 규칙상 불가(모달) / 처리 오류(토스트).
  * mock: 선택 항목이 모두 refundable이면 성공, 불가 항목 포함 시 blocked.
- * 연동: POST /api/payment/{orderId}/refund 로 교체 (BE 환불 엔드포인트 추가 시).
+ * 연동: POST /api/order/{orderId}/items/{courseId}/refund (per-item, Idempotency-Key 헤더).
+ *   ⚠️ BE는 항목별(courseId 1개씩) 환불 모델 — courseIds 배열은 항목마다 반복 호출(부분환불=여러 번). (라이브 검증 2026-06-27)
  */
 export async function refundAction(
   orderId: number,
@@ -137,7 +143,8 @@ export async function refundAction(
     return { ok: true };
   }
 
-  // TODO(API 연동): POST /api/payment/${orderId}/refund { courseIds, reason }
+  // TODO(API 연동): per-item — courseIds.forEach → POST /api/order/${orderId}/items/${courseId}/refund (Idempotency-Key 헤더)
+  // ⚠️ BE는 항목별 단건 모델이라 부분환불은 항목 수만큼 반복 호출. 또 order/{id} 자체가 현재 400 C001(OrderStatus enum 버그)이라 BE 수정 전엔 연동 불가.
   // 성공 → { ok:true } / 규칙 위반 → { ok:false, kind:'blocked', reason } / 그 외 → { ok:false, kind:'error' }
   return { ok: false, kind: 'error' };
 }
