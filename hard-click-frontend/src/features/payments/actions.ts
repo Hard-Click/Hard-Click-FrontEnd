@@ -78,7 +78,12 @@ export async function confirmPaymentAction(
         serverApi.post('/api/enrollments', { courseId }),
       ),
     );
-    const failed = results.filter((r) => !r.success).length;
+    // 409 EN001('이미 수강 중')은 실패가 아니다 — 이미 보유한 강의를 재결제했거나 BE가
+    // 결제 승인 때 자동 등록한 경우. 사용자는 강의에 접근 가능하므로 경고하지 않는다(멱등 처리).
+    // (라이브 확인 2026-06-27: 보유 강의 재등록 → 409 EN001 "이미 수강 중인 강의입니다.")
+    const failed = results.filter(
+      (r) => !r.success && r.httpStatus !== 409 && r.errorCode !== 'EN001',
+    ).length;
     if (failed > 0) {
       enrollWarning = `결제는 완료됐지만 ${failed}개 강의의 수강 등록에 실패했어요. 고객센터로 문의해주세요.`;
     }
