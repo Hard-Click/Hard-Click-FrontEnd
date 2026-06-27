@@ -2,7 +2,7 @@ import { serverApi } from '@/lib/api';
 import { isMock } from '@/mocks/config';
 import { mockCart } from '@/mocks/cart.mock';
 import { mockCourseListResponse } from '@/mocks/courses.mock';
-import type { OrderSummary, OrderType } from './types';
+import type { OrderSummary, OrderType, CheckoutBlocked } from './types';
 
 /** 데모용 주문번호 (FORCE_ALL_MOCK 프리뷰 전용 — 라이브는 BE가 발급) */
 const MOCK_ORDER_NO = 'ORD-20260614-001';
@@ -86,7 +86,7 @@ export async function getCheckoutServer(
    *    BE가 courseIds(복수)를 무시하고 장바구니 전체를 돌려주는지 거기서 검증해 토스 전에 차단하기 때문.
    */
   filterToSelection = true,
-): Promise<OrderSummary | null> {
+): Promise<OrderSummary | CheckoutBlocked | null> {
   if (!isMock('orders')) {
     const params = new URLSearchParams({ type });
     if (type === 'course' && courseId) params.set('courseId', String(courseId));
@@ -98,7 +98,15 @@ export async function getCheckoutServer(
     const res = await serverApi.get<ApiOrder>(
       `/api/order/checkout?${params.toString()}`,
     );
-    if (!res.success || !res.data) return null;
+    // BE는 이미 수강 중인 강의가 포함되면 EN001로 주문을 거부한다(이중결제 방지, 라이브 2026-06-27: 409 EN001).
+    // → "이미 수강 중"(EN001)만 blocked로 구분하고, 그 외 오류(다른 409 포함)는 generic(null)로 둔다(오분류 방지).
+    if (!res.success) {
+      if (res.errorCode === 'EN001') {
+        return { blocked: 'ALREADY_ENROLLED' };
+      }
+      return null;
+    }
+    if (!res.data) return null;
     const summary = toOrderSummary(res.data);
 
     // 체크아웃 "표시"용 필터: BE가 이제 courseIds를 honor해 선택분만 오므로 사실상 no-op이나,

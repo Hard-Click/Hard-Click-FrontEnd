@@ -30,3 +30,11 @@ export interface OrderSummary {
   /** 최종 결제금액(원) */
   finalAmount: number;
 }
+
+/**
+ * 체크아웃 차단 — BE가 주문 발급을 거부한 경우.
+ * `ALREADY_ENROLLED`: 이미 수강 중인 강의가 포함됨(BE 409 EN001) → 이중결제 방지. (라이브 확인 2026-06-27)
+ */
+export interface CheckoutBlocked {
+  blocked: 'ALREADY_ENROLLED';
+}
