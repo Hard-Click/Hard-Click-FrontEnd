@@ -1026,6 +1026,7 @@ export default function CourseCreateForm({
                     orderIndex: sIdx,
                     lessons: sec.lectures.map((lec, lIdx) => ({
                       title: lec.fileName,
+                      description: lec.fileName || undefined,
                       orderIndex: lIdx,
                       durationSeconds: lec.duration
                         ? (() => {
