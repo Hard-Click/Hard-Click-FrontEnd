@@ -1013,9 +1013,9 @@ export default function CourseCreateForm({
 
                 const payload = {
                   title,
-                  description,
+                  description: description || undefined,
                   subjectId,
-                  thumbnailUrl,
+                  thumbnailUrl: thumbnailUrl || undefined,
                   priceType,
                   price: priceType === 'FREE' ? 0 : Number(price),
                   learningObjectives: learningGoals,
