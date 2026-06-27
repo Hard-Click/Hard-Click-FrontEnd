@@ -398,10 +398,11 @@ export default function CourseCreateForm({
 
           {/* 강의 소개 */}
           <div className="mb-8">
-            <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
+            <label htmlFor="course-description" className="mb-3 block text-sm font-semibold text-[#1E293B]">
               강의 소개
             </label>
             <textarea
+              id="course-description"
               placeholder="강의 소개를 입력하세요"
               value={description}
               onChange={(e) => setDescription(e.target.value)}

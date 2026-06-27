@@ -117,10 +117,9 @@ export async function createCourse(payload: {
   }
 
   const { subjectId, ...rest } = payload;
-  return api.post<{ courseId: number }>('/api/courses', {
-    ...rest,
-    subject: subjectValueById(subjectId),
-  });
+  const subject = subjectValueById(subjectId);
+  if (!subject) return { success: false, httpStatus: 400, message: '유효하지 않은 과목입니다.', data: undefined };
+  return api.post<{ courseId: number }>('/api/courses', { ...rest, subject });
 }
 
 /**
@@ -160,10 +159,9 @@ export async function updateCourse(
     };
   }
   const { subjectId, ...rest } = payload;
-  return api.patch<{ courseId: number }>(`/api/courses/${courseId}`, {
-    ...rest,
-    subject: subjectValueById(subjectId),
-  });
+  const subject = subjectValueById(subjectId);
+  if (!subject) return { success: false, httpStatus: 400, message: '유효하지 않은 과목입니다.', data: undefined };
+  return api.patch<{ courseId: number }>(`/api/courses/${courseId}`, { ...rest, subject });
 }
 
 /** 강의 삭제 (DELETE /api/courses/{courseId}) */
