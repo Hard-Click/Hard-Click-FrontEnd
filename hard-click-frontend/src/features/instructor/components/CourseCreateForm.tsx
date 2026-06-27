@@ -640,9 +640,9 @@ export default function CourseCreateForm({
             <div className="flex gap-3">
               {(
                 [
-                  { value: 'BEGINNER', label: '입문' },
-                  { value: 'INTERMEDIATE', label: '중급' },
-                  { value: 'ADVANCED', label: '심화' },
+                  { value: '입문', label: '입문' },
+                  { value: '중급', label: '중급' },
+                  { value: '심화', label: '심화' },
                 ] as const
               ).map(({ value, label }) => (
                 <button
@@ -1026,7 +1026,6 @@ export default function CourseCreateForm({
                     orderIndex: sIdx,
                     lessons: sec.lectures.map((lec, lIdx) => ({
                       title: lec.fileName,
-                      description: '',
                       orderIndex: lIdx,
                       durationSeconds: lec.duration
                         ? (() => {
