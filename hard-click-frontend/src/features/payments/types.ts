@@ -35,8 +35,14 @@ export interface PaymentHistory {
 
 /* ── 주문 상세 (order detail) ── */
 
-/** 주문 상태 — 결제완료/환불완료/결제실패 */
-export type OrderStatus = 'PAID' | 'REFUNDED' | 'FAILED';
+/** 주문 상태 — BE OrderStatus enum 그대로(READY 결제대기·PARTIAL_REFUNDED 부분환불·CANCELED 취소 포함) */
+export type OrderStatus =
+  | 'READY'
+  | 'PAID'
+  | 'PARTIAL_REFUNDED'
+  | 'REFUNDED'
+  | 'FAILED'
+  | 'CANCELED';
 
 /** 주문 상세의 항목 1개 */
 export interface OrderDetailItem {
@@ -57,6 +63,8 @@ export interface OrderDetailItem {
   refundAmount: number;
   /** 환불 안내 — 예: "진도율 4% · 결제 5일 경과" / "남은 157일 비례 환불" */
   refundNote: string;
+  /** 이미 환불된 항목 여부(부분환불 표시용) — BE 제공, mock은 미설정 */
+  refunded?: boolean;
 }
 
 /** 주문 상세 (UI 계약) */

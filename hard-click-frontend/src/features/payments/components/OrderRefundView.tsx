@@ -44,7 +44,9 @@ export default function OrderRefundView({ order }: { order: OrderDetail }) {
   const [processing, setProcessing] = useState(false);
 
   const isRefunded = (it: OrderDetailItem) =>
-    order.status === 'REFUNDED' || refundedIds.includes(it.courseId);
+    order.status === 'REFUNDED' ||
+    it.refunded === true || // BE 부분환불 항목
+    refundedIds.includes(it.courseId);
   const selectable = order.status === 'PAID';
   const allRefunded = order.items.every(isRefunded);
 
