@@ -162,6 +162,24 @@ describe('getCheckoutServer — 폴백 (라이브)', () => {
     );
     expect(await getOrder('course')).toBeNull();
   });
+
+  it('이미 수강 중(409 EN001)이면 CheckoutBlocked 반환 (이중결제 방지)', async () => {
+    mockGet.mockResolvedValue({
+      success: false,
+      httpStatus: 409,
+      message: '이미 수강 중인 강의입니다.',
+      errorCode: 'EN001',
+      data: null,
+    });
+    expect(await getCheckoutServer('course', undefined, [1])).toEqual({
+      blocked: 'ALREADY_ENROLLED',
+    });
+  });
+
+  it('409 아닌 일반 실패(500)는 null (blocked 아님)', async () => {
+    mockGet.mockResolvedValue(fail());
+    expect(await getCheckoutServer('course', 1)).toBeNull();
+  });
 });
 
 describe('getCheckoutServer — courseIds 표시필터 (filterToSelection)', () => {
