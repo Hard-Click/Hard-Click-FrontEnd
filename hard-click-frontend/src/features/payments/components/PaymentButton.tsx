@@ -40,6 +40,9 @@ export default function PaymentButton({
     type === 'course' &&
     (courseIds?.length ?? 0) > 0 &&
     TOSS_CLIENT_KEY.length > 0;
+  // 구독 결제: 강의와 동일 흐름(checkout?type=subscription→confirm). 주문(orderNo)은 페이지에서 이미 발급됨.
+  //   BE confirm이 dispatchAccessGrant()→subscribeUseCase.handle()로 구독권 지급(BE 확인 2026-06-27).
+  const canTossSub = type === 'subscription' && TOSS_CLIENT_KEY.length > 0;
 
   // 언마운트 시 진행 중인 mock 타이머 정리 (콜백이 언마운트 뒤 실행되는 것 방지)
   useEffect(() => {
@@ -93,7 +96,26 @@ export default function PaymentButton({
       return;
     }
 
-    // mock 흐름 (구독·장바구니·Client Key 미설정) — 처리 흐름만 재현
+    if (canTossSub) {
+      try {
+        const toss = await getTossPayments(TOSS_CLIENT_KEY);
+        const origin = window.location.origin;
+        // 구독은 고정 상품 — 페이지에서 발급된 orderNo/amount 그대로 결제창. confirm이 구독권 지급.
+        await toss.requestPayment('카드', {
+          amount,
+          orderId: orderNo,
+          orderName: 'FLOWN 연간 패스',
+          successUrl: `${origin}/payment-result?type=subscription`,
+          failUrl: `${origin}/payment-result?status=fail&type=subscription`,
+        });
+      } catch {
+        toast.error('결제가 취소되었습니다.');
+        setProcessing(false);
+      }
+      return;
+    }
+
+    // mock 흐름 (Client Key 미설정 시 폴백) — 처리 흐름만 재현
     timerRef.current = window.setTimeout(() => {
       toast.success('결제가 완료되었습니다');
       router.push(

@@ -27,14 +27,14 @@ export async function confirmPaymentAction(
   const courseIds = Array.isArray(input?.courseIds)
     ? [...new Set(input.courseIds)].filter((n) => Number.isInteger(n) && n > 0)
     : [];
+  // courseIds는 선택 — 구독 결제는 수강할 강의가 없다(confirm이 구독권을 지급). paymentKey/orderId/amount만 필수.
   if (
     typeof input?.paymentKey !== 'string' ||
     input.paymentKey.length === 0 ||
     typeof input.orderId !== 'string' ||
     input.orderId.length === 0 ||
     !Number.isFinite(input.amount) ||
-    input.amount <= 0 ||
-    courseIds.length === 0
+    input.amount <= 0
   ) {
     return { success: false, message: '결제 정보가 올바르지 않습니다.' };
   }
@@ -71,8 +71,9 @@ export async function confirmPaymentAction(
   // - 중복 승인(성공 URL 새로고침 등)이면 첫 승인 때 이미 등록됨 → 재등록 생략(멱등).
   // - serverApi.post는 throw하지 않고 {success:false}를 반환하므로, Promise.all 결과를 확인해
   //   일부 등록 실패를 감지하고 사용자에게 알린다(§0.1④ — 결제됐는데 미등록을 조용히 숨기지 않음).
+  // 구독(courseIds 없음)은 BE confirm이 구독권을 지급하므로 FE 수강등록 호출 없음. 강의 결제만 등록.
   let enrollWarning: string | undefined;
-  if (!res.data.duplicate) {
+  if (!res.data.duplicate && courseIds.length > 0) {
     const results = await Promise.all(
       courseIds.map((courseId) =>
         serverApi.post('/api/enrollments', { courseId }),
