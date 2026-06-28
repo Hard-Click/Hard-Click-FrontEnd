@@ -47,7 +47,7 @@ const MOCK_OVERRIDE: Record<string, boolean> = {
   quizzes: false, // 강사 읽기(server.ts: 목록·점수통계)·학생 흐름(studentServer/studentActions: 목록·응시·리뷰 reports/me·제출) 전부 라이브. 섹션→주차 매핑. ⚠️ 강사 쓰기(actions.ts 등록/수정/삭제)는 실엔드포인트로 배선됐으나 BE 비즈니스 로직이 stub(201/200만 반환·저장 안 됨) — BE 구현 시 매퍼 가정(sectionId←week·correctOptionId←answerIndex+1) 검증 필요.
   subscriptions: false, // GET /api/subscriptions/me(상태)+/plan(가격) 라이브 합성 → 구독 상태/플랜. ⚠️ 가격은 BE 고정 plan.price(FE 수능 D-day 동적가격은 placeholder였음). 구독하기(POST)는 결제 흐름(mock 규칙) 경유.
   notifications: false, // 헤더 종 알림 — GET /api/notifications(목록,data={content,hasNext})·/unread-count(미읽음수)·PATCH /api/notifications/{id}/read(읽음). 루트 layout에서 서버조회→NotificationProvider(AuthProvider 패턴 미러). 라이브 검증(2026-06-25). ⚠️ SSE 실시간(/subscribe)은 BE M3 완료(6/26) 후 — 지금은 조회+읽음만(읽음=Provider 낙관적 갱신).
-  learning: true, // 영상 재생/진도(/api/learning/*) — ⚠️ mock 유지. BE 영상 시드 0개·강의 lesson에 videoId 필드 없음·me/courses lastVideoId null이라 라이브 전환 불가(2026-06-26 BE 요청). BE가 영상 시드+lesson↔video 매핑하면 false로 전환.
+  learning: false, // 영상 재생/진도(/api/learning/*) — 라이브 전환(2026-06-27). BE가 영상 시드+lesson↔video 매핑 제공: courses/{id}/progress가 lessons[videoId] 줌, videos/{id}/play가 실 S3 streamingUrl(presigned) 줌. shape 라이브 검증 완료(play·progress·position·course progress 전부 FE 타입 일치). ⚠️ 영상 데이터는 일부만 연결(videoId 1=200, 나머지 404 L005=BE가 더 업로드해야) → 미연결은 VideoErrorState로 처리.
   // ⚠️ 잔디 lessons/yearly/monthly는 콜드(첫호출) 200 후 연속 500 출렁(BE 작업중). members/me/profile-image=항상 500. subscriptions/me=500. quiz는 배포됨(미연동 도메인). chat=BE 없음.
   // 공지·커뮤니티·인증은 팀이 별도 플래그(USE_MOCK_NOTICES/COMMUNITY/AUTH)로 관리 → 여기서 관여하지 않음.
 };
