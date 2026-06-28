@@ -51,6 +51,8 @@ export interface OrderDetailItem {
   title: string;
   /** 강사명 (구독은 빈 문자열) */
   instructor: string;
+  /** 강의 썸네일 URL — BE 제공. 없으면 그라데이션 placeholder, 구독은 sparkle 박스. */
+  thumbnailUrl?: string;
   /** 결제 금액(원) */
   price: number;
   /** 구독 상품 여부 — "구독 상품" 뱃지 */
