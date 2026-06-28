@@ -86,8 +86,8 @@ describe('createCheckoutOrderAction — courseIds 정규화', () => {
     const result = await createCheckoutOrderAction('course', [7, 7, 7]);
 
     expect(result).not.toBeNull();
-    // 정규화 후 1건 → 단건 경로: courseId=7, courseIds=[7]
-    expect(mockGetCheckout).toHaveBeenCalledWith('course', 7, [7], false);
+    // 정규화 후 1건 → 단건 경로: courseId=7만(courseIds 미전달 — BE 장바구니 경로 회피)
+    expect(mockGetCheckout).toHaveBeenCalledWith('course', 7, undefined, false);
   });
 
   it('음수·0·비정수를 걸러낸 뒤 유효 id만 전달', async () => {

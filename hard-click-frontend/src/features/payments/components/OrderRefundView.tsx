@@ -44,9 +44,12 @@ export default function OrderRefundView({ order }: { order: OrderDetail }) {
   const [processing, setProcessing] = useState(false);
 
   const isRefunded = (it: OrderDetailItem) =>
-    order.status === 'REFUNDED' || refundedIds.includes(it.courseId);
+    order.status === 'REFUNDED' ||
+    it.refunded === true || // BE 부분환불 항목
+    refundedIds.includes(it.courseId);
   const selectable = order.status === 'PAID';
-  const allRefunded = order.items.every(isRefunded);
+  // 빈 items(구독 주문은 BE가 item 안 줌)에서 every()가 무조건 true → "환불 완료" 오표시 방지
+  const allRefunded = order.items.length > 0 && order.items.every(isRefunded);
 
   // 선택 = 체크 && 미환불
   const isSel = (i: number) => selected[i] && !isRefunded(order.items[i]);
@@ -133,11 +136,18 @@ export default function OrderRefundView({ order }: { order: OrderDetail }) {
                     {selected[i] && CheckIcon}
                   </button>
                 )}
-                {/* 썸네일 — 구독은 sparkle 박스(체크아웃과 통일), 강의는 이미지 자리(연동 시 next/image + thumbnailUrl) */}
+                {/* 썸네일 — 구독=sparkle 박스 / 강의=thumbnailUrl 있으면 이미지(BE 제공), 없으면 그라데이션 placeholder.
+                    img는 코드베이스 썸네일 패턴(CourseCard·WishlistCard)과 일관 — ⚡최적화 시 next/image 일괄 전환 */}
                 {it.isSubscription ? (
                   <span className="flex h-16 w-[88px] flex-shrink-0 items-center justify-center rounded-xl bg-[#2F5DAA]">
                     {SparkleIcon}
                   </span>
+                ) : it.thumbnailUrl ? (
+                  <img
+                    src={it.thumbnailUrl}
+                    alt={it.title}
+                    className="h-16 w-[88px] flex-shrink-0 rounded-xl object-cover"
+                  />
                 ) : (
                   <span className="flex h-16 w-[88px] flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-[#EDF1F6] to-[#F8FAFC]">
                     {ImageIcon}

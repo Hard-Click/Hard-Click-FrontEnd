@@ -29,12 +29,14 @@ export async function createCheckoutOrderAction(
   );
   if (safe.length === 0) return null;
 
-  // 단건이면 courseId 경로, 다건이면 courseIds 경로(둘 다 BE honor 라이브 확인) — server가 URL 구성.
+  // 단건(강의 상세 진입)은 courseId 경로만 — courseIds까지 같이 보내면 BE가 **장바구니 경로**로 처리해
+  //   장바구니에 없는 강의는 400 C001로 실패한다(라이브 확인 2026-06-27). 다건(장바구니)일 때만 courseIds.
   // 결제 발급이므로 filterToSelection=false → BE 원본을 받아 honor 여부를 직접 검증한다.
+  const single = safe.length === 1;
   const order = await getCheckoutServer(
     type,
-    safe.length === 1 ? safe[0] : undefined,
-    safe,
+    single ? safe[0] : undefined,
+    single ? undefined : safe,
     false,
   );
   // 'blocked'(이미 수강 중)이면 주문 발급 불가 → null(결제 진행 차단). 페이지가 선차단하므로 보통 여기 안 옴.
