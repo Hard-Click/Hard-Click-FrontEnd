@@ -44,12 +44,14 @@ export async function getMyPaymentsServer(): Promise<PaymentHistory[]> {
     return mockMyPayments.content.map(toPaymentHistory);
   }
 
-  // 라이브: GET /api/payment/me (MyPaymentHistoryPageResponse) — 라이브 검증 2026-06-26(200).
+  // 라이브: GET /api/payments/me (MyPaymentHistoryPageResponse).
+  // ⚠️ BE가 결제 경로를 복수(/api/payments/*)로 통일(2026-06-29 main) — 단수 /api/payment/me는 500(C002)이라
+  //    결제내역(강의·구독) 전체가 안 뜨던 버그. confirm(/api/payments/confirm)과 경로 체계 일치. 라이브 검증: 복수 200.
   // ⚠️ 삭제된 강의 행은 orderId/orderNo/paymentType(+FAILED는 paidAt) null로 내려옴 → 매퍼·카드가 null 가드.
   // 페이지네이션 미적용(첫 page=10건만 표시) — 추후.
   try {
     const res =
-      await serverApi.get<MyPaymentHistoryPageResponse>('/api/payment/me');
+      await serverApi.get<MyPaymentHistoryPageResponse>('/api/payments/me');
     if (!res.success || !res.data) return [];
     return res.data.content.map(toPaymentHistory);
   } catch {

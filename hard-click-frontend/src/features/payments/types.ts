@@ -1,6 +1,6 @@
 /**
  * 결제 내역 도메인 타입 — UI는 이 타입에만 의존(격리막).
- * 실제 백엔드 `GET /api/payment/me`(MyPaymentHistoryResponse) 기준.
+ * 실제 백엔드 `GET /api/payments/me`(MyPaymentHistoryResponse) 기준.
  */
 
 export type PaymentType = 'COURSE' | 'SUBSCRIPTION';
