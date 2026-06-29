@@ -6,7 +6,7 @@ import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import { useRouter } from 'next/navigation';
 import LoadingModal from '@/components/ui/loadingModal';
 import { createCourse, updateCourse, uploadCourseThumbnail } from '../services';
-import { SUBJECTS } from '@/features/courses/subjects';
+import { SUBJECTS, subjectValueById } from '@/features/courses/subjects';
 import type { Subject } from '@/features/courses/types';
 import { api } from '@/services/api';
 import axios from 'axios';
@@ -316,6 +316,12 @@ export default function CourseCreateForm({
         newErrors.price = '1원 이상의 올바른 가격을 입력해주세요';
         if (!firstError) firstError = 'price';
       }
+    }
+
+    const hasEmptySectionTitle = sections.some((sec) => !sec.title.trim());
+    if (hasEmptySectionTitle) {
+      toast.error('섹션 제목을 모두 입력해주세요.');
+      return;
     }
 
     setErrors(newErrors);
@@ -1094,8 +1100,8 @@ export default function CourseCreateForm({
 
                 const payload = {
                   title,
-                  description: description || undefined,
-                  subjectId,
+                  description,
+                  subject: subjectValueById(subjectId) ?? '',
                   thumbnailUrl: thumbnailUrl || undefined,
                   priceType,
                   price: priceType === 'FREE' ? 0 : Number(price),
