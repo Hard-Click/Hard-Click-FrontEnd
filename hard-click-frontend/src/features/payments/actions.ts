@@ -107,13 +107,16 @@ export async function confirmPaymentAction(
  * 환불 요청 (Server Action).
  * 결과: 성공 / 규칙상 불가(모달) / 처리 오류(토스트).
  * mock: 선택 항목이 모두 refundable이면 성공, 불가 항목 포함 시 blocked.
- * 연동: POST /api/order/{orderId}/items/{courseId}/refund (per-item, Idempotency-Key 헤더).
+ * 연동(강의): POST /api/order/{orderId}/items/{courseId}/refund (per-item, Idempotency-Key 헤더).
  *   ⚠️ BE는 항목별(courseId 1개씩) 환불 모델 — courseIds 배열은 항목마다 반복 호출(부분환불=여러 번). (라이브 검증 2026-06-27)
+ * 연동(구독, isSubscription): POST /api/order/{orderId}/refund (주문 단위 전액 환불, courseId 없음).
+ *   구독 주문은 order_items가 없어 per-item이 불가 → BE가 별도 엔드포인트 제공(OrderController.refundSubscription, BE 코드 ba34f83 검증).
  */
 export async function refundAction(
   orderId: number,
   courseIds: number[],
   reason: string,
+  isSubscription = false,
 ): Promise<RefundResult> {
   if (!reason.trim() || courseIds.length === 0) {
     return { ok: false, kind: 'error' };
@@ -145,6 +148,23 @@ export async function refundAction(
     }
     revalidatePath(`/orders/${orderId}`);
     return { ok: true };
+  }
+
+  // 구독: 주문 단위 환불 — POST /api/order/{orderId}/refund (orderId만, Idempotency-Key UUID 헤더, body 없음).
+  //   구독 주문은 item이 없어 per-item이 불가(courseId=0 합성) → BE 별도 엔드포인트(OrderController.refundSubscription).
+  //   ⚠️ 실 환불 호출은 파괴적이라 미테스트 — BE 코드(ba34f83) 시그니처 기준 배선. courseIds 미사용(orderId 기준).
+  if (isSubscription) {
+    const res = await serverApi.post(`/api/order/${orderId}/refund`, undefined, {
+      'Idempotency-Key': randomUUID(),
+    });
+    if (res.success) {
+      revalidatePath(`/orders/${orderId}`);
+      revalidatePath('/subscriptions'); // 구독 해지 상태 반영
+      return { ok: true };
+    }
+    return res.httpStatus === 400 || res.httpStatus === 409
+      ? { ok: false, kind: 'blocked', reason: '환불 조건을 충족하지 않아요.' }
+      : { ok: false, kind: 'error' };
   }
 
   // 라이브: 항목별(per-item) POST /api/order/{orderId}/items/{courseId}/refund (Idempotency-Key 헤더, body 없음).

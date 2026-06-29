@@ -54,10 +54,10 @@ beforeEach(() => {
 });
 
 describe('getMyPaymentsServer — BE 응답 → UI 계약 매핑 (라이브 분기)', () => {
-  it('GET /api/payment/me 를 호출한다', async () => {
+  it('GET /api/payments/me 를 호출한다', async () => {
     mockedGet.mockResolvedValue(ok(pageOf([])));
     await getMyPaymentsServer();
-    expect(mockedGet).toHaveBeenCalledWith('/api/payment/me');
+    expect(mockedGet).toHaveBeenCalledWith('/api/payments/me');
   });
 
   it('정상 항목을 PaymentHistory 형태로 그대로 매핑한다 (happy path)', async () => {
