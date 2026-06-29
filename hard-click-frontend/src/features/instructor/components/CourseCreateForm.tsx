@@ -318,12 +318,6 @@ export default function CourseCreateForm({
       }
     }
 
-    const hasEmptySectionTitle = sections.some((sec) => !sec.title.trim());
-    if (hasEmptySectionTitle) {
-      toast.error('섹션 제목을 모두 입력해주세요.');
-      return;
-    }
-
     setErrors(newErrors);
     setFirstErrorField(firstError);
 
@@ -347,6 +341,12 @@ export default function CourseCreateForm({
       if ('focus' in (targetRef?.current ?? {})) {
         (targetRef?.current as HTMLElement | null)?.focus();
       }
+      return;
+    }
+
+    const hasEmptySectionTitle = sections.some((sec) => !sec.title.trim());
+    if (hasEmptySectionTitle) {
+      toast.error('섹션 제목을 모두 입력해주세요.');
       return;
     }
 
