@@ -114,6 +114,7 @@ export async function refundAction(
   orderId: number,
   courseIds: number[],
   reason: string,
+  isSubscription = false,
 ): Promise<RefundResult> {
   if (!reason.trim() || courseIds.length === 0) {
     return { ok: false, kind: 'error' };
@@ -145,6 +146,23 @@ export async function refundAction(
     }
     revalidatePath(`/orders/${orderId}`);
     return { ok: true };
+  }
+
+  // 구독: 주문 단위 환불 — POST /api/order/{orderId}/refund (orderId만, Idempotency-Key 헤더, body 없음).
+  //   구독 주문은 item이 없어 per-item이 안 되므로 BE가 별도 엔드포인트 제공(2026-06-29 배포, 스웨거 검증).
+  //   ⚠️ 실 환불 호출은 파괴적이라 미테스트 — 시그니처 기준 배선(E2E는 실 결제→환불로). courseIds 미사용(orderId 기준).
+  if (isSubscription) {
+    const res = await serverApi.post(`/api/order/${orderId}/refund`, undefined, {
+      'Idempotency-Key': randomUUID(),
+    });
+    if (res.success) {
+      revalidatePath(`/orders/${orderId}`);
+      revalidatePath('/subscriptions'); // 구독 해지 상태 반영
+      return { ok: true };
+    }
+    return res.httpStatus === 400 || res.httpStatus === 409
+      ? { ok: false, kind: 'blocked', reason: '환불 조건을 충족하지 않아요.' }
+      : { ok: false, kind: 'error' };
   }
 
   // 라이브: 항목별(per-item) POST /api/order/{orderId}/items/{courseId}/refund (Idempotency-Key 헤더, body 없음).

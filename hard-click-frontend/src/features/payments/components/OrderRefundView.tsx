@@ -87,7 +87,12 @@ export default function OrderRefundView({ order }: { order: OrderDetail }) {
     setProcessing(true);
     const courseIds = refundableSelected.map((it) => it.courseId);
     try {
-      const res = await refundAction(order.orderId, courseIds, reason);
+      const res = await refundAction(
+        order.orderId,
+        courseIds,
+        reason,
+        isSubscription,
+      );
       if (res.ok) {
         toast.success(
           isSubscription ? '구독 환불이 완료되었습니다' : '환불이 완료되었습니다',
