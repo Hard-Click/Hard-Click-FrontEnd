@@ -12,8 +12,6 @@ interface VideoPlayerProps {
   lastPositionSeconds: number;
   durationSeconds: number;
   isCompleted: boolean;
-  /** 진도율 변경 시 부모에 전달 (사이드바/요약 갱신용) */
-  onProgressChange?: (progressRate: number) => void;
   /** 백엔드 완료 처리 성공 시 — 사이드바/요약 isCompleted=true 갱신용 */
   onCompleted?: () => void;
 }
@@ -53,7 +51,6 @@ export default function VideoPlayer({
   lastPositionSeconds,
   durationSeconds,
   isCompleted,
-  onProgressChange,
   onCompleted,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -70,7 +67,6 @@ export default function VideoPlayer({
     videoId,
     durationSeconds,
     isPlaying,
-    onProgress: onProgressChange,
     onCompleted,
   });
 
