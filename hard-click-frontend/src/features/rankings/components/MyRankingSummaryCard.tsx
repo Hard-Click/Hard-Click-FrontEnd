@@ -34,6 +34,9 @@ export default function MyRankingSummaryCard({
     acceptedCount: myRanking.acceptedCommentRank,
   };
   const { rank, totalUsers, topPercent } = rankByMetric[metric];
+  /* BE가 활동 시드 전/미랭크 유저에겐 rank=null을 주고 매퍼가 0으로 파생한다.
+   * "0위·전체 0명·상위 0%" 위조 대신 '집계 전' 안내 (CLAUDE.md §0.1 규칙②, 마이페이지와 동일). */
+  const isRanked = rank > 0 && totalUsers > 0;
 
   return (
     <section className="flex items-center gap-4 rounded-2xl bg-gradient-to-br from-[#2F5DAA] to-[#4071C0] px-6 py-5 text-white shadow-[0_8px_24px_-8px_rgba(47,93,170,0.5)]">
@@ -50,13 +53,22 @@ export default function MyRankingSummaryCard({
 
       {/* 순위 */}
       <div className="flex flex-col items-end">
-        <p className="leading-none">
-          <span className="text-3xl font-extrabold">{rank}</span>
-          <span className="ml-0.5 text-base font-bold">위</span>
-        </p>
-        <p className="mt-1 text-xs text-white/80">
-          전체 {totalUsers.toLocaleString()}명 · 상위 {topPercent}%
-        </p>
+        {isRanked ? (
+          <>
+            <p className="leading-none">
+              <span className="text-3xl font-extrabold">{rank}</span>
+              <span className="ml-0.5 text-base font-bold">위</span>
+            </p>
+            <p className="mt-1 text-xs text-white/80">
+              전체 {totalUsers.toLocaleString()}명 · 상위 {topPercent}%
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-lg font-bold leading-none">집계 전</p>
+            <p className="mt-1 text-xs text-white/80">아직 순위가 없어요</p>
+          </>
+        )}
       </div>
     </section>
   );

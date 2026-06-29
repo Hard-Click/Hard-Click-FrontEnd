@@ -24,15 +24,16 @@ export default function CourseInstructorSection({
         <h2 className="text-2xl font-semibold text-[#1A1F2E] mb-6">강사소개</h2>
 
         <div className="flex items-start gap-6 pb-8">
-          <div className="flex-shrink-0 w-28 h-28 rounded-full border-2 border-[#D5D8DD] overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/image/Image (박지훈).svg"
-              width={112}
-              height={112}
-              alt=""
-              className="w-full h-full object-cover"
-            />
+          {/* BE에 강사 사진 필드가 없어, 특정 인물 사진(박지훈) 고정 대신 이니셜 placeholder.
+              실인물 사진이 모든 강사로 둔갑하던 §0.1② 위반 제거 — 필드 생기면 instructor.avatarUrl로 교체. */}
+          <div
+            className="flex-shrink-0 w-28 h-28 rounded-full border-2 border-[#D5D8DD] flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #2F5DAA, #6B8FD6)' }}
+            aria-hidden="true"
+          >
+            <span className="text-4xl font-semibold text-white select-none">
+              {instructor.name?.trim().charAt(0) || '강'}
+            </span>
           </div>
 
           <div className="flex-1 min-w-0">

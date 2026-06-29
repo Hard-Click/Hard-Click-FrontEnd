@@ -102,10 +102,10 @@ export default function SubscriptionPlanCard({
   info: SubscriptionInfo;
 }) {
   const notices = [
-    `구독권은 결제일부터 수능일(${dotDate(info.suneungDate)})까지 유효합니다.`,
+    '구독권은 결제일로부터 구독 만료일까지 이용할 수 있습니다.',
     '구독 기간 중 추가되는 모든 신규 강의를 자동으로 수강할 수 있습니다.',
-    '환불은 남은 이용 기간에 비례하여 일할 계산됩니다.',
-    '구독 취소 후에도 만료일까지는 서비스를 이용할 수 있습니다.',
+    '환불은 마이페이지 결제 내역에서 요청할 수 있습니다.',
+    '구독 만료일이 지나면 자동으로 종료됩니다.',
   ];
 
   return (
@@ -122,7 +122,7 @@ export default function SubscriptionPlanCard({
               <span className="ml-1 text-2xl text-[#4B5563]">원</span>
             </p>
             <p className="mt-3 text-lg text-[#4B5563]">
-              수능일까지 · D-{info.daysUntilSuneung}
+              연간 이용권
             </p>
           </>
         )}
@@ -177,7 +177,7 @@ export default function SubscriptionPlanCard({
               이미 이용 중인 구독권입니다
             </p>
             <p className="mt-2 text-base text-[#4B5563]">
-              구독 만료일: {dotDate(info.suneungDate)}
+              구독 만료일: {info.expiresAt ? dotDate(info.expiresAt) : '—'}
             </p>
           </div>
           <div className="mt-4 flex h-16 items-center justify-center rounded-[20px] bg-[#E2E8F0] text-lg font-bold text-[#9CA3AF]">

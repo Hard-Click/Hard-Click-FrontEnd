@@ -31,7 +31,7 @@ const SparkleWhite = (
 
 /**
  * 구독 이용 내용 카드 (Server·표시용) — 구독 중 화면 하단.
- * 결제일 / 만료일(=수능일) / 남은 기간 / 결제 금액.
+ * 결제일 / 남은 기간(BE remainingDays) / 결제 금액. (실 만료일은 SubscriptionPlanCard에서 expiresAt로 표시)
  */
 export default function SubscriptionStatusCard({
   info,

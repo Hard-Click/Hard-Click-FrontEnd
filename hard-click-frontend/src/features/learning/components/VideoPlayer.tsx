@@ -12,8 +12,6 @@ interface VideoPlayerProps {
   lastPositionSeconds: number;
   durationSeconds: number;
   isCompleted: boolean;
-  /** 진도율 변경 시 부모에 전달 (사이드바/요약 갱신용) */
-  onProgressChange?: (progressRate: number) => void;
   /** 백엔드 완료 처리 성공 시 — 사이드바/요약 isCompleted=true 갱신용 */
   onCompleted?: () => void;
 }
@@ -53,7 +51,6 @@ export default function VideoPlayer({
   lastPositionSeconds,
   durationSeconds,
   isCompleted,
-  onProgressChange,
   onCompleted,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -65,45 +62,13 @@ export default function VideoPlayer({
   const [duration, setDuration] = useState(durationSeconds);
   const [volume, setVolume] = useState(1);
   const restartToastFiredRef = useRef(false);
-  /* 실시간 진행률용 — 영상 변경 시 baseline 누적 + 재생 중 매초 sessionWatched++.
-   * 90% 도달 토스트는 useWatchTimeSaver(5초 heartbeat 응답 기반)에서만 fire — 중복 방지. */
-  const baselineWatchedRef = useRef(0);
-  const sessionWatchedRef = useRef(0);
 
   useWatchTimeSaver({
     videoId,
     durationSeconds,
     isPlaying,
-    onProgress: onProgressChange,
     onCompleted,
   });
-
-  /* 영상 변경 시 baseline 설정 — localStorage 누적 watchedSeconds */
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = window.localStorage.getItem(`learning:watchedSeconds:${videoId}`);
-      const sec = stored ? Number(stored) : 0;
-      baselineWatchedRef.current = Number.isFinite(sec) ? sec : 0;
-    }
-    sessionWatchedRef.current = 0;
-  }, [videoId]);
-
-  /* 재생 중 5초마다 카운터 — 사이드바 진행률 갱신 (매초 setState로 인한 12개 영상 리렌더 막음).
-   * 90% 토스트는 useWatchTimeSaver가 백엔드 응답 기반으로 1회만 fire. */
-  useEffect(() => {
-    if (!isPlaying) return;
-    const interval = setInterval(() => {
-      sessionWatchedRef.current += 5;
-      const total = baselineWatchedRef.current + sessionWatchedRef.current;
-      /* 실제 영상 길이 기준 (백엔드 durationSeconds와 다를 수 있음) */
-      const actualDuration = videoRef.current?.duration || durationSeconds;
-      if (actualDuration > 0) {
-        const rate = Math.min(100, (total / actualDuration) * 100);
-        onProgressChange?.(rate);
-      }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [isPlaying, durationSeconds, onProgressChange]);
 
   /* localStorage에 마지막 위치 저장/복원 — mock 환경 이어보기 polyfill */
   const LAST_POS_KEY = `learning:lastPosition:${videoId}`;
@@ -228,8 +193,9 @@ export default function VideoPlayer({
     const onLoaded = () => setDuration(video.duration || durationSeconds);
     const onVolume = () => setVolume(video.volume);
     const onEnded = () => {
+      /* 영상 종료 = 마지막 위치만 저장. '완료'는 useWatchTimeSaver가 watch-time을 누적해
+       * 백엔드 완료 검증(completeVideo)을 통과해야만 처리한다(§0.1 — 끝까지 안 봐도 완료되는 위조 방지). */
       persistLastPosition(video.duration);
-      onProgressChange?.(100);
     };
     video.addEventListener('play', onPlay);
     video.addEventListener('pause', onPause);

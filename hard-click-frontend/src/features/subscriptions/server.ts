@@ -47,6 +47,7 @@ function unsubscribedFallback(): SubscriptionInfo {
     currentPrice: priceOn(),
     paidAt: null,
     paidAmount: null,
+    expiresAt: null,
   };
 }
 
@@ -66,6 +67,7 @@ export async function getSubscriptionServer(): Promise<SubscriptionInfo> {
       currentPrice: priceOn(),
       paidAt: s.subscribed ? s.paidAt : null,
       paidAmount: s.subscribed ? s.paidAmount : null,
+      expiresAt: s.subscribed ? s.expiresAt : null,
     };
   }
 
@@ -88,5 +90,7 @@ export async function getSubscriptionServer(): Promise<SubscriptionInfo> {
     currentPrice: plan?.price ?? priceOn(),
     paidAt: subscribed && me?.startedAt ? me.startedAt.split('T')[0] : null,
     paidAmount: subscribed ? (me?.paidAmount ?? null) : null,
+    // 실 만료일 = BE me.expiredAt(결제일+구독기간). 하드코딩 수능일을 만료일로 쓰던 §0.1② 정정.
+    expiresAt: subscribed && me?.expiredAt ? me.expiredAt.split('T')[0] : null,
   };
 }

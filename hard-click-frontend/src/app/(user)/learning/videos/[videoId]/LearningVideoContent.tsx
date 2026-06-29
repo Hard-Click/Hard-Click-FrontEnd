@@ -245,9 +245,12 @@ export default function LearningVideoContent({
     [sidebarVideos, displayVideo?.videoId],
   );
 
-  /* 진도율 갱신 — 백엔드 응답이 void라 클라이언트에서 lessons completed 갱신 */
-  const handleProgressChange = (rate: number) => {
-    if (rate < 90 || !video) return;
+  /* 레슨 완료 갱신 — ⚠️ 백엔드 완료 검증(PATCH /progress/complete, watchTime ≥ 90%)을 통과해
+   * completeVideo가 성공했을 때 useWatchTimeSaver의 onCompleted 콜백으로만 호출된다.
+   * 클라이언트 추정 진도율(5초 카운터·영상 ended)로 '완료'를 만들지 않는다(§0.1 — 가짜 완료 방지).
+   * 사이드바 lessons[].completed + 완료 개수 + 강의 진도율(완료 레슨/전체)을 함께 갱신. */
+  const handleLessonCompleted = () => {
+    if (!video) return;
     setProgress((prev) => {
       if (!prev) return prev;
       const nextLessons = prev.lessons.map((l) =>
@@ -311,8 +314,7 @@ export default function LearningVideoContent({
                 lastPositionSeconds={startPosition}
                 durationSeconds={video.durationSeconds}
                 isCompleted={video.completed}
-                onProgressChange={handleProgressChange}
-                onCompleted={() => video && setVideo({ ...video, completed: true })}
+                onCompleted={handleLessonCompleted}
               />
             ) : (
               <div className="text-white/60 text-sm">잠시만 기다려주세요...</div>
