@@ -11,14 +11,16 @@ export interface SubscriptionInfo {
   planName: string;
   /** 혜택 목록 */
   benefits: string[];
-  /** 수능일(만료 기준) — YYYY-MM-DD */
+  /** 수능일 — 미구독 mock 가격(D-day) 산정용. ⚠️ 실제 만료일은 expiresAt (수능일 아님). YYYY-MM-DD */
   suneungDate: string;
-  /** 오늘 → 수능 남은 일수 (미구독 가격 산정 + 구독 중 남은 기간) */
+  /** 오늘 → 수능 남은 일수 (미구독 mock 가격 산정용) */
   daysUntilSuneung: number;
-  /** 오늘 기준 가격(원) — 미구독 결제 예정액 (= 남은 일수 × 1만원) */
+  /** 오늘 기준 가격(원) — 미구독 결제 예정액 */
   currentPrice: number;
   /** 결제일 — 구독 중일 때만 (YYYY-MM-DD) */
   paidAt: string | null;
   /** 결제 금액(원) — 구독 중일 때만 */
   paidAmount: number | null;
+  /** 실제 구독 만료일 — 구독 중일 때만 (YYYY-MM-DD). BE me.expiredAt(결제일+구독기간) */
+  expiresAt: string | null;
 }

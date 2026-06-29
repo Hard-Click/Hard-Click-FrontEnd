@@ -1,6 +1,6 @@
 /**
  * 장바구니 도메인 타입 — UI는 이 타입에만 의존(격리막).
- * BE 미구현(노션 명세 기준) GET /api/cart. 연동 시 server/actions만 교체.
+ * BE 연동 완료 — GET /api/cart(조회)·DELETE /api/cart/{courseId}(삭제) 실서버 호출(server.ts/actions.ts, config cart:false).
  */
 
 /** 장바구니 항목 1개 (UI 계약) */
