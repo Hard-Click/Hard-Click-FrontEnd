@@ -62,16 +62,22 @@ function toCartFromApi(api: BeCartResponse): Cart {
 /**
  * 내 수강중(구매 완료) courseId 집합 — 이미 산 강의를 장바구니에서 숨기기 위함.
  * courses/server.ts와 동일한 검증된 호출(GET /api/enrollments/me?status=ALL).
- * 비로그인이면 호출 생략, 실패는 빈 집합 → 필터 미적용(장바구니 노출 자체는 막지 않음).
+ * 비로그인이면 호출 생략. 실패 봉투든 예외든 빈 집합 → 필터 미적용(장바구니 노출 자체는
+ * 막지 않음). serverApi.get는 보통 봉투를 반환하지만, 계약이 타입으로 강제되지 않으므로
+ * 예외도 try/catch로 흡수해 "수강목록 조회 실패 시 장바구니는 그대로"를 보장한다.
  */
 async function getEnrolledCourseIds(): Promise<Set<number>> {
   const user = await getCurrentUser();
   if (!user) return new Set();
-  const res = await serverApi.get<{ courseId: number }[]>(
-    '/api/enrollments/me?status=ALL',
-  );
-  if (!res.success || !Array.isArray(res.data)) return new Set();
-  return new Set(res.data.map((e) => e.courseId));
+  try {
+    const res = await serverApi.get<{ courseId: number }[]>(
+      '/api/enrollments/me?status=ALL',
+    );
+    if (!res.success || !Array.isArray(res.data)) return new Set();
+    return new Set(res.data.map((e) => e.courseId));
+  } catch {
+    return new Set();
+  }
 }
 
 /** 이미 수강중인 강의를 장바구니 목록에서 제외하고 합계·개수를 재계산한다. */
