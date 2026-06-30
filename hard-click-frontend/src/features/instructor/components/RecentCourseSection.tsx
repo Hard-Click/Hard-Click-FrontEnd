@@ -21,6 +21,7 @@ export default function RecentCourseSection() {
       if (!res.success || !res.data) return;
 
       const mapped: Course[] = res.data.content
+        .filter((c) => c.status !== 'DELETED')
         .sort(
           (a, b) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
