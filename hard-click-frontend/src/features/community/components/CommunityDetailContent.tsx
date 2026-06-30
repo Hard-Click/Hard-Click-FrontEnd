@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import ReportModal from '@/features/reports/components/ReportModal';
@@ -18,7 +18,7 @@ import {
 } from '../actions';
 import type { PostDetail, CommentItem } from '../types';
 import { BOARD_TYPE_LABEL } from '../types';
-import { useRef } from 'react';
+import { useMemberStatus } from '@/features/community/MemberStatusProvider';
 
 const CATEGORY_STYLE: Record<string, string> = {
   질문게시판: 'bg-[#FEF3C7] text-[#D97706]',
@@ -52,6 +52,7 @@ export default function CommunityDetailContent({
   initialComments,
 }: CommunityDetailContentProps) {
   const router = useRouter();
+  const { isSuspended, suspendedMessage } = useMemberStatus();
 
   // 데이터는 서버(page.tsx)에서 받아온 초기값으로 시작. 변경(mutation) 후엔 재조회.
   const [post, setPost] = useState<PostDetail>(initialPost);
@@ -778,6 +779,11 @@ export default function CommunityDetailContent({
         <div className="my-6 h-px bg-[#E2E8F0]" />
 
         {/* comment input */}
+        {isSuspended ? (
+          <div className="rounded-xl border border-[#FCA5A5] bg-[#FEF2F2] px-5 py-4 text-sm text-[#EF4444]">
+            {suspendedMessage ?? '커뮤니티 작성이 제한된 계정입니다. 댓글을 작성할 수 없습니다.'}
+          </div>
+        ) : (
         <div className="flex flex-col gap-2">
           {commentImagePreview && (
             <div className="relative h-[80px] w-[80px] overflow-hidden rounded-xl border border-[#E2E8F0]">
@@ -837,6 +843,7 @@ export default function CommunityDetailContent({
             </button>
           </div>
         </div>
+        )}
       </div>
 
       {/* 이미지 미리보기 모달 */}

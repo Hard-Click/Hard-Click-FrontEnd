@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/features/auth/session';
 import { AuthProvider } from '@/features/auth/AuthProvider';
 import { getNotificationsServer } from '@/features/notifications/server';
 import { NotificationProvider } from '@/features/notifications/NotificationProvider';
+import { MemberStatusProvider } from '@/features/community/MemberStatusProvider';
 
 export default async function RootLayout({
   children,
@@ -30,7 +31,9 @@ export default async function RootLayout({
           }}
         >
           <NotificationProvider value={notifications}>
-            {children}
+            <MemberStatusProvider>
+              {children}
+            </MemberStatusProvider>
           </NotificationProvider>
         </AuthProvider>
 
