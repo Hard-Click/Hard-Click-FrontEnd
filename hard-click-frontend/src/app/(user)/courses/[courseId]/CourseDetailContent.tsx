@@ -18,6 +18,7 @@ import {
   removeWishlistAction,
 } from '@/features/wishlist/actions';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import CourseInstructorSection from '@/features/courses/components/CourseInstructorSection';
 import CourseIntroSection from '@/features/courses/components/CourseIntroSection';
 import {
@@ -376,11 +377,12 @@ export default function CourseDetailContent({
                 {/* 썸네일 */}
                 <div className="flex-shrink-0 self-start w-[282px] h-[262px] bg-[#1A1F2E] rounded-2xl overflow-hidden relative">
                   {course.thumbnailUrl ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
+                    <Image
                       src={course.thumbnailUrl}
                       alt={course.title}
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="282px"
+                      className="object-cover"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
