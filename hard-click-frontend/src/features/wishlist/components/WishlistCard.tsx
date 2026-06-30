@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { SUBJECT_GRADIENTS } from '@/features/courses/components/CourseCard';
 import { StarIcon } from '@/components/common/RatingStars';
 import type { WishlistCourse } from '../types';
@@ -81,11 +82,12 @@ export default function WishlistCard({
       {/* 썸네일 + 찜 해제 버튼 */}
       <div className="relative aspect-[284/160] overflow-hidden">
         {thumbnailUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={thumbnailUrl}
             alt={title}
-            className="absolute inset-0 h-full w-full object-cover"
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            className="object-cover"
           />
         ) : (
           <div
