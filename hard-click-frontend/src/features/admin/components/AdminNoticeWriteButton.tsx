@@ -65,6 +65,7 @@ export default function AdminNoticeWriteButton({
         <AdminNoticeFormModal
           mode="create"
           courseTitle={selectedCourse?.title}
+          courseId={selectedCourse?.id}
           onClose={handleClose}
         />
       )}
