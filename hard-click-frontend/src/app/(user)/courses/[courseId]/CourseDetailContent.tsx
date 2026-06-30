@@ -231,10 +231,12 @@ export default function CourseDetailContent({
   }, [handleScroll]);
 
   // UA-P0-120: 무료 → POST /api/enrollments 즉시 처리
-  // UA-P0-121: 유료 → 결제 모달 → POST /api/payments → enrollments 자동 생성
+  // UA-P0-121: 유료(비구독) → 결제 페이지 → 승인 시 수강 등록
+  // 구독 중: 유료여도 결제 없이 즉시 수강 등록(enrollment 생성) → 내 강의에 노출 + 학습 접근
   const handleEnrollClick = async () => {
     if (!requireLogin()) return;
-    if (course?.isFree) {
+    if (course?.isFree || subscribed) {
+      // 무료 강의 또는 구독 중 → 결제 없이 즉시 수강 등록(enrollment 레코드 생성)
       const result = await enrollCourse(courseId, 'FREE');
       if (result.success) {
         setIsEnrolled(true);
@@ -481,9 +483,8 @@ export default function CourseDetailContent({
 
               {/* Row 2: 액션 버튼 (border-top, Figma: padding 24px 0 0, gap 12px) */}
               <div className="border-t border-[#D5D8DD] pt-6 pb-8 flex items-center gap-3">
-                {isEnrolled || subscribed ? (
-                  /* 수강 중 또는 구독 중 → 학습하기. 구독은 결제 없이 접근(BE canPlay: enrolled||subscribed).
-                     ⚠️ 구독자(미수강)는 BE GetCourseProgressService가 아직 enrolled만 체크 → progress 403 가능(BE 구독 분기 추가 필요) */
+                {isEnrolled ? (
+                  /* 수강 중 → 학습하기 (학습 커리큘럼/진도 홈으로 이동) */
                   <Link href={`/learning/${courseId}`} className="flex-1">
                     <button className="w-full h-14 rounded-[10px] bg-[#2F5DAA] text-white font-semibold text-base hover:bg-[#1D3E75] transition-colors">
                       학습하기
@@ -491,15 +492,17 @@ export default function CourseDetailContent({
                   </Link>
                 ) : (
                   <>
-                    {/* UA-P0-120: 무료 → "수강하기" / UA-P0-121: 유료 → "수강신청" */}
+                    {/* UA-P0-120: 무료 → "수강하기" / UA-P0-121: 유료 → "수강신청".
+                        구독 중이면 유료여도 "수강신청"이 결제 없이 enroll → 내 강의 등록 후 학습하기로 전환 */}
                     <button
                       onClick={handleEnrollClick}
                       className="flex-1 h-14 rounded-[10px] bg-[#2F5DAA] text-white font-semibold text-base hover:bg-[#1D3E75] transition-colors"
                     >
                       {course.isFree ? '수강하기' : '수강신청'}
                     </button>
-                    {/* UA-P0-130: 무료 강의는 장바구니 버튼 표시 안 함 */}
+                    {/* 무료·구독 중이면 장바구니 불필요(결제 없이 수강) → 비구독+유료만 노출 */}
                     {!course.isFree &&
+                      !subscribed &&
                       (isInCart ? (
                         <Link
                           href="/cart"
