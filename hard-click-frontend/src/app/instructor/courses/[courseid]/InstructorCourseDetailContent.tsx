@@ -516,7 +516,7 @@ export default function InstructorCourseDetailContent({
       {/* 미리보기 영상 모달 (학생 강의상세와 동일) */}
       {previewLesson && (
         <PreviewVideoModal
-          lessonId={previewLesson.lessonId}
+          lessonId={previewLesson.videoId ?? previewLesson.lessonId}
           title={previewLesson.title}
           onClose={() => setPreviewLesson(null)}
         />
