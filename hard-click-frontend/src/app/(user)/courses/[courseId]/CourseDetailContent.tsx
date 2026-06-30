@@ -241,6 +241,8 @@ export default function CourseDetailContent({
       if (result.success) {
         setIsEnrolled(true);
         toast.success(result.message);
+        // cart/찜 핸들러와 동일 — 서버 컴포넌트 재요청으로 isEnrolled 재동기화(라우터 캐시 stale 방지)
+        router.refresh();
       } else {
         toast.error(result.message);
       }

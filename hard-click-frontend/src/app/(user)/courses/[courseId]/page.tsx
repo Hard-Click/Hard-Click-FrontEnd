@@ -19,8 +19,11 @@ export default async function CourseDetailPage({
     getCourseDetailServer(parsedCourseId),
     // 공지는 부가정보 — 조회 실패해도 강의 상세는 정상 노출되도록 빈 목록 폴백
     getCourseNoticePreviewServer(parsedCourseId).catch(() => []),
-    // 구독 중이면 유료 강의도 결제 없이 학습 가능(BE VideoAccessService: enrolled||subscribed).
-    // 조회 실패(미로그인·BE 500)는 미구독으로 취급 → 기존 결제 흐름 유지
+    // 구독 중이면 유료 강의도 결제 없이 수강(수강신청이 enroll). 조회 실패(미로그인·BE 500)는 미구독 취급.
+    // ⚡최적화 대상: subscribed는 '유료·미수강·미구독'에서만 쓰여 무료·이미수강·비로그인 강의엔 불필요한
+    //   /subscriptions/me+/plan 2콜이 발생한다. 다만 course 결과를 알기 전이라 여기선 무조건 호출하며,
+    //   병렬이라 추가 wall-clock은 max(0, T_sub−T_course). 가드를 넣으면 정작 유료·미수강(결제 직전)에서
+    //   구독 조회가 직렬화돼 오히려 느려지므로 미적용 — 단건 구독 캐시/플래그 API가 생기면 그때 정리.
     getSubscriptionServer()
       .then((s) => s.subscribed)
       .catch(() => false),
