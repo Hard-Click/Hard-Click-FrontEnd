@@ -52,10 +52,11 @@ function mergeLessons(
   const result: SidebarVideoItem[] = [];
   detail.curriculum.forEach((section) => {
     section.lessons.forEach((lesson) => {
-      const lp = progressMap.get(lesson.lessonId);
+      const vid = lesson.videoId ?? lesson.lessonId;
+      const lp = progressMap.get(vid);
       const [m, s] = lesson.duration.split(':').map(Number);
       result.push({
-        videoId: lesson.lessonId,
+        videoId: vid,
         title: lesson.title,
         sectionTitle: section.title,
         durationSeconds: (m ?? 0) * 60 + (s ?? 0),
@@ -104,6 +105,8 @@ export default function LearningVideoContent({
   const [resumePromptOpen, setResumePromptOpen] = useState(false);
   const [startPosition, setStartPosition] = useState(0);
   const [playerReady, setPlayerReady] = useState(false);
+  /* 재생 중 5초 heartbeat마다 증가 — 사이드바가 localStorage 진행률을 실시간 재읽기하도록 트리거 */
+  const [liveTick, setLiveTick] = useState(0);
 
   /* 타이머 confirm 모달 */
   const [timerConfirmMode, setTimerConfirmMode] = useState<'start' | 'end' | null>(null);
@@ -174,8 +177,14 @@ export default function LearningVideoContent({
       timerSecondsRef.current += 1;
       setTimerSeconds((s) => s + 1);
     }, 1000);
-    heartbeatRef.current = setInterval(() => {
-      void heartbeatAction(sid);
+    heartbeatRef.current = setInterval(async () => {
+      // BE가 확정한 누적초로 보정 — 백그라운드 탭 throttle 등으로 1초 tick이 밀린
+      // 화면-저장 드리프트를 해소한다(StudyTimerPanel과 동일).
+      const serverSeconds = await heartbeatAction(sid);
+      if (serverSeconds != null) {
+        timerSecondsRef.current = serverSeconds;
+        setTimerSeconds(serverSeconds);
+      }
     }, HEARTBEAT_INTERVAL_MS);
   };
 
@@ -189,7 +198,9 @@ export default function LearningVideoContent({
   /* 페이지 진입 시 실행 중 세션 복원 */
   useEffect(() => {
     fetchCurrentSessionAction().then((session) => {
-      if (!session) return;
+      // RUNNING 세션만 복원 — PAUSED/ENDED 세션 위에 tick을 다시 돌리면
+      // BE 누적과 화면이 어긋난다(StudyTimerPanel과 동일 가드).
+      if (!session || session.status !== 'RUNNING') return;
       setTimerSessionId(session.sessionId);
       setTimerSeconds(session.accumulatedStudySeconds);
       timerSecondsRef.current = session.accumulatedStudySeconds;
@@ -315,6 +326,7 @@ export default function LearningVideoContent({
                 durationSeconds={video.durationSeconds}
                 isCompleted={video.completed}
                 onCompleted={handleLessonCompleted}
+                onProgress={() => setLiveTick((t) => t + 1)}
               />
             ) : (
               <div className="text-white/60 text-sm">잠시만 기다려주세요...</div>
@@ -355,6 +367,7 @@ export default function LearningVideoContent({
         <LearningCurriculumSidebar
           videos={sidebarVideos}
           currentVideoId={displayVideo.videoId}
+          liveTick={liveTick}
         />
       </div>
 

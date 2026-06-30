@@ -30,6 +30,11 @@ export async function getVideoPlayInfoServer(
   const res = await serverApi.get<VideoPlayInfo>(
     `/api/learning/videos/${videoId}/play`,
   );
+  // 200이어도 streamingUrl이 비어 있으면(영상 미업로드/lessonId↔video 매핑 누락) 재생 불가다.
+  // 그대로 넘기면 VideoPlayer가 검은 화면으로 조용히 실패하므로, 404로 강등해 에러 모달을 띄운다.
+  if (res.success && res.data && !res.data.streamingUrl) {
+    return { video: null, status: 404 };
+  }
   return {
     video: res.success && res.data ? res.data : null,
     status: res.httpStatus,

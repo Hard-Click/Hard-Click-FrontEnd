@@ -22,7 +22,8 @@ const nextConfig: NextConfig = {
         hostname: 'picsum.photos',
       },
       {
-        // BE 프로필 이미지 S3 presigned URL (예: hard-click-files-*.s3.ap-northeast-2.amazonaws.com)
+        // BE 썸네일/프로필/커뮤니티 이미지 = 만료·쿼리 없는 public S3 URL (예: {버킷}.s3.ap-northeast-2.amazonaws.com).
+        // (영상만 수강권 검증 위해 presigned 유지 — 쿼리스트링 있음. 와일드카드가 둘 다 커버.)
         protocol: 'https',
         hostname: '*.s3.ap-northeast-2.amazonaws.com',
       },
