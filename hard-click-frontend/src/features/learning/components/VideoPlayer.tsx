@@ -14,6 +14,8 @@ interface VideoPlayerProps {
   isCompleted: boolean;
   /** 백엔드 완료 처리 성공 시 — 사이드바/요약 isCompleted=true 갱신용 */
   onCompleted?: () => void;
+  /** 5초 heartbeat마다 갱신된 진행률(%) — 사이드바 실시간 반영용 */
+  onProgress?: (progressRate: number) => void;
 }
 
 /** 볼륨 아이콘 — 디자이너가 넣어둔 videoVolume.svg(소리 ON) + 음소거(사선) 2-state.
@@ -52,6 +54,7 @@ export default function VideoPlayer({
   durationSeconds,
   isCompleted,
   onCompleted,
+  onProgress,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -68,6 +71,7 @@ export default function VideoPlayer({
     durationSeconds,
     isPlaying,
     onCompleted,
+    onProgress,
   });
 
   /* localStorage에 마지막 위치 저장/복원 — mock 환경 이어보기 polyfill */

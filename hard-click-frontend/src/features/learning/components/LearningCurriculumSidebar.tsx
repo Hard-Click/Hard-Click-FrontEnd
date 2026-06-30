@@ -9,6 +9,8 @@ interface LearningCurriculumSidebarProps {
   videos: SidebarVideoItem[];
   currentVideoId: number;
   routePrefix?: string;
+  /** 재생 중 증가하는 틱 — 변할 때마다 localStorage 진행률을 재읽기해 실시간 갱신 */
+  liveTick?: number;
 }
 
 function formatDuration(seconds?: number) {
@@ -46,6 +48,7 @@ export default function LearningCurriculumSidebar({
   videos,
   currentVideoId,
   routePrefix = '/learning/videos',
+  liveTick,
 }: LearningCurriculumSidebarProps) {
   /* localStorage 기반 누적 시청 시간 (watchedSeconds) — 백엔드 progressRate가 0이어도
    * 이전에 재생한 적 있으면 진행률 표시. lastPosition(드래그 영향) X, 실제 재생 시간만. */
@@ -59,7 +62,7 @@ export default function LearningCurriculumSidebar({
       if (Number.isFinite(sec) && sec > 0) map[v.videoId] = sec;
     });
     setStoredWatched(map);
-  }, [videos, currentVideoId]);
+  }, [videos, currentVideoId, liveTick]);
 
   /* 섹션별 그룹화 */
   const sections = new Map<string, SidebarVideoItem[]>();

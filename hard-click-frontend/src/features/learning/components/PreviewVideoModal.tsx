@@ -26,6 +26,7 @@ export default function PreviewVideoModal({ lessonId, title, onClose }: PreviewV
 
   const [playUrl, setPlayUrl] = useState<string | null>(null);
   const [loadError, setLoadError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -37,8 +38,13 @@ export default function PreviewVideoModal({ lessonId, title, onClose }: PreviewV
     setLoadError(false);
     void getVideoPlayInfo(lessonId).then((res) => {
       if (cancelled) return;
-      if (res.success) setPlayUrl(res.data.streamingUrl);
-      else setLoadError(true);
+      if (res.success && res.data?.streamingUrl) {
+        setPlayUrl(res.data.streamingUrl);
+      } else {
+        setLoadError(true);
+        // BE 상태별 메시지 노출(403 권한 없음 / 404 L005 영상 미업로드 등) — 단일 문구로 뭉개지 않음
+        setErrorMessage(res.message || '');
+      }
     });
     return () => {
       cancelled = true;
@@ -175,6 +181,9 @@ export default function PreviewVideoModal({ lessonId, title, onClose }: PreviewV
           {loadError && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#1F2937] text-white/80 text-sm gap-1">
               <span>미리보기 영상을 불러오지 못했습니다.</span>
+              {errorMessage && (
+                <span className="text-white/50 text-xs">{errorMessage}</span>
+              )}
             </div>
           )}
           {playUrl && !isPlaying && (
