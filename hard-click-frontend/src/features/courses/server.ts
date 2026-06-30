@@ -120,12 +120,21 @@ export async function getCourseDetailServer(
   const user = await getCurrentUser();
   if (user) {
     const [enrolled, wishlist, cart] = await Promise.all([
-      serverApi.get<{ courseId: number }[]>('/api/enrollments/me?status=ALL'),
+      serverApi.get<{ courseId: number; status: string }[]>(
+        '/api/enrollments/me?status=ALL',
+      ),
       serverApi.get<{ items: { courseId: number }[] }>('/api/wishlist'),
       serverApi.get<{ items: { courseId: number }[] }>('/api/cart'),
     ]);
     if (enrolled.success && Array.isArray(enrolled.data)) {
-      detail.isEnrolled = enrolled.data.some((e) => e.courseId === courseId);
+      // status=ALL은 환불(REFUNDED)된 수강까지 포함하므로 active(수강중/완료)만 '수강 중'으로 판정.
+      // (BE도 영상접근·내강의목록을 IN_PROGRESS/COMPLETED로만 판정 — REFUNDED 제외.
+      //  → 환불 시 isEnrolled=false로 떨어져 상세 CTA가 '학습하기'→'수강신청'으로 복원)
+      detail.isEnrolled = enrolled.data.some(
+        (e) =>
+          e.courseId === courseId &&
+          (e.status === 'IN_PROGRESS' || e.status === 'COMPLETED'),
+      );
     }
     if (wishlist.success && wishlist.data?.items) {
       detail.isWishlisted = wishlist.data.items.some(
