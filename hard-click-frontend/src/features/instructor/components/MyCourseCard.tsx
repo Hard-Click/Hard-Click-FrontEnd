@@ -81,6 +81,8 @@ export default function MyCourseCard({
     router.refresh(); // 추가
   };
 
+  if (isDeleted) return null;
+
   return (
     <div
       className={`flex items-start justify-between rounded-2xl border bg-white p-6 shadow-sm transition-all ${
