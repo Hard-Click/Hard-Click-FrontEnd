@@ -45,6 +45,7 @@ interface CourseDetail {
   courseId?: number;
   title: string;
   description?: string;
+  techTags?: string[];
   subjectId?: number;
   priceType: 'FREE' | 'PAID';
   price: string;
@@ -215,7 +216,7 @@ export default function CourseCreateForm({
     initialData?.targetAudience ?? []
   );
   const [targetAudienceInput, setTargetAudienceInput] = useState('');
-  const [techTags, setTechTags] = useState<string[]>([]);
+  const [techTags, setTechTags] = useState<string[]>(initialData?.techTags ?? []);
   const [techTagInput, setTechTagInput] = useState('');
   const [level, setLevel] = useState(initialData?.level ?? '');
   const router = useRouter();
