@@ -28,8 +28,14 @@ export default function MyCoursesContent({ courses }: { courses: Course[] }) {
 
   const [selectedFilter, setSelectedFilter] = useState<'ALL' | 'PUBLIC' | 'PRIVATE'>('ALL');
   const [keyword, setKeyword] = useState('');
+  const [deletedIds, setDeletedIds] = useState<Set<number>>(new Set());
+
+  const handleDeleted = (id: number) => {
+    setDeletedIds((prev) => new Set(prev).add(id));
+  };
 
   const filteredCourses = courses.filter((c) => {
+    if (deletedIds.has(c.id)) return false;
     const matchFilter =
       selectedFilter === 'ALL' ||
       (selectedFilter === 'PUBLIC' && c.isPublic) ||
@@ -85,7 +91,7 @@ export default function MyCoursesContent({ courses }: { courses: Course[] }) {
         ) : (
           filteredCourses.map((course) => (
             <div key={course.id} ref={(el) => { if (el) cardRefs.current.set(course.id, el); }}>
-              <MyCourseCard {...course} highlighted={course.id === highlightId} />
+              <MyCourseCard {...course} highlighted={course.id === highlightId} onDeleted={handleDeleted} />
             </div>
           ))
         )}

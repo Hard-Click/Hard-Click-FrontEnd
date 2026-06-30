@@ -3,6 +3,7 @@ import { isMock } from '@/mocks/config';
 const USE_MOCK = isMock('instructor');
 import { mockInstructorCourses } from '@/mocks/instructor.mock';
 import type {
+  ApiCourseStatus,
   CourseListApiItem,
   CourseListApiResponse,
 } from '@/features/courses/types';
@@ -16,7 +17,7 @@ export interface InstructorCourseItem {
   title: string;
   subjectName: string;
   price: number;
-  status: 'DRAFT' | 'PUBLISHED';
+  status: ApiCourseStatus;
   thumbnailUrl: string;
   averageRating: number;
   reviewCount: number;
