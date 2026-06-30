@@ -54,6 +54,8 @@ export interface InstructorProfile {
 
 export interface CurriculumLesson {
   lessonId: number;
+  /** 재생/진도 API용 영상 ID (현재 lessonId와 동일). 학습 경로/진도 매칭에 사용. */
+  videoId?: number;
   title: string;
   duration: string; // "MM:SS"
   isPreview: boolean;
@@ -143,6 +145,8 @@ export interface CourseListApiResponse {
 // GET /api/courses/{courseId} → CourseDetailResponse.sections[].lessons[]
 export interface CourseLessonApiItem {
   lessonId: number;
+  /** 재생/진도 API용 영상 ID (BE main부터 제공, 현재 lessonId와 동일). 미제공 시 lessonId로 폴백. */
+  videoId?: number;
   title: string;
   description: string;
   orderIndex: number;
