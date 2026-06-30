@@ -44,9 +44,15 @@ interface Props {
   course: CourseListItem;
   /** 상세 페이지 prefix — 기본 '/courses' (학생용), 강사용은 '/instructor/courses' */
   hrefPrefix?: string;
+  /** 첫 화면(above-fold) 카드면 true — LCP 썸네일을 즉시·우선 로드(fetchpriority=high), 나머지는 lazy */
+  priority?: boolean;
 }
 
-export default function CourseCard({ course, hrefPrefix = '/courses' }: Props) {
+export default function CourseCard({
+  course,
+  hrefPrefix = '/courses',
+  priority = false,
+}: Props) {
   const [fromColor, toColor] = SUBJECT_GRADIENTS[course.subjectName] ?? ['#475569', '#94A3B8'];
 
   return (
@@ -60,6 +66,8 @@ export default function CourseCard({ course, hrefPrefix = '/courses' }: Props) {
           <img
             src={course.thumbnailUrl}
             alt={course.title}
+            loading={priority ? 'eager' : 'lazy'}
+            fetchPriority={priority ? 'high' : 'auto'}
             className="absolute inset-0 w-full h-full object-cover"
           />
         ) : (
