@@ -16,7 +16,7 @@ export interface InstructorCourseItem {
   title: string;
   subjectName: string;
   price: number;
-  status: 'DRAFT' | 'PUBLISHED';
+  status: 'DRAFT' | 'PUBLISHED' | 'DELETED' | 'HIDDEN';
   thumbnailUrl: string;
   averageRating: number;
   reviewCount: number;

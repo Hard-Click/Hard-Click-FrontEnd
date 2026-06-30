@@ -6,7 +6,7 @@ import MyCoursesContent, { type Course } from '@/features/instructor/components/
 export default async function MyCoursesPage() {
   // 서버에서 강사 내 강의 목록 확보 → 화면 표시용 Course로 변환
   const { content } = await getInstructorCoursesServer();
-  const courses: Course[] = content.map((c) => ({
+  const courses: Course[] = content.filter((c) => c.status !== 'DELETED').map((c) => ({
     id: c.courseId,
     category: c.subjectName,
     title: c.title,
