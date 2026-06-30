@@ -48,3 +48,37 @@ describe('MyRankingSummaryCard — 미랭크 위조 차단(§0.1②)', () => {
     expect(screen.getByText('집계 전')).toBeInTheDocument();
   });
 });
+
+describe('MyRankingSummaryCard — 활성 탭(metric)별 지표·라벨 선택', () => {
+  // 세 지표 슬롯에 서로 다른 값 — metric이 올바른 슬롯/라벨을 고르는지 검증한다.
+  // (같은 값을 세 슬롯에 넣으면 rankByMetric[metric]/METRIC_LABEL[metric]을 무시해도 통과해 헛검증)
+  const board: MyRankingSummary = {
+    studyTimeRank: { rank: 6, totalUsers: 100, topPercent: 6 },
+    lessonRank: { rank: 12, totalUsers: 100, topPercent: 12 },
+    acceptedCommentRank: { rank: 3, totalUsers: 100, topPercent: 3 },
+  };
+
+  it("studyTime이면 '순공 시간' 라벨과 studyTimeRank(상위 6%)를 표시한다", () => {
+    render(<MyRankingSummaryCard metric="studyTime" myRanking={board} />);
+
+    expect(screen.getByText('순공 시간')).toBeInTheDocument();
+    expect(screen.getByText(/전체 100명.*상위 6%/)).toBeInTheDocument();
+    expect(screen.queryByText('수강 횟수')).not.toBeInTheDocument();
+  });
+
+  it("lessonCount면 '수강 횟수' 라벨과 lessonRank(상위 12%)를 표시한다", () => {
+    render(<MyRankingSummaryCard metric="lessonCount" myRanking={board} />);
+
+    expect(screen.getByText('수강 횟수')).toBeInTheDocument();
+    expect(screen.getByText(/전체 100명.*상위 12%/)).toBeInTheDocument();
+    expect(screen.queryByText('순공 시간')).not.toBeInTheDocument();
+  });
+
+  it("acceptedCount면 '채택 횟수' 라벨과 acceptedCommentRank(상위 3%)를 표시한다", () => {
+    render(<MyRankingSummaryCard metric="acceptedCount" myRanking={board} />);
+
+    expect(screen.getByText('채택 횟수')).toBeInTheDocument();
+    expect(screen.getByText(/전체 100명.*상위 3%/)).toBeInTheDocument();
+    expect(screen.queryByText('순공 시간')).not.toBeInTheDocument();
+  });
+});
