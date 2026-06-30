@@ -1207,7 +1207,7 @@ export default function CourseCreateForm({
                               `영상 업로드 실패 lessonId=${apiLesson.lessonId}`,
                               err
                             );
-                            toast.error('영상 업로드에 실패했습니다. 다시 시도해주세요.');
+                            toast.error('영상 업로드에 실패했습니다. 강의는 등록되었으니 수정 페이지에서 다시 업로드해주세요.');
                             uploadFailed = true;
                             break;
                           }
@@ -1217,6 +1217,7 @@ export default function CourseCreateForm({
                     if (uploadFailed) {
                       isSubmittingRef.current = false;
                       setIsLoading(false);
+                      router.push('/instructor/myCourses');
                       return;
                     }
                   }
