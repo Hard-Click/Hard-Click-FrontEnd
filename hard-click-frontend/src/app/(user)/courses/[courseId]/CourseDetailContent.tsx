@@ -17,8 +17,7 @@ import {
   addWishlistAction,
   removeWishlistAction,
 } from '@/features/wishlist/actions';
-import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
-import PreviewVideoModal from '@/features/learning/components/PreviewVideoModal';
+import dynamic from 'next/dynamic';
 import CourseInstructorSection from '@/features/courses/components/CourseInstructorSection';
 import CourseIntroSection from '@/features/courses/components/CourseIntroSection';
 import {
@@ -34,7 +33,16 @@ import type {
 import { StarRow, StarIcon } from '@/components/common/RatingStars';
 import { CurriculumAccordion } from '@/features/courses/components/CourseCurriculumSection';
 
-import ReportModal from '@/features/reports/components/ReportModal';
+// 무거운 모달은 코드 스플리팅 — 열기 전엔 청크 다운로드 안 함 (수업자료 §1-5)
+const ReviewFormModal = dynamic(
+  () => import('@/features/reviews/components/ReviewFormModal'),
+);
+const PreviewVideoModal = dynamic(
+  () => import('@/features/learning/components/PreviewVideoModal'),
+);
+const ReportModal = dynamic(
+  () => import('@/features/reports/components/ReportModal'),
+);
 
 /* ── 강의 에러 화면 공통 컴포넌트 ── */
 function CourseErrorScreen({
