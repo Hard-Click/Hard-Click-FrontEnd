@@ -5,11 +5,12 @@ const CheckIcon = (
     <path d="M20 6 9 17l-5-5" />
   </svg>
 );
-const ImageIcon = (
-  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A4AFBE" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="3" width="18" height="18" rx="2" />
-    <circle cx="9" cy="9" r="2" />
-    <path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21" />
+// 강의 썸네일 대신 쓰는 학사모(졸업모) 아이콘 — 흰색, 파란 박스 위에 표시
+const GradCapIcon = (
+  <svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21.42 10.922a1 1 0 0 0 0-1.844L12.83 5.18a2 2 0 0 0-1.66 0L2.58 9.078a1 1 0 0 0 0 1.844l8.59 3.898a2 2 0 0 0 1.66 0z" />
+    <path d="M22 10v6" />
+    <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
   </svg>
 );
 const TrashIcon = (
@@ -61,9 +62,9 @@ export default function CarItem({
             {selected && CheckIcon}
           </span>
 
-          {/* 강의 썸네일 (연동 시 next/image + thumbnailUrl) */}
-          <span className="flex h-16 w-[88px] flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-[#EDF1F6] to-[#F8FAFC]">
-            {ImageIcon}
+          {/* 강의 썸네일 대신 학사모 파란 박스 (이미지 미사용 — 구독 상품 박스와 동일 스타일) */}
+          <span className="flex h-16 w-[88px] flex-shrink-0 items-center justify-center rounded-xl bg-[#2F5DAA]">
+            {GradCapIcon}
           </span>
 
           {/* 정보 */}

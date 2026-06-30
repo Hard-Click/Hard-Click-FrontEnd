@@ -34,9 +34,8 @@ export async function getNotificationsServer(): Promise<NotificationsData> {
 
   try {
     const [listRes, countRes] = await Promise.all([
-      serverApi.get<NotificationListApiResponse>(
-        '/api/notifications?page=0&size=30',
-      ),
+      // BE는 cursor 기반(cursorId)이라 page/size를 무시 → 죽은 파라미터 제거. 첫 페이지 조회.
+      serverApi.get<NotificationListApiResponse>('/api/notifications'),
       serverApi.get<{ unreadCount: number }>(
         '/api/notifications/unread-count',
       ),
