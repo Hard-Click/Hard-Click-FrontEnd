@@ -108,6 +108,9 @@ export async function createPostAction(formData: FormData) {
     });
     const json = await res.json().catch(() => null);
     if (!res.ok || !json || json.httpStatus >= 400) {
+      if (json?.errorCode === 'C010' || json?.errorCode === 'U015') {
+        return { success: false, message: '커뮤니티 이용 권한이 없습니다. 계정 상태를 확인해주세요.' };
+      }
       return { success: false, message: json?.message ?? '게시글 등록에 실패했습니다.' };
     }
     revalidatePath('/community');
@@ -204,6 +207,10 @@ export async function createCommentAction(formData: FormData) {
     });
     const json = await res.json().catch(() => null);
     if (!res.ok || !json || json.httpStatus >= 400) {
+      // C010: 커뮤니티 이용 권한 없음 (정지 계정 안전망)
+      if (json?.errorCode === 'C010' || json?.errorCode === 'U015') {
+        return { success: false, message: '커뮤니티 이용 권한이 없습니다. 계정 상태를 확인해주세요.' };
+      }
       return { success: false, message: json?.message ?? '댓글 등록에 실패했습니다.' };
     }
     revalidatePath(`/community/${postId}`);

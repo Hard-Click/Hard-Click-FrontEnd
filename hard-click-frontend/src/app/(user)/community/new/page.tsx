@@ -1,4 +1,5 @@
 import CommunityWriteForm from '@/features/community/components/CommunityWriteForm';
+import SuspendedWriteGuard from '@/features/community/components/SuspendedWriteGuard';
 import Image from 'next/image';
 
 export default function CommunityWritePage() {
@@ -17,7 +18,9 @@ export default function CommunityWritePage() {
         <h1 className="mt-1 text-4xl font-bold text-[#1E293B]">게시글 작성</h1>
       </div>
 
-      <CommunityWriteForm />
+      <SuspendedWriteGuard>
+        <CommunityWriteForm />
+      </SuspendedWriteGuard>
     </div>
   );
 }
