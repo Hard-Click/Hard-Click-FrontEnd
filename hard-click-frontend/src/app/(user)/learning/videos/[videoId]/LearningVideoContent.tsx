@@ -104,6 +104,8 @@ export default function LearningVideoContent({
   const [resumePromptOpen, setResumePromptOpen] = useState(false);
   const [startPosition, setStartPosition] = useState(0);
   const [playerReady, setPlayerReady] = useState(false);
+  /* 재생 중 5초 heartbeat마다 증가 — 사이드바가 localStorage 진행률을 실시간 재읽기하도록 트리거 */
+  const [liveTick, setLiveTick] = useState(0);
 
   /* 타이머 confirm 모달 */
   const [timerConfirmMode, setTimerConfirmMode] = useState<'start' | 'end' | null>(null);
@@ -315,6 +317,7 @@ export default function LearningVideoContent({
                 durationSeconds={video.durationSeconds}
                 isCompleted={video.completed}
                 onCompleted={handleLessonCompleted}
+                onProgress={() => setLiveTick((t) => t + 1)}
               />
             ) : (
               <div className="text-white/60 text-sm">잠시만 기다려주세요...</div>
@@ -355,6 +358,7 @@ export default function LearningVideoContent({
         <LearningCurriculumSidebar
           videos={sidebarVideos}
           currentVideoId={displayVideo.videoId}
+          liveTick={liveTick}
         />
       </div>
 

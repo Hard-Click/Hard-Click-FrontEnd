@@ -93,8 +93,11 @@ export function useWatchTimeSaver({
   }, [isPlaying]);
 
   /* 페이지 이탈 / 영상 변경 시 잔여 시간 처리.
-   * sendBeacon은 Authorization 헤더 못 붙여 백엔드 인증 실패 → 사용 X.
-   * 대신 localStorage에 누적값 갱신 (다음 진입 시 saveWatchTime이 누적 동기화). */
+   * - 하드 내비(탭 닫기·새로고침 pagehide/beforeunload): 비동기 fetch를 끝낼 수 없고
+   *   sendBeacon은 Authorization을 못 붙여 인증 실패 → localStorage에만 누적(데이터 보존).
+   * - 소프트 내비(영상 변경·페이지 이동 unmount): fetch 가능 → flush로 BE에도 전송한다.
+   *   ⚠️ 예전엔 여기서도 localStorage만 갱신해 BE 누적값이 실제보다 적었고, 끝까지 봐도
+   *      BE watchTime이 90%에 못 미쳐 완료가 안 되는 버그가 있었다. flush는 localStorage+BE 동시 갱신. */
   useEffect(() => {
     const handleUnload = () => {
       if (!playStartTimeRef.current) return;
@@ -113,7 +116,12 @@ export function useWatchTimeSaver({
     return () => {
       window.removeEventListener('pagehide', handleUnload);
       window.removeEventListener('beforeunload', handleUnload);
-      handleUnload();
+      /* 소프트 내비 unmount — 잔여 delta를 BE에 flush(localStorage+BE 동시 갱신) */
+      if (playStartTimeRef.current) {
+        const delta = Math.floor((Date.now() - playStartTimeRef.current) / 1000);
+        playStartTimeRef.current = null;
+        if (delta >= 1) void flush(delta);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId]);
