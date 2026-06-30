@@ -249,6 +249,7 @@ export default function CourseCreateForm({
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isCancelOpen, setIsCancelOpen] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
   const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -275,6 +276,7 @@ export default function CourseCreateForm({
     (priceType === 'FREE' || price.trim());
 
   const handleSubmit = () => {
+    if (isLoading) return;
     const newErrors = {
       title: '',
       subject: '',
@@ -650,7 +652,7 @@ export default function CourseCreateForm({
           {/* 연관 과목 */}
           <div className="mb-8" ref={techTagsRef}>
             <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
-              연관 과목 <span className="text-[#DC2626]">*</span>
+              연관 과목
             </label>
             <div className="mb-3 flex gap-2">
               <input
@@ -1060,10 +1062,11 @@ export default function CourseCreateForm({
           <button
             type="button"
             onClick={handleSubmit}
+            disabled={isLoading}
             className={`h-14 flex-1 rounded-2xl text-base font-semibold text-white transition ${
-              isFormValid
+              isFormValid && !isLoading
                 ? 'bg-[#2F5DAA] opacity-100 hover:bg-[#1D3E75]'
-                : 'bg-[#2F5DAA] opacity-50'
+                : 'bg-[#2F5DAA] opacity-50 cursor-not-allowed'
             }`}
           >
             {mode === 'edit' ? '강의 수정' : '강의 등록'}
@@ -1082,6 +1085,8 @@ export default function CourseCreateForm({
             rightText="확인"
             onLeftClick={() => setIsConfirmOpen(false)}
             onRightClick={async () => {
+              if (isSubmittingRef.current) return;
+              isSubmittingRef.current = true;
               setIsConfirmOpen(false);
               setIsLoading(true);
 
@@ -1094,6 +1099,7 @@ export default function CourseCreateForm({
                       ...prev,
                       thumbnail: '썸네일 업로드에 실패했습니다.',
                     }));
+                    isSubmittingRef.current = false;
                     setIsLoading(false);
                     return;
                   }
@@ -1140,6 +1146,7 @@ export default function CourseCreateForm({
 
                 if (mode === 'edit' && !initialData?.courseId) {
                   toast.error('강의 정보를 불러올 수 없습니다. 페이지를 새로고침해주세요.');
+                  isSubmittingRef.current = false;
                   setIsLoading(false);
                   return;
                 }
@@ -1150,6 +1157,7 @@ export default function CourseCreateForm({
                     : await createCourse(payload);
 
                 if (!result.success) {
+                  isSubmittingRef.current = false;
                   setIsLoading(false);
                   toast.error(result.message || '강의 저장에 실패했습니다.');
                   return;
@@ -1199,7 +1207,7 @@ export default function CourseCreateForm({
                               `영상 업로드 실패 lessonId=${apiLesson.lessonId}`,
                               err
                             );
-                            toast.error('영상 업로드에 실패했습니다. 다시 시도해주세요.');
+                            toast.error('영상 업로드에 실패했습니다. 강의는 등록되었으니 수정 페이지에서 다시 업로드해주세요.');
                             uploadFailed = true;
                             break;
                           }
@@ -1207,7 +1215,9 @@ export default function CourseCreateForm({
                       }
                     }
                     if (uploadFailed) {
+                      isSubmittingRef.current = false;
                       setIsLoading(false);
+                      router.push('/instructor/myCourses');
                       return;
                     }
                   }
@@ -1217,9 +1227,11 @@ export default function CourseCreateForm({
                   'courseToastType',
                   mode === 'edit' ? 'edit' : 'create'
                 );
+                isSubmittingRef.current = false;
                 setIsLoading(false);
                 router.push('/instructor/myCourses');
               } catch (error) {
+                isSubmittingRef.current = false;
                 setIsLoading(false);
                 console.error(error);
               }

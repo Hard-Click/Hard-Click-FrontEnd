@@ -107,7 +107,7 @@ export interface CourseDetail {
 /* ───── 백엔드 응답 (실제 Hard-Click-BackEnd 코드 DTO 기준) ───── */
 
 export type PriceType = 'FREE' | 'PAID';
-export type ApiCourseStatus = 'DRAFT' | 'PUBLISHED';
+export type ApiCourseStatus = 'DRAFT' | 'PUBLISHED' | 'DELETED' | 'HIDDEN';
 
 // GET /api/subjects → List<SubjectResponse>
 export interface SubjectApiItem {

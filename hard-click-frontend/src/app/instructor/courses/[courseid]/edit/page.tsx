@@ -40,7 +40,7 @@ export default function EditCoursePage() {
     getCourseDetail(courseId)
       .then((data) => {
         if (data) {
-          const matched = SUBJECTS.find((s) => s.value === data.subjectName);
+          const matched = SUBJECTS.find((s) => s.name === data.subjectName);
           setCourse({
             courseId,
             title: data.title,
