@@ -652,7 +652,7 @@ export default function CourseCreateForm({
           {/* 연관 과목 */}
           <div className="mb-8" ref={techTagsRef}>
             <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
-              연관 과목 <span className="text-[#DC2626]">*</span>
+              연관 과목
             </label>
             <div className="mb-3 flex gap-2">
               <input
