@@ -176,8 +176,14 @@ export default function LearningVideoContent({
       timerSecondsRef.current += 1;
       setTimerSeconds((s) => s + 1);
     }, 1000);
-    heartbeatRef.current = setInterval(() => {
-      void heartbeatAction(sid);
+    heartbeatRef.current = setInterval(async () => {
+      // BE가 확정한 누적초로 보정 — 백그라운드 탭 throttle 등으로 1초 tick이 밀린
+      // 화면-저장 드리프트를 해소한다(StudyTimerPanel과 동일).
+      const serverSeconds = await heartbeatAction(sid);
+      if (serverSeconds != null) {
+        timerSecondsRef.current = serverSeconds;
+        setTimerSeconds(serverSeconds);
+      }
     }, HEARTBEAT_INTERVAL_MS);
   };
 
@@ -191,7 +197,9 @@ export default function LearningVideoContent({
   /* 페이지 진입 시 실행 중 세션 복원 */
   useEffect(() => {
     fetchCurrentSessionAction().then((session) => {
-      if (!session) return;
+      // RUNNING 세션만 복원 — PAUSED/ENDED 세션 위에 tick을 다시 돌리면
+      // BE 누적과 화면이 어긋난다(StudyTimerPanel과 동일 가드).
+      if (!session || session.status !== 'RUNNING') return;
       setTimerSessionId(session.sessionId);
       setTimerSeconds(session.accumulatedStudySeconds);
       timerSecondsRef.current = session.accumulatedStudySeconds;
