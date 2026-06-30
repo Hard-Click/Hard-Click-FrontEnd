@@ -1228,6 +1228,7 @@ export default function CourseCreateForm({
                 );
                 isSubmittingRef.current = false;
                 setIsLoading(false);
+                router.refresh();
                 router.push('/instructor/myCourses');
               } catch (error) {
                 isSubmittingRef.current = false;
