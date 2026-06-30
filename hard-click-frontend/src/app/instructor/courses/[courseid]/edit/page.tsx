@@ -28,6 +28,7 @@ export default function EditCoursePage() {
           setCourse({
             courseId,
             title: data.title,
+            description: data.description ?? '',
             subjectId: matched?.subjectId ?? 0,
             priceType: data.isFree ? 'FREE' : 'PAID',
             price: data.isFree ? '' : String(data.price),
@@ -35,6 +36,7 @@ export default function EditCoursePage() {
             thumbnailName: '',
             learningGoals: data.learningGoals ?? [],
             targetAudience: data.targetAudience ?? [],
+            techTags: data.techTags ?? [],
             level: data.level ?? '',
             curriculum: (data.curriculum ?? []).map((section: CurriculumSection) => ({
               id: String(section.sectionId),
@@ -65,6 +67,7 @@ export default function EditCoursePage() {
       initialData={{
         courseId: course.courseId,
         title: course.title,
+        description: course.description,
         subjectId: course.subjectId,
         priceType: course.priceType,
         price: course.price,
@@ -72,6 +75,7 @@ export default function EditCoursePage() {
         thumbnailName: course.thumbnailName,
         learningGoals: course.learningGoals,
         targetAudience: course.targetAudience,
+        techTags: course.techTags,
         level: course.level,
         curriculum: course.curriculum,
       }}
