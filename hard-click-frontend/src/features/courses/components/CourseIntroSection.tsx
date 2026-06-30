@@ -10,7 +10,7 @@ interface CourseIntroSectionProps {
 
 /**
  * 강의 상세 "강의소개" 섹션 — 학생·강사 페이지 공용 (순수 표시).
- * 학습목표·추천대상·과목(techTags)·예상 학습 시간·난이도.
+ * 학습목표·추천대상·연관 과목(techTags)·예상 학습 시간·난이도.
  * (제공자료는 BE 미제공이라 표시하지 않음 — 학생 페이지 기준으로 통일)
  */
 export default function CourseIntroSection({
@@ -84,7 +84,7 @@ export default function CourseIntroSection({
             <div className="flex items-center gap-2 mb-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/icons/bookIcon.svg" width={20} height={20} alt="" />
-              <h3 className="text-lg font-semibold text-[#1A1F2E]">과목</h3>
+              <h3 className="text-lg font-semibold text-[#1A1F2E]">연관 과목</h3>
             </div>
             <div className="flex flex-wrap gap-2">
               {techTags.map((tag, i) => (
