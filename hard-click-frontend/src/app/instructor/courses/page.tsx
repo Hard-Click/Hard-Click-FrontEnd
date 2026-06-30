@@ -3,6 +3,7 @@ import CourseNoticeBanner from '@/features/courses/components/CourseNoticeBanner
 import InstructorCourseListControls from '@/features/instructor/components/InstructorCourseListControls';
 import { getCoursesServer, getSubjectsServer } from '@/features/courses/server';
 import { getInstructorCoursesServer } from '@/features/instructor/server';
+import { getMyProfileServer } from '@/features/users/server';
 import { getPinnedNoticesServer } from '@/features/notices/server';
 import type { CourseSortType, CourseListItem } from '@/features/courses/types';
 
@@ -40,14 +41,18 @@ export default async function InstructorCoursesPage({ searchParams }: PageProps)
   let courses: CourseListItem[];
   if (mine) {
     // 내 강의만: 강사 강의 목록을 CourseListItem으로 변환 후 키워드/과목 필터
-    const { content } = await getInstructorCoursesServer();
+    // 강사 목록 응답엔 본인 이름이 없어 카드 강사명이 빈칸이었음 →
+    // 본인 강의 목록이므로 본인 프로필 이름을 일괄 적용한다.
+    // (카탈로그 역조회는 미공개[DRAFT/HIDDEN] 강의를 못 채워 프로필 이름으로 통일)
+    const [{ content }, profile] = await Promise.all([
+      getInstructorCoursesServer(),
+      getMyProfileServer(),
+    ]);
+    const myName = profile?.name ?? '';
     let mapped: CourseListItem[] = content.map((c) => ({
       courseId: c.courseId,
       title: c.title,
-      // 강사 목록 응답엔 본인 이름이 없어 카드 강사명이 빈칸이었음 →
-      // 라이브 카탈로그에서 같은 강의의 강사명을 끌어와 채움(미발견 시 '' 유지).
-      instructorName:
-        catalog.find((cat) => cat.courseId === c.courseId)?.instructorName ?? '',
+      instructorName: myName,
       subjectName: c.subjectName,
       price: c.price,
       thumbnailUrl: c.thumbnailUrl,
