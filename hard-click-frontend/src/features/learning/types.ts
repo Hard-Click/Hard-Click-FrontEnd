@@ -4,7 +4,7 @@
 export interface VideoPlayInfo {
   videoId: number;
   courseId: number;
-  /** HLS m3u8 스트리밍 URL */
+  /** 스트리밍 URL — presigned mp4(현행) 또는 HLS m3u8. VideoPlayer가 둘 다 처리. */
   streamingUrl: string;
   durationSeconds: number;
   lastPositionSec: number;

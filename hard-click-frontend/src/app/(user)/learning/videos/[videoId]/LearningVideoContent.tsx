@@ -52,10 +52,11 @@ function mergeLessons(
   const result: SidebarVideoItem[] = [];
   detail.curriculum.forEach((section) => {
     section.lessons.forEach((lesson) => {
-      const lp = progressMap.get(lesson.lessonId);
+      const vid = lesson.videoId ?? lesson.lessonId;
+      const lp = progressMap.get(vid);
       const [m, s] = lesson.duration.split(':').map(Number);
       result.push({
-        videoId: lesson.lessonId,
+        videoId: vid,
         title: lesson.title,
         sectionTitle: section.title,
         durationSeconds: (m ?? 0) * 60 + (s ?? 0),

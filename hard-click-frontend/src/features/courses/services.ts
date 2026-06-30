@@ -84,6 +84,7 @@ export function toCourseDetail(data: CourseDetailApiResponse): CourseDetail {
       title: s.title,
       lessons: s.lessons.map((l) => ({
         lessonId: l.lessonId,
+        videoId: l.videoId ?? l.lessonId,
         title: l.title,
         duration: formatLessonDuration(l.durationSeconds),
         isPreview: l.isPreview,
