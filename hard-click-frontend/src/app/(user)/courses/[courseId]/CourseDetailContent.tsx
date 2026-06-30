@@ -125,8 +125,11 @@ function SideNav({
 /* ── 메인 페이지 ── */
 export default function CourseDetailContent({
   initialCourse,
+  subscribed = false,
 }: {
   initialCourse: CourseDetail | null;
+  /** 구독 중이면 유료 강의도 결제 없이 학습 가능(BE VideoAccessService: enrolled||subscribed) */
+  subscribed?: boolean;
 }) {
   const params = useParams();
   const router = useRouter();
@@ -478,8 +481,9 @@ export default function CourseDetailContent({
 
               {/* Row 2: 액션 버튼 (border-top, Figma: padding 24px 0 0, gap 12px) */}
               <div className="border-t border-[#D5D8DD] pt-6 pb-8 flex items-center gap-3">
-                {isEnrolled ? (
-                  /* 수강 중 → 학습하기 (학습 커리큘럼/진도 홈으로 이동) */
+                {isEnrolled || subscribed ? (
+                  /* 수강 중 또는 구독 중 → 학습하기. 구독은 결제 없이 접근(BE canPlay: enrolled||subscribed).
+                     ⚠️ 구독자(미수강)는 BE GetCourseProgressService가 아직 enrolled만 체크 → progress 403 가능(BE 구독 분기 추가 필요) */
                   <Link href={`/learning/${courseId}`} className="flex-1">
                     <button className="w-full h-14 rounded-[10px] bg-[#2F5DAA] text-white font-semibold text-base hover:bg-[#1D3E75] transition-colors">
                       학습하기
