@@ -227,6 +227,7 @@ export default function CourseCreateForm({
     thumbnail: '',
     learningGoals: '',
     targetAudience: '',
+    techTags: '',
     level: '',
   });
   const [firstErrorField, setFirstErrorField] = useState('');
@@ -1110,9 +1111,11 @@ export default function CourseCreateForm({
                   techTags,
                   level: level || undefined,
                   sections: sections.map((sec, sIdx) => ({
+                    ...(mode === 'edit' && Number(sec.id) ? { sectionId: Number(sec.id) } : {}),
                     title: sec.title,
                     orderIndex: sIdx,
                     lessons: sec.lectures.map((lec, lIdx) => ({
+                      ...(mode === 'edit' && Number(lec.id) ? { lessonId: Number(lec.id) } : {}),
                       title: lec.fileName,
                       description: lec.fileName || undefined,
                       orderIndex: lIdx,

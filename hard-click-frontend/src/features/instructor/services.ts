@@ -2,7 +2,6 @@ import { api } from '@/services/api';
 import { isMock } from '@/mocks/config';
 const USE_MOCK = isMock('instructor');
 import { mockInstructorCourses } from '@/mocks/instructor.mock';
-import { subjectValueById } from '@/features/courses/subjects';
 import type {
   CourseListApiItem,
   CourseListApiResponse,
@@ -82,13 +81,14 @@ export async function getInstructorCourses(page = 0, size = 20) {
  */
 export async function createCourse(payload: {
   title: string;
-  description?: string;
-  subjectId: number;
+  description: string;
+  subject: string;
   thumbnailUrl?: string;
   priceType: 'FREE' | 'PAID';
   price: number;
   learningObjectives?: string[];
   targetAudience?: string[];
+  techTags?: string[];
   level?: string;
   sections: Array<{
     title: string;
@@ -116,10 +116,8 @@ export async function createCourse(payload: {
     };
   }
 
-  const { subjectId, ...rest } = payload;
-  const subject = subjectValueById(subjectId);
-  if (!subject) return { success: false, httpStatus: 400, message: '유효하지 않은 과목입니다.', data: undefined };
-  return api.post<{ courseId: number }>('/api/courses', { ...rest, subject });
+  if (!payload.subject) return { success: false, httpStatus: 400, message: '유효하지 않은 과목입니다.', data: undefined };
+  return api.post<{ courseId: number }>('/api/courses', payload);
 }
 
 /**
@@ -129,18 +127,21 @@ export async function updateCourse(
   courseId: number,
   payload: {
     title: string;
-    description?: string;
-    subjectId: number;
+    description: string;
+    subject: string;
     thumbnailUrl?: string;
     priceType: 'FREE' | 'PAID';
     price: number;
     learningObjectives?: string[];
     targetAudience?: string[];
+    techTags?: string[];
     level?: string;
     sections: Array<{
+      sectionId?: number;
       title: string;
       orderIndex: number;
       lessons: Array<{
+        lessonId?: number;
         title: string;
         description?: string;
         orderIndex: number;
@@ -158,10 +159,8 @@ export async function updateCourse(
       message: '강의 수정 완료',
     };
   }
-  const { subjectId, ...rest } = payload;
-  const subject = subjectValueById(subjectId);
-  if (!subject) return { success: false, httpStatus: 400, message: '유효하지 않은 과목입니다.', data: undefined };
-  return api.patch<{ courseId: number }>(`/api/courses/${courseId}`, { ...rest, subject });
+  if (!payload.subject) return { success: false, httpStatus: 400, message: '유효하지 않은 과목입니다.', data: undefined };
+  return api.patch<{ courseId: number }>(`/api/courses/${courseId}`, payload);
 }
 
 /** 강의 삭제 (DELETE /api/courses/{courseId}) */

@@ -234,11 +234,7 @@ export async function resetPassword(payload: {
   return api.patch<Record<string, never>>('/api/auth/password-reset', payload);
 }
 
-/**
- * 잠긴 계정 인증번호 발송/재발송
- * BE /api/auth/account-locks/email 미구현(Swagger 없음) → password-reset/email로 대체.
- * BE가 account-locks/email 추가되면 이 함수만 원복.
- */
+/** 잠긴 계정 인증번호 발송/재발송 (POST /api/auth/account-locks/email) */
 export async function sendAccountLockEmail(email: string) {
   if (USE_MOCK) {
     return {
@@ -248,19 +244,14 @@ export async function sendAccountLockEmail(email: string) {
       message: '계정 보호 인증번호가 발송되었습니다',
     };
   }
-  return api.post<Record<string, never>>('/api/auth/password-reset/email', {
+  return api.post<Record<string, never>>('/api/auth/account-locks/email', {
     email,
   });
 }
 
 /* ─────────────────────────── 잠긴 계정 흐름 ─────────────────────────── */
 
-/**
- * 잠긴 계정 인증번호 검증
- * sendAccountLockEmail이 password-reset/email을 사용하므로,
- * 검증도 같은 흐름의 password-reset/verify를 사용해야 토큰이 일치함.
- * BE가 account-locks/email + account-locks/verify를 구현하면 원복.
- */
+/** 잠긴 계정 인증번호 검증 (POST /api/auth/account-locks/verify) */
 export async function verifyAccountLockCode(email: string, code: string) {
   if (USE_MOCK) {
     return {
@@ -271,7 +262,7 @@ export async function verifyAccountLockCode(email: string, code: string) {
     };
   }
   return api.post<{ passwordChangeToken: string }>(
-    '/api/auth/password-reset/verify',
+    '/api/auth/account-locks/verify',
     { email, code },
   );
 }
