@@ -8,10 +8,26 @@ import { getCourseDetail } from '@/features/courses/services';
 import { SUBJECTS } from '@/features/courses/subjects';
 import type { CurriculumSection, CurriculumLesson } from '@/features/courses/types';
 
+interface EditCourseState {
+  courseId: number;
+  title: string;
+  description: string;
+  subjectId: number;
+  priceType: 'FREE' | 'PAID';
+  price: string;
+  thumbnailUrl?: string;
+  thumbnailName: string;
+  learningGoals: string[];
+  targetAudience: string[];
+  techTags: string[];
+  level: string;
+  curriculum: { id: string; title: string; lectures: { id: string; fileName: string; duration: string }[] }[];
+}
+
 export default function EditCoursePage() {
   const params = useParams();
 
-  const [course, setCourse] = useState<any>(null);
+  const [course, setCourse] = useState<EditCourseState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
