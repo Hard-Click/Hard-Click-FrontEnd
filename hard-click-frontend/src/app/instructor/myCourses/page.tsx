@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getInstructorCoursesServer } from '@/features/instructor/server';
 import MyCoursesContent, { type Course } from '@/features/instructor/components/MyCoursesContent';
 
