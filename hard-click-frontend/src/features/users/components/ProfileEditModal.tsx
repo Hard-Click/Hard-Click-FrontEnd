@@ -246,6 +246,10 @@ export default function ProfileEditModal({
       return;
     }
     toast.success(res.message || '프로필이 수정되었습니다.');
+    // 사진 변경이면 헤더 아바타(별도 마운트 client 컴포넌트)도 새로고침 없이 즉시 갱신
+    if (step !== 'password') {
+      window.dispatchEvent(new Event('profile-updated'));
+    }
     onSaved?.();
     onClose();
   };

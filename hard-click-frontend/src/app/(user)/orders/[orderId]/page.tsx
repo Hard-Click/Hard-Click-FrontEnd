@@ -6,10 +6,14 @@ import BackButton from '@/components/common/BackButton';
 import type { OrderStatus } from '@/features/payments/types';
 
 const STATUS_STYLE: Record<OrderStatus, { label: string; className: string }> = {
+  READY: { label: '결제 대기', className: 'bg-[#F59E0B]/10 text-[#F59E0B]' },
   PAID: { label: '결제완료', className: 'bg-[#16A34A]/10 text-[#16A34A]' },
+  PARTIAL_REFUNDED: { label: '부분 환불', className: 'bg-[#4B5563]/10 text-[#4B5563]' },
   REFUNDED: { label: '환불완료', className: 'bg-[#4B5563]/10 text-[#4B5563]' },
   FAILED: { label: '결제실패', className: 'bg-[#B91C1C]/10 text-[#B91C1C]' },
+  CANCELED: { label: '취소', className: 'bg-[#4B5563]/10 text-[#4B5563]' },
 };
+const NEUTRAL_BADGE = 'bg-[#4B5563]/10 text-[#4B5563]';
 
 const BoxIcon = (
   <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2F5DAA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -52,11 +56,30 @@ export default async function OrderDetailPage({
   const order = await getOrderDetailServer(parsedOrderId);
   if (!order) notFound();
 
-  const status = STATUS_STYLE[order.status];
+  // 알 수 없는 status도 크래시 없이 raw 라벨로 폴백
+  const status = STATUS_STYLE[order.status] ?? {
+    label: order.status,
+    className: NEUTRAL_BADGE,
+  };
   const infoCols = [
     { key: 'state', icon: BoxIcon, label: '주문 상태', value: status.label },
-    { key: 'method', icon: CardIcon, label: '결제 수단', value: order.paymentMethod },
-    { key: 'paidAt', icon: CalendarIcon, label: '결제일시', value: formatDateTime(order.paidAt) },
+    // 결제수단은 BE 미제공이면(빈 값) 행 자체를 숨긴다
+    ...(order.paymentMethod
+      ? [
+          {
+            key: 'method',
+            icon: CardIcon,
+            label: '결제 수단',
+            value: order.paymentMethod,
+          },
+        ]
+      : []),
+    {
+      key: 'paidAt',
+      icon: CalendarIcon,
+      label: '결제일시',
+      value: order.paidAt ? formatDateTime(order.paidAt) : '-',
+    },
   ];
 
   return (

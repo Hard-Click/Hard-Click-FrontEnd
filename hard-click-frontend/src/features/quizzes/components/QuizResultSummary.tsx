@@ -24,6 +24,12 @@ const Icons = {
       <polyline points="16 17 22 17 22 11" />
     </svg>
   ),
+  // 비교불가(직전 주차 점수 없음) — 상승/하락 화살표 대신 중립 대시
+  minus: (
+    <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  ),
 };
 
 /**
@@ -46,8 +52,11 @@ export default function QuizResultSummary({
   const wrongCount = totalCount - correctCount;
   const up = improvement !== null && improvement > 0;
   const down = improvement !== null && improvement < 0;
-  const impText =
-    improvement === null || improvement === 0
+  // 직전 주차 점수 미제공(BE) = 비교불가 → '+0점'으로 위조하지 않고 '—' 표시 (§0.1②)
+  const noCompare = improvement === null;
+  const impText = noCompare
+    ? '—'
+    : improvement === 0
       ? '+0점'
       : improvement > 0
         ? `+${improvement}점`
@@ -67,7 +76,7 @@ export default function QuizResultSummary({
   const stats = [
     { label: '정답', value: `${correctCount}개`, color: 'text-[#16A34A]', bg: 'bg-[#16A34A1a]', icon: Icons.check },
     { label: '오답', value: `${wrongCount}개`, color: 'text-[#B91C1C]', bg: 'bg-[#B91C1C1a]', icon: Icons.x },
-    { label: '향상도', value: impText, color: impColor, bg: impBg, icon: down ? Icons.down : Icons.up },
+    { label: '향상도', value: impText, color: impColor, bg: impBg, icon: noCompare ? Icons.minus : down ? Icons.down : Icons.up },
   ];
 
   return (

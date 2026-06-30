@@ -163,7 +163,7 @@ interface ApiAdminQuizCourseItem {
   createdAt?: string;
 }
 interface ApiAdminQuizCoursesResponse {
-  content: ApiAdminQuizCourseItem[];
+  courses: ApiAdminQuizCourseItem[];
   totalPages?: number;
 }
 
@@ -173,8 +173,8 @@ export async function getAdminQuizCoursesServer(): Promise<AdminCourseManageRow[
     return [];
   }
   const res = await serverApi.get<ApiAdminQuizCoursesResponse>('/api/admin/quizzes/courses');
-  if (!res.success || !Array.isArray(res.data?.content)) return [];
-  return res.data.content.map((c) => ({
+  if (!res.success || !Array.isArray(res.data?.courses)) return [];
+  return res.data.courses.map((c) => ({
     id: c.courseId,
     title: c.title,
     subject: c.subjectName ?? '',
@@ -189,10 +189,10 @@ export async function getAdminQuizCoursesServer(): Promise<AdminCourseManageRow[
   }));
 }
 
-/** GET /api/admin/quizzes/courses/{courseId} 응답 — 강사 목록과 동일 구조 가정 */
+/** GET /api/admin/quizzes/courses/{courseId} 응답 */
 interface ApiAdminQuizList {
   courseId: number;
-  quizzes: ApiInstructorQuizItem[];
+  weeks: ApiInstructorQuizItem[];
 }
 
 /** 관리자 — 강의별 주차 퀴즈 목록 (GET /api/admin/quizzes/courses/{courseId}). */
@@ -203,9 +203,9 @@ export async function getAdminCourseQuizzesServer(courseId: number): Promise<Qui
   const res = await serverApi.get<ApiAdminQuizList>(
     `/api/admin/quizzes/courses/${courseId}`,
   );
-  if (!res.success || !res.data || !Array.isArray(res.data.quizzes)) return [];
+  if (!res.success || !res.data || !Array.isArray(res.data.weeks)) return [];
   const cid = res.data.courseId ?? courseId;
-  return res.data.quizzes
+  return res.data.weeks
     .map((item) => ({
       quizId: item.quizId,
       courseId: cid,

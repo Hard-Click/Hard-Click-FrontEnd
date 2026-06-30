@@ -60,14 +60,20 @@ export default function UserHeader() {
     if (!isLoggedIn) return;
     // 로그아웃 직후 늦게 도착한 이전 응답이 상태를 덮어쓰지 않도록 가드
     let cancelled = false;
-    getMyProfile().then((result) => {
-      if (cancelled) return;
-      setProfileImageUrl(
-        result.success ? (result.data?.profileImageUrl ?? '') : '',
-      );
-    });
+    const loadProfileImage = () => {
+      getMyProfile().then((result) => {
+        if (cancelled) return;
+        setProfileImageUrl(
+          result.success ? (result.data?.profileImageUrl ?? '') : '',
+        );
+      });
+    };
+    loadProfileImage();
+    // 프로필 사진 변경(ProfileEditModal) 시 새로고침 없이 헤더 아바타 즉시 갱신
+    window.addEventListener('profile-updated', loadProfileImage);
     return () => {
       cancelled = true;
+      window.removeEventListener('profile-updated', loadProfileImage);
     };
   }, [isLoggedIn]);
 

@@ -71,12 +71,9 @@ export default function PaymentResultClient() {
   const isSubscription = type === 'subscription';
   const orderNo = sp.get('orderNo') ?? orderId ?? '';
 
-  // 토스 success 진입(paymentKey+orderId+amount+courseIds 전부 유효) → 승인 단계
-  const canConfirm =
-    !!paymentKey &&
-    !!orderId &&
-    Number.isFinite(amountNum) &&
-    courseIds.length > 0;
+  // 토스 success 진입(paymentKey+orderId+amount 유효) → 승인 단계.
+  //   courseIds는 강의 결제에만 있음 — 구독은 없어도 confirm(구독권 지급).
+  const canConfirm = !!paymentKey && !!orderId && Number.isFinite(amountNum);
 
   const [phase, setPhase] = useState<Phase>(() => {
     if (status === 'fail') return 'fail';
@@ -100,7 +97,7 @@ export default function PaymentResultClient() {
       paymentKey: paymentKey!,
       orderId: orderId!,
       amount: amountNum,
-      courseIds: courseIdsKey.split(',').map(Number),
+      courseIds: courseIdsKey ? courseIdsKey.split(',').map(Number) : [],
     })
       .then((res) => {
         if (res.success) {
