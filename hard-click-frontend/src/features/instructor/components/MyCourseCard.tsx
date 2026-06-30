@@ -12,6 +12,7 @@ interface MyCourseCardProps {
   createdAt: string;
   price: string;
   thumbnailUrl?: string;
+  onDeleted?: (id: number) => void;
 }
 
 import Image from 'next/image';
@@ -34,6 +35,7 @@ export default function MyCourseCard({
   price,
   thumbnailUrl,
   highlighted = false,
+  onDeleted,
 }: MyCourseCardProps) {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -57,6 +59,7 @@ export default function MyCourseCard({
 
       setIsLoading(false);
       setIsDeleted(true);
+      onDeleted?.(id);
       toast.success('강의 삭제가 완료되었습니다.', { duration: 2000 });
     } catch (error) {
       setIsLoading(false);
