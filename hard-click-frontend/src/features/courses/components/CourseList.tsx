@@ -62,8 +62,13 @@ export default function CourseList({ courses, status, hrefPrefix }: Props) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-16 gap-y-6">
-      {courses.map(course => (
-        <CourseCard key={course.courseId} course={course} hrefPrefix={hrefPrefix} />
+      {courses.map((course, i) => (
+        <CourseCard
+          key={course.courseId}
+          course={course}
+          hrefPrefix={hrefPrefix}
+          priority={i < 4}
+        />
       ))}
     </div>
   );
