@@ -227,6 +227,7 @@ export default function InstructorCourseDetailContent({
                       src={course.thumbnailUrl}
                       alt={course.title}
                       fill
+                      sizes="282px"
                       className="object-cover"
                     />
                   ) : (

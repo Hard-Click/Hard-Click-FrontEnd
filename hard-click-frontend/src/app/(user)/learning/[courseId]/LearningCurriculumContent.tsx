@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { mergeCurriculumProgress, formatDuration } from '@/features/learning/utils';
 import type { CourseDetail } from '@/features/courses/types';
 import type { CourseProgress, SidebarVideoItem } from '@/features/learning/types';
@@ -130,10 +131,9 @@ export default function LearningCurriculumContent({
                 </Link>
 
                 <div className="flex items-start gap-6 mt-4">
-                  <div className="w-64 h-36 rounded-[20px] shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-4px_rgba(0,0,0,0.1)] overflow-hidden flex-shrink-0 bg-white flex items-center justify-center">
+                  <div className="relative w-64 h-36 rounded-[20px] shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-4px_rgba(0,0,0,0.1)] overflow-hidden flex-shrink-0 bg-white flex items-center justify-center">
                     {detail?.thumbnailUrl ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={detail.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                      <Image src={detail.thumbnailUrl} alt="" fill sizes="256px" className="object-cover" />
                     ) : (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img src="/icons/courseThumbnailIcon.svg" width={48} height={48} alt="" />
