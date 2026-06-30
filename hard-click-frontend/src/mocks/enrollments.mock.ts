@@ -9,7 +9,8 @@ export type EnrollmentStatus =
   | 'ENROLLED'
   | 'IN_PROGRESS'
   | 'COMPLETED'
-  | 'EXPIRED';
+  | 'EXPIRED'
+  | 'REFUNDED';
 
 export interface MyEnrollmentApiItem {
   enrollmentId: number;
