@@ -1195,12 +1195,37 @@ export default function CourseCreateForm({
                         const lecture = sections[sIdx].lectures[lIdx];
                         const apiLesson = apiLessons[lIdx];
                         if (lecture.file && apiLesson?.lessonId) {
-                          const videoForm = new FormData();
-                          videoForm.append('file', lecture.file);
                           try {
-                            await axios.post(
-                              `/api/courses/lessons/${apiLesson.lessonId}/video`,
-                              videoForm
+                            // 영상 업로드 3단계 (Presign → S3 직접 PUT → 확정).
+                            // BE가 multipart → presigned 직업로드로 전환 (main CourseController로 계약 확인).
+                            // ⚠️ 선행: S3 버킷 CORS의 AllowedMethods에 PUT 추가돼야 브라우저 PUT 통과(인프라).
+                            // 1) Presign 요청 — filename은 @RequestParam(쿼리).
+                            //    응답 = ApiResponse<{lessonId, presignedUrl, s3Key, contentType}>
+                            const presignRes = await axios.post<{
+                              data?: {
+                                presignedUrl: string;
+                                s3Key: string;
+                                contentType?: string;
+                              };
+                            }>(
+                              `/api/courses/lessons/${apiLesson.lessonId}/video/presign?filename=${encodeURIComponent(lecture.file.name)}`
+                            );
+                            const presign = presignRes.data?.data;
+                            if (!presign?.presignedUrl || !presign?.s3Key) {
+                              throw new Error('presign 응답 형식 불일치');
+                            }
+                            // 2) S3 직접 PUT — 순수 axios(default, 인터셉터 없음)·절대 S3 URL이라
+                            //    BFF/Authorization을 안 거침(인증 헤더 붙으면 S3 서명 검증 깨짐).
+                            //    Content-Type은 presign이 서명한 값과 일치시킨다.
+                            await axios.put(presign.presignedUrl, lecture.file, {
+                              headers: {
+                                'Content-Type':
+                                  presign.contentType ?? lecture.file.type,
+                              },
+                            });
+                            // 3) 확정 — s3Key는 @RequestParam(쿼리). BFF가 인증 첨부.
+                            await axios.patch(
+                              `/api/courses/lessons/${apiLesson.lessonId}/video?s3Key=${encodeURIComponent(presign.s3Key)}`
                             );
                           } catch (err) {
                             console.error(
