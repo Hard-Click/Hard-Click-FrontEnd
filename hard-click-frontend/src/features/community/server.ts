@@ -7,13 +7,19 @@ import { mockPostListResponse } from '@/mocks/community.mock';
 import { toPostListResponse, mapOk } from './services';
 import { mockSubjects } from '@/mocks/community.mock';
 import type { SubjectItem } from './types';
-import { SUBJECT_NAME } from '@/constants/subjects';
+import { SUBJECT_NAME, SUBJECTS as CONST_SUBJECTS } from '@/constants/subjects';
 
 export async function getSubjects(): Promise<ApiResponse<SubjectItem[]>> {
   if (USE_MOCK) {
     return { success: true, httpStatus: 200, message: '', data: mockSubjects };
   }
-  return serverApi.get<SubjectItem[]>('/api/subjects');
+  // /api/subjects 엔드포인트 없음 → FE 상수에서 생성
+  return {
+    success: true,
+    httpStatus: 200,
+    message: '',
+    data: CONST_SUBJECTS.map((s) => ({ code: s.code, name: s.name })),
+  };
 }
 
 export async function getCommunityPosts(
