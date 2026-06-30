@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import type { CourseListItem } from '../types';
 
 export const SUBJECT_GRADIENTS: Record<string, [string, string]> = {
@@ -63,12 +64,13 @@ export default function CourseCard({
       {/* Thumbnail */}
       <div className="relative w-full overflow-hidden" style={{ aspectRatio: '284/192' }}>
         {course.thumbnailUrl ? (
-          <img
+          <Image
             src={course.thumbnailUrl}
             alt={course.title}
-            loading={priority ? 'eager' : 'lazy'}
-            fetchPriority={priority ? 'high' : 'auto'}
-            className="absolute inset-0 w-full h-full object-cover"
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            priority={priority}
+            className="object-cover"
           />
         ) : (
           <div

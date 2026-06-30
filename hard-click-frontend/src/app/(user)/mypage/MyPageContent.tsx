@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { toast } from 'sonner';
 
 import ProfileEditModal from '@/features/users/components/ProfileEditModal';
@@ -306,13 +307,14 @@ export default function MyPageContent({
                 <div className="flex items-start gap-8">
                   {/* 좌측: 아바타 + 이름 + 이메일 */}
                   <div className="flex items-center gap-6 w-[400px] flex-shrink-0">
-                    <div className="w-28 h-28 rounded-full bg-[rgba(47,93,170,0.1)] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    <div className="relative w-28 h-28 rounded-full bg-[rgba(47,93,170,0.1)] flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {profile?.profileImageUrl ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img
+                        <Image
                           src={profile.profileImageUrl}
                           alt=""
-                          className="h-full w-full object-cover"
+                          fill
+                          sizes="112px"
+                          className="object-cover"
                         />
                       ) : (
                         /* eslint-disable-next-line @next/next/no-img-element */

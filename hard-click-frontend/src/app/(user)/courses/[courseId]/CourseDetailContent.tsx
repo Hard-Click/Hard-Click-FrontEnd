@@ -17,8 +17,8 @@ import {
   addWishlistAction,
   removeWishlistAction,
 } from '@/features/wishlist/actions';
-import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
-import PreviewVideoModal from '@/features/learning/components/PreviewVideoModal';
+import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import CourseInstructorSection from '@/features/courses/components/CourseInstructorSection';
 import CourseIntroSection from '@/features/courses/components/CourseIntroSection';
 import {
@@ -34,7 +34,16 @@ import type {
 import { StarRow, StarIcon } from '@/components/common/RatingStars';
 import { CurriculumAccordion } from '@/features/courses/components/CourseCurriculumSection';
 
-import ReportModal from '@/features/reports/components/ReportModal';
+// 무거운 모달은 코드 스플리팅 — 열기 전엔 청크 다운로드 안 함 (수업자료 §1-5)
+const ReviewFormModal = dynamic(
+  () => import('@/features/reviews/components/ReviewFormModal'),
+);
+const PreviewVideoModal = dynamic(
+  () => import('@/features/learning/components/PreviewVideoModal'),
+);
+const ReportModal = dynamic(
+  () => import('@/features/reports/components/ReportModal'),
+);
 
 /* ── 강의 에러 화면 공통 컴포넌트 ── */
 function CourseErrorScreen({
@@ -368,11 +377,12 @@ export default function CourseDetailContent({
                 {/* 썸네일 */}
                 <div className="flex-shrink-0 self-start w-[282px] h-[262px] bg-[#1A1F2E] rounded-2xl overflow-hidden relative">
                   {course.thumbnailUrl ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
+                    <Image
                       src={course.thumbnailUrl}
                       alt={course.title}
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="282px"
+                      className="object-cover"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">

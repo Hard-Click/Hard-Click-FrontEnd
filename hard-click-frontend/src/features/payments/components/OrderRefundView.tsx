@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { toast } from 'sonner';
 import { refundAction } from '../actions';
 import type { OrderDetail, OrderDetailItem } from '../types';
@@ -141,16 +142,18 @@ export default function OrderRefundView({ order }: { order: OrderDetail }) {
                     {selected[i] && CheckIcon}
                   </button>
                 )}
-                {/* 썸네일 — 구독=sparkle 박스 / 강의=thumbnailUrl 있으면 이미지(BE 제공), 없으면 그라데이션 placeholder.
-                    img는 코드베이스 썸네일 패턴(CourseCard·WishlistCard)과 일관 — ⚡최적화 시 next/image 일괄 전환 */}
+                {/* 썸네일 — 구독=sparkle 박스 / 강의=thumbnailUrl 있으면 next/image(BE 제공), 없으면 그라데이션 placeholder.
+                    코드베이스 썸네일 패턴(CourseCard·WishlistCard)과 일관 — next/image 전환 완료 */}
                 {it.isSubscription ? (
                   <span className="flex h-16 w-[88px] flex-shrink-0 items-center justify-center rounded-xl bg-[#2F5DAA]">
                     {SparkleIcon}
                   </span>
                 ) : it.thumbnailUrl ? (
-                  <img
+                  <Image
                     src={it.thumbnailUrl}
                     alt={it.title}
+                    width={88}
+                    height={64}
                     className="h-16 w-[88px] flex-shrink-0 rounded-xl object-cover"
                   />
                 ) : (
