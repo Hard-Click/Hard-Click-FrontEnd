@@ -38,7 +38,10 @@ export async function getMyProfile() {
 }
 
 /* ───── 프로필 이미지 변경 (PATCH /api/members/me/profile-image) ─────
- * multipart/form-data 로 profileImage 필드만 전송. */
+ * multipart/form-data 로 profileImage 필드만 전송.
+ * ⚠️ 라이브(mypage=false)지만 BE가 현재 이 엔드포인트 500(저장 실패) → 업로드 시도 시
+ *    api.ts가 success:false로 정규화 → ProfileEditModal이 실패 토스트로 노출(조용히 숨기지 않음, §0.1④).
+ *    프로필 사진 '표시'는 별도 경로(GET /api/members/me의 profileImageUrl)라 영향 없음. */
 export async function updateProfileImage(profileImage: File) {
   if (isMock('mypage')) {
     return {

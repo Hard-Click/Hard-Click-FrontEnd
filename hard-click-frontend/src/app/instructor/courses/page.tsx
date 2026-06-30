@@ -44,7 +44,10 @@ export default async function InstructorCoursesPage({ searchParams }: PageProps)
     let mapped: CourseListItem[] = content.map((c) => ({
       courseId: c.courseId,
       title: c.title,
-      instructorName: '',
+      // 강사 목록 응답엔 본인 이름이 없어 카드 강사명이 빈칸이었음 →
+      // 라이브 카탈로그에서 같은 강의의 강사명을 끌어와 채움(미발견 시 '' 유지).
+      instructorName:
+        catalog.find((cat) => cat.courseId === c.courseId)?.instructorName ?? '',
       subjectName: c.subjectName,
       price: c.price,
       thumbnailUrl: c.thumbnailUrl,
