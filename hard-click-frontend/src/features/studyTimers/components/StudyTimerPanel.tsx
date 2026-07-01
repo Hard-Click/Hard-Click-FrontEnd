@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
+import { toast } from 'sonner';
 import {
   startTimerAction,
   endTimerAction,
   heartbeatAction,
   fetchCurrentSessionAction,
+  probeSessionAction,
 } from '../actions';
 import FocusModeOverlay from './FocusModeOverlay';
 import CurrentSessionAlert from './CurrentSessionAlert';
@@ -107,9 +109,20 @@ export default function StudyTimerPanel() {
     startHeartbeat(result.sessionId);
   };
 
-  // 이어하기
-  const handleResume = () => {
+  // 이어하기 — 학습 이탈 자동 종료 등으로 이미 끝난 세션이면 되살리지 않는다(재검증).
+  const handleResume = async () => {
     if (!resumeSession) return;
+    // 'ended'(확정 종료)일 때만 배너 정리. 'unknown'(조회 실패)이면 살아있는 세션을 버리지 않고
+    // 낙관적으로 재개한다(실제로 끝났다면 종료가 idempotent하게 정리).
+    const state = await probeSessionAction(resumeSession.sessionId);
+    if (state === 'ended') {
+      setResumeSession(null);
+      toast('이미 종료된 세션이에요. 새로 시작해 주세요.', {
+        className: 'timer-toast',
+        duration: 2000,
+      });
+      return;
+    }
     setSessionId(resumeSession.sessionId);
     setIsRunning(true);
     setIsPaused(false);
