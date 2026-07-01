@@ -24,6 +24,9 @@ import type {
 import type { CourseDetail } from '@/features/courses/types';
 
 const HEARTBEAT_INTERVAL_MS = 60_000;
+// 레슨 전환(key={videoId} remount)으로 언마운트→재마운트되는 짧은 틈. 이 시간 안에 새 인스턴스가
+// 마운트되면 end를 취소한다(=레슨 전환). 지나도 재마운트 없으면 진짜 이탈로 보고 end.
+const LESSON_SWITCH_GRACE_MS = 300;
 
 /** module-level cache — 페이지 navigation 간 마지막 정상 상태 유지 (page remount에도 살아남음) */
 let lastValidVideoCache: VideoPlayInfo | null = null;
@@ -231,7 +234,7 @@ export default function LearningVideoContent({
         pendingSessionEnd = setTimeout(() => {
           void endTimerAction(sid);
           pendingSessionEnd = null;
-        }, 300);
+        }, LESSON_SWITCH_GRACE_MS);
       }
     };
   }, []);
