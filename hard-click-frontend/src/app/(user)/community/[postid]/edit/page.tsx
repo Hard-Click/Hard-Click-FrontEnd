@@ -56,6 +56,7 @@ export default function CommunityEditPage() {
         initialTitle={post.title}
         initialContent={post.content}
         initialFileUrls={post.fileUrls}
+        initialSubject={post.subjectCode ?? ''}
         postId={post.postId}
       />
     </div>

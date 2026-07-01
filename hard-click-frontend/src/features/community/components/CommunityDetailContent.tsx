@@ -8,8 +8,8 @@ import type { ReportTargetRef } from '@/features/reports/types';
 import { toast } from 'sonner';
 import LoadingModal from '@/components/ui/loadingModal';
 import {
-  getPostDetailAction,
   deletePostAction,
+  getPostDetailAction,
   getCommentsAction,
   createCommentAction,
   updateCommentAction,
@@ -18,6 +18,7 @@ import {
 } from '../actions';
 import type { PostDetail, CommentItem } from '../types';
 import { BOARD_TYPE_LABEL } from '../types';
+import { parseServerDate } from '../utils';
 import { useMemberStatus } from '@/features/community/MemberStatusProvider';
 
 const CATEGORY_STYLE: Record<string, string> = {
@@ -27,7 +28,7 @@ const CATEGORY_STYLE: Record<string, string> = {
 };
 
 function formatDate(isoString: string): string {
-  const date = new Date(isoString);
+  const date = parseServerDate(isoString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
@@ -54,7 +55,8 @@ export default function CommunityDetailContent({
   const router = useRouter();
   const { isSuspended, suspendedMessage } = useMemberStatus();
 
-  // 데이터는 서버(page.tsx)에서 받아온 초기값으로 시작. 변경(mutation) 후엔 재조회.
+  // 데이터는 서버(page.tsx)에서 받아온 초기값으로 시작. mutation 후엔 핸들러에서
+  // getCommentsAction/getPostDetailAction으로 직접 재조회해 state를 갱신한다.
   const [post, setPost] = useState<PostDetail>(initialPost);
   const [comments, setComments] = useState<CommentItem[]>(initialComments);
 
@@ -89,11 +91,16 @@ export default function CommunityDetailContent({
   const commentFileRef = useRef<HTMLInputElement>(null);
   const replyFileRef = useRef<HTMLInputElement>(null);
 
-  const fetchComments = async () => {
+  // 댓글 목록을 서버에서 직접 재조회해 state 동기화. 성공 여부를 반환해
+  // 호출부가 "재조회 실패 시 성공 토스트를 띄우지 않도록" 분기할 수 있게 한다.
+  const refreshComments = async (): Promise<boolean> => {
     const result = await getCommentsAction(postId);
     if (result.success && result.data) {
       setComments(result.data.comments);
+      return true;
     }
+    toast.error(result.message || '댓글 목록을 불러오지 못했습니다.');
+    return false;
   };
 
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -112,10 +119,7 @@ export default function CommunityDetailContent({
       toast.error(result.message || '채택에 실패했습니다.');
       return;
     }
-    const [postResult] = await Promise.all([
-      getPostDetailAction(postId),
-      fetchComments(),
-    ]);
+    const [postResult] = await Promise.all([getPostDetailAction(postId), refreshComments()]);
     if (postResult.success && postResult.data) setPost(postResult.data);
     toast.success('답변이 채택되었습니다.');
   };
@@ -163,8 +167,8 @@ export default function CommunityDetailContent({
     setCommentText('');
     setCommentImage(null);
     setCommentImagePreview(null);
-    await fetchComments();
-    toast.success('댓글 등록이 완료되었습니다.');
+    // 재조회 실패 시(예: 목록 API 오류) 성공 토스트를 띄우지 않아 혼란 방지
+    if (await refreshComments()) toast.success('댓글 등록이 완료되었습니다.');
   };
 
   const handleReplySubmit = async (parentCommentId: number) => {
@@ -184,8 +188,7 @@ export default function CommunityDetailContent({
     setReplyImage(null);
     setReplyImagePreview(null);
     setReplyInputId(null);
-    await fetchComments();
-    toast.success('답글 등록이 완료되었습니다.');
+    if (await refreshComments()) toast.success('답글 등록이 완료되었습니다.');
   };
 
   const handleDeletePost = async () => {
@@ -217,8 +220,7 @@ export default function CommunityDetailContent({
     }
     setEditingCommentId(null);
     setEditingCommentText('');
-    await fetchComments();
-    toast.success('댓글이 수정되었습니다.');
+    if (await refreshComments()) toast.success('댓글이 수정되었습니다.');
   };
 
   const handleCommentEditCancel = () => {
@@ -233,8 +235,7 @@ export default function CommunityDetailContent({
       return;
     }
     setDeletingCommentId(null);
-    await fetchComments();
-    toast.success('댓글이 삭제되었습니다.');
+    if (await refreshComments()) toast.success('댓글이 삭제되었습니다.');
   };
 
   const handleReplyEditStart = (replyId: number, content: string) => {
@@ -253,8 +254,7 @@ export default function CommunityDetailContent({
     }
     setEditingReplyId(null);
     setEditingReplyText('');
-    await fetchComments();
-    toast.success('답글이 수정되었습니다.');
+    if (await refreshComments()) toast.success('답글이 수정되었습니다.');
   };
 
   const handleReplyEditCancel = () => {
@@ -269,8 +269,7 @@ export default function CommunityDetailContent({
       return;
     }
     setDeletingReplyInfo(null);
-    await fetchComments();
-    toast.success('답글이 삭제되었습니다.');
+    if (await refreshComments()) toast.success('답글이 삭제되었습니다.');
   };
 
   return (

@@ -22,6 +22,8 @@ interface CommunityWriteFormProps {
   initialTitle?: string;
   initialContent?: string;
   initialFileUrls?: string[];
+  /** 수정 시 기존 과목 enum 코드 (예: 'KO_READING') — 드롭다운 초기 선택값 */
+  initialSubject?: string;
   postId?: number;
 }
 
@@ -31,6 +33,7 @@ export default function CommunityWriteForm({
   initialTitle = '',
   initialContent = '',
   initialFileUrls = [],
+  initialSubject = '',
   postId,
 }: CommunityWriteFormProps) {
   const router = useRouter();
@@ -49,7 +52,7 @@ export default function CommunityWriteForm({
   const [titleError, setTitleError] = useState('');
   const [content, setContent] = useState(initialContent);
   const [contentError, setContentError] = useState('');
-  const [subject, setSubject] = useState('');
+  const [subject, setSubject] = useState(initialSubject);
   const [subjectError, setSubjectError] = useState('');
   const [isSubjectOpen, setIsSubjectOpen] = useState(false);
   const [recruit, setRecruit] = useState('');
@@ -199,6 +202,7 @@ export default function CommunityWriteForm({
       }
       toast.success('게시글이 수정되었습니다.');
       router.push(`/community/${postId}`);
+      router.refresh();
     } else {
       const fd = new FormData();
       if (boardType === 'STUDY') {
@@ -220,12 +224,13 @@ export default function CommunityWriteForm({
       }
       const result = await createPostAction(fd);
       setIsSubmitting(false);
-      if (!result.success || !('data' in result) || !result.data?.postId) {
+      if (!result.success) {
         toast.error(result.message || '게시글 등록에 실패했습니다.');
         return;
       }
       toast.success('게시글이 등록되었습니다.');
       router.push(`/community?tab=${activeTab}`);
+      router.refresh();
     }
   };
 

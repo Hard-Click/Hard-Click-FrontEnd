@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { notFound } from 'next/navigation';
 import { getPostDetail, getComments } from '@/features/community/services';
 import CommunityDetailContent from '@/features/community/components/CommunityDetailContent';
