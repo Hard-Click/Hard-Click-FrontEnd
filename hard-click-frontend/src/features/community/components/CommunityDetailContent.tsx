@@ -9,6 +9,8 @@ import { toast } from 'sonner';
 import LoadingModal from '@/components/ui/loadingModal';
 import {
   deletePostAction,
+  getPostDetailAction,
+  getCommentsAction,
   createCommentAction,
   updateCommentAction,
   deleteCommentAction,
@@ -90,6 +92,12 @@ export default function CommunityDetailContent({
   const commentFileRef = useRef<HTMLInputElement>(null);
   const replyFileRef = useRef<HTMLInputElement>(null);
 
+  // 댓글 목록을 서버에서 직접 재조회해 state 동기화
+  const refreshComments = async () => {
+    const result = await getCommentsAction(postId);
+    if (result.success && result.data) setComments(result.data.comments);
+  };
+
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const category = BOARD_TYPE_LABEL[post.boardType];
@@ -106,7 +114,8 @@ export default function CommunityDetailContent({
       toast.error(result.message || '채택에 실패했습니다.');
       return;
     }
-    router.refresh();
+    const [postResult] = await Promise.all([getPostDetailAction(postId), refreshComments()]);
+    if (postResult.success && postResult.data) setPost(postResult.data);
     toast.success('답변이 채택되었습니다.');
   };
 
@@ -153,7 +162,7 @@ export default function CommunityDetailContent({
     setCommentText('');
     setCommentImage(null);
     setCommentImagePreview(null);
-    router.refresh();
+    await refreshComments();
     toast.success('댓글 등록이 완료되었습니다.');
   };
 
@@ -174,7 +183,7 @@ export default function CommunityDetailContent({
     setReplyImage(null);
     setReplyImagePreview(null);
     setReplyInputId(null);
-    router.refresh();
+    await refreshComments();
     toast.success('답글 등록이 완료되었습니다.');
   };
 
@@ -207,7 +216,7 @@ export default function CommunityDetailContent({
     }
     setEditingCommentId(null);
     setEditingCommentText('');
-    router.refresh();
+    await refreshComments();
     toast.success('댓글이 수정되었습니다.');
   };
 
@@ -223,7 +232,7 @@ export default function CommunityDetailContent({
       return;
     }
     setDeletingCommentId(null);
-    router.refresh();
+    await refreshComments();
     toast.success('댓글이 삭제되었습니다.');
   };
 
@@ -243,7 +252,7 @@ export default function CommunityDetailContent({
     }
     setEditingReplyId(null);
     setEditingReplyText('');
-    router.refresh();
+    await refreshComments();
     toast.success('답글이 수정되었습니다.');
   };
 
@@ -259,7 +268,7 @@ export default function CommunityDetailContent({
       return;
     }
     setDeletingReplyInfo(null);
-    router.refresh();
+    await refreshComments();
     toast.success('답글이 삭제되었습니다.');
   };
 
