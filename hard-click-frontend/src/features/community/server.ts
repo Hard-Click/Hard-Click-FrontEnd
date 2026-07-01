@@ -14,6 +14,10 @@ import { mockSubjects } from '@/mocks/community.mock';
 import type { SubjectItem } from './types';
 import { SUBJECT_NAME, SUBJECTS as CONST_SUBJECTS } from '@/constants/subjects';
 
+// 페이지 데이터 조회는 server.ts로 통일한다. 글 상세 조회(serverApi 기반)는
+// services.ts에 정의돼 있으므로 여기서 재노출해 페이지가 한 곳(server.ts)에서만 import하도록 한다.
+export { getPostDetail } from './services';
+
 export async function getSubjects(): Promise<ApiResponse<SubjectItem[]>> {
   if (USE_MOCK) {
     return { success: true, httpStatus: 200, message: '', data: mockSubjects };

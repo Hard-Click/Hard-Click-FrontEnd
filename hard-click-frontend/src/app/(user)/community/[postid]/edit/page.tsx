@@ -1,8 +1,7 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import CommunityWriteForm from '@/features/community/components/CommunityWriteForm';
-import { getPostDetail } from '@/features/community/services';
-import { getSubjects } from '@/features/community/server';
+import { getPostDetail, getSubjects } from '@/features/community/server';
 import type { SubjectItem } from '@/features/community/types';
 import { BOARD_TYPE_LABEL } from '@/features/community/types';
 
@@ -16,6 +15,10 @@ export default async function CommunityEditPage({
 }: CommunityEditPageProps) {
   const { postid } = await params;
   const postId = Number(postid);
+  // 잘못된 동적 라우트(NaN·음수)는 백엔드에 요청하지 않고 즉시 404
+  if (!Number.isInteger(postId) || postId <= 0) {
+    notFound();
+  }
 
   const [postRes, subjectsRes] = await Promise.all([
     getPostDetail(postId),
