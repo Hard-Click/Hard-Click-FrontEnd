@@ -89,9 +89,9 @@ export default function MyCoursesContent({ courses }: { courses: Course[] }) {
         {filteredCourses.length === 0 ? (
           <div className="py-20 text-center text-[#64748B]">해당하는 강의가 없습니다.</div>
         ) : (
-          filteredCourses.map((course) => (
+          filteredCourses.map((course, index) => (
             <div key={course.id} ref={(el) => { if (el) cardRefs.current.set(course.id, el); }}>
-              <MyCourseCard {...course} highlighted={course.id === highlightId} onDeleted={handleDeleted} />
+              <MyCourseCard {...course} highlighted={course.id === highlightId} onDeleted={handleDeleted} priority={index === 0} />
             </div>
           ))
         )}

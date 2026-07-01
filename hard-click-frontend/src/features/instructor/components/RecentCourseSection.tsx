@@ -1,11 +1,7 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import RecentCourseCard from './RecentCourseCard';
-import { getInstructorCourses } from '../services';
 
-interface Course {
+export interface RecentCourse {
   id: number;
   title: string;
   isPublic: boolean;
@@ -13,32 +9,12 @@ interface Course {
   createdAt: string;
 }
 
-export default function RecentCourseSection() {
-  const [courses, setCourses] = useState<Course[]>([]);
-
-  useEffect(() => {
-    getInstructorCourses(0, 3).then((res) => {
-      if (!res.success || !res.data) return;
-
-      const mapped: Course[] = res.data.content
-        .filter((c) => c.status !== 'DELETED')
-        .sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        )
-        .slice(0, 3)
-        .map((c) => ({
-          id: c.courseId,
-          title: c.title,
-          isPublic: c.status === 'PUBLISHED',
-          students: c.enrollmentCount,
-          createdAt: c.createdAt.split('T')[0].replaceAll('-', '.'),
-        }));
-
-      setCourses(mapped);
-    });
-  }, []);
-
+// Server-First: 데이터는 서버(대시보드 페이지)에서 조회해 props로 받는다. (useEffect 클라 페칭 제거)
+export default function RecentCourseSection({
+  courses,
+}: {
+  courses: RecentCourse[];
+}) {
   return (
     <section className="rounded-3xl bg-white p-8 shadow-sm">
       {/* header */}

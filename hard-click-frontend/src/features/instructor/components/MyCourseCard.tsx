@@ -13,6 +13,8 @@ interface MyCourseCardProps {
   price: string;
   thumbnailUrl?: string;
   onDeleted?: (id: number) => void;
+  /** 목록 첫 카드(above-fold)면 true — LCP 썸네일 우선 로딩 */
+  priority?: boolean;
 }
 
 import Image from 'next/image';
@@ -36,6 +38,7 @@ export default function MyCourseCard({
   thumbnailUrl,
   highlighted = false,
   onDeleted,
+  priority = false,
 }: MyCourseCardProps) {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -103,6 +106,7 @@ export default function MyCourseCard({
             alt={title}
             width={160}
             height={120}
+            priority={priority}
             className="h-[120px] w-[160px] shrink-0 self-start rounded-2xl object-cover"
           />
         ) : (

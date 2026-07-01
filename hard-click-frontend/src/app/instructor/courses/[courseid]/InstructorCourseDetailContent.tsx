@@ -228,6 +228,7 @@ export default function InstructorCourseDetailContent({
                       alt={course.title}
                       fill
                       sizes="282px"
+                      priority
                       className="object-cover"
                     />
                   ) : (
