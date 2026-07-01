@@ -3,8 +3,6 @@
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import {
-  getPosts,
-  getSubjects,
   getPostDetail,
   deletePost,
   updateComment,
@@ -12,7 +10,6 @@ import {
   acceptComment,
 } from './services';
 import type {
-  BoardType,
   UpdateCommentRequest,
   CommentApiItem,
   CommentsResponse,
@@ -38,19 +35,6 @@ async function getAuthHeader(): Promise<HeadersInit> {
   if (token) headers['authorization'] = `Bearer ${token}`;
   if (memberId) headers['x-member-id'] = memberId;
   return headers;
-}
-
-export async function getPostsAction(
-  boardType: BoardType = 'ALL',
-  page = 0,
-  keyword?: string,
-  sort?: string
-) {
-  return getPosts(boardType, page, keyword, sort);
-}
-
-export async function getSubjectsAction() {
-  return getSubjects();
 }
 
 export async function getPostDetailAction(postId: number) {

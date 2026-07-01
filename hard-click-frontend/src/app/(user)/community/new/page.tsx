@@ -1,8 +1,15 @@
 import CommunityWriteForm from '@/features/community/components/CommunityWriteForm';
 import SuspendedWriteGuard from '@/features/community/components/SuspendedWriteGuard';
+import { getSubjects } from '@/features/community/server';
+import type { SubjectItem } from '@/features/community/types';
 import Image from 'next/image';
 
-export default function CommunityWritePage() {
+// Server Component: 과목 목록을 서버에서 조회해 폼에 props로 전달 (useEffect 페칭 X)
+export default async function CommunityWritePage() {
+  const subjectsRes = await getSubjects();
+  const subjects: SubjectItem[] =
+    subjectsRes.success && subjectsRes.data ? subjectsRes.data : [];
+
   return (
     <div>
       <div className="items-start flex gap-4 px-8 py-10">
@@ -19,7 +26,7 @@ export default function CommunityWritePage() {
       </div>
 
       <SuspendedWriteGuard>
-        <CommunityWriteForm />
+        <CommunityWriteForm subjects={subjects} />
       </SuspendedWriteGuard>
     </div>
   );

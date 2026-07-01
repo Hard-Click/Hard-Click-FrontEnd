@@ -1,16 +1,12 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { COMMUNITY_ERRORS } from '../constants/errorMessages';
 import LoadingModal from '@/components/ui/loadingModal';
-import {
-  createPostAction,
-  updatePostAction,
-  getSubjectsAction,
-} from '../actions';
+import { createPostAction, updatePostAction } from '../actions';
 import { BOARD_TYPE_VALUE } from '../types';
 import type { SubjectItem } from '../types';
 
@@ -25,6 +21,8 @@ interface CommunityWriteFormProps {
   /** 수정 시 기존 과목 enum 코드 (예: 'KO_READING') — 드롭다운 초기 선택값 */
   initialSubject?: string;
   postId?: number;
+  /** 과목 목록은 서버(Server Component)에서 조회해 props로 전달받는다 */
+  subjects: SubjectItem[];
 }
 
 export default function CommunityWriteForm({
@@ -35,18 +33,12 @@ export default function CommunityWriteForm({
   initialFileUrls = [],
   initialSubject = '',
   postId,
+  subjects,
 }: CommunityWriteFormProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(initialCategory);
   const [previewImages, setPreviewImages] = useState<string[]>(initialFileUrls);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [subjects, setSubjects] = useState<SubjectItem[]>([]);
-
-  useEffect(() => {
-    getSubjectsAction().then((result) => {
-      if (result.success && result.data) setSubjects(result.data);
-    });
-  }, []);
 
   const [title, setTitle] = useState(initialTitle);
   const [titleError, setTitleError] = useState('');
