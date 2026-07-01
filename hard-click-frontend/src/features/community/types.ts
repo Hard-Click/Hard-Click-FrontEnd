@@ -158,6 +158,24 @@ export interface PostListApiResponse {
   totalCount: number;
 }
 
+// GET /api/studies → StudyPageResponse (스터디는 게시판과 별도 리소스)
+export interface StudyItemApiResponse {
+  groupId: number;
+  title: string;
+  content: string;
+  authorName: string;
+  subjectName?: string | null;
+  currentCount: number;
+  maxCount: number;
+  isClosed: boolean;
+  createdAt: string;
+}
+
+export interface StudyListApiResponse {
+  content: StudyItemApiResponse[];
+  totalPages: number;
+}
+
 // GET /api/posts/{postId} → PostDetailResponse
 export interface PostDetailApiResponse {
   postId: number;

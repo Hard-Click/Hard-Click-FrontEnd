@@ -7,6 +7,7 @@ import CommunityToolBar from './CommunityToolBar';
 import { getPostsAction } from '../actions';
 import type { PostListItem, BoardType } from '../types';
 import { BOARD_TYPE_LABEL } from '../types';
+import { parseServerDate } from '../utils';
 
 // UI 표시 → 백엔드 sort enum
 const SORT_MAP: Record<string, string> = {
@@ -24,7 +25,7 @@ const TAB_TO_BOARD_TYPE: Record<string, BoardType> = {
 };
 
 function formatDate(isoString: string): string {
-  const date = new Date(isoString);
+  const date = parseServerDate(isoString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);

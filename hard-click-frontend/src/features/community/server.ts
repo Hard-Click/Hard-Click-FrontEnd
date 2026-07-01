@@ -1,10 +1,15 @@
 import { serverApi } from '@/lib/api';
 import type { ApiResponse } from '@/services/api';
-import type { BoardType, PostListResponse, PostListApiResponse } from './types';
+import type {
+  BoardType,
+  PostListResponse,
+  PostListApiResponse,
+  StudyListApiResponse,
+} from './types';
 // 커뮤니티 도메인만 실서버 연동 (다른 도메인은 전역 USE_MOCK 유지)
 import { USE_MOCK_COMMUNITY as USE_MOCK } from '@/mocks/config';
 import { mockPostListResponse } from '@/mocks/community.mock';
-import { toPostListResponse, mapOk } from './services';
+import { toPostListResponse, toStudyListResponse, mapOk } from './services';
 import { mockSubjects } from '@/mocks/community.mock';
 import type { SubjectItem } from './types';
 import { SUBJECT_NAME, SUBJECTS as CONST_SUBJECTS } from '@/constants/subjects';
@@ -58,6 +63,19 @@ export async function getCommunityPosts(
         totalPages,
       }),
     };
+  }
+
+  // 스터디는 게시판(/api/boards)과 별도 리소스 → /api/studies로 조회 (subject/page/size만 지원)
+  if (boardType === 'STUDY') {
+    const studyParams = new URLSearchParams();
+    studyParams.set('page', String(page));
+    if (subjectCode) studyParams.set('subject', subjectCode);
+    return mapOk(
+      await serverApi.get<StudyListApiResponse>(
+        `/api/studies?${studyParams.toString()}`
+      ),
+      toStudyListResponse
+    );
   }
 
   const params = new URLSearchParams();

@@ -202,6 +202,7 @@ export default function CommunityWriteForm({
       }
       toast.success('게시글이 수정되었습니다.');
       router.push(`/community/${postId}`);
+      router.refresh();
     } else {
       const fd = new FormData();
       if (boardType === 'STUDY') {
@@ -229,6 +230,7 @@ export default function CommunityWriteForm({
       }
       toast.success('게시글이 등록되었습니다.');
       router.push(`/community?tab=${activeTab}`);
+      router.refresh();
     }
   };
 

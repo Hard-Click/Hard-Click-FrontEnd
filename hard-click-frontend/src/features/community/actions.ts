@@ -7,7 +7,6 @@ import {
   getSubjects,
   getPostDetail,
   deletePost,
-  getComments,
   updateComment,
   deleteComment,
   acceptComment,
@@ -15,6 +14,8 @@ import {
 import type {
   BoardType,
   UpdateCommentRequest,
+  CommentApiItem,
+  CommentsResponse,
 } from './types';
 
 const BACKEND = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
@@ -171,8 +172,51 @@ export async function deletePostAction(postId: number) {
   return result;
 }
 
-export async function getCommentsAction(postId: number) {
-  return getComments(postId);
+export async function getCommentsAction(postId: number): Promise<{ success: boolean; data?: CommentsResponse; message?: string }> {
+  try {
+    const headers = await getAuthHeader();
+    const res = await fetch(`${BACKEND}/api/posts/${postId}/comments`, {
+      method: 'GET',
+      headers,
+      cache: 'no-store',
+    });
+    const json = (await res.json().catch(() => null)) as
+      | { data?: unknown; message?: string }
+      | null;
+    if (!res.ok || !json) {
+      return { success: false, message: json?.message ?? '댓글 목록 조회에 실패했습니다.' };
+    }
+    const raw = json.data as { totalCount: number; comments: CommentApiItem[] } | null;
+    if (!raw || !Array.isArray(raw.comments)) {
+      return { success: false, message: '댓글 목록 형식이 올바르지 않습니다.' };
+    }
+    return {
+      success: true,
+      data: {
+        comments: raw.comments.map((c) => ({
+          commentId: c.commentId,
+          authorName: c.authorName,
+          content: c.content,
+          imageUrl: c.imageUrl,
+          isAccepted: c.isAccepted,
+          isMine: c.isMine,
+          isDeleted: c.isDeleted,
+          createdAt: c.createdAt,
+          replies: (c.replies ?? []).map((r) => ({
+            commentId: r.commentId,
+            authorName: r.authorName,
+            content: r.content,
+            imageUrl: r.imageUrl,
+            isMine: r.isMine,
+            isDeleted: r.isDeleted,
+            createdAt: r.createdAt,
+          })),
+        })),
+      },
+    };
+  } catch {
+    return { success: false, message: '댓글 목록 조회 중 오류가 발생했습니다.' };
+  }
 }
 
 export async function createCommentAction(formData: FormData) {

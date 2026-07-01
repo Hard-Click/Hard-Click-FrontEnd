@@ -25,7 +25,6 @@ export const SUBJECTS: Subject[] = [
   { code: 'MATH_PROB_STAT', name: '확률과 통계', group: '수학' },
   { code: 'MATH_CALCULUS', name: '미적분', group: '수학' },
   { code: 'MATH_GEOMETRY', name: '기하', group: '수학' },
-  { code: 'MATH_GEOMETRY', name: '기하', group: '수학' },
   /// 영어
   { code: 'ENG_1', name: '영어Ⅰ', group: '영어' },
   { code: 'ENG_2', name: '영어Ⅱ', group: '영어' },

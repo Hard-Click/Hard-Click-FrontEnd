@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import ReportModal from '@/features/reports/components/ReportModal';
@@ -18,6 +18,7 @@ import {
 } from '../actions';
 import type { PostDetail, CommentItem } from '../types';
 import { BOARD_TYPE_LABEL } from '../types';
+import { parseServerDate } from '../utils';
 import { useMemberStatus } from '@/features/community/MemberStatusProvider';
 
 const CATEGORY_STYLE: Record<string, string> = {
@@ -27,7 +28,7 @@ const CATEGORY_STYLE: Record<string, string> = {
 };
 
 function formatDate(isoString: string): string {
-  const date = new Date(isoString);
+  const date = parseServerDate(isoString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
@@ -54,12 +55,10 @@ export default function CommunityDetailContent({
   const router = useRouter();
   const { isSuspended, suspendedMessage } = useMemberStatus();
 
-  // 데이터는 서버(page.tsx)에서 받아온 초기값으로 시작. mutation 후 router.refresh() → 서버 재조회 → props 갱신 → useEffect로 state 동기화
+  // 데이터는 서버(page.tsx)에서 받아온 초기값으로 시작. mutation 후엔 핸들러에서
+  // getCommentsAction/getPostDetailAction으로 직접 재조회해 state를 갱신한다.
   const [post, setPost] = useState<PostDetail>(initialPost);
   const [comments, setComments] = useState<CommentItem[]>(initialComments);
-
-  useEffect(() => { setPost(initialPost); }, [initialPost]);
-  useEffect(() => { setComments(initialComments); }, [initialComments]);
 
   const [commentText, setCommentText] = useState('');
   const [replyInputId, setReplyInputId] = useState<number | null>(null);
@@ -95,7 +94,11 @@ export default function CommunityDetailContent({
   // 댓글 목록을 서버에서 직접 재조회해 state 동기화
   const refreshComments = async () => {
     const result = await getCommentsAction(postId);
-    if (result.success && result.data) setComments(result.data.comments);
+    if (result.success && result.data) {
+      setComments(result.data.comments);
+    } else {
+      toast.error(result.message || '댓글 목록을 불러오지 못했습니다.');
+    }
   };
 
   const [previewImage, setPreviewImage] = useState<string | null>(null);

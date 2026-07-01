@@ -2,10 +2,11 @@ import CommunityPostCard from './CommunityPostCard';
 import PostEmptyState from './PostEmptyState';
 import StudyPostCard from './StudyPostCard';
 import { BOARD_TYPE_LABEL, type PostListItem } from '../types';
+import { parseServerDate } from '../utils';
 
 // 상대 시간 표시 (서버에서 렌더)
 function formatDate(isoString: string): string {
-  const date = new Date(isoString);
+  const date = parseServerDate(isoString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);

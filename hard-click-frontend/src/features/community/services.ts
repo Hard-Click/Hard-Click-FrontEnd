@@ -19,6 +19,8 @@ import type {
   PostDetailApiResponse,
   CommentApiItem,
   CommentListApiResponse,
+  StudyItemApiResponse,
+  StudyListApiResponse,
 } from './types';
 // 커뮤니티 도메인만 실서버 연동 (다른 도메인은 전역 USE_MOCK 유지)
 import { USE_MOCK_COMMUNITY as USE_MOCK } from '@/mocks/config';
@@ -74,6 +76,37 @@ export function toPostListResponse(r: PostListApiResponse): PostListResponse {
   return { content: list.map(toPostListItem), totalPages: r.totalPages };
 }
 
+// 스터디는 별도 리소스(/api/studies) → StudyItem을 PostListItem으로 변환
+function toStudyListItem(s: StudyItemApiResponse): PostListItem {
+  return {
+    // 스터디 상세/수정 링크는 groupId 사용
+    postId: s.groupId,
+    groupId: s.groupId,
+    boardType: 'STUDY',
+    title: s.title,
+    authorName: s.authorName,
+    viewCount: 0,
+    commentCount: 0,
+    status: null,
+    currentCount: s.currentCount ?? null,
+    maxCount: s.maxCount ?? null,
+    // subjectName이 enum 코드로 올 수 있어 한글 라벨로 변환(이미 한글이면 원본 유지)
+    subjectName: subjectLabel(s.subjectName) || s.subjectName || null,
+    description: s.content ?? null,
+    createdAt: s.createdAt,
+    isMine: null,
+    isJoined: null,
+    isClosed: s.isClosed ?? null,
+  };
+}
+
+export function toStudyListResponse(r: StudyListApiResponse): PostListResponse {
+  return {
+    content: (r.content ?? []).map(toStudyListItem),
+    totalPages: r.totalPages,
+  };
+}
+
 function toPostDetail(d: PostDetailApiResponse): PostDetail {
   // BE가 subjectName을 raw enum code('KO_READING')로 내려주므로 한글 라벨로 변환
   const rawCode = d.subjectName ?? d.subject ?? null;
@@ -116,7 +149,7 @@ function toComment(c: CommentApiItem): CommentItem {
     isMine: c.isMine,
     isDeleted: c.isDeleted,
     createdAt: c.createdAt,
-    replies: c.replies.map(toReply),
+    replies: (c.replies ?? []).map(toReply),
   };
 }
 
