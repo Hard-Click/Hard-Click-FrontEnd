@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { deleteCourse, publishCourse } from '@/features/instructor/services';
 import CourseReviewSection from '@/features/courses/components/CourseReviewSection';
 import CourseNoticeSection from '@/features/courses/components/CourseNoticeSection';

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import type { ReportItem, ReportTarget } from '../types';
 import { getLatestReason } from '../types';
 import AdminReportConfirmModal from './AdminReportConfirmModal';

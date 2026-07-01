@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import ConfirmModal from '@/components/ui/confirmModal';
 import { submitReportAction } from '@/features/reports/actions';
 import type { ReportTargetRef, ReportTarget } from '@/features/reports/types';

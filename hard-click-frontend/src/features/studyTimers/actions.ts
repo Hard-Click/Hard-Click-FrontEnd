@@ -1,7 +1,7 @@
 'use client';
 
 import { isMock } from '@/mocks/config';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import {
   startStudySession,
   saveHeartbeat,

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import ConfirmModal from '@/components/ui/confirmModal';
 import LoadingModal from '@/components/ui/loadingModal';
 import CarItem from './CarItem';

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useWatchTimeSaver } from '@/features/learning/hooks/useWatchTimeSaver';
 import { saveLastPosition } from '@/features/learning/services';
 

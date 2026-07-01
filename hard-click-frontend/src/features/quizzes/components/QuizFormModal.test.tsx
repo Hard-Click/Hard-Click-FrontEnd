@@ -10,7 +10,7 @@ jest.mock('next/navigation', () => ({
 }));
 
 // sonner — toast stub
-jest.mock('sonner', () => ({
+jest.mock('@/lib/toast', () => ({
   toast: { success: jest.fn(), error: jest.fn() },
 }));
 

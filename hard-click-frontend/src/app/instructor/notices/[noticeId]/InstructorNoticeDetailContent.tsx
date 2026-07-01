@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { deleteNoticeAction } from '@/features/notices/actions';
 import { updateNotice } from '@/features/notices/services';
 import NoticeBackButton from '@/features/notices/components/NoticeBackButton';

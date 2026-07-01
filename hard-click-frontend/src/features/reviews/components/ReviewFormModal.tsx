@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import Image from 'next/image';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import LoadingModal from '@/components/ui/loadingModal';
 
 interface ReviewFormModalProps {
