@@ -30,6 +30,9 @@ let lastValidVideoCache: VideoPlayInfo | null = null;
 let lastValidProgressCache: CourseProgress | null = null;
 let lastValidDetailCache: CourseDetail | null = null;
 
+/** 레슨 전환(page key={videoId} remount) 시엔 end 예약을 취소해 세션 유지, 진짜 학습 이탈 시에만 end. */
+let pendingSessionEnd: ReturnType<typeof setTimeout> | null = null;
+
 function formatStudyTime(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
@@ -195,8 +198,19 @@ export default function LearningVideoContent({
     heartbeatRef.current = null;
   };
 
+  // 언마운트 cleanup 클로저는 초기값(null)만 캡처하므로 최신 sessionId를 ref로 미러링.
+  const timerSessionIdRef = useRef<number | null>(null);
+  useEffect(() => {
+    timerSessionIdRef.current = timerSessionId;
+  }, [timerSessionId]);
+
   /* 페이지 진입 시 실행 중 세션 복원 */
   useEffect(() => {
+    // 직전 인스턴스(레슨 전환 remount)가 예약한 세션 end 취소 → 레슨 바꿀 땐 세션 유지.
+    if (pendingSessionEnd) {
+      clearTimeout(pendingSessionEnd);
+      pendingSessionEnd = null;
+    }
     fetchCurrentSessionAction().then((session) => {
       // RUNNING 세션만 복원 — PAUSED/ENDED 세션 위에 tick을 다시 돌리면
       // BE 누적과 화면이 어긋난다(StudyTimerPanel과 동일 가드).
@@ -206,7 +220,20 @@ export default function LearningVideoContent({
       timerSecondsRef.current = session.accumulatedStudySeconds;
       startTimerTicks(session.sessionId);
     });
-    return () => stopTimerTicks();
+    return () => {
+      stopTimerTicks();
+      // 학습 이탈 시 순공 세션 end → 경과분이 daily_study_stats에 저장돼 마이페이지 오늘순공·랭킹 순공 반영.
+      // 단 페이지가 key={videoId}라 레슨마다 remount → end를 잠깐 예약하고, 곧 새 인스턴스가 마운트되면
+      // (=레슨 전환) 위 effect에서 취소한다. 재마운트 없는 진짜 이탈일 때만 end 실행.
+      // (탭 닫기·새로고침은 sendBeacon 인프라 필요 — 별건.)
+      const sid = timerSessionIdRef.current;
+      if (sid != null) {
+        pendingSessionEnd = setTimeout(() => {
+          void endTimerAction(sid);
+          pendingSessionEnd = null;
+        }, 300);
+      }
+    };
   }, []);
 
   const handleTimerStartClick = () => {
