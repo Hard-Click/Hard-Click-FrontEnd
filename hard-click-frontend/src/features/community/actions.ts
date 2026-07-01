@@ -224,13 +224,19 @@ export async function updateCommentAction(
   commentId: number,
   body: UpdateCommentRequest
 ) {
-  return updateComment(commentId, body);
+  const result = await updateComment(commentId, body);
+  if (result.success) revalidatePath('/community', 'layout');
+  return result;
 }
 
 export async function deleteCommentAction(commentId: number) {
-  return deleteComment(commentId);
+  const result = await deleteComment(commentId);
+  if (result.success) revalidatePath('/community', 'layout');
+  return result;
 }
 
 export async function acceptCommentAction(commentId: number) {
-  return acceptComment(commentId);
+  const result = await acceptComment(commentId);
+  if (result.success) revalidatePath('/community', 'layout');
+  return result;
 }

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import Image from 'next/image';
 import PostActionButtons from '@/features/community/components/PostActionButtons';
 import CommunityListControls from '@/features/community/components/CommunityListControls';

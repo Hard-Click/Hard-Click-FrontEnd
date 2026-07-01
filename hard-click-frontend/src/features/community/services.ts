@@ -1,6 +1,6 @@
 import { serverApi as api } from '@/lib/api';
 import type { ApiResponse } from '@/services/api';
-import { SUBJECTS } from '@/features/courses/subjects';
+import { SUBJECTS, subjectLabel } from '@/features/courses/subjects';
 import type {
   BoardType,
   PostListResponse,
@@ -45,6 +45,8 @@ export function mapOk<A, B>(
 
 /* ───── 백엔드 응답(API) → UI 타입 매퍼 ───── */
 function toPostListItem(p: PostItemApiResponse): PostListItem {
+  // BE가 subjectName을 raw enum code('KO_READING')로 내려주므로 한글 라벨로 변환
+  const resolvedSubject = subjectLabel(p.subjectName ?? p.subject) || null;
   return {
     // 스터디는 postId가 null이라 groupId로 대체 (StudyPostCard 링크용)
     postId: p.postId ?? p.groupId ?? 0,
@@ -57,7 +59,7 @@ function toPostListItem(p: PostItemApiResponse): PostListItem {
     status: p.status ?? null,
     currentCount: p.currentCount ?? null,
     maxCount: p.maxCount ?? null,
-    subjectName: p.subjectName ?? null,
+    subjectName: resolvedSubject,
     description: p.description ?? null,
     createdAt: p.createdAt,
     isMine: p.isMine ?? null,
@@ -73,10 +75,14 @@ export function toPostListResponse(r: PostListApiResponse): PostListResponse {
 }
 
 function toPostDetail(d: PostDetailApiResponse): PostDetail {
+  // BE가 subjectName을 raw enum code('KO_READING')로 내려주므로 한글 라벨로 변환
+  const rawCode = d.subjectName ?? d.subject ?? null;
+  const resolvedSubject = subjectLabel(rawCode) || null;
   return {
     postId: d.postId,
     boardType: d.boardType,
-    subjectName: d.subjectName ?? null,
+    subjectName: resolvedSubject,
+    subjectCode: rawCode,
     title: d.title,
     content: d.content,
     authorName: d.authorName,

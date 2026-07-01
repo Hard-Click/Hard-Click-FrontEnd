@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import ReportModal from '@/features/reports/components/ReportModal';
@@ -8,9 +8,7 @@ import type { ReportTargetRef } from '@/features/reports/types';
 import { toast } from 'sonner';
 import LoadingModal from '@/components/ui/loadingModal';
 import {
-  getPostDetailAction,
   deletePostAction,
-  getCommentsAction,
   createCommentAction,
   updateCommentAction,
   deleteCommentAction,
@@ -54,9 +52,12 @@ export default function CommunityDetailContent({
   const router = useRouter();
   const { isSuspended, suspendedMessage } = useMemberStatus();
 
-  // 데이터는 서버(page.tsx)에서 받아온 초기값으로 시작. 변경(mutation) 후엔 재조회.
+  // 데이터는 서버(page.tsx)에서 받아온 초기값으로 시작. mutation 후 router.refresh() → 서버 재조회 → props 갱신 → useEffect로 state 동기화
   const [post, setPost] = useState<PostDetail>(initialPost);
   const [comments, setComments] = useState<CommentItem[]>(initialComments);
+
+  useEffect(() => { setPost(initialPost); }, [initialPost]);
+  useEffect(() => { setComments(initialComments); }, [initialComments]);
 
   const [commentText, setCommentText] = useState('');
   const [replyInputId, setReplyInputId] = useState<number | null>(null);
@@ -89,13 +90,6 @@ export default function CommunityDetailContent({
   const commentFileRef = useRef<HTMLInputElement>(null);
   const replyFileRef = useRef<HTMLInputElement>(null);
 
-  const fetchComments = async () => {
-    const result = await getCommentsAction(postId);
-    if (result.success && result.data) {
-      setComments(result.data.comments);
-    }
-  };
-
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const category = BOARD_TYPE_LABEL[post.boardType];
@@ -112,11 +106,7 @@ export default function CommunityDetailContent({
       toast.error(result.message || '채택에 실패했습니다.');
       return;
     }
-    const [postResult] = await Promise.all([
-      getPostDetailAction(postId),
-      fetchComments(),
-    ]);
-    if (postResult.success && postResult.data) setPost(postResult.data);
+    router.refresh();
     toast.success('답변이 채택되었습니다.');
   };
 
@@ -163,7 +153,7 @@ export default function CommunityDetailContent({
     setCommentText('');
     setCommentImage(null);
     setCommentImagePreview(null);
-    await fetchComments();
+    router.refresh();
     toast.success('댓글 등록이 완료되었습니다.');
   };
 
@@ -184,7 +174,7 @@ export default function CommunityDetailContent({
     setReplyImage(null);
     setReplyImagePreview(null);
     setReplyInputId(null);
-    await fetchComments();
+    router.refresh();
     toast.success('답글 등록이 완료되었습니다.');
   };
 
@@ -217,7 +207,7 @@ export default function CommunityDetailContent({
     }
     setEditingCommentId(null);
     setEditingCommentText('');
-    await fetchComments();
+    router.refresh();
     toast.success('댓글이 수정되었습니다.');
   };
 
@@ -233,7 +223,7 @@ export default function CommunityDetailContent({
       return;
     }
     setDeletingCommentId(null);
-    await fetchComments();
+    router.refresh();
     toast.success('댓글이 삭제되었습니다.');
   };
 
@@ -253,7 +243,7 @@ export default function CommunityDetailContent({
     }
     setEditingReplyId(null);
     setEditingReplyText('');
-    await fetchComments();
+    router.refresh();
     toast.success('답글이 수정되었습니다.');
   };
 
@@ -269,7 +259,7 @@ export default function CommunityDetailContent({
       return;
     }
     setDeletingReplyInfo(null);
-    await fetchComments();
+    router.refresh();
     toast.success('답글이 삭제되었습니다.');
   };
 

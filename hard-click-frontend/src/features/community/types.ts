@@ -66,6 +66,8 @@ export interface PostDetail {
   fileUrls: string[];
   createdAt: string;
   subjectName?: string | null;
+  /** BE raw enum 코드 (예: 'KO_READING') — 수정 폼에서 드롭다운 초기값으로 사용 */
+  subjectCode?: string | null;
 }
 
 // GET /api/posts/{postId}/comments
@@ -135,7 +137,10 @@ export interface PostItemApiResponse {
   createdAt: string;
   viewCount: number | null;
   commentCount: number | null;
+  /** 한국어 과목명 (예: '독서') — BE가 name으로 내려줄 때 */
   subjectName?: string | null;
+  /** 과목 enum 코드 (예: 'KO_READING') — BE가 code로 내려줄 때 */
+  subject?: string | null;
   description?: string | null;
   currentCount?: number | null;
   maxCount?: number | null;
@@ -165,7 +170,10 @@ export interface PostDetailApiResponse {
   isMyPost: boolean;
   isAccepted: boolean;
   fileUrls: string[];
+  /** 한국어 과목명 (예: '독서') — BE가 name으로 내려줄 때 */
   subjectName?: string | null;
+  /** 과목 enum 코드 (예: 'KO_READING') — BE가 code로 내려줄 때 */
+  subject?: string | null;
 }
 
 // GET /api/posts/{postId}/comments → CommentListResponse (replies는 재귀 동일 타입)
