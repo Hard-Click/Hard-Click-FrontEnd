@@ -65,7 +65,11 @@ export async function getCommunityPosts(
     };
   }
 
-  // 스터디는 게시판(/api/boards)과 별도 리소스 → /api/studies로 조회 (subject/page/size만 지원)
+  // 스터디는 게시판(/api/boards)과 별도 리소스 → /api/studies로 조회.
+  // ⚠️ 이 엔드포인트는 subject/page/size만 지원하고 keyword(검색)/sort(정렬)는 미지원.
+  // 따라서 스터디 탭에서는 검색어/정렬이 서버에 전달되지 않는다.
+  // (BE가 keyword/sort를 지원하면 여기서 전달하고, 계속 미지원이면 스터디 탭 UI에서
+  //  검색/정렬 컨트롤을 비활성화하는 후속 작업이 필요함)
   if (boardType === 'STUDY') {
     const studyParams = new URLSearchParams();
     studyParams.set('page', String(page));

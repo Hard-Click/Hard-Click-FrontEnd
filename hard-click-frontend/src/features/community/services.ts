@@ -108,8 +108,10 @@ export function toStudyListResponse(r: StudyListApiResponse): PostListResponse {
 }
 
 function toPostDetail(d: PostDetailApiResponse): PostDetail {
-  // BE가 subjectName을 raw enum code('KO_READING')로 내려주므로 한글 라벨로 변환
-  const rawCode = d.subjectName ?? d.subject ?? null;
+  // subjectCode(수정 폼 드롭다운 매칭용)는 raw enum 코드여야 함.
+  // 코드 필드(subject)를 우선하고, 없으면 subjectName(BE가 코드로 내려주는 경우) 사용.
+  // 표시용 subjectName은 코드를 한글 라벨로 변환.
+  const rawCode = d.subject ?? d.subjectName ?? null;
   const resolvedSubject = subjectLabel(rawCode) || null;
   return {
     postId: d.postId,
