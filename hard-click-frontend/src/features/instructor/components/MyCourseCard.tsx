@@ -96,14 +96,20 @@ export default function MyCourseCard({
     >
       {/* left */}
       <div className="flex gap-5">
-        {/* thumbnail */}
-        <Image
-          src={thumbnailUrl || '/images/defaultThumbnail.svg'}
-          alt={title}
-          width={160}
-          height={120}
-          className="rounded-2xl object-cover"
-        />
+        {/* thumbnail — 고정 160×120 박스. h/w 명시 + self-start로 flex stretch(세로 늘어남) 방지 */}
+        {thumbnailUrl ? (
+          <Image
+            src={thumbnailUrl}
+            alt={title}
+            width={160}
+            height={120}
+            className="h-[120px] w-[160px] shrink-0 self-start rounded-2xl object-cover"
+          />
+        ) : (
+          <div className="flex h-[120px] w-[160px] shrink-0 self-start items-center justify-center rounded-2xl bg-gradient-to-br from-[#EEF2FF] to-[#E2E8F0] text-xs text-[#94A3B8]">
+            이미지 없음
+          </div>
+        )}
 
         {/* content */}
         <div>
