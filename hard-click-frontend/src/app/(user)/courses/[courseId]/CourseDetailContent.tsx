@@ -55,7 +55,7 @@ function CourseErrorScreen({
 }) {
   return (
     <div className="min-h-screen bg-[#F0F2F5]">
-      <div className="w-full max-w-[1440px] mx-auto px-[157.5px] py-6">
+      <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 lg:px-[157.5px] py-6">
         <Link
           href="/courses"
           className="flex items-center gap-1.5 text-[#6B7280] text-sm hover:text-[#374151] transition-colors mb-8"
@@ -363,25 +363,22 @@ export default function CourseDetailContent({
       {/* 토스트는 sonner Toaster가 layout.tsx에서 처리 */}
 
       {/* 외부 패딩 */}
-      <div className="w-full max-w-[1440px] mx-auto px-[157.5px]">
+      <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 lg:px-[157.5px]">
         {/* 내부 패딩 */}
-        <div className="pt-10 px-8 pb-0 flex flex-col gap-8">
+        <div className="pt-6 md:pt-10 px-0 md:px-8 pb-0 flex flex-col gap-8">
           {/* ── 히어로 카드 ── */}
-          <div
-            className="bg-white border border-[#D5D8DD]"
-            style={{ padding: '33px 33px 1px' }}
-          >
+          <div className="bg-white border border-[#D5D8DD] p-5 pb-[1px] md:p-[33px] md:pb-[1px]">
             <div className="flex flex-col gap-6">
-              {/* Row 1: 썸네일 + 강의 정보 */}
-              <div className="flex gap-6">
+              {/* Row 1: 썸네일 + 강의 정보 — 모바일 세로 스택 */}
+              <div className="flex flex-col md:flex-row gap-6">
                 {/* 썸네일 */}
-                <div className="flex-shrink-0 self-start w-[282px] h-[262px] bg-[#1A1F2E] rounded-2xl overflow-hidden relative">
+                <div className="flex-shrink-0 self-stretch md:self-start w-full md:w-[282px] h-[200px] md:h-[262px] bg-[#1A1F2E] rounded-2xl overflow-hidden relative">
                   {course.thumbnailUrl ? (
                     <Image
                       src={course.thumbnailUrl}
                       alt={course.title}
                       fill
-                      sizes="282px"
+                      sizes="(max-width: 768px) 100vw, 282px"
                       className="object-cover"
                     />
                   ) : (
@@ -402,7 +399,7 @@ export default function CourseDetailContent({
                 </div>
 
                 {/* 강의 정보 */}
-                <div className="w-[588px] flex flex-col gap-3">
+                <div className="w-full md:w-[588px] flex flex-col gap-3">
                   {/* 제목 */}
                   <h1 className="text-[30px] font-semibold leading-9 text-[#1A1F2E]">
                     {course.title}
@@ -439,7 +436,7 @@ export default function CourseDetailContent({
                   </div>
 
                   {/* 통계 행: 수강생 수 · 총 강의시간 · 난이도 */}
-                  <div className="flex items-center gap-6">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 md:gap-6">
                     <div className="flex items-center gap-1.5">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -494,13 +491,14 @@ export default function CourseDetailContent({
               </div>
 
               {/* Row 2: 액션 버튼 (border-top, Figma: padding 24px 0 0, gap 12px) */}
-              <div className="border-t border-[#D5D8DD] pt-6 pb-8 flex items-center gap-3">
+              <div className="border-t border-[#D5D8DD] pt-6 pb-8 flex flex-wrap items-center gap-3">
                 {isEnrolled ? (
                   /* 수강 중 → 학습하기 (학습 커리큘럼/진도 홈으로 이동) */
-                  <Link href={`/learning/${courseId}`} className="flex-1">
-                    <button className="w-full h-14 rounded-[10px] bg-[#2F5DAA] text-white font-semibold text-base hover:bg-[#1D3E75] transition-colors">
-                      학습하기
-                    </button>
+                  <Link
+                    href={`/learning/${courseId}`}
+                    className="flex-1 basis-full sm:basis-0 flex h-14 items-center justify-center rounded-[10px] bg-[#2F5DAA] text-white font-semibold text-base hover:bg-[#1D3E75] transition-colors"
+                  >
+                    학습하기
                   </Link>
                 ) : (
                   <>
@@ -508,7 +506,7 @@ export default function CourseDetailContent({
                         구독 중이면 유료여도 "수강신청"이 결제 없이 enroll → 내 강의 등록 후 학습하기로 전환 */}
                     <button
                       onClick={handleEnrollClick}
-                      className="flex-1 h-14 rounded-[10px] bg-[#2F5DAA] text-white font-semibold text-base hover:bg-[#1D3E75] transition-colors"
+                      className="flex-1 basis-full sm:basis-0 h-14 rounded-[10px] bg-[#2F5DAA] text-white font-semibold text-base hover:bg-[#1D3E75] transition-colors"
                     >
                       {course.isFree ? '수강하기' : '수강신청'}
                     </button>
@@ -518,8 +516,7 @@ export default function CourseDetailContent({
                       (isInCart ? (
                         <Link
                           href="/cart"
-                          className="h-14 rounded-[10px] font-semibold text-base transition-colors flex items-center justify-center gap-2 bg-[rgba(47,93,170,0.08)] text-[#2F5DAA] border-2 border-[#2F5DAA]"
-                          style={{ width: '166.98px' }}
+                          className="flex-1 sm:flex-none sm:w-[166.98px] h-14 rounded-[10px] font-semibold text-base transition-colors flex items-center justify-center gap-2 bg-[rgba(47,93,170,0.08)] text-[#2F5DAA] border-2 border-[#2F5DAA]"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
@@ -533,8 +530,7 @@ export default function CourseDetailContent({
                       ) : (
                         <button
                           onClick={handleCartClick}
-                          className="h-14 rounded-[10px] font-semibold text-base transition-colors flex items-center justify-center gap-2 bg-white text-[#4B5563] border-2 border-[#E2E8F0] hover:border-[#CBD5E1]"
-                          style={{ width: '166.98px' }}
+                          className="flex-1 sm:flex-none sm:w-[166.98px] h-14 rounded-[10px] font-semibold text-base transition-colors flex items-center justify-center gap-2 bg-white text-[#4B5563] border-2 border-[#E2E8F0] hover:border-[#CBD5E1]"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
@@ -589,12 +585,11 @@ export default function CourseDetailContent({
                     }
                   }}
                   disabled={wishlistPending}
-                  className={`h-14 rounded-[10px] font-medium text-base transition-colors flex items-center justify-center gap-2 border-2 disabled:opacity-60 ${
+                  className={`flex-1 sm:flex-none sm:w-[121.52px] h-14 rounded-[10px] font-medium text-base transition-colors flex items-center justify-center gap-2 border-2 disabled:opacity-60 ${
                     isWishlisted
                       ? 'bg-[#FEF2F2] text-[#EF4444] border-[#EF4444]'
                       : 'bg-white text-[#4B5563] border-[#E2E8F0] hover:border-[#CBD5E1]'
                   }`}
-                  style={{ width: '121.52px' }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -691,12 +686,9 @@ export default function CourseDetailContent({
                   </div>
                 ) : (
                   <>
-                    {/* 별점 요약 */}
-                    <div className="flex items-center gap-6 pb-8 border-b border-[#D5D8DD] mb-8">
-                      <div
-                        className="flex flex-col items-center justify-center gap-2 bg-[#E8EAED] rounded-2xl flex-shrink-0"
-                        style={{ width: 431, height: 160 }}
-                      >
+                    {/* 별점 요약 — 모바일 세로 스택 */}
+                    <div className="flex flex-col md:flex-row md:items-center gap-6 pb-8 border-b border-[#D5D8DD] mb-8">
+                      <div className="w-full md:w-[431px] h-[160px] flex flex-col items-center justify-center gap-2 bg-[#E8EAED] rounded-2xl flex-shrink-0">
                         <span className="text-[48px] font-bold text-[#1A1F2E] leading-none">
                           {reviewAvg.toFixed(1)}
                         </span>
@@ -903,9 +895,9 @@ export default function CourseDetailContent({
         </div>
       </div>
 
-      {/* ── 오른쪽 여백 고정 사이드 네비 ── */}
+      {/* ── 오른쪽 여백 고정 사이드 네비 (lg+에서만 — 모바일/태블릿은 여백 없어 콘텐츠 가림) ── */}
       <div
-        className="fixed z-30"
+        className="fixed z-30 hidden lg:block"
         style={{
           right: 'max(26px, calc((100vw - 1440px) / 2 + 26px))',
           top: '50%',

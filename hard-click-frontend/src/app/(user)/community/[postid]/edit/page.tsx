@@ -1,40 +1,36 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import CommunityWriteForm from '@/features/community/components/CommunityWriteForm';
-import { getPostDetailAction } from '@/features/community/actions';
-import type { PostDetail } from '@/features/community/types';
+import { getPostDetail, getSubjects } from '@/features/community/server';
+import type { SubjectItem } from '@/features/community/types';
 import { BOARD_TYPE_LABEL } from '@/features/community/types';
 
-export default function CommunityEditPage() {
-  const { postid } = useParams();
-  const router = useRouter();
-  const [post, setPost] = useState<PostDetail | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+interface CommunityEditPageProps {
+  params: Promise<{ postid: string }>;
+}
 
-  useEffect(() => {
-    const postId = Number(postid);
-    if (!postId) return;
-    getPostDetailAction(postId).then((result) => {
-      if (result.success && result.data) {
-        setPost(result.data);
-      } else {
-        router.push('/community');
-      }
-      setIsLoading(false);
-    });
-  }, [postid, router]);
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-20 text-[#64748B]">
-        불러오는 중...
-      </div>
-    );
+// Server Component: 글 상세 + 과목을 서버에서 조회해 폼에 props로 전달 (useEffect 페칭 X)
+export default async function CommunityEditPage({
+  params,
+}: CommunityEditPageProps) {
+  const { postid } = await params;
+  const postId = Number(postid);
+  // 잘못된 동적 라우트(NaN·음수)는 백엔드에 요청하지 않고 즉시 404
+  if (!Number.isInteger(postId) || postId <= 0) {
+    notFound();
   }
-  if (!post) return null;
+
+  const [postRes, subjectsRes] = await Promise.all([
+    getPostDetail(postId),
+    getSubjects(),
+  ]);
+
+  if (!postRes.success || !postRes.data) {
+    notFound();
+  }
+  const post = postRes.data;
+  const subjects: SubjectItem[] =
+    subjectsRes.success && subjectsRes.data ? subjectsRes.data : [];
 
   return (
     <div>
@@ -56,7 +52,9 @@ export default function CommunityEditPage() {
         initialTitle={post.title}
         initialContent={post.content}
         initialFileUrls={post.fileUrls}
+        initialSubject={post.subjectCode ?? ''}
         postId={post.postId}
+        subjects={subjects}
       />
     </div>
   );

@@ -1,16 +1,12 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { COMMUNITY_ERRORS } from '../constants/errorMessages';
 import LoadingModal from '@/components/ui/loadingModal';
-import {
-  createPostAction,
-  updatePostAction,
-  getSubjectsAction,
-} from '../actions';
+import { createPostAction, updatePostAction } from '../actions';
 import { BOARD_TYPE_VALUE } from '../types';
 import type { SubjectItem } from '../types';
 
@@ -22,7 +18,11 @@ interface CommunityWriteFormProps {
   initialTitle?: string;
   initialContent?: string;
   initialFileUrls?: string[];
+  /** 수정 시 기존 과목 enum 코드 (예: 'KO_READING') — 드롭다운 초기 선택값 */
+  initialSubject?: string;
   postId?: number;
+  /** 과목 목록은 서버(Server Component)에서 조회해 props로 전달받는다 */
+  subjects: SubjectItem[];
 }
 
 export default function CommunityWriteForm({
@@ -31,25 +31,20 @@ export default function CommunityWriteForm({
   initialTitle = '',
   initialContent = '',
   initialFileUrls = [],
+  initialSubject = '',
   postId,
+  subjects,
 }: CommunityWriteFormProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(initialCategory);
   const [previewImages, setPreviewImages] = useState<string[]>(initialFileUrls);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [subjects, setSubjects] = useState<SubjectItem[]>([]);
-
-  useEffect(() => {
-    getSubjectsAction().then((result) => {
-      if (result.success && result.data) setSubjects(result.data);
-    });
-  }, []);
 
   const [title, setTitle] = useState(initialTitle);
   const [titleError, setTitleError] = useState('');
   const [content, setContent] = useState(initialContent);
   const [contentError, setContentError] = useState('');
-  const [subject, setSubject] = useState('');
+  const [subject, setSubject] = useState(initialSubject);
   const [subjectError, setSubjectError] = useState('');
   const [isSubjectOpen, setIsSubjectOpen] = useState(false);
   const [recruit, setRecruit] = useState('');
@@ -199,6 +194,7 @@ export default function CommunityWriteForm({
       }
       toast.success('게시글이 수정되었습니다.');
       router.push(`/community/${postId}`);
+      router.refresh();
     } else {
       const fd = new FormData();
       if (boardType === 'STUDY') {
@@ -220,12 +216,13 @@ export default function CommunityWriteForm({
       }
       const result = await createPostAction(fd);
       setIsSubmitting(false);
-      if (!result.success || !('data' in result) || !result.data?.postId) {
+      if (!result.success) {
         toast.error(result.message || '게시글 등록에 실패했습니다.');
         return;
       }
       toast.success('게시글이 등록되었습니다.');
       router.push(`/community?tab=${activeTab}`);
+      router.refresh();
     }
   };
 

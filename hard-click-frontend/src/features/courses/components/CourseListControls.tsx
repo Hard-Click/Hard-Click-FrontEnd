@@ -78,7 +78,7 @@ export default function CourseListControls({
   }
 
   return (
-    <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-[0_4px_10px_rgba(0,0,0,0.06)] p-6 mb-8 flex flex-col gap-4">
+    <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-[0_4px_10px_rgba(0,0,0,0.06)] p-4 md:p-6 mb-8 flex flex-col gap-4">
       <CourseSearchBar
         value={keywordInput}
         onChange={handleKeywordChange}

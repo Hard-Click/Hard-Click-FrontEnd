@@ -55,12 +55,12 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 
       {/* 히어로 */}
       <div className="w-full" style={{ backgroundColor: '#2F5DAA' }}>
-        <div className="w-full max-w-[1440px] mx-auto px-8 py-20">
-          <h1 className="text-white font-semibold text-5xl leading-[60px] tracking-wide mb-6">
+        <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 py-12 md:py-20">
+          <h1 className="text-white font-semibold text-3xl md:text-5xl leading-tight md:leading-[60px] tracking-wide mb-4 md:mb-6">
             2027 수능
             <br />1등급을 향한 여정
           </h1>
-          <p className="text-white/95 text-lg leading-relaxed max-w-2xl">
+          <p className="text-white/95 text-base md:text-lg leading-relaxed max-w-2xl">
             최고의 강사진과 체계적인 커리큘럼으로 목표 달성을 이루세요. 학습
             타이머로 공부 습관을 만들어보세요.
           </p>
@@ -68,9 +68,9 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
       </div>
 
       {/* 메인 콘텐츠 */}
-      <div className="w-full max-w-[1440px] mx-auto px-8 pt-10 pb-16">
+      <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 pt-8 md:pt-10 pb-16">
         <div className="mb-6">
-          <h2 className="text-[#1F2937] font-bold text-3xl leading-9 mb-2">
+          <h2 className="text-[#1F2937] font-bold text-2xl md:text-3xl leading-9 mb-2">
             강의
           </h2>
           <p className="text-[#4B5563] text-base">원하는 강의를 찾아보세요.</p>

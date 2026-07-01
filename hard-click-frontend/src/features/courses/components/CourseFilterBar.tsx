@@ -42,11 +42,11 @@ function SelectDropdown({
   );
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative w-full md:w-auto">
       <button
         type="button"
         onClick={() => setIsOpen(v => !v)}
-        className="relative h-10 pl-4 pr-3 border border-[#E2E8F0] rounded-2xl text-base bg-white flex items-center gap-1.5 whitespace-nowrap transition-colors hover:border-[#CBD5E1]"
+        className="relative w-full md:w-auto h-10 pl-4 pr-3 border border-[#E2E8F0] rounded-2xl text-base bg-white flex items-center justify-between md:justify-start gap-1.5 whitespace-nowrap transition-colors hover:border-[#CBD5E1]"
       >
         {/* 가장 긴 옵션 텍스트로 너비 확보 */}
         <span className="invisible select-none" aria-hidden>{longestLabel}</span>
@@ -135,9 +135,9 @@ export default function CourseFilterBar({
   ];
 
   return (
-    <div className="flex items-center justify-between">
-      {/* 드롭다운 */}
-      <div className="flex items-center gap-3">
+    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      {/* 드롭다운 — 모바일 2칸 grid(오와열 정렬), md+ 가로 배치 */}
+      <div className="grid grid-cols-2 gap-3 md:flex md:items-center">
         <SelectDropdown
           placeholder="과목"
           value={selectedSubjectId?.toString() ?? ''}
@@ -152,13 +152,13 @@ export default function CourseFilterBar({
         />
       </div>
 
-      {/* 정렬 + 초기화 */}
-      <div className="flex items-center gap-[22px]">
+      {/* 정렬 + 초기화 — 모바일은 균등폭 한 줄(오와열), md+ 자연폭 */}
+      <div className="flex items-center gap-2 md:gap-[22px]">
         {SORT_OPTIONS.map(opt => (
           <button
             key={opt.value}
             onClick={() => onSortChange(opt.value)}
-            className={`h-10 px-4 font-semibold text-base rounded-2xl transition-colors ${
+            className={`flex-1 md:flex-none h-10 px-2 md:px-4 font-semibold text-sm md:text-base rounded-2xl transition-colors ${
               sort === opt.value
                 ? 'bg-[#2F5DAA] text-white'
                 : 'bg-[#F8FAFC] text-[#4B5563] hover:bg-gray-100'
@@ -169,7 +169,7 @@ export default function CourseFilterBar({
         ))}
         <button
           onClick={onReset}
-          className="h-10 px-4 font-semibold text-base text-[#4B5563] border border-[#E2E8F0] rounded-2xl hover:bg-gray-50 transition-colors"
+          className="flex-1 md:flex-none h-10 px-2 md:px-4 font-semibold text-sm md:text-base text-[#4B5563] border border-[#E2E8F0] rounded-2xl hover:bg-gray-50 transition-colors"
         >
           초기화
         </button>

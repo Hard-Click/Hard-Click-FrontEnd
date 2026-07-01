@@ -3,24 +3,29 @@
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import {
-  getPosts,
-  getSubjects,
   getPostDetail,
   deletePost,
-  getComments,
   updateComment,
   deleteComment,
   acceptComment,
 } from './services';
 import type {
-  BoardType,
   UpdateCommentRequest,
+  CommentApiItem,
+  CommentsResponse,
 } from './types';
 
 const BACKEND = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+// BE 지연 시 Server Action이 무한 대기하지 않도록 native fetch 타임아웃
+const REQUEST_TIMEOUT_MS = 10000;
+
+/** 클라이언트에서 넘어온 id가 양의 정수인지 검증 (문자열 값으로 BE 프록시 남용 방지) */
+function isValidId(id: number): boolean {
+  return Number.isInteger(id) && id > 0;
+}
 
 async function getAuthHeader(): Promise<HeadersInit> {
   const cookieStore = await cookies();
@@ -30,19 +35,6 @@ async function getAuthHeader(): Promise<HeadersInit> {
   if (token) headers['authorization'] = `Bearer ${token}`;
   if (memberId) headers['x-member-id'] = memberId;
   return headers;
-}
-
-export async function getPostsAction(
-  boardType: BoardType = 'ALL',
-  page = 0,
-  keyword?: string,
-  sort?: string
-) {
-  return getPosts(boardType, page, keyword, sort);
-}
-
-export async function getSubjectsAction() {
-  return getSubjects();
 }
 
 export async function getPostDetailAction(postId: number) {
@@ -79,6 +71,7 @@ export async function createPostAction(formData: FormData) {
           content: body.content,
           ...(body.maxCount !== undefined ? { maxCount: body.maxCount } : {}),
         }),
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
       const json = await res.json().catch(() => null);
       if (!res.ok || !json || json.httpStatus >= 400) {
@@ -105,6 +98,7 @@ export async function createPostAction(formData: FormData) {
       method: 'POST',
       headers: await getAuthHeader(),
       body: backendForm,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     const json = await res.json().catch(() => null);
     if (!res.ok || !json || json.httpStatus >= 400) {
@@ -152,6 +146,7 @@ export async function updatePostAction(postId: number, formData: FormData) {
       method: 'PATCH',
       headers: await getAuthHeader(),
       body: backendForm,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     const json = await res.json().catch(() => null);
     if (!res.ok || !json || json.httpStatus >= 400) {
@@ -171,8 +166,55 @@ export async function deletePostAction(postId: number) {
   return result;
 }
 
-export async function getCommentsAction(postId: number) {
-  return getComments(postId);
+export async function getCommentsAction(postId: number): Promise<{ success: boolean; data?: CommentsResponse; message?: string }> {
+  if (!isValidId(postId)) {
+    return { success: false, message: '잘못된 게시글 정보입니다.' };
+  }
+  try {
+    const headers = await getAuthHeader();
+    const res = await fetch(`${BACKEND}/api/posts/${postId}/comments`, {
+      method: 'GET',
+      headers,
+      cache: 'no-store',
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+    const json = (await res.json().catch(() => null)) as
+      | { data?: unknown; message?: string }
+      | null;
+    if (!res.ok || !json) {
+      return { success: false, message: json?.message ?? '댓글 목록 조회에 실패했습니다.' };
+    }
+    const raw = json.data as { totalCount: number; comments: CommentApiItem[] } | null;
+    if (!raw || !Array.isArray(raw.comments)) {
+      return { success: false, message: '댓글 목록 형식이 올바르지 않습니다.' };
+    }
+    return {
+      success: true,
+      data: {
+        comments: raw.comments.map((c) => ({
+          commentId: c.commentId,
+          authorName: c.authorName,
+          content: c.content,
+          imageUrl: c.imageUrl,
+          isAccepted: c.isAccepted,
+          isMine: c.isMine,
+          isDeleted: c.isDeleted,
+          createdAt: c.createdAt,
+          replies: (c.replies ?? []).map((r) => ({
+            commentId: r.commentId,
+            authorName: r.authorName,
+            content: r.content,
+            imageUrl: r.imageUrl,
+            isMine: r.isMine,
+            isDeleted: r.isDeleted,
+            createdAt: r.createdAt,
+          })),
+        })),
+      },
+    };
+  } catch {
+    return { success: false, message: '댓글 목록 조회 중 오류가 발생했습니다.' };
+  }
 }
 
 export async function createCommentAction(formData: FormData) {
@@ -204,6 +246,7 @@ export async function createCommentAction(formData: FormData) {
       method: 'POST',
       headers: await getAuthHeader(),
       body: backendForm,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     const json = await res.json().catch(() => null);
     if (!res.ok || !json || json.httpStatus >= 400) {
@@ -224,13 +267,28 @@ export async function updateCommentAction(
   commentId: number,
   body: UpdateCommentRequest
 ) {
-  return updateComment(commentId, body);
+  if (!isValidId(commentId)) {
+    return { success: false, message: '잘못된 댓글 정보입니다.' };
+  }
+  const result = await updateComment(commentId, body);
+  if (result.success) revalidatePath('/community', 'layout');
+  return result;
 }
 
 export async function deleteCommentAction(commentId: number) {
-  return deleteComment(commentId);
+  if (!isValidId(commentId)) {
+    return { success: false, message: '잘못된 댓글 정보입니다.' };
+  }
+  const result = await deleteComment(commentId);
+  if (result.success) revalidatePath('/community', 'layout');
+  return result;
 }
 
 export async function acceptCommentAction(commentId: number) {
-  return acceptComment(commentId);
+  if (!isValidId(commentId)) {
+    return { success: false, message: '잘못된 댓글 정보입니다.' };
+  }
+  const result = await acceptComment(commentId);
+  if (result.success) revalidatePath('/community', 'layout');
+  return result;
 }

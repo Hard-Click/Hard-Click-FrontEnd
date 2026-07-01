@@ -38,7 +38,7 @@ export default function CarItem({
   return (
     <li>
       <div
-        className={`flex items-center gap-4 rounded-2xl border p-4 transition ${
+        className={`flex items-center gap-3 sm:gap-4 rounded-2xl border p-4 transition ${
           selected
             ? 'border-[#2F5DAA] bg-[#2F5DAA]/[0.04]'
             : 'border-[#E5E9F0] bg-white hover:border-[#CBD5E1] hover:bg-[#FAFBFC]'
@@ -50,7 +50,7 @@ export default function CarItem({
           onClick={onToggle}
           aria-pressed={selected}
           aria-label={`${item.title} 선택`}
-          className="flex min-w-0 flex-1 items-center gap-4 text-left"
+          className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4 text-left"
         >
           <span
             className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md border-2 transition ${
@@ -63,23 +63,23 @@ export default function CarItem({
           </span>
 
           {/* 강의 썸네일 대신 학사모 파란 박스 (이미지 미사용 — 구독 상품 박스와 동일 스타일) */}
-          <span className="flex h-16 w-[88px] flex-shrink-0 items-center justify-center rounded-xl bg-[#2F5DAA]">
+          <span className="flex h-14 w-14 sm:h-16 sm:w-[88px] flex-shrink-0 items-center justify-center rounded-xl bg-[#2F5DAA]">
             {GradCapIcon}
           </span>
 
-          {/* 정보 */}
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-base font-semibold text-[#0F172A]">
-              {item.title}
+          {/* 정보 + 가격 — 모바일 세로(제목 위·가격 아래), sm+ 가로(가격 우측) */}
+          <span className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
+            <span className="block min-w-0 flex-1">
+              <span className="line-clamp-2 break-words text-base font-semibold text-[#0F172A]">
+                {item.title}
+              </span>
+              <span className="mt-1 block text-sm text-[#64748B]">
+                {item.instructor}
+              </span>
             </span>
-            <span className="mt-1 block text-sm text-[#64748B]">
-              {item.instructor}
+            <span className="flex-shrink-0 text-base font-bold text-[#2F5DAA] sm:text-lg">
+              {item.price.toLocaleString()}원
             </span>
-          </span>
-
-          {/* 가격 */}
-          <span className="flex-shrink-0 text-lg font-bold text-[#2F5DAA]">
-            {item.price.toLocaleString()}원
           </span>
         </button>
 

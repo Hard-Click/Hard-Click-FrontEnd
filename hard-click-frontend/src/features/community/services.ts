@@ -1,6 +1,6 @@
 import { serverApi as api } from '@/lib/api';
 import type { ApiResponse } from '@/services/api';
-import { SUBJECTS } from '@/features/courses/subjects';
+import { SUBJECTS, subjectLabel } from '@/features/courses/subjects';
 import type {
   BoardType,
   PostListResponse,
@@ -19,6 +19,8 @@ import type {
   PostDetailApiResponse,
   CommentApiItem,
   CommentListApiResponse,
+  StudyItemApiResponse,
+  StudyListApiResponse,
 } from './types';
 // 커뮤니티 도메인만 실서버 연동 (다른 도메인은 전역 USE_MOCK 유지)
 import { USE_MOCK_COMMUNITY as USE_MOCK } from '@/mocks/config';
@@ -45,6 +47,8 @@ export function mapOk<A, B>(
 
 /* ───── 백엔드 응답(API) → UI 타입 매퍼 ───── */
 function toPostListItem(p: PostItemApiResponse): PostListItem {
+  // BE가 subjectName을 raw enum code('KO_READING')로 내려주므로 한글 라벨로 변환
+  const resolvedSubject = subjectLabel(p.subjectName ?? p.subject) || null;
   return {
     // 스터디는 postId가 null이라 groupId로 대체 (StudyPostCard 링크용)
     postId: p.postId ?? p.groupId ?? 0,
@@ -57,7 +61,7 @@ function toPostListItem(p: PostItemApiResponse): PostListItem {
     status: p.status ?? null,
     currentCount: p.currentCount ?? null,
     maxCount: p.maxCount ?? null,
-    subjectName: p.subjectName ?? null,
+    subjectName: resolvedSubject,
     description: p.description ?? null,
     createdAt: p.createdAt,
     isMine: p.isMine ?? null,
@@ -72,11 +76,48 @@ export function toPostListResponse(r: PostListApiResponse): PostListResponse {
   return { content: list.map(toPostListItem), totalPages: r.totalPages };
 }
 
+// 스터디는 별도 리소스(/api/studies) → StudyItem을 PostListItem으로 변환
+function toStudyListItem(s: StudyItemApiResponse): PostListItem {
+  return {
+    // 스터디 상세/수정 링크는 groupId 사용
+    postId: s.groupId,
+    groupId: s.groupId,
+    boardType: 'STUDY',
+    title: s.title,
+    authorName: s.authorName,
+    viewCount: 0,
+    commentCount: 0,
+    status: null,
+    currentCount: s.currentCount ?? null,
+    maxCount: s.maxCount ?? null,
+    // subjectName이 enum 코드로 올 수 있어 한글 라벨로 변환(이미 한글이면 원본 유지)
+    subjectName: subjectLabel(s.subjectName) || s.subjectName || null,
+    description: s.content ?? null,
+    createdAt: s.createdAt,
+    isMine: null,
+    isJoined: null,
+    isClosed: s.isClosed ?? null,
+  };
+}
+
+export function toStudyListResponse(r: StudyListApiResponse): PostListResponse {
+  return {
+    content: (r.content ?? []).map(toStudyListItem),
+    totalPages: r.totalPages,
+  };
+}
+
 function toPostDetail(d: PostDetailApiResponse): PostDetail {
+  // subjectCode(수정 폼 드롭다운 매칭용)는 raw enum 코드여야 함.
+  // 코드 필드(subject)를 우선하고, 없으면 subjectName(BE가 코드로 내려주는 경우) 사용.
+  // 표시용 subjectName은 코드를 한글 라벨로 변환.
+  const rawCode = d.subject ?? d.subjectName ?? null;
+  const resolvedSubject = subjectLabel(rawCode) || null;
   return {
     postId: d.postId,
     boardType: d.boardType,
-    subjectName: d.subjectName ?? null,
+    subjectName: resolvedSubject,
+    subjectCode: rawCode,
     title: d.title,
     content: d.content,
     authorName: d.authorName,
@@ -110,7 +151,7 @@ function toComment(c: CommentApiItem): CommentItem {
     isMine: c.isMine,
     isDeleted: c.isDeleted,
     createdAt: c.createdAt,
-    replies: c.replies.map(toReply),
+    replies: (c.replies ?? []).map(toReply),
   };
 }
 

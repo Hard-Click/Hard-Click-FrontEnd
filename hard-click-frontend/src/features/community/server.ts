@@ -1,13 +1,22 @@
 import { serverApi } from '@/lib/api';
 import type { ApiResponse } from '@/services/api';
-import type { BoardType, PostListResponse, PostListApiResponse } from './types';
+import type {
+  BoardType,
+  PostListResponse,
+  PostListApiResponse,
+  StudyListApiResponse,
+} from './types';
 // 커뮤니티 도메인만 실서버 연동 (다른 도메인은 전역 USE_MOCK 유지)
 import { USE_MOCK_COMMUNITY as USE_MOCK } from '@/mocks/config';
 import { mockPostListResponse } from '@/mocks/community.mock';
-import { toPostListResponse, mapOk } from './services';
+import { toPostListResponse, toStudyListResponse, mapOk } from './services';
 import { mockSubjects } from '@/mocks/community.mock';
 import type { SubjectItem } from './types';
 import { SUBJECT_NAME, SUBJECTS as CONST_SUBJECTS } from '@/constants/subjects';
+
+// 페이지 데이터 조회는 server.ts로 통일한다. 글 상세 조회(serverApi 기반)는
+// services.ts에 정의돼 있으므로 여기서 재노출해 페이지가 한 곳(server.ts)에서만 import하도록 한다.
+export { getPostDetail } from './services';
 
 export async function getSubjects(): Promise<ApiResponse<SubjectItem[]>> {
   if (USE_MOCK) {
@@ -58,6 +67,23 @@ export async function getCommunityPosts(
         totalPages,
       }),
     };
+  }
+
+  // 스터디는 게시판(/api/boards)과 별도 리소스 → /api/studies로 조회.
+  // ⚠️ 이 엔드포인트는 subject/page/size만 지원하고 keyword(검색)/sort(정렬)는 미지원.
+  // 따라서 스터디 탭에서는 검색어/정렬이 서버에 전달되지 않는다.
+  // (BE가 keyword/sort를 지원하면 여기서 전달하고, 계속 미지원이면 스터디 탭 UI에서
+  //  검색/정렬 컨트롤을 비활성화하는 후속 작업이 필요함)
+  if (boardType === 'STUDY') {
+    const studyParams = new URLSearchParams();
+    studyParams.set('page', String(page));
+    if (subjectCode) studyParams.set('subject', subjectCode);
+    return mapOk(
+      await serverApi.get<StudyListApiResponse>(
+        `/api/studies?${studyParams.toString()}`
+      ),
+      toStudyListResponse
+    );
   }
 
   const params = new URLSearchParams();
