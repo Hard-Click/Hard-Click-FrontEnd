@@ -306,7 +306,7 @@ export default function MyPageContent({
                 {/* 사용자 정보 + 통계 카드 */}
                 <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-8">
                   {/* 좌측: 아바타 + 이름 + 이메일 */}
-                  <div className="flex items-center gap-6 w-full md:w-[400px] flex-shrink-0">
+                  <div className="flex flex-col items-center text-center gap-3 sm:flex-row sm:text-left sm:gap-6 w-full md:w-[400px] flex-shrink-0">
                     <div className="relative w-28 h-28 rounded-full bg-[rgba(47,93,170,0.1)] flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {profile?.profileImageUrl ? (
                         <Image
@@ -321,9 +321,9 @@ export default function MyPageContent({
                         <img src="/icons/profileAvatarIcon.svg" width={56} height={56} alt="" />
                       )}
                     </div>
-                    <div className="flex flex-col">
+                    <div className="flex flex-col min-w-0">
                       <p className="text-2xl font-bold text-[#1F2937] leading-8 mb-1">{profile?.name ?? ''}</p>
-                      <p className="text-base text-[#4B5563]">{profile?.email ?? ''}</p>
+                      <p className="text-base text-[#4B5563] break-all">{profile?.email ?? ''}</p>
                     </div>
                   </div>
 
@@ -367,7 +367,7 @@ export default function MyPageContent({
                         <p className="text-sm font-medium text-[#4B5563] mb-2">{r.label}</p>
                         {r.rank > 0 ? (
                           <>
-                            <p className="text-4xl font-bold text-[#2F5DAA] leading-10 mb-2">{r.rank}위</p>
+                            <p className="text-3xl sm:text-4xl font-bold text-[#2F5DAA] leading-10 mb-2">{r.rank}위</p>
                             <p className="text-sm text-[#4B5563]">상위 {r.pct}%</p>
                           </>
                         ) : (
@@ -424,7 +424,7 @@ export default function MyPageContent({
                       <p className="text-sm text-[#4B5563]">새로운 강의를 둘러보고 학습을 시작해보세요.</p>
                     </div>
                   ) : (inProgress.map((c) => (
-                    <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-5 flex gap-4 sm:gap-5 items-center">
+                    <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-5 flex flex-col sm:flex-row gap-3 sm:gap-5 sm:items-center">
                       <div className="w-24 h-20 sm:w-40 sm:h-24 bg-[#F8FAFC] rounded-2xl flex items-center justify-center flex-shrink-0">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src="/icons/courseThumbnailIcon.svg" width={48} height={48} alt="" />
@@ -484,7 +484,7 @@ export default function MyPageContent({
                       <p className="text-sm text-[#4B5563]">학습을 완료하고 리뷰를 작성해보세요.</p>
                     </div>
                   ) : (completed.map((c) => (
-                    <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-5 flex gap-4 sm:gap-5 items-center">
+                    <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-5 flex flex-col sm:flex-row gap-3 sm:gap-5 sm:items-center">
                       <Link
                         href={`/courses/${c.courseId}`}
                         className="w-24 h-20 sm:w-40 sm:h-24 bg-[#F8FAFC] rounded-2xl flex items-center justify-center flex-shrink-0 hover:bg-[#EEF2F7] transition-colors"

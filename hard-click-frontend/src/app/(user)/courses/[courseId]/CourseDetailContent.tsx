@@ -494,10 +494,11 @@ export default function CourseDetailContent({
               <div className="border-t border-[#D5D8DD] pt-6 pb-8 flex flex-wrap items-center gap-3">
                 {isEnrolled ? (
                   /* 수강 중 → 학습하기 (학습 커리큘럼/진도 홈으로 이동) */
-                  <Link href={`/learning/${courseId}`} className="flex-1 basis-full sm:basis-0">
-                    <button className="w-full h-14 rounded-[10px] bg-[#2F5DAA] text-white font-semibold text-base hover:bg-[#1D3E75] transition-colors">
-                      학습하기
-                    </button>
+                  <Link
+                    href={`/learning/${courseId}`}
+                    className="flex-1 basis-full sm:basis-0 flex h-14 items-center justify-center rounded-[10px] bg-[#2F5DAA] text-white font-semibold text-base hover:bg-[#1D3E75] transition-colors"
+                  >
+                    학습하기
                   </Link>
                 ) : (
                   <>
