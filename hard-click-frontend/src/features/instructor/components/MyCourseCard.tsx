@@ -13,6 +13,8 @@ interface MyCourseCardProps {
   price: string;
   thumbnailUrl?: string;
   onDeleted?: (id: number) => void;
+  /** 목록 첫 카드(above-fold)면 true — LCP 썸네일 우선 로딩 */
+  priority?: boolean;
 }
 
 import Image from 'next/image';
@@ -36,6 +38,7 @@ export default function MyCourseCard({
   thumbnailUrl,
   highlighted = false,
   onDeleted,
+  priority = false,
 }: MyCourseCardProps) {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -96,14 +99,21 @@ export default function MyCourseCard({
     >
       {/* left */}
       <div className="flex gap-5">
-        {/* thumbnail */}
-        <Image
-          src={thumbnailUrl || '/images/defaultThumbnail.svg'}
-          alt={title}
-          width={160}
-          height={120}
-          className="rounded-2xl object-cover"
-        />
+        {/* thumbnail — 고정 160×120 박스. h/w 명시 + self-start로 flex stretch(세로 늘어남) 방지 */}
+        {thumbnailUrl ? (
+          <Image
+            src={thumbnailUrl}
+            alt={title}
+            width={160}
+            height={120}
+            priority={priority}
+            className="h-[120px] w-[160px] shrink-0 self-start rounded-2xl object-cover"
+          />
+        ) : (
+          <div className="flex h-[120px] w-[160px] shrink-0 self-start items-center justify-center rounded-2xl bg-gradient-to-br from-[#EEF2FF] to-[#E2E8F0] text-xs text-[#94A3B8]">
+            이미지 없음
+          </div>
+        )}
 
         {/* content */}
         <div>

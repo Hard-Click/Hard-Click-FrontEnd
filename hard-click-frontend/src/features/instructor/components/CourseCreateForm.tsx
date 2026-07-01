@@ -69,6 +69,16 @@ const formatDuration = (seconds: number) => {
   return [hrs, mins, secs].map((v) => String(v).padStart(2, '0')).join(':');
 };
 
+// "hh:mm:ss" 또는 "mm:ss" 재생시간 문자열 → 초. 형식 불명이면 undefined.
+const durationToSeconds = (duration: string): number | undefined => {
+  if (!duration) return undefined;
+  const parts = duration.split(':').map(Number);
+  if (parts.length === 3)
+    return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
+  if (parts.length === 2) return (parts[0] || 0) * 60 + (parts[1] || 0);
+  return undefined;
+};
+
 function SortableSectionItem({
   section,
   sectionIndex,
@@ -1126,20 +1136,7 @@ export default function CourseCreateForm({
                       title: lec.fileName,
                       description: lec.fileName || undefined,
                       orderIndex: lIdx,
-                      durationSeconds: lec.duration
-                        ? (() => {
-                            const parts = lec.duration.split(':').map(Number);
-                            if (parts.length === 3)
-                              return (
-                                (parts[0] || 0) * 3600 +
-                                (parts[1] || 0) * 60 +
-                                (parts[2] || 0)
-                              );
-                            if (parts.length === 2)
-                              return (parts[0] || 0) * 60 + (parts[1] || 0);
-                            return undefined;
-                          })()
-                        : undefined,
+                      durationSeconds: durationToSeconds(lec.duration),
                     })),
                   })),
                 };
@@ -1223,9 +1220,13 @@ export default function CourseCreateForm({
                                   presign.contentType ?? lecture.file.type,
                               },
                             });
-                            // 3) 확정 — s3Key는 @RequestParam(쿼리). BFF가 인증 첨부.
+                            // 3) 확정 — s3Key·durationSeconds는 @RequestParam(쿼리). BFF가 인증 첨부.
+                            //    durationSeconds는 BE가 받아 재생시간으로 저장.
+                            const durationSeconds = durationToSeconds(
+                              lecture.duration
+                            );
                             await axios.patch(
-                              `/api/courses/lessons/${apiLesson.lessonId}/video?s3Key=${encodeURIComponent(presign.s3Key)}`
+                              `/api/courses/lessons/${apiLesson.lessonId}/video?s3Key=${encodeURIComponent(presign.s3Key)}${durationSeconds != null ? `&durationSeconds=${durationSeconds}` : ''}`
                             );
                           } catch (err) {
                             console.error(
