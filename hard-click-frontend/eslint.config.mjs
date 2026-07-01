@@ -32,9 +32,9 @@ const eslintConfig = defineConfig([
       ],
     },
   },
-  // 래퍼 자신은 sonner의 toast를 감싸야 하므로 이 규칙에서 예외
+  // 래퍼 자신(과 그 테스트)은 sonner의 toast를 감싸/검증해야 하므로 이 규칙에서 예외
   {
-    files: ["src/lib/toast.ts"],
+    files: ["src/lib/toast.ts", "src/lib/toast.test.ts"],
     rules: { "no-restricted-imports": "off" },
   },
 ]);
