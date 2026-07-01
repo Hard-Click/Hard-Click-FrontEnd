@@ -23,5 +23,9 @@ export default defineConfig({
     url: 'http://localhost:3001',
     reuseExistingServer: false,
     timeout: 120_000,
+    // dev 서버 로그(브라우저 콘솔 warning 등)를 숨겨 테스트 결과만 깔끔하게 출력.
+    // (서버 기동 실패는 webServer url 타임아웃으로 Playwright가 별도 감지)
+    stdout: 'ignore',
+    stderr: 'ignore',
   },
 });
