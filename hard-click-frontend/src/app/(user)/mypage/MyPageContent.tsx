@@ -149,9 +149,9 @@ function Heatmap({
                 className="block w-full h-full"
               />
               {hoveredIdx === i && (
-                <div className="absolute bottom-[20px] left-1/2 -translate-x-1/2 z-20 bg-[#1F2937CC] text-white px-3 py-1.5 rounded-[10px] whitespace-nowrap shadow-lg pointer-events-none">
-                  <div className="text-[8px] font-bold leading-tight">{c.date}</div>
-                  <div className="text-[6px] font-medium leading-tight mt-0.5">{valueLabel} : {c.value}</div>
+                <div className="absolute bottom-[26px] left-1/2 -translate-x-1/2 z-20 bg-[#1F2937CC] text-white px-4 py-2.5 rounded-xl whitespace-nowrap text-center shadow-lg pointer-events-none">
+                  <div className="text-sm font-bold leading-tight">{c.date}</div>
+                  <div className="text-xs font-medium leading-tight mt-1">{valueLabel} : {c.value}</div>
                 </div>
               )}
             </div>
