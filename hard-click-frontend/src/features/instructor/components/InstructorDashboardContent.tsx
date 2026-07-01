@@ -1,8 +1,26 @@
 import Image from 'next/image';
-import RecentCourseSection from './RecentCourseSection';
+import RecentCourseSection, { type RecentCourse } from './RecentCourseSection';
 import InstructorStatsCard from './InstructorStatsCard';
+import { getInstructorCoursesServer } from '../server';
 
-export default function InstructorDashboardContent() {
+// Server Component: 최근 등록 강의를 서버에서 조회해 props로 전달 (useEffect 클라 페칭 제거)
+export default async function InstructorDashboardContent() {
+  const { content } = await getInstructorCoursesServer(0, 3);
+  const recentCourses: RecentCourse[] = content
+    .filter((c) => c.status !== 'DELETED')
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )
+    .slice(0, 3)
+    .map((c) => ({
+      id: c.courseId,
+      title: c.title,
+      isPublic: c.status === 'PUBLISHED',
+      students: c.enrollmentCount,
+      createdAt: c.createdAt.split('T')[0].replaceAll('-', '.'),
+    }));
+
   return (
     <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
       <div className="mx-auto w-full max-w-[1152px]">
@@ -30,7 +48,7 @@ export default function InstructorDashboardContent() {
         </div>
 
         {/* 최근 등록 강의 */}
-        <RecentCourseSection />
+        <RecentCourseSection courses={recentCourses} />
       </div>
     </div>
   );
