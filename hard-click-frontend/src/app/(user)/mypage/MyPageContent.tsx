@@ -149,9 +149,9 @@ function Heatmap({
                 className="block w-full h-full"
               />
               {hoveredIdx === i && (
-                <div className="absolute bottom-[20px] left-1/2 -translate-x-1/2 z-20 bg-[#1F2937CC] text-white px-3 py-1.5 rounded-[10px] whitespace-nowrap shadow-lg pointer-events-none">
-                  <div className="text-[8px] font-bold leading-tight">{c.date}</div>
-                  <div className="text-[6px] font-medium leading-tight mt-0.5">{valueLabel} : {c.value}</div>
+                <div className="absolute bottom-[26px] left-1/2 -translate-x-1/2 z-20 bg-[#1F2937CC] text-white px-4 py-2.5 rounded-xl whitespace-nowrap text-center shadow-lg pointer-events-none">
+                  <div className="text-sm font-bold leading-tight">{c.date}</div>
+                  <div className="text-xs font-medium leading-tight mt-1">{valueLabel} : {c.value}</div>
                 </div>
               )}
             </div>
@@ -304,9 +304,9 @@ export default function MyPageContent({
                 </div>
 
                 {/* 사용자 정보 + 통계 카드 */}
-                <div className="flex items-start gap-8">
+                <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-8">
                   {/* 좌측: 아바타 + 이름 + 이메일 */}
-                  <div className="flex items-center gap-6 w-[400px] flex-shrink-0">
+                  <div className="flex flex-col items-center text-center gap-3 sm:flex-row sm:text-left sm:gap-6 w-full md:w-[400px] flex-shrink-0">
                     <div className="relative w-28 h-28 rounded-full bg-[rgba(47,93,170,0.1)] flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {profile?.profileImageUrl ? (
                         <Image
@@ -321,9 +321,9 @@ export default function MyPageContent({
                         <img src="/icons/profileAvatarIcon.svg" width={56} height={56} alt="" />
                       )}
                     </div>
-                    <div className="flex flex-col">
+                    <div className="flex flex-col min-w-0">
                       <p className="text-2xl font-bold text-[#1F2937] leading-8 mb-1">{profile?.name ?? ''}</p>
-                      <p className="text-base text-[#4B5563]">{profile?.email ?? ''}</p>
+                      <p className="text-base text-[#4B5563] break-all">{profile?.email ?? ''}</p>
                     </div>
                   </div>
 
@@ -357,7 +357,7 @@ export default function MyPageContent({
                 {/* 구분선 + 랭킹 */}
                 <div className="border-t border-[#E2E8F0] pt-8">
                   <h3 className="text-xl font-semibold text-[#1F2937] mb-5">랭킹 요약</h3>
-                  <div className="grid grid-cols-3 gap-5">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-5">
                     {[
                       { label: '순공시간 순위', rank: ranking?.studyTimeRank.rank ?? 0, pct: ranking?.studyTimeRank.topPercent ?? 0 },
                       { label: '수강량 순위', rank: ranking?.lessonRank.rank ?? 0, pct: ranking?.lessonRank.topPercent ?? 0 },
@@ -367,7 +367,7 @@ export default function MyPageContent({
                         <p className="text-sm font-medium text-[#4B5563] mb-2">{r.label}</p>
                         {r.rank > 0 ? (
                           <>
-                            <p className="text-4xl font-bold text-[#2F5DAA] leading-10 mb-2">{r.rank}위</p>
+                            <p className="text-3xl sm:text-4xl font-bold text-[#2F5DAA] leading-10 mb-2">{r.rank}위</p>
                             <p className="text-sm text-[#4B5563]">상위 {r.pct}%</p>
                           </>
                         ) : (
@@ -393,7 +393,7 @@ export default function MyPageContent({
 
               <SectionCard>
                 <div className="p-8">
-                  <div className="grid grid-cols-2 gap-[84px]">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-[84px]">
                     <Heatmap
                       type="green"
                       monthLabel={`${HEATMAP_YEAR}년 ${HEATMAP_MONTH}월`}
@@ -424,8 +424,8 @@ export default function MyPageContent({
                       <p className="text-sm text-[#4B5563]">새로운 강의를 둘러보고 학습을 시작해보세요.</p>
                     </div>
                   ) : (inProgress.map((c) => (
-                    <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-5 flex gap-5 items-center">
-                      <div className="w-40 h-24 bg-[#F8FAFC] rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-5 flex flex-col sm:flex-row gap-3 sm:gap-5 sm:items-center">
+                      <div className="w-24 h-20 sm:w-40 sm:h-24 bg-[#F8FAFC] rounded-2xl flex items-center justify-center flex-shrink-0">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src="/icons/courseThumbnailIcon.svg" width={48} height={48} alt="" />
                       </div>
@@ -452,7 +452,7 @@ export default function MyPageContent({
                             <div className="h-full bg-[#2F5DAA] rounded-full" style={{ width: `${c.progressRate}%` }} />
                           </div>
                         </div>
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
                           <span className="text-sm text-[#4B5563]">최근 학습: {formatDisplayDate(c.lastStudiedAt)}</span>
                           <Link
                             href={c.lastVideoId ? `/learning/videos/${c.lastVideoId}` : '#'}
@@ -484,10 +484,10 @@ export default function MyPageContent({
                       <p className="text-sm text-[#4B5563]">학습을 완료하고 리뷰를 작성해보세요.</p>
                     </div>
                   ) : (completed.map((c) => (
-                    <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-5 flex gap-5 items-center">
+                    <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-5 flex flex-col sm:flex-row gap-3 sm:gap-5 sm:items-center">
                       <Link
                         href={`/courses/${c.courseId}`}
-                        className="w-40 h-24 bg-[#F8FAFC] rounded-2xl flex items-center justify-center flex-shrink-0 hover:bg-[#EEF2F7] transition-colors"
+                        className="w-24 h-20 sm:w-40 sm:h-24 bg-[#F8FAFC] rounded-2xl flex items-center justify-center flex-shrink-0 hover:bg-[#EEF2F7] transition-colors"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src="/icons/trophyIcon.svg" width={48} height={48} alt="" />
@@ -502,7 +502,7 @@ export default function MyPageContent({
                         <div className="w-full h-2.5 bg-[#E2E8F0] rounded-full overflow-hidden">
                           <div className="h-full bg-[#16A34A] rounded-full" style={{ width: '100%' }} />
                         </div>
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
                           <span className="text-sm text-[#4B5563]">완료일: {formatDisplayDate(c.completedAt)}</span>
                           {reviewedIds.has(c.courseId) ? (
                             <Link

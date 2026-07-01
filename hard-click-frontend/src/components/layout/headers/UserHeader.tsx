@@ -33,6 +33,7 @@ const DROPDOWN_ITEMS = [
 export default function UserHeader() {
   const pathname = usePathname();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [profileImageUrl, setProfileImageUrl] = useState('');
 
@@ -53,6 +54,11 @@ export default function UserHeader() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // 라우트 변경 시 모바일 메뉴 닫기 (링크 외 이동·뒤로가기 대비)
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     // 비로그인 상태에선 /api/members/me를 호출하지 않는다.
@@ -87,15 +93,15 @@ export default function UserHeader() {
 
   return (
     <header className="sticky top-0 z-50 w-full h-16 bg-[#2F5DAA] shadow-[0_2px_8px_rgba(0,0,0,0.15),0_1px_2px_rgba(0,0,0,0.08)] flex-shrink-0">
-      <div className="w-full max-w-[1440px] mx-auto px-8 h-full grid grid-cols-[1fr_auto_1fr] items-center">
+      <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 h-full flex justify-between md:grid md:grid-cols-[1fr_auto_1fr] items-center">
         {/* 로고 */}
         <Link href="/courses" className="flex items-center gap-3">
           <Image src="/logos/logo.svg" alt="logo" width={28} height={28} />
           <span className="text-white font-bold text-xl">FLOWN</span>
         </Link>
 
-        {/* 네비게이션 */}
-        <nav className="flex items-center justify-center gap-[60px]">
+        {/* 네비게이션 — 모바일은 햄버거로 대체(hidden), md+에서 표시 */}
+        <nav className="hidden md:flex items-center justify-center gap-6 lg:gap-[60px]">
           {NAV_ITEMS.map((item) => {
             const isActive =
               pathname.startsWith(item.href) ||
@@ -123,7 +129,7 @@ export default function UserHeader() {
         </nav>
 
         {/* 우측 - 프로필 */}
-        <div className="flex items-center gap-6 justify-end">
+        <div className="flex items-center gap-3 md:gap-6 justify-end">
           {isLoggedIn ? (
             <>
               {/* 알림 */}
@@ -191,8 +197,63 @@ export default function UserHeader() {
               로그인
             </Link>
           )}
+
+          {/* 모바일 햄버거 — 로그인/프로필 오른쪽 끝에 붙임 */}
+          <button
+            type="button"
+            aria-label={mobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
+            aria-expanded={mobileMenuOpen}
+            onClick={() => setMobileMenuOpen((p) => !p)}
+            className="md:hidden w-9 h-9 flex items-center justify-center text-white"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {mobileMenuOpen ? (
+                <>
+                  <path d="M6 6l12 12" />
+                  <path d="M18 6L6 18" />
+                </>
+              ) : (
+                <>
+                  <path d="M4 7h16" />
+                  <path d="M4 12h16" />
+                  <path d="M4 17h16" />
+                </>
+              )}
+            </svg>
+          </button>
         </div>
       </div>
+
+      {/* 모바일 메뉴 — 햄버거 토글 시 헤더 아래로 펼침 */}
+      {mobileMenuOpen && (
+        <div className="md:hidden absolute top-16 left-0 w-full bg-[#2F5DAA] border-t border-white/10 shadow-lg">
+          <nav className="flex flex-col px-4 py-2">
+            {NAV_ITEMS.map((item) => {
+              const isActive =
+                pathname.startsWith(item.href) ||
+                (item.match?.some((m) => pathname.startsWith(m)) ?? false);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={(e) => {
+                    if (!isLoggedIn && !PUBLIC_NAV_HREFS.has(item.href)) {
+                      e.preventDefault();
+                      toast.error('로그인이 필요합니다');
+                    }
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`px-4 py-3 rounded-xl font-medium text-white transition-colors ${
+                    isActive ? 'bg-[#1D3E75]' : 'hover:bg-white/10'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }
