@@ -86,11 +86,18 @@ export async function getCommunityPosts(
     );
   }
 
+  // ⚠️ BE 목록 엔드포인트(/api/boards/**/posts)는 과목(subject) 필터를 지원하지 않는다.
+  // (Swagger 파라미터: boardType·sort·keyword·page뿐. 스터디 /api/studies?subject=만 서버 필터 지원.)
+  // 따라서 질문게시판 과목 필터는 여기서 전체 페이지를 받아 subject enum 코드로 거른 뒤
+  // 재페이지네이션한다. (BE가 필터를 지원하면 subjectCode를 쿼리로 넘기고 이 분기를 제거하면 됨)
+  if (boardType === 'QUESTION' && subjectCode) {
+    return getFilteredQuestionPosts(page, keyword, sort, subjectCode);
+  }
+
   const params = new URLSearchParams();
   params.set('page', String(page));
   if (keyword) params.set('keyword', keyword);
   if (sort) params.set('sort', sort);
-  if (subjectCode) params.set('subjectCode', subjectCode);
 
   const url =
     boardType === 'ALL'
@@ -101,4 +108,67 @@ export async function getCommunityPosts(
     await serverApi.get<PostListApiResponse>(url),
     toPostListResponse
   );
+}
+
+const QUESTION_PAGE_SIZE = 10;
+
+/**
+ * 질문게시판 과목 필터 (BE 미지원 워크어라운드).
+ * 검색어/정렬은 서버에 그대로 위임하고, 그 결과 전체 페이지를 받아 과목 코드로 거른 뒤
+ * 프론트에서 재페이지네이션한다.
+ */
+async function getFilteredQuestionPosts(
+  page: number,
+  keyword: string | undefined,
+  sort: string | undefined,
+  subjectCode: string
+): Promise<ApiResponse<PostListResponse>> {
+  const urlFor = (p: number): string => {
+    const sp = new URLSearchParams();
+    sp.set('page', String(p));
+    if (keyword) sp.set('keyword', keyword);
+    if (sort) sp.set('sort', sort);
+    return `/api/boards/QUESTION/posts?${sp.toString()}`;
+  };
+
+  const first = await serverApi.get<PostListApiResponse>(urlFor(0));
+  if (!first.success || first.data == null) {
+    return mapOk(first, toPostListResponse);
+  }
+
+  const totalPages = first.data.totalPages ?? 1;
+  const rest =
+    totalPages > 1
+      ? await Promise.all(
+          Array.from({ length: totalPages - 1 }, (_, i) =>
+            serverApi.get<PostListApiResponse>(urlFor(i + 1))
+          )
+        )
+      : [];
+
+  const all = [first, ...rest].flatMap(
+    (r) => r.data?.posts ?? r.data?.items ?? []
+  );
+  // BE는 QUESTION 글의 과목을 enum 코드(예: MATH_1)로 subject에 담아 내려준다.
+  const matched = all.filter((p) => (p.subject ?? p.subjectName) === subjectCode);
+
+  const newTotalPages = Math.max(
+    1,
+    Math.ceil(matched.length / QUESTION_PAGE_SIZE)
+  );
+  const safePage = Math.min(Math.max(page, 0), newTotalPages - 1);
+  const paged = matched.slice(
+    safePage * QUESTION_PAGE_SIZE,
+    (safePage + 1) * QUESTION_PAGE_SIZE
+  );
+
+  return {
+    ...first,
+    data: toPostListResponse({
+      posts: paged,
+      totalPages: newTotalPages,
+      currentPage: safePage,
+      totalCount: matched.length,
+    }),
+  };
 }
