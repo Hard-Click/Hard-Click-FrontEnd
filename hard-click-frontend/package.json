@@ -10,7 +10,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:mock": "playwright test --config=playwright.mock.config.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -16,13 +16,19 @@ export const USE_MOCK = true;
 const FORCE_ALL_MOCK: boolean = false;
 
 /**
+ * E2E mock 전용 플래그 — `test:e2e:mock` 실행 시 webServer가 `NEXT_PUBLIC_E2E_MOCK=1`을 세팅한다.
+ * 켜지면 모든 도메인+인증을 mock 강제(BE 없이 결정적 E2E). 평소/프로덕션엔 미설정이라 영향 0.
+ */
+const E2E_MOCK = process.env.NEXT_PUBLIC_E2E_MOCK === '1';
+
+/**
  * (팀) 개별 도메인 플래그 — 일부 도메인은 단일 boolean으로 토글한다.
  * 공지·커뮤니티·인증처럼 별도 플래그를 쓰는 코드와의 호환을 위해 유지.
  * (FORCE_ALL_MOCK=false면 원래 값: 공지/커뮤/인증 실서버 연동)
  */
-export const USE_MOCK_NOTICES = FORCE_ALL_MOCK; // 학생 공지 목록/상세 실서버 연동
-export const USE_MOCK_COMMUNITY = FORCE_ALL_MOCK; // 학생 커뮤니티 실서버 연동
-export const USE_MOCK_AUTH = FORCE_ALL_MOCK; // 로그인/로그아웃 등 인증 실서버 연동 (실토큰 발급 필요)
+export const USE_MOCK_NOTICES = FORCE_ALL_MOCK || E2E_MOCK; // 학생 공지 목록/상세 실서버 연동
+export const USE_MOCK_COMMUNITY = FORCE_ALL_MOCK || E2E_MOCK; // 학생 커뮤니티 실서버 연동
+export const USE_MOCK_AUTH = FORCE_ALL_MOCK || E2E_MOCK; // 로그인/로그아웃 등 인증 실서버 연동 (실토큰 발급 필요)
 
 /**
  * 도메인별 mock 오버라이드 — 실제 백엔드 연동이 끝난 도메인만 `false`로 둔다.
@@ -54,8 +60,8 @@ const MOCK_OVERRIDE: Record<string, boolean> = {
 
 /** 도메인 단위 mock 사용 여부. 오버라이드가 없으면 전역 `USE_MOCK`을 따른다. */
 export function isMock(domain: string): boolean {
-  // ⚠️ 임시 전체 mock 프리뷰 — FORCE_ALL_MOCK이면 도메인 무관 mock (프리뷰 끝나면 위 토글 false)
-  if (FORCE_ALL_MOCK) return true;
+  // E2E mock 실행(NEXT_PUBLIC_E2E_MOCK=1) 또는 전체 mock 프리뷰면 도메인 무관 mock
+  if (E2E_MOCK || FORCE_ALL_MOCK) return true;
   // own-property만 조회 (prototype 키로 boolean 외 값이 새지 않도록)
   return Object.hasOwn(MOCK_OVERRIDE, domain) ? MOCK_OVERRIDE[domain] : USE_MOCK;
 }

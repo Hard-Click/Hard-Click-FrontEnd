@@ -40,20 +40,29 @@ export async function loginAction(
 
   // ── MOCK ──────────────────────────────────────────────────────────────────
   if (USE_MOCK) {
-    if (username !== 'test' || password !== 'test1234') {
+    // 데모/E2E 계정 — 아이디로 역할 매핑(비번은 계정별 고정). BE 없이 결정적 로그인.
+    const MOCK_ACCOUNTS: Record<
+      string,
+      { password: string; role: string; memberId: number }
+    > = {
+      test: { password: 'test1234', role: 'STUDENT', memberId: 1 },
+      admin1: { password: 'Admin1234!', role: 'ADMIN', memberId: 11 },
+      instructor1: { password: 'Test1234!', role: 'INSTRUCTOR', memberId: 9 },
+    };
+    const acc = MOCK_ACCOUNTS[username];
+    if (!acc || acc.password !== password) {
       return { success: false, message: '아이디 또는 비밀번호가 올바르지 않습니다' };
     }
     const cookieStore = await cookies();
     const base = AUTH_COOKIE_BASE;
     cookieStore.set('accessToken', mockLoginData.accessToken, { ...base, maxAge: ACCESS_TOKEN_MAX_AGE });
     cookieStore.set('refreshToken', mockLoginData.refreshToken, { ...base, maxAge: REFRESH_TOKEN_MAX_AGE });
-    cookieStore.set('memberId', String(mockLoginData.memberId), { ...base, maxAge: REFRESH_TOKEN_MAX_AGE });
-    cookieStore.set('role', mockLoginData.role, { ...base, maxAge: REFRESH_TOKEN_MAX_AGE });
-    const mockRole = mockLoginData.role;
+    cookieStore.set('memberId', String(acc.memberId), { ...base, maxAge: REFRESH_TOKEN_MAX_AGE });
+    cookieStore.set('role', acc.role, { ...base, maxAge: REFRESH_TOKEN_MAX_AGE });
     redirect(
-      mockRole === 'ADMIN'
+      acc.role === 'ADMIN'
         ? '/admin/dashboard'
-        : mockRole === 'INSTRUCTOR'
+        : acc.role === 'INSTRUCTOR'
           ? '/instructor/dashboard'
           : '/courses',
     );
