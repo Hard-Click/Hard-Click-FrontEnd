@@ -399,10 +399,12 @@ export default function CommunityDetailContent({
                   onClick={() => setPreviewImage(url)}
                   className="overflow-hidden rounded-xl border border-[#E2E8F0]"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  {/* next/image: 표시 크기(240×180)로 자동 리사이즈·WebP·lazy → 원본 풀해상도 다운로드 방지 */}
+                  <Image
                     src={url}
                     alt={`첨부이미지-${i + 1}`}
+                    width={240}
+                    height={180}
                     className="h-[180px] w-[240px] cursor-pointer object-cover transition hover:opacity-90"
                   />
                 </button>
