@@ -106,7 +106,10 @@ describe('CourseCard — 썸네일', () => {
     );
 
     const img = screen.getByRole('img', { name: '국어 기초' });
-    expect(img).toHaveAttribute('src', 'https://example.com/t.jpg');
+    // next/image 최적화 src(/_next/image?url=...)라 원본 URL은 인코딩되어 포함된다
+    expect(img.getAttribute('src')).toContain(
+      encodeURIComponent('https://example.com/t.jpg'),
+    );
   });
 
   it('thumbnailUrl이 없으면 img를 렌더하지 않는다 (그라데이션 폴백)', () => {

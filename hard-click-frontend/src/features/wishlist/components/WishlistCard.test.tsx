@@ -226,7 +226,10 @@ describe('WishlistCard', () => {
         makeCourse({ thumbnailUrl: 'https://cdn.example.com/thumb.jpg' }),
       );
       const img = screen.getByRole('img', { name: '수능 수학 마스터' });
-      expect(img).toHaveAttribute('src', 'https://cdn.example.com/thumb.jpg');
+      // next/image 최적화 src(/_next/image?url=...)라 원본 URL은 인코딩되어 포함된다
+      expect(img.getAttribute('src')).toContain(
+        encodeURIComponent('https://cdn.example.com/thumb.jpg'),
+      );
     });
 
     it('thumbnailUrl 이 없으면 강의 이미지(alt=제목)를 렌더하지 않는다', () => {
