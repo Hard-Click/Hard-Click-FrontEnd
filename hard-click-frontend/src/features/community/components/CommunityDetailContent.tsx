@@ -566,6 +566,22 @@ export default function CommunityDetailContent({
                   </p>
                 )}
 
+                {!comment.isDeleted && comment.imageUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewImage(comment.imageUrl!)}
+                    className="mb-2 overflow-hidden rounded-xl border border-[#E2E8F0]"
+                  >
+                    <Image
+                      src={comment.imageUrl}
+                      alt="댓글 이미지"
+                      width={240}
+                      height={180}
+                      className="h-[180px] w-[240px] cursor-pointer object-cover transition hover:opacity-90"
+                    />
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() =>
@@ -766,6 +782,22 @@ export default function CommunityDetailContent({
                           >
                             {reply.isDeleted ? '삭제된 댓글입니다.' : reply.content}
                           </p>
+                        )}
+
+                        {!reply.isDeleted && reply.imageUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setPreviewImage(reply.imageUrl!)}
+                            className="mt-2 overflow-hidden rounded-xl border border-[#E2E8F0]"
+                          >
+                            <Image
+                              src={reply.imageUrl}
+                              alt="답글 이미지"
+                              width={200}
+                              height={150}
+                              className="h-[150px] w-[200px] cursor-pointer object-cover transition hover:opacity-90"
+                            />
+                          </button>
                         )}
                       </div>
                     </div>
