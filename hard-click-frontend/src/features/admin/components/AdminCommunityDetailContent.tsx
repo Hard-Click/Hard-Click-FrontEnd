@@ -119,7 +119,7 @@ export default function AdminCommunityDetailContent({
               ? backToReportKey
                 ? `/admin/reports?openReport=${encodeURIComponent(
                     backToReportKey
-                  )}`
+                  )}&reopen=1`
                 : '/admin/reports'
               : '/admin/community'
           )

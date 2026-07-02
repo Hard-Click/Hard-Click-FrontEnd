@@ -5,13 +5,13 @@ import AdminReportManage from '@/features/reports/components/AdminReportManage';
 import { getAdminReportsServer } from '@/features/reports/server';
 
 interface AdminReportsPageProps {
-  searchParams: Promise<{ openReport?: string }>;
+  searchParams: Promise<{ openReport?: string; reopen?: string }>;
 }
 
 export default async function AdminReportsPage({
   searchParams,
 }: AdminReportsPageProps) {
-  const { openReport } = await searchParams;
+  const { openReport, reopen } = await searchParams;
   const initialReports = await getAdminReportsServer();
 
   return (
@@ -39,6 +39,7 @@ export default async function AdminReportsPage({
         <AdminReportManage
           initialReports={initialReports}
           openReport={openReport}
+          reopen={reopen === '1'}
         />
       </div>
     </div>

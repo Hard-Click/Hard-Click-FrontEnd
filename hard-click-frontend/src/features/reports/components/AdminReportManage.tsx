@@ -15,9 +15,12 @@ const PAGE_SIZE = 10;
 export default function AdminReportManage({
   initialReports,
   openReport,
+  reopen,
 }: {
   initialReports: ReportItem[];
   openReport?: string;
+  /** 게시물/리뷰의 "신고 관리로 돌아가기" 복귀(reopen=1) → 상세 모달 자동 오픈 */
+  reopen?: boolean;
 }) {
   // 목록 원본 state (처리의 source of truth)
   const [reports, setReports] = useState<ReportItem[]>(initialReports);
@@ -105,6 +108,7 @@ export default function AdminReportManage({
         reports={pagedReports}
         onProcessReport={handleProcessReport}
         openReportKey={resolvedOpenReport}
+        reopenModal={reopen}
       />
       <Pagination
         currentPage={safePage}

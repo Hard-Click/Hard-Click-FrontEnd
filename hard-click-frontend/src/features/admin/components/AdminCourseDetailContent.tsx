@@ -238,7 +238,7 @@ export default function AdminCourseDetailContent({
                   backToReportKey
                     ? `/admin/reports?openReport=${encodeURIComponent(
                         backToReportKey
-                      )}`
+                      )}&reopen=1`
                     : '/admin/reports'
                 )
               }
