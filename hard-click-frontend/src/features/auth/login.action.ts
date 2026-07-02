@@ -109,8 +109,6 @@ export async function loginAction(
     if (axios.isAxiosError(error) && error.response) {
       const status = error.response.status;
       const body = error.response.data as { message?: string; errorCode?: string };
-      // [임시 디버그] BE 실제 status/errorCode 확인용 — 잠금/정지 코드 확정 후 제거할 것
-      console.error('[login BE error]', 'status=', status, 'errorCode=', body?.errorCode, 'message=', body?.message);
       // 403 = 계정 잠금(5회 실패) 또는 정지(SUSPENDED). BE가 둘 다 403으로 준다.
       // 정지는 사용자가 스스로 풀 수 없으므로 안내만, 잠금은 계정 보호 인증(isLocked)으로 유도.
       // TODO: BE의 잠금/정지 errorCode 확정 시 메시지 휴리스틱 대신 코드 기반으로 분기.
