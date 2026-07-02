@@ -48,3 +48,26 @@ export async function getInstructorCoursesServer(
   }
   return { content: [], totalPages: 0 };
 }
+
+/** 강사 대시보드 통계 (전체/공개/숨김 강의·수강생 수·퀴즈 수) */
+export interface InstructorDashboardStats {
+  totalCourses: number;
+  publishedCourses: number;
+  hiddenCourses: number;
+  totalStudents: number;
+  quizCount: number;
+}
+
+/** 강사 대시보드 통계 — 서버 조회 (Server Component 전용).
+ * GET /api/instructor/dashboard. ⚠️ 강사 토큰 필요. quizCount는 BE도 현재 고정값(퀴즈 mock).
+ * 조회 실패 시 0으로 폴백해 대시보드가 깨지지 않게 한다. */
+export async function getInstructorDashboardServer(): Promise<InstructorDashboardStats> {
+  if (isMock('instructor')) {
+    return { totalCourses: 12, publishedCourses: 9, hiddenCourses: 3, totalStudents: 245, quizCount: 36 };
+  }
+  const res = await serverApi.get<InstructorDashboardStats>(
+    '/api/instructor/dashboard',
+  );
+  if (res.success && res.data) return res.data;
+  return { totalCourses: 0, publishedCourses: 0, hiddenCourses: 0, totalStudents: 0, quizCount: 0 };
+}
