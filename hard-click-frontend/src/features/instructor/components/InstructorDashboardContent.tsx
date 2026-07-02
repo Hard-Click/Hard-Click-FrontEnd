@@ -1,11 +1,17 @@
 import Image from 'next/image';
 import RecentCourseSection, { type RecentCourse } from './RecentCourseSection';
 import InstructorStatsCard from './InstructorStatsCard';
-import { getInstructorCoursesServer } from '../server';
+import {
+  getInstructorCoursesServer,
+  getInstructorDashboardServer,
+} from '../server';
 
-// Server Component: 최근 등록 강의를 서버에서 조회해 props로 전달 (useEffect 클라 페칭 제거)
+// Server Component: 통계·최근 등록 강의를 서버에서 조회해 props로 전달 (useEffect 클라 페칭 제거)
 export default async function InstructorDashboardContent() {
-  const { content } = await getInstructorCoursesServer(0, 3);
+  const [{ content }, stats] = await Promise.all([
+    getInstructorCoursesServer(0, 3),
+    getInstructorDashboardServer(),
+  ]);
   const recentCourses: RecentCourse[] = content
     .filter((c) => c.status !== 'DELETED')
     .sort(
@@ -44,7 +50,7 @@ export default async function InstructorDashboardContent() {
 
         {/* 스탯 카드 */}
         <div className="mb-8">
-          <InstructorStatsCard />
+          <InstructorStatsCard stats={stats} />
         </div>
 
         {/* 최근 등록 강의 */}
