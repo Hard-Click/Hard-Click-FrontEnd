@@ -34,11 +34,27 @@ export default function AdminReportManage({
     [reports, status, target]
   );
 
+  // 딥링크 키 정규화: 원 형식은 `${targetType}-${targetId}`지만, 대시보드(라이브)는
+  // BE 응답에 targetId가 없어 `${targetType}-${reportId}`로 온다 → reportId로 행을
+  // 찾아 canonical 키(targetType-targetId)로 변환해 하이라이트가 매칭되게 한다.
+  const resolvedOpenReport = useMemo(() => {
+    if (!openReport) return undefined;
+    if (reports.some((r) => `${r.targetType}-${r.targetId}` === openReport)) {
+      return openReport;
+    }
+    const byReportId = reports.find(
+      (r) => `${r.targetType}-${r.reportId}` === openReport
+    );
+    return byReportId
+      ? `${byReportId.targetType}-${byReportId.targetId}`
+      : openReport;
+  }, [openReport, reports]);
+
   // 딥링크(openReport)로 진입 시 해당 신고가 있는 페이지로 시작
   const [page, setPage] = useState(() => {
-    if (!openReport) return 1;
+    if (!resolvedOpenReport) return 1;
     const idx = filtered.findIndex(
-      (r) => `${r.targetType}-${r.targetId}` === openReport
+      (r) => `${r.targetType}-${r.targetId}` === resolvedOpenReport
     );
     return idx >= 0 ? Math.floor(idx / PAGE_SIZE) + 1 : 1;
   });
@@ -88,7 +104,7 @@ export default function AdminReportManage({
       <AdminReportTable
         reports={pagedReports}
         onProcessReport={handleProcessReport}
-        openReportKey={openReport}
+        openReportKey={resolvedOpenReport}
       />
       <Pagination
         currentPage={safePage}
