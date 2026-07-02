@@ -1,12 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import ReportModal from './ReportModal';
 import { submitReportAction } from '@/features/reports/actions';
 import type { ReportActionResult, SubmitReportInput } from '@/features/reports/types';
 
-// sonner toast mock
-jest.mock('sonner', () => ({
+// toast mock (컴포넌트는 @/lib/toast 래퍼를 import)
+jest.mock('@/lib/toast', () => ({
   toast: { success: jest.fn(), error: jest.fn() },
 }));
 

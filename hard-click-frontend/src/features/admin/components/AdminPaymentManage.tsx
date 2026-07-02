@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import AdminPaymentFilterBar from './AdminPaymentFilterBar';
 import AdminPaymentTable from './AdminPaymentTable';
 import PaymentRefundModal from './PaymentRefundModal';

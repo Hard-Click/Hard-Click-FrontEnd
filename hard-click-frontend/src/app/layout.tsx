@@ -67,7 +67,7 @@ export default async function RootLayout({
           </NotificationProvider>
         </AuthProvider>
 
-        <Toaster position="top-center" richColors offset={80} />
+        <Toaster position="top-center" richColors offset={80} visibleToasts={3} />
       </body>
     </html>
   );

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 
 import {
   checkEmailAction,

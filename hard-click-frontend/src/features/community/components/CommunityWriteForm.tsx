@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import Image from 'next/image';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useRouter } from 'next/navigation';
 import { COMMUNITY_ERRORS } from '../constants/errorMessages';
 import LoadingModal from '@/components/ui/loadingModal';

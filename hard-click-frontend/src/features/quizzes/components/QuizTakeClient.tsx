@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import QuizQuestionCard from './QuizQuestionCard';
 import QuizNavigator from './QuizNavigator';
 import QuizSubmitModal from './QuizSubmitModal';

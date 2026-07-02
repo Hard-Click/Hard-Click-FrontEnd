@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import LoadingModal from '@/components/ui/loadingModal';
 import type { OrderType } from '@/features/orders/types';
 import { createCheckoutOrderAction } from '@/features/orders/actions';

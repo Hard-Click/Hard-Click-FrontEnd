@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import type {
   AdminCourseManageRow,

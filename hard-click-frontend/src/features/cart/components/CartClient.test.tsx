@@ -11,8 +11,8 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/cart',
 }));
 
-// sonner toast — 성공/실패 토스트 추적용
-jest.mock('sonner', () => ({
+// toast — 성공/실패 토스트 추적용 (컴포넌트는 @/lib/toast 래퍼를 import)
+jest.mock('@/lib/toast', () => ({
   toast: { success: jest.fn(), error: jest.fn() },
 }));
 
@@ -21,7 +21,7 @@ jest.mock('../actions', () => ({
   removeCartItemsAction: jest.fn(),
 }));
 
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 
 const mockedRemove = removeCartItemsAction as jest.MockedFunction<
   typeof removeCartItemsAction

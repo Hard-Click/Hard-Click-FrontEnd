@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { refundAction } from '../actions';
 import type { OrderDetail, OrderDetailItem } from '../types';
 

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import CourseNoticeSection from '@/features/courses/components/CourseNoticeSection';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useAuth } from '@/features/auth/AuthProvider';
 // TODO: 수강신청 모달 — 팀원 결제 모달 확인 후 연결
 // TODO: 리뷰 삭제 확인 모달 — 팀원 모달 확인 후 연결

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import VideoPlayer from '@/features/learning/components/VideoPlayer';
 import CourseProgressSummary from '@/features/learning/components/CourseProgressSummary';
 import LearningCurriculumSidebar from '@/features/learning/components/LearningCurriculumSidebar';

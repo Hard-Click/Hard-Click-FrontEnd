@@ -10,7 +10,7 @@ import { SUBJECTS, subjectValueById } from '@/features/courses/subjects';
 import type { Subject } from '@/features/courses/types';
 import { api } from '@/services/api';
 import axios from 'axios';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import {
   DndContext,
   closestCenter,
