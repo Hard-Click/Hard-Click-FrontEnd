@@ -47,11 +47,12 @@ export default function AdminReportTable({
     setSelectedReport(enriched);
   };
 
-  // 복귀(reopen=1) 시 상세 모달 자동 오픈 — 대시보드 딥링크(하이라이트만)와 구분.
+  // openReport 딥링크 진입 시 해당 신고 상세 모달 자동 오픈.
+  // 대시보드 상세보기 = 하이라이트 + 모달 / 게시물 복귀(reopen=1) = 모달만.
   // setState는 fetch 완료 후(then)라 sync-setState-in-effect에 걸리지 않는다.
   const reopenedRef = useRef(false);
   useEffect(() => {
-    if (!reopenModal || !openReportKey || reopenedRef.current) return;
+    if (!openReportKey || reopenedRef.current) return;
     const target = reports.find(
       (r) => `${r.targetType}-${r.targetId}` === openReportKey
     );
@@ -60,7 +61,7 @@ export default function AdminReportTable({
     void fetchReportDetailAction(target.reportId, target).then(
       setSelectedReport
     );
-  }, [reopenModal, openReportKey, reports]);
+  }, [openReportKey, reports]);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white">
