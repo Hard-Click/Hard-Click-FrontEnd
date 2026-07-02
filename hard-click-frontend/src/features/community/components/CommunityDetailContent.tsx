@@ -609,7 +609,7 @@ export default function CommunityDetailContent({
                         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#E2E8F0] hover:bg-[#F8FAFC]"
                       >
                         <Image
-                          src="/icons/image.svg"
+                          src="/icons/Image.svg"
                           alt="이미지 첨부"
                           width={18}
                           height={18}
@@ -813,7 +813,7 @@ export default function CommunityDetailContent({
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#E2E8F0] hover:bg-[#F8FAFC]"
             >
               <Image
-                src="/icons/image.svg"
+                src="/icons/Image.svg"
                 alt="이미지 첨부"
                 width={20}
                 height={20}
