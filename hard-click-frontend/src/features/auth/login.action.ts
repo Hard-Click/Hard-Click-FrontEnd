@@ -17,7 +17,7 @@ const BACKEND = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
 export interface LoginActionState {
   success: boolean;
   message?: string;
-  /** 423: 5회 실패로 계정 잠금 → 계정 보호 인증 필요 */
+  /** 403: 5회 실패로 계정 잠금 → 계정 보호 인증 필요 (BE는 잠금/정지 모두 403) */
   isLocked?: boolean;
 }
 
@@ -108,8 +108,18 @@ export async function loginAction(
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       const status = error.response.status;
-      const body = error.response.data as { message?: string };
-      if (status === 423) {
+      const body = error.response.data as { message?: string; errorCode?: string };
+      // 403 = 계정 잠금(5회 실패) 또는 정지(SUSPENDED). BE가 둘 다 403으로 준다.
+      // 정지는 사용자가 스스로 풀 수 없으므로 안내만, 잠금은 계정 보호 인증(isLocked)으로 유도.
+      // TODO: BE의 잠금/정지 errorCode 확정 시 메시지 휴리스틱 대신 코드 기반으로 분기.
+      if (status === 403) {
+        const isSuspended = /정지/.test(body?.message ?? '');
+        if (isSuspended) {
+          return {
+            success: false,
+            message: body?.message ?? '정지된 계정입니다. 관리자에게 문의해주세요.',
+          };
+        }
         return {
           success: false,
           isLocked: true,

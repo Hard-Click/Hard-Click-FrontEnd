@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import SelectDropdown from '@/components/ui/SelectDropdown';
 import { mockAdminInstructorOptions } from '@/mocks/admin.mock';

@@ -19,7 +19,7 @@ jest.mock('../actions', () => ({
 }));
 
 // toast(sonner) stub
-jest.mock('sonner', () => ({
+jest.mock('@/lib/toast', () => ({
   toast: { success: jest.fn(), error: jest.fn() },
 }));
 

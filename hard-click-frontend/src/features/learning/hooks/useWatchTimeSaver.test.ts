@@ -14,7 +14,7 @@ jest.mock('@/features/learning/services', () => ({
   saveWatchTime: jest.fn(),
   completeVideo: jest.fn(),
 }));
-jest.mock('sonner', () => ({ toast: { success: jest.fn() } }));
+jest.mock('@/lib/toast', () => ({ toast: { success: jest.fn() } }));
 
 import { saveWatchTime, completeVideo } from '@/features/learning/services';
 

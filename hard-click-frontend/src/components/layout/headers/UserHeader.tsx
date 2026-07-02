@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { getMyProfile } from '@/features/users/services';
 import { logout } from '@/features/auth/services';
 import { clearSession } from '@/features/auth/session';

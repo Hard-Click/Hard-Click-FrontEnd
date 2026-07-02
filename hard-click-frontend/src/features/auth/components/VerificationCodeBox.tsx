@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { verifyAccountLockCodeAction } from '../actions';
 import { sendAccountLockEmailAction } from '../actions';
 import { useResendCooldown } from '@/hooks/useResendCooldown';

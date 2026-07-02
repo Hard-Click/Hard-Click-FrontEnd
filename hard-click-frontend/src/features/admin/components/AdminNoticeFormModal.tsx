@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import {
   createGlobalNoticeAction,
   createCourseNoticeAction,

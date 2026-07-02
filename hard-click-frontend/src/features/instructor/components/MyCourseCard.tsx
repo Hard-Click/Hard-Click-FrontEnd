@@ -20,7 +20,7 @@ interface MyCourseCardProps {
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import LoadingModal from '@/components/ui/loadingModal';
 import { deleteCourse, publishCourse } from '../services';

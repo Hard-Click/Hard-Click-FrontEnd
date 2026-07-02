@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import MyCourseCard from '@/features/instructor/components/MyCourseCard';
 import MyCoursesFilterBar from '@/features/instructor/components/MyCoursesFilterBar';
 

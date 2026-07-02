@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { addToCart, enrollCourse } from '@/features/courses/actions';
 import { removeWishlistAction } from '../actions';
 import WishlistCard from './WishlistCard';

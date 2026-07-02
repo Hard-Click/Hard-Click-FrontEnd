@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import type { AdminNoticeRow } from '@/mocks/admin.mock';
 import AdminNoticeFormModal from './AdminNoticeFormModal';

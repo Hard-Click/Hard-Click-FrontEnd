@@ -6,11 +6,12 @@ const createJestConfig = nextJest({ dir: './' });
 const config = {
   testEnvironment: 'jest-environment-jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-  // Playwright(E2E) 스펙은 jest가 실행하지 않도록 제외 (e2e/*.spec.ts는 @playwright/test 전용)
+  // Playwright(E2E) 스펙은 jest가 실행하지 않도록 제외 (e2e/·e2e-mock/*.spec.ts는 @playwright/test 전용)
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/',
     '<rootDir>/.next/',
     '<rootDir>/e2e/',
+    '<rootDir>/e2e-mock/',
   ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1', // @/ → src/ 별칭

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import AdminUserFilterBar from './AdminUserFilterBar';
 import AdminMemberTable from './AdminMemberTable';
 import MemberStatusChangeModal from './MemberStatusChangeModal';

@@ -17,7 +17,7 @@ export default async function AdminDashboardPage() {
         <div className="mb-8 flex items-center gap-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-[26px] bg-[#2F5DAA]">
             <Image
-              src="/icons/adminDashboard.svg"
+              src="/icons/AdminDashboard.svg"
               alt="admin"
               width={36}
               height={36}

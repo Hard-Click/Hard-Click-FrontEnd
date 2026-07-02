@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import SelectDropdown from '@/components/ui/SelectDropdown';
 import ConfirmModal from '@/components/ui/confirmModal';
 import LoadingModal from '@/components/ui/loadingModal';
