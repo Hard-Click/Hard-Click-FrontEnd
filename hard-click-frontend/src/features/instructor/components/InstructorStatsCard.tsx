@@ -1,55 +1,31 @@
 import Image from 'next/image';
+import type { InstructorDashboardStats } from '../server';
 
-interface StatItem {
+interface StatConfig {
   icon: string;
   iconBg: string;
   label: string;
-  value: number;
+  key: keyof InstructorDashboardStats;
   valueColor: string;
 }
 
-const STATS: StatItem[] = [
-  {
-    icon: '/icons/bookIcon.svg',
-    iconBg: '#EFF6FF',
-    label: '전체 강의',
-    value: 12,
-    valueColor: '#2F5DAA',
-  },
-  {
-    icon: '/icons/openEye.svg',
-    iconBg: '#F0FDF4',
-    label: '공개 강의',
-    value: 9,
-    valueColor: '#16A34A',
-  },
-  {
-    icon: '/icons/closeEye.svg',
-    iconBg: '#FFF7ED',
-    label: '숨김 강의',
-    value: 3,
-    valueColor: '#EA580C',
-  },
-  {
-    icon: '/icons/studentsBlueIcon.svg',
-    iconBg: '#EFF6FF',
-    label: '수강생 수',
-    value: 245,
-    valueColor: '#2F5DAA',
-  },
-  {
-    icon: '/icons/documentIcon.svg',
-    iconBg: '#EFF6FF',
-    label: '퀴즈 수',
-    value: 36,
-    valueColor: '#2F5DAA',
-  },
+// 표시 설정(아이콘·색·라벨)만 상수로 두고, 값은 API(stats)에서 채운다.
+const STAT_CONFIG: StatConfig[] = [
+  { icon: '/icons/bookIcon.svg', iconBg: '#EFF6FF', label: '전체 강의', key: 'totalCourses', valueColor: '#2F5DAA' },
+  { icon: '/icons/openEye.svg', iconBg: '#F0FDF4', label: '공개 강의', key: 'publishedCourses', valueColor: '#16A34A' },
+  { icon: '/icons/closeEye.svg', iconBg: '#FFF7ED', label: '숨김 강의', key: 'hiddenCourses', valueColor: '#EA580C' },
+  { icon: '/icons/studentsBlueIcon.svg', iconBg: '#EFF6FF', label: '수강생 수', key: 'totalStudents', valueColor: '#2F5DAA' },
+  { icon: '/icons/documentIcon.svg', iconBg: '#EFF6FF', label: '퀴즈 수', key: 'quizCount', valueColor: '#2F5DAA' },
 ];
 
-export default function InstructorStatsCard() {
+interface InstructorStatsCardProps {
+  stats: InstructorDashboardStats;
+}
+
+export default function InstructorStatsCard({ stats }: InstructorStatsCardProps) {
   return (
     <div className="grid grid-cols-5 gap-4">
-      {STATS.map((stat) => (
+      {STAT_CONFIG.map((stat) => (
         <div
           key={stat.label}
           className="rounded-2xl border border-[#E2E8F0] bg-white px-5 py-4 shadow-sm"
@@ -64,7 +40,7 @@ export default function InstructorStatsCard() {
             <span className="text-sm text-[#64748B]">{stat.label}</span>
           </div>
           <p className="text-3xl font-bold" style={{ color: stat.valueColor }}>
-            {stat.value.toLocaleString()}
+            {stats[stat.key].toLocaleString()}
           </p>
         </div>
       ))}
