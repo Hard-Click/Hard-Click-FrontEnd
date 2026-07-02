@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import ReportStatusBadge from './ReportStatusBadge';
 import AdminReportDetailModal from './AdminReportDetailModal';
@@ -25,12 +25,15 @@ interface Props {
   reports: ReportItem[];
   onProcessReport: (report: ReportItem, memo?: string) => void;
   openReportKey?: string;
+  /** 게시물/리뷰 "신고 관리로 돌아가기" 복귀 → 해당 신고 상세 모달을 자동으로 다시 연다 */
+  reopenModal?: boolean;
 }
 
 export default function AdminReportTable({
   reports,
   onProcessReport,
   openReportKey,
+  reopenModal,
 }: Props) {
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
   const [memoReport, setMemoReport] = useState<ReportItem | null>(null);
@@ -43,6 +46,22 @@ export default function AdminReportTable({
     setLoadingId(null);
     setSelectedReport(enriched);
   };
+
+  // openReport 딥링크 진입 시 해당 신고 상세 모달 자동 오픈.
+  // 대시보드 상세보기 = 하이라이트 + 모달 / 게시물 복귀(reopen=1) = 모달만.
+  // setState는 fetch 완료 후(then)라 sync-setState-in-effect에 걸리지 않는다.
+  const reopenedRef = useRef(false);
+  useEffect(() => {
+    if (!openReportKey || reopenedRef.current) return;
+    const target = reports.find(
+      (r) => `${r.targetType}-${r.targetId}` === openReportKey
+    );
+    if (!target) return;
+    reopenedRef.current = true;
+    void fetchReportDetailAction(target.reportId, target).then(
+      setSelectedReport
+    );
+  }, [openReportKey, reports]);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white">
@@ -88,7 +107,9 @@ export default function AdminReportTable({
           ) : (
             reports.map((report) => {
               const isPending = report.status === 'PENDING';
+              // 복귀(reopen) 진입은 모달을 여는 흐름이라 하이라이트는 대시보드 딥링크에서만
               const isHighlighted =
+                !reopenModal &&
                 `${report.targetType}-${report.targetId}` === openReportKey;
               return (
                 <tr
