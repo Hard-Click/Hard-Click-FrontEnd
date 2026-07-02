@@ -59,14 +59,14 @@ export function getLatestReason(item: ReportItem): string {
   return item.reasonStats?.[0]?.reason ?? '-';
 }
 
+/** BE ReportType enum 7개와 1:1 — 신고 모달의 REASON_TO_ENUM(actions.ts) 역방향과 일치 */
 export const REASON_LABEL: Record<string, string> = {
-  SPAM: '스팸/광고',
-  OBSCENE: '음란 행위',
-  ABUSE: '욕설 및 비하',
-  DEFAMATION: '명예훼손',
-  FLOOD: '도배',
-  INAPPROPRIATE: '부적절한 언어',
-  SLANDER: '비방',
+  ABUSIVE_LANGUAGE: '욕설/비속어',
+  ABUSE: '비방/명예훼손',
+  OBSCENE: '음란물',
+  SPAM: '스팸/도배',
+  COMMERCIAL: '상업적 광고',
+  PRIVACY: '개인정보 노출',
   OTHER: '기타',
 };
 
