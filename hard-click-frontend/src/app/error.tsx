@@ -16,6 +16,7 @@ export default function Error({
     error.message?.includes('인증') || error.message?.includes('401') || error.message?.includes('Unauthorized');
 
   useEffect(() => {
+    console.error(error);
     Sentry.captureException(error);
   }, [error]);
 

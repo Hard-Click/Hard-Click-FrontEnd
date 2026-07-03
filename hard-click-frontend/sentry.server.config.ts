@@ -1,21 +1,9 @@
-// This file configures the initialization of Sentry on the server.
-// The config you add here will be used whenever the server handles a request.
-// https://docs.sentry.io/platforms/javascript/guides/nextjs/
-
 import * as Sentry from "@sentry/nextjs";
 
 Sentry.init({
-  dsn: "https://6ec2955d30a15377fee6a000cf4a695d@o4511672295882752.ingest.us.sentry.io/4511672651743232",
+  dsn: process.env.SENTRY_DSN,
 
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1,
 
-  // Enable logs to be sent to Sentry
   enableLogs: true,
-
-  dataCollection: {
-    // To disable sending user data and HTTP bodies, uncomment the lines below. For more info visit:
-    // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#dataCollection
-    // userInfo: false,
-    // httpBodies: [],
-  },
 });
