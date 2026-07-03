@@ -19,7 +19,12 @@ export default function GlobalError({
     <html lang="ko">
       <body>
         <NextError statusCode={0} />
-        <button onClick={reset}>다시 시도</button>
+        <button
+          onClick={reset}
+          style={{ display: 'block', margin: '16px auto', padding: '8px 20px', cursor: 'pointer' }}
+        >
+          다시 시도
+        </button>
       </body>
     </html>
   );
