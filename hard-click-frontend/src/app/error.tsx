@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import * as Sentry from '@sentry/nextjs';
 
 export default function Error({
   error,
@@ -15,7 +16,7 @@ export default function Error({
     error.message?.includes('인증') || error.message?.includes('401') || error.message?.includes('Unauthorized');
 
   useEffect(() => {
-    console.error(error);
+    Sentry.captureException(error);
   }, [error]);
 
   return (
