@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import * as Sentry from '@sentry/nextjs';
 
 export default function Error({
   error,
@@ -16,6 +17,10 @@ export default function Error({
 
   useEffect(() => {
     console.error(error);
+    // error.digest가 있으면 서버에서 onRequestError로 이미 캡처됨 → 중복 방지
+    if (!error.digest) {
+      Sentry.captureException(error);
+    }
   }, [error]);
 
   return (
