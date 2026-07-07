@@ -52,10 +52,11 @@ export async function getMyCompletedCoursesServer(): Promise<CompletedCourse[]> 
   return res.success && res.data ? res.data : [];
 }
 
-/** 사용자 관리 — 전체 회원 목록 서버 조회 (GET /api/admin/members, 관리자) */
+/** 사용자 관리 — 전체 회원 목록 서버 조회 (GET /api/admin/members, 관리자)
+ * ⚠️ BE 기본 size=3이라 명시적으로 최대치(size=100) 요청. 100명 초과 시 서버 페이지네이션 연동 필요. */
 export async function getAdminUsersServer(): Promise<AdminUser[]> {
   const res = await serverApi.get<AdminUserListApiResponse>(
-    '/api/admin/members',
+    '/api/admin/members?page=0&size=100',
   );
   if (res.success && res.data) return res.data.content.map(toAdminUser);
   if (USE_MOCK) return mockAdminUserList.content.map(toAdminUser);

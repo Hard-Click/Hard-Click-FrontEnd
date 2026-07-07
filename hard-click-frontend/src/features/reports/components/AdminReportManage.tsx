@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { useNotifications } from '@/features/notifications/NotificationProvider';
 import AdminReportFilterBar from './AdminReportFilterBar';
 import AdminReportTable from './AdminReportTable';
 import Pagination from '@/features/admin/components/Pagination';
@@ -22,10 +24,42 @@ export default function AdminReportManage({
   /** 게시물/리뷰의 "신고 관리로 돌아가기" 복귀(reopen=1) → 상세 모달 자동 오픈 */
   reopen?: boolean;
 }) {
+  const router = useRouter();
+  const { notifications } = useNotifications();
+
   // 목록 원본 state (처리의 source of truth)
   const [reports, setReports] = useState<ReportItem[]>(initialReports);
   const [status, setStatus] = useState<ReportStatusFilter>('ALL');
   const [target, setTarget] = useState<ReportTargetFilter>('ALL');
+
+  // 서버가 새 목록을 내려주면(router.refresh 등) 동기화 — NotificationProvider와 동일 패턴.
+  // (props로 파생된 state를 prop 변경 시 갱신 — effect 아닌 렌더 중 처리)
+  const [seed, setSeed] = useState(initialReports);
+  if (seed !== initialReports) {
+    setSeed(initialReports);
+    setReports(initialReports);
+  }
+
+  // 새 신고 알림(SSE)이 오면 목록을 재조회한다. NotificationProvider는 종(bell) 데이터만
+  // 갱신하고 이 테이블의 reports state는 건드리지 않으므로, REPORT 알림의 최댓값 id가
+  // 커지면 router.refresh()로 이 페이지(Server Component)를 다시 조회해 위 seed로 반영한다.
+  // (BE 목록이 항상 최신순이라는 보장이 없어 첫 항목만 보는 find()는 순서에 취약 — max로 비교)
+  const latestReportNotiId = useRef<number | null>(null);
+  useEffect(() => {
+    const reportNotiIds = notifications
+      .filter((n) => n.type === 'REPORT')
+      .map((n) => n.notiId);
+    if (reportNotiIds.length === 0) return;
+    const maxId = Math.max(...reportNotiIds);
+    if (latestReportNotiId.current === null) {
+      latestReportNotiId.current = maxId; // 최초 마운트 — 기준값만 저장, 새로고침 X
+      return;
+    }
+    if (maxId > latestReportNotiId.current) {
+      latestReportNotiId.current = maxId;
+      router.refresh();
+    }
+  }, [notifications, router]);
 
   const filtered = useMemo(
     () =>
