@@ -55,8 +55,9 @@ export default function SelectDropdown({
     : placeholder;
 
   // 가장 긴 옵션으로 버튼 최소 너비 고정 (선택 변경 시 너비 점프 방지)
+  // label이 undefined인 옵션(BE 미제공 값 등)이 섞여도 안 터지게 방어 — 공용 프리미티브.
   const longestLabel = options.reduce(
-    (max, opt) => (opt.label.length > max.length ? opt.label : max),
+    (max, opt) => ((opt.label ?? '').length > max.length ? opt.label : max),
     placeholder,
   );
 

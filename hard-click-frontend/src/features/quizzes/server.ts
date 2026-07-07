@@ -148,10 +148,12 @@ export async function getQuizScoresServer(
  * 관리자 전용 퀴즈 조회 — GET /api/admin/quizzes/*
  * ───────────────────────────────────────────────────────────────────────── */
 
-/** GET /api/admin/quizzes/courses 응답 */
+/** GET /api/admin/quizzes/courses 응답 (라이브 검증 2026-07-07).
+ * ⚠️ BE 필드명: title→courseTitle, status→visible(boolean), createdAt→registeredAt.
+ *    과목(subjectName)·평점·가격은 이 엔드포인트에 미제공 → 빈 값/기본값. */
 interface ApiAdminQuizCourseItem {
   courseId: number;
-  title: string;
+  courseTitle: string;
   instructorName?: string;
   subjectName?: string;
   studentCount?: number;
@@ -159,8 +161,8 @@ interface ApiAdminQuizCourseItem {
   reviewCount?: number;
   price?: number;
   priceType?: string;
-  status?: string;
-  createdAt?: string;
+  visible?: boolean;
+  registeredAt?: string;
 }
 interface ApiAdminQuizCoursesResponse {
   courses: ApiAdminQuizCourseItem[];
@@ -176,7 +178,7 @@ export async function getAdminQuizCoursesServer(): Promise<AdminCourseManageRow[
   if (!res.success || !Array.isArray(res.data?.courses)) return [];
   return res.data.courses.map((c) => ({
     id: c.courseId,
-    title: c.title,
+    title: c.courseTitle,
     subject: c.subjectName ?? '',
     instructor: c.instructorName ?? '',
     studentCount: c.studentCount ?? 0,
@@ -184,8 +186,8 @@ export async function getAdminQuizCoursesServer(): Promise<AdminCourseManageRow[
     reviewCount: c.reviewCount ?? 0,
     price: c.price ?? 0,
     isFree: c.priceType === 'FREE',
-    status: c.status === 'PUBLISHED' ? 'PUBLISHED' : 'HIDDEN',
-    createdAt: c.createdAt?.split('T')[0] ?? '',
+    status: c.visible ? 'PUBLISHED' : 'HIDDEN',
+    createdAt: c.registeredAt?.split('T')[0] ?? '',
   }));
 }
 
