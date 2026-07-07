@@ -20,20 +20,18 @@ export default function AdminQuizCourseManage({
   const subjectOptions = useMemo(
     () => [
       { label: '전체', value: '' },
-      ...Array.from(new Set(courses.map((c) => c.subject))).map((s) => ({
-        label: s,
-        value: s,
-      })),
+      ...Array.from(new Set(courses.map((c) => c.subject).filter(Boolean))).map(
+        (s) => ({ label: s, value: s })
+      ),
     ],
     [courses]
   );
   const instructorOptions = useMemo(
     () => [
       { label: '전체', value: '' },
-      ...Array.from(new Set(courses.map((c) => c.instructor))).map((i) => ({
-        label: i,
-        value: i,
-      })),
+      ...Array.from(
+        new Set(courses.map((c) => c.instructor).filter(Boolean))
+      ).map((i) => ({ label: i, value: i })),
     ],
     [courses]
   );

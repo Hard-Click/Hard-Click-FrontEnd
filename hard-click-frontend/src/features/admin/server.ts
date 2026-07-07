@@ -92,8 +92,8 @@ function toCourseManageRow(item: CourseListApiItem): AdminCourseManageRow {
   return {
     id: item.courseId,
     title: item.title,
-    subject: SUBJECTS.find((s) => s.value === item.subjectName)?.name ?? item.subjectName,
-    instructor: item.instructorName,
+    subject: SUBJECTS.find((s) => s.value === item.subjectName)?.name ?? item.subjectName ?? '',
+    instructor: item.instructorName ?? '',
     studentCount: item.studentCount,
     rating: item.averageRating,
     reviewCount: item.reviewCount,
@@ -112,7 +112,7 @@ export async function fetchAllAdminCourses(): Promise<AdminCourseManageRow[]> {
     const res = await serverApi.get<CourseListApiResponse>(
       `/api/courses?page=${page}&size=50`,
     );
-    if (!res.success || !res.data?.content.length) break;
+    if (!res.success || !res.data?.content?.length) break;
     all.push(...res.data.content.map(toCourseManageRow));
     if (page + 1 >= (res.data.totalPages ?? 1)) break;
     page++;
