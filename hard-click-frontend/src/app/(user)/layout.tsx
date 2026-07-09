@@ -27,8 +27,6 @@ export default function UserLayout({
   const isAuthPage = pathname?.startsWith('/auth') ?? false;
   // 강의 시청 페이지(/learning/*)는 inline 타이머 위젯을 쓰므로 floating panel 제외
   const isLearningPage = pathname?.startsWith('/learning') ?? false;
-  // 채팅방(/chat/*)은 전체화면 카톡식 레이아웃이라 floating 타이머가 겹쳐 → 제외
-  const isChatPage = pathname?.startsWith('/chat') ?? false;
 
   // 인증 상태는 서버(루트 layout의 getCurrentUser)가 쿠키로 계산해 Context로 내려줌
   const { isLoggedIn, role } = useAuth();
@@ -41,9 +39,7 @@ export default function UserLayout({
       {!isAuthPage &&
         (role === 'INSTRUCTOR' ? <InstructorHeader /> : <UserHeader />)}
       {blocked ? <NotFoundView code="401" /> : children}
-      {!isAuthPage && !isLearningPage && !isChatPage && isLoggedIn && (
-        <StudyTimerPanel />
-      )}
+      {!isAuthPage && !isLearningPage && isLoggedIn && <StudyTimerPanel />}
     </>
   );
 }
