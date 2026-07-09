@@ -150,26 +150,28 @@ export default function CommunityListControls({
           </div>
         )}
 
-        {/* 아랫줄: 정렬 */}
-        <div className="mt-3 flex items-center gap-2">
-          {SORT_OPTIONS.map((option) => {
-            const isActive = sortType === option;
-            return (
-              <button
-                key={option}
-                type="button"
-                onClick={() => pushWith({ sort: option })}
-                className={`h-10 whitespace-nowrap rounded-xl px-3 text-sm font-semibold transition ${
-                  isActive
-                    ? 'bg-[#2F5DAA] text-white'
-                    : 'bg-[#F8FAFC] text-[#4B5563]'
-                }`}
-              >
-                {option}
-              </button>
-            );
-          })}
-        </div>
+        {/* 아랫줄: 정렬 (스터디모집은 정렬 미노출) */}
+        {!isStudyTab && (
+          <div className="mt-3 flex items-center gap-2">
+            {SORT_OPTIONS.map((option) => {
+              const isActive = sortType === option;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => pushWith({ sort: option })}
+                  className={`h-10 whitespace-nowrap rounded-xl px-3 text-sm font-semibold transition ${
+                    isActive
+                      ? 'bg-[#2F5DAA] text-white'
+                      : 'bg-[#F8FAFC] text-[#4B5563]'
+                  }`}
+                >
+                  {option}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     </>
   );
