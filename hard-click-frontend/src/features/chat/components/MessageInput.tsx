@@ -50,7 +50,8 @@ export default function MessageInput({
         disabled={disabled}
         onChange={(e) => handleChange(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
+          // IME 조합 중(한글 음절 확정용) Enter는 전송 제외 — 안 그러면 "안녕하"가 미완성으로 전송됨.
+          if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
             e.preventDefault();
             submit();
           }

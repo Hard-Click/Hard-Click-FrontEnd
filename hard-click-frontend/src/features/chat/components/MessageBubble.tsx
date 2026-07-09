@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { ChatMessage } from '../types';
 import { formatMessageTime, getInitial } from '../utils';
 import { maskName } from '@/lib/formatter';
@@ -9,7 +10,8 @@ import CrownIcon from './CrownIcon';
  * grouped=연속 같은 발신자 → 아바타·이름 숨기고 붙여서 표시(카톡 그룹핑).
  * 방장 메시지는 앰버 아바타·이름 + 왕관 + "방장" 뱃지.
  */
-export default function MessageBubble({
+// memo: 무한스크롤로 messages 배열 참조가 바뀌어도, message 객체는 불변 업데이트라 기존 말풍선 재렌더 차단.
+function MessageBubble({
   message,
   isMine,
   isHost,
@@ -79,3 +81,5 @@ export default function MessageBubble({
     </li>
   );
 }
+
+export default memo(MessageBubble);
