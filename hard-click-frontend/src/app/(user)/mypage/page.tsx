@@ -12,6 +12,7 @@ import {
   getLessonsGrassServer,
 } from '@/features/grass/server';
 import { getDailyStudyStatsServer } from '@/features/studyTimers/server';
+import { getMyChatRoomsServer } from '@/features/chat/server';
 
 /** 잔디 히트맵 표시 기준 연·월 (MyPageContent의 buildMonthHeatmap과 동일하게 유지) */
 const HEATMAP_YEAR = 2026;
@@ -40,6 +41,7 @@ export default async function MyPage() {
     dailyStats,
     studyTimeGrass,
     lessonsGrass,
+    chatRooms,
   ] = await Promise.all([
     getMyProfileServer().catch(() => null),
     getMyCoursesServer().catch(() => []),
@@ -57,6 +59,7 @@ export default async function MyPage() {
     getLessonsGrassServer({ year: HEATMAP_YEAR, month: HEATMAP_MONTH }).catch(
       () => [],
     ), // 라이브 /api/grass/lessons (BE 200↔500 출렁 → 500이면 빈 셀)
+    getMyChatRoomsServer().catch(() => []), // 내 채팅방 목록 (chat mock/seam)
   ]);
 
   const inProgress = courses.filter((c) => c.progressRate < 100);
@@ -75,6 +78,7 @@ export default async function MyPage() {
       studyTimeGrass={studyTimeGrass}
       lessonsGrass={lessonsGrass}
       initialReviewedIds={initialReviewedIds}
+      chatRooms={chatRooms}
     />
   );
 }
