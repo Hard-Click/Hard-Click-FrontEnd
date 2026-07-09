@@ -158,7 +158,7 @@ export interface PostListApiResponse {
   totalCount: number;
 }
 
-// GET /api/studies → StudyPageResponse (스터디는 게시판과 별도 리소스)
+// GET /api/study → StudyPageResponse (스터디는 게시판과 별도 리소스)
 export interface StudyItemApiResponse {
   groupId: number;
   title: string;

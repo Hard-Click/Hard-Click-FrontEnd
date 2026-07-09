@@ -59,10 +59,10 @@ export async function createPostAction(formData: FormData) {
     return { success: false, message: '내용을 입력해주세요.' };
   }
 
-  // 스터디모집은 별도 API (/api/studies) 호출
+  // 스터디모집은 별도 API (/api/study) 호출
   if (body.boardType === 'STUDY') {
     try {
-      const res = await fetch(`${BACKEND}/api/studies`, {
+      const res = await fetch(`${BACKEND}/api/study`, {
         method: 'POST',
         headers: { ...(await getAuthHeader()), 'content-type': 'application/json' },
         body: JSON.stringify({

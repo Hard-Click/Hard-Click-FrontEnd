@@ -69,7 +69,7 @@ export async function getCommunityPosts(
     };
   }
 
-  // 스터디는 게시판(/api/boards)과 별도 리소스 → /api/studies로 조회.
+  // 스터디는 게시판(/api/boards)과 별도 리소스 → /api/study로 조회.
   // ⚠️ 이 엔드포인트는 subject/page/size만 지원하고 keyword(검색)/sort(정렬)는 미지원.
   // 따라서 스터디 탭에서는 검색어/정렬이 서버에 전달되지 않는다.
   // (BE가 keyword/sort를 지원하면 여기서 전달하고, 계속 미지원이면 스터디 탭 UI에서
@@ -80,14 +80,14 @@ export async function getCommunityPosts(
     if (subjectCode) studyParams.set('subject', subjectCode);
     return mapOk(
       await serverApi.get<StudyListApiResponse>(
-        `/api/studies?${studyParams.toString()}`
+        `/api/study?${studyParams.toString()}`
       ),
       toStudyListResponse
     );
   }
 
   // ⚠️ BE 목록 엔드포인트(/api/boards/**/posts)는 과목(subject) 필터를 지원하지 않는다.
-  // (Swagger 파라미터: boardType·sort·keyword·page뿐. 스터디 /api/studies?subject=만 서버 필터 지원.)
+  // (Swagger 파라미터: boardType·sort·keyword·page뿐. 스터디 /api/study?subject=만 서버 필터 지원.)
   // 따라서 질문게시판 과목 필터는 여기서 전체 페이지를 받아 subject enum 코드로 거른 뒤
   // 재페이지네이션한다. (BE가 필터를 지원하면 subjectCode를 쿼리로 넘기고 이 분기를 제거하면 됨)
   if (boardType === 'QUESTION' && subjectCode) {
