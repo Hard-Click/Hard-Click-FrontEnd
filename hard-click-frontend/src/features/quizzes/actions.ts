@@ -6,6 +6,7 @@ import { isMock } from '@/mocks/config';
 import {
   getCourseSectionsServer,
   getInstructorQuizDetailServer,
+  getAdminQuizDetailServer,
   getQuizFormMetaServer,
 } from './server';
 import type { QuizFormPayload, Quiz } from './types';
@@ -71,6 +72,14 @@ export async function getInstructorQuizDetailAction(
 ): Promise<Quiz | null> {
   if (!Number.isInteger(quizId) || quizId <= 0) return null;
   return getInstructorQuizDetailServer(quizId);
+}
+
+/** ① 관리자 수정 모달용 — 관리자 퀴즈 상세 조회(admin 패밀리). 관리자 페이지가 detailAction으로 명시 전달. */
+export async function getAdminQuizDetailAction(
+  quizId: number,
+): Promise<Quiz | null> {
+  if (!Number.isInteger(quizId) || quizId <= 0) return null;
+  return getAdminQuizDetailServer(quizId);
 }
 
 /** ②③ 등록 폼 메타 — 선택 강의의 실제 주차(섹션) + 이미 퀴즈 있는 주차. 클라가 강의 선택 시 호출. */

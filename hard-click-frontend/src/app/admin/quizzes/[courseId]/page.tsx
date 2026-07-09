@@ -11,6 +11,7 @@ import {
   createAdminQuizAction,
   updateAdminQuizAction,
   deleteAdminQuizAction,
+  getAdminQuizDetailAction,
 } from '@/features/quizzes/actions';
 import QuizListContent from '@/features/quizzes/components/QuizListContent';
 import QuizCreateButton from '@/features/quizzes/components/QuizCreateButton';
@@ -98,6 +99,7 @@ export default async function AdminCourseQuizzesPage({
         deleteAction={deleteAdminQuizAction}
         createAction={createAdminQuizAction}
         updateAction={updateAdminQuizAction}
+        detailAction={getAdminQuizDetailAction}
       />
     </div>
   );

@@ -114,17 +114,9 @@ interface ApiInstructorQuizDetail {
     options: { optionId: number; optionText: string; correct: boolean }[];
   }[];
 }
-export async function getInstructorQuizDetailServer(
-  quizId: number,
-): Promise<Quiz | null> {
-  if (isMock('quizzes')) {
-    return mockQuizzes.find((q) => q.quizId === quizId) ?? null;
-  }
-  const res = await serverApi.get<ApiInstructorQuizDetail>(
-    `/api/instructor/quizzes/${quizId}`,
-  );
-  if (!res.success || !res.data) return null;
-  const d = res.data;
+/** 퀴즈 상세 응답 → Quiz(문항 포함) 매퍼. 정답 인덱스는 options[].correct 우선, 없으면 correctOptionId 매칭.
+ *  강사/관리자 상세가 동일 shape라 공유. */
+function toQuizDetail(d: ApiInstructorQuizDetail): Quiz {
   return {
     quizId: d.quizId,
     courseId: d.courseId,
@@ -134,6 +126,8 @@ export async function getInstructorQuizDetailServer(
     createdDate: d.createdAt ? d.createdAt.split('T')[0] : '',
     questions: d.questions.map((q) => {
       const byFlag = q.options.findIndex((o) => o.correct);
+      // 정상 응답은 correct=true 옵션 1개라 byFlag>=0. 둘 다 실패 시 -1(정답 미선택으로 열림,
+      // 저장 시 재선택 필요) — 빈 상태 degrade지 조용한 위조 아님. 정상 시드에선 도달 안 함.
       return {
         questionId: q.questionId,
         content: q.questionText,
@@ -146,6 +140,35 @@ export async function getInstructorQuizDetailServer(
       };
     }),
   };
+}
+
+/** 강사 퀴즈 상세(수정 진입 문항 로드) — GET /api/instructor/quizzes/{id}. */
+export async function getInstructorQuizDetailServer(
+  quizId: number,
+): Promise<Quiz | null> {
+  if (isMock('quizzes')) {
+    return mockQuizzes.find((q) => q.quizId === quizId) ?? null;
+  }
+  const res = await serverApi.get<ApiInstructorQuizDetail>(
+    `/api/instructor/quizzes/${quizId}`,
+  );
+  if (!res.success || !res.data) return null;
+  return toQuizDetail(res.data);
+}
+
+/** 관리자 퀴즈 상세 — GET /api/admin/quizzes/{id}. 관리자 수정 흐름이 강사 엔드포인트로 새지 않게 admin 패밀리 사용.
+ *  ⚠️ BE 관리자 상세 실구현 대기(AdminQuizMockController에 detail 없음) → 라이브 404 시 상위(handleEdit)서 목록값 폴백. */
+export async function getAdminQuizDetailServer(
+  quizId: number,
+): Promise<Quiz | null> {
+  if (isMock('quizzes')) {
+    return mockQuizzes.find((q) => q.quizId === quizId) ?? null;
+  }
+  const res = await serverApi.get<ApiInstructorQuizDetail>(
+    `/api/admin/quizzes/${quizId}`,
+  );
+  if (!res.success || !res.data) return null;
+  return toQuizDetail(res.data);
 }
 
 /** ②③ 등록 폼 메타 — 강의의 실제 섹션(존재하는 주차) + 이미 퀴즈가 있는 주차.

@@ -263,6 +263,13 @@ describe('QuizFormModal — 퀴즈 등록 모달 통합', () => {
       await user.click(screen.getAllByRole('button', { name: '삭제' })[1]);
       // 삭제 확인 모달
       const dialog = screen.getByRole('dialog', { name: '문제 삭제' });
+      // ③ 삭제 확인은 폼을 '대체'하지 않고 그 '위에 겹쳐' 뜬다 — 모달 열린 동안에도
+      //    폼(헤더·문제2)이 그대로 마운트돼 있어야 함. (early-return으로 폼 대체하던 옛 구현이면 실패)
+      expect(
+        screen.getByRole('heading', { name: '퀴즈 등록' }),
+      ).toBeInTheDocument();
+      expect(screen.getByText('문제 2')).toBeInTheDocument();
+
       await user.click(within(dialog).getByRole('button', { name: '삭제' }));
 
       expect(screen.queryByText('문제 2')).not.toBeInTheDocument();
