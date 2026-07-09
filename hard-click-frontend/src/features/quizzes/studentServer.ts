@@ -243,13 +243,13 @@ export async function getStudentQuizReviewServer(
     };
   }
 
-  const res = await serverApi.get<ApiQuizReport>(
-    `/api/quizzes/${quizId}/reports/me`,
-  );
+  // 리포트와 수강목록(courseTitle 브레드크럼용)은 서로 독립 → 병렬 조회로 라운드트립 단축.
+  const [res, courses] = await Promise.all([
+    serverApi.get<ApiQuizReport>(`/api/quizzes/${quizId}/reports/me`),
+    getEnrolledCoursesServer(),
+  ]);
   if (!res.success || !res.data) return null;
   const d = res.data;
-  // BE 리포트엔 courseTitle이 없어 수강목록에서 조회(브레드크럼용).
-  const courses = await getEnrolledCoursesServer();
   const courseTitle = courses.find((c) => c.courseId === courseId)?.title ?? '';
   return {
     quizId: d.quizId,
