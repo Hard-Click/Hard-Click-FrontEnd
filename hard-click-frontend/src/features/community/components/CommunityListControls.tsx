@@ -45,6 +45,38 @@ export default function CommunityListControls({
     router.push(`${pathname}?${params.toString()}`);
   }
 
+  // 과목 필터 노출 탭. 스터디모집만 검색줄과 분리해 아랫줄로 내린다(질문게시판은 한 줄 유지).
+  const showSubjectFilter =
+    activeTab === '질문게시판' || activeTab === '스터디모집';
+  const isStudyTab = activeTab === '스터디모집';
+
+  const subjectFilterControls = (
+    <>
+      <select
+        value={subject}
+        onChange={(e) => pushWith({ subject: e.target.value || undefined })}
+        className="h-11 rounded-xl border border-[#E2E8F0] bg-white px-3 text-sm text-[#4B5563] outline-none"
+      >
+        <option value="">전체 과목</option>
+        {subjects.map((s) => (
+          <option key={s.code} value={s.code}>
+            {s.name}
+          </option>
+        ))}
+      </select>
+      <button
+        type="button"
+        onClick={() => {
+          setSearch('');
+          pushWith({ keyword: undefined, subject: undefined });
+        }}
+        className="flex h-11 items-center gap-1 rounded-xl border border-[#E2E8F0] bg-white px-4 text-sm text-[#4B5563] transition hover:bg-[#F8FAFC]"
+      >
+        초기화
+      </button>
+    </>
+  );
+
   return (
     <>
       {/* filter tabs */}
@@ -80,7 +112,7 @@ export default function CommunityListControls({
 
       {/* toolbar */}
       <div className="mt-6 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm">
-        {/* 윗줄: 검색바 + 검색버튼 + (질문게시판일 때 과목필터 + 초기화) */}
+        {/* 윗줄: 검색바 + 검색버튼 + (질문게시판일 때만 과목필터 + 초기화) */}
         <div className="flex items-center gap-2">
           <div className="flex h-11 flex-1 items-center rounded-xl border border-[#E2E8F0] px-4">
             <Image
@@ -108,35 +140,15 @@ export default function CommunityListControls({
             검색
           </button>
 
-          {(activeTab === '질문게시판' || activeTab === '스터디모집') && (
-            <>
-              <select
-                value={subject}
-                onChange={(e) =>
-                  pushWith({ subject: e.target.value || undefined })
-                }
-                className="h-11 rounded-xl border border-[#E2E8F0] bg-white px-3 text-sm text-[#4B5563] outline-none"
-              >
-                <option value="">전체 과목</option>
-                {subjects.map((s) => (
-                  <option key={s.code} value={s.code}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearch('');
-                  pushWith({ keyword: undefined, subject: undefined });
-                }}
-                className="flex h-11 items-center gap-1 rounded-xl border border-[#E2E8F0] bg-white px-4 text-sm text-[#4B5563] transition hover:bg-[#F8FAFC]"
-              >
-                초기화
-              </button>
-            </>
-          )}
+          {showSubjectFilter && !isStudyTab && subjectFilterControls}
         </div>
+
+        {/* 스터디모집: 과목필터 + 초기화를 검색줄과 분리해 아랫줄로 */}
+        {showSubjectFilter && isStudyTab && (
+          <div className="mt-3 flex items-center gap-2">
+            {subjectFilterControls}
+          </div>
+        )}
 
         {/* 아랫줄: 정렬 */}
         <div className="mt-3 flex items-center gap-2">
