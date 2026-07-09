@@ -63,12 +63,7 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* 라이트 전용 앱 — OS 다크모드 자동 오버라이드 제거(랭킹·퀴즈 등 배경이 검정으로 뜨던 버그 방지). */
 
 body {
   background: var(--background);
