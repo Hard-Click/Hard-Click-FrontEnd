@@ -55,7 +55,7 @@ export interface ChatHistoryPage {
 /** 채팅방 진입 출처 — 이탈 시 돌아갈 곳(page의 returnUrl)을 결정. 오타 방지용 유니언. */
 export type ChatEntrySource = 'mypage' | 'mychats';
 
-/** 내 채팅방 목록 항목 (GET /api/users/me/chat-rooms). lastMessageAt은 표시용 상대시간. */
+/** 내 채팅방 목록 항목 (GET /api/chat/rooms/me). lastMessageAt은 표시용 상대시간. */
 export interface ChatRoomListItem {
   chatRoomId: number;
   name: string;

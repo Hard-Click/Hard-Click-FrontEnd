@@ -128,10 +128,9 @@ function toChatRoomListItem(api: ChatRoomApiItem): ChatRoomListItem {
 export async function getMyChatRoomsServer(): Promise<ChatRoomListItem[]> {
   if (isMock('chat')) return mockChatRooms.map(toChatRoomListItem);
 
-  // ── BE 연동 seam ──
-  const res = await serverApi.get<ChatRoomApiItem[]>(
-    '/api/users/me/chat-rooms',
-  );
+  // ── BE 연동 seam ── BE 확정: GET /api/chat/rooms/me (기존 /api/chat/rooms 리소스 패밀리, 이슈 #480·PR #481).
+  //   lastMessageAt 최신순·메시지 없는 방 뒤로·unreadCount는 0 고정(BE).
+  const res = await serverApi.get<ChatRoomApiItem[]>('/api/chat/rooms/me');
   if (!res.success || !res.data) {
     throw new Error('채팅방 목록을 불러오지 못했습니다.');
   }
