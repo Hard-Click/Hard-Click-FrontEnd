@@ -147,7 +147,7 @@ export default function AdminReportTable({
                   </td>
                   {/* 신고 횟수 */}
                   <td className="px-6 py-4 text-center">
-                    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-[#EF4444]/10 px-3 py-1 pr-5 text-xs font-semibold text-[#EF4444]">
+                    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-[#EF4444]/10 px-3 py-1 pr-5text-xs font-semibold text-[#EF4444]">
                       <Image
                         src="/icons/RedFlag.svg"
                         alt="신고"
@@ -176,7 +176,7 @@ export default function AdminReportTable({
                             : setMemoReport(report)
                         }
                         disabled={loadingId === report.reportId}
-                        className="flex items-center gap-1 whitespace-nowrap rounded-lg border border-[#E2E8F0] px-3 pr-6 py-1.5 text-sm font-medium text-[#2F5DAA] hover:bg-[#F8FAFC] disabled:opacity-50"
+                        className="flex items-center gap-1 whitespace-nowrap rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-sm font-medium text-[#2F5DAA] hover:bg-[#F8FAFC] disabled:opacity-50"
                       >
                         <Image
                           src={
