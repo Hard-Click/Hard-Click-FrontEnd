@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { toast } from '@/lib/toast';
@@ -9,10 +9,12 @@ import ConfirmModal from '@/components/ui/confirmModal';
 import LoadingModal from '@/components/ui/loadingModal';
 import QuizQuestionFields, { type QuestionErrors } from './QuizQuestionFields';
 import FieldError from './FieldError';
-import { createQuizAction, updateQuizAction } from '../actions';
+import {
+  createQuizAction,
+  updateQuizAction,
+  getQuizFormMetaAction,
+} from '../actions';
 import type { Quiz, QuizQuestionInput, QuizFormPayload } from '../types';
-
-const WEEK_COUNT = 12; // mock: 1~12주 (API 연동 시 강의 섹션 기반으로 교체)
 
 interface FormErrors {
   title: string;
@@ -68,6 +70,17 @@ export default function QuizFormModal({
       )?.instructor ?? ''
   );
   const [week, setWeek] = useState<number>(initialData?.week ?? 0);
+  // ②③ 등록: 강의의 실제 섹션(주차) + 이미 퀴즈 있는 주차 — 강의 선택 시 서버에서 로드.
+  // meta.courseId로 "현재 선택 강의 기준 로드 완료"를 파생 판별(별도 loading state 없이 → effect 내 동기 setState 회피).
+  const [meta, setMeta] = useState<{
+    courseId: number;
+    weeks: number[];
+    takenWeeks: number[];
+  }>(() => ({
+    courseId: 0,
+    weeks: [],
+    takenWeeks: takenWeeksByCourse[courseId] ?? [],
+  }));
   const [questions, setQuestions] = useState<QuizQuestionInput[]>(
     initialData
       ? initialData.questions.map((q) => ({
@@ -113,16 +126,34 @@ export default function QuizFormModal({
       })),
     [visibleCourses]
   );
-  // 등록: 1주 1퀴즈 — 이미 퀴즈 있는 주차 제외 / 수정: 자기 주차 고정(변경 불가)
+  // 강의 선택 시 실제 섹션(주차)·이미 쓴 주차 로드 (등록 모드). setState는 async 콜백에서만.
+  useEffect(() => {
+    if (mode !== 'create' || courseId <= 0) return;
+    let cancelled = false;
+    getQuizFormMetaAction(courseId).then((m) => {
+      if (!cancelled) setMeta({ courseId, ...m });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [courseId, mode]);
+  // 로딩 = 선택 강의 기준 meta가 아직 안 옴 (파생, 동기 setState 없음).
+  const metaLoading =
+    mode === 'create' && courseId > 0 && meta.courseId !== courseId;
+
+  // 등록: 강의 실제 섹션 주차 중 아직 퀴즈 없는 것 / 수정: 자기 주차 고정(변경 불가)
   const weekOptions =
     mode === 'edit' && initialData
       ? [{ label: `${initialData.week}주`, value: String(initialData.week) }]
-      : Array.from({ length: WEEK_COUNT }, (_, i) => i + 1)
-          .filter((w) => !(takenWeeksByCourse[courseId] ?? []).includes(w))
+      : meta.weeks
+          .filter((w) => !meta.takenWeeks.includes(w))
           .map((w) => ({ label: `${w}주`, value: String(w) }));
-  // 강의 선택했는데 모든 주차가 이미 차 있으면 → 등록 가능한 주차 없음
+  // 강의 선택했는데 등록 가능한 주차(섹션)가 없으면 안내
   const noWeeksAvailable =
-    mode === 'create' && courseId > 0 && weekOptions.length === 0;
+    mode === 'create' &&
+    courseId > 0 &&
+    !metaLoading &&
+    weekOptions.length === 0;
 
   const isFormValid =
     title.trim() !== '' &&
@@ -266,25 +297,8 @@ export default function QuizFormModal({
       />
     );
   }
-  if (deletingQuestionIdx !== null) {
-    return (
-      <ConfirmModal
-        icon="/icons/trashIcon.svg"
-        iconBgColor="rgba(185, 28, 28, 0.1)"
-        title="문제 삭제"
-        description="해당 문제를 삭제하시겠습니까?"
-        cancelText="취소"
-        confirmText="삭제"
-        onCancel={() => setDeletingQuestionIdx(null)}
-        onConfirm={() => {
-          removeQuestion(deletingQuestionIdx);
-          setDeletingQuestionIdx(null);
-        }}
-      />
-    );
-  }
-
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div
         role="dialog"
@@ -376,12 +390,18 @@ export default function QuizFormModal({
                 value={week > 0 ? String(week) : ''}
                 options={weekOptions}
                 onChange={(v) => setWeek(Number(v))}
-                disabled={mode === 'edit' || courseId === 0 || noWeeksAvailable}
+                disabled={
+                  mode === 'edit' ||
+                  courseId === 0 ||
+                  noWeeksAvailable ||
+                  metaLoading
+                }
                 fullWidth
               />
               {noWeeksAvailable ? (
                 <p className="mt-1.5 text-sm text-[#B91C1C]">
-                  이 강의는 모든 주차에 퀴즈가 있어 등록할 수 없습니다.
+                  등록 가능한 주차가 없습니다 (모든 섹션에 퀴즈가 있거나 섹션이
+                  없어요).
                 </p>
               ) : (
                 <FieldError message={errors?.week} />
@@ -441,5 +461,22 @@ export default function QuizFormModal({
         </div>
       </div>
     </div>
+    {/* 문제 삭제 확인 — 폼을 대체하지 않고 그 위에 겹쳐 렌더(ConfirmModal이 뒤 z-50 폼 위에 쌓임) */}
+    {deletingQuestionIdx !== null && (
+      <ConfirmModal
+        icon="/icons/trashIcon.svg"
+        iconBgColor="rgba(185, 28, 28, 0.1)"
+        title="문제 삭제"
+        description="해당 문제를 삭제하시겠습니까?"
+        cancelText="취소"
+        confirmText="삭제"
+        onCancel={() => setDeletingQuestionIdx(null)}
+        onConfirm={() => {
+          removeQuestion(deletingQuestionIdx);
+          setDeletingQuestionIdx(null);
+        }}
+      />
+    )}
+    </>
   );
 }
