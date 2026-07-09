@@ -109,14 +109,17 @@ export default function QuizResultSummary({
         {previousScore === null || improvement === null ? (
           <p>비교할 이전 데이터가 없습니다</p>
         ) : (
-          <p>
-            이전 퀴즈: {previousScore}점 · 지난 주보다{' '}
-            <span className={`font-semibold ${impColor}`}>
-              {Math.abs(improvement)}점{' '}
-              {improvement > 0 ? '상승' : improvement < 0 ? '하락' : '동일'}
-            </span>
-            했습니다
-          </p>
+          <>
+            <p>이전 퀴즈: {previousScore}점</p>
+            <p>
+              지난 주보다{' '}
+              <span className={`font-semibold ${impColor}`}>
+                {Math.abs(improvement)}점{' '}
+                {improvement > 0 ? '상승' : improvement < 0 ? '하락' : '동일'}
+              </span>
+              했습니다
+            </p>
+          </>
         )}
       </div>
     </section>
