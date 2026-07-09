@@ -14,7 +14,7 @@ import { MemberStatusProvider } from '@/features/community/MemberStatusProvider'
 const DESCRIPTION =
   'FLOWN에서 강의 수강부터 학습 기록 관리까지 한 번에. 체계적인 강의와 학습 타이머로 공부 습관을 만들어보세요.';
 export const metadata: Metadata = {
-  metadataBase: new URL('https://hard-click-front-end.vercel.app'),
+  metadataBase: new URL('https://www.flown.site'),
   title: {
     default: 'FLOWN — 학습 흐름을 관리하는 가장 쉬운 방법',
     template: '%s | FLOWN',
