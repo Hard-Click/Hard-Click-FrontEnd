@@ -2,6 +2,13 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from '@/lib/toast';
+import {
+  enterStudyChatAction,
+  joinStudyChatAction,
+} from '@/features/study/actions';
 
 interface StudyPostCardProps {
   id: number;
@@ -42,6 +49,26 @@ export default function StudyPostCard({
   actionLabel,
 }: StudyPostCardProps) {
   const isFull = currentCount >= maxCount;
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+
+  // 입장/참여 → 액션으로 chatRoomId 얻어 채팅방으로. (목록엔 chatRoomId가 없어 클릭 시 조회/참여)
+  const goChat = async (
+    action: (
+      groupId: number,
+    ) => Promise<{ success: boolean; chatRoomId?: number; message: string }>,
+  ) => {
+    if (pending) return;
+    setPending(true);
+    const res = await action(id);
+    if (res.success && res.chatRoomId) {
+      if (res.message) toast.success(res.message);
+      router.push(`/chat/${res.chatRoomId}`);
+    } else {
+      toast.error(res.message || '채팅방을 열지 못했어요.');
+      setPending(false);
+    }
+  };
 
   // 소유자 액션 영역: 관리자(onDelete)면 삭제만, 본인 글이면 수정+삭제
   const renderOwnerActions = () => {
@@ -88,13 +115,16 @@ export default function StudyPostCard({
       );
     }
     if (isMine || isJoined) {
+      // 참여 중/내 스터디 → 채팅방 입장
       return (
-        <Link
-          href={`${hrefPrefix}/${id}`}
-          className={`block ${widthClass} rounded-2xl bg-[#2F5DAA] py-3 text-center text-sm font-semibold text-white transition hover:opacity-90`}
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => goChat(enterStudyChatAction)}
+          className={`${widthClass} rounded-2xl bg-[#2F5DAA] py-3 text-center text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60`}
         >
-          입장하기
-        </Link>
+          {pending ? '여는 중…' : '입장하기'}
+        </button>
       );
     }
     if (full) {
@@ -108,13 +138,16 @@ export default function StudyPostCard({
         </button>
       );
     }
+    // 미참여 → 참여 후 채팅방 입장
     return (
-      <Link
-        href={`${hrefPrefix}/${id}`}
-        className={`block ${widthClass} rounded-2xl bg-[#2F5DAA] py-3 text-center text-sm font-semibold text-white transition hover:opacity-90`}
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => goChat(joinStudyChatAction)}
+        className={`${widthClass} rounded-2xl bg-[#2F5DAA] py-3 text-center text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60`}
       >
-        참여하기
-      </Link>
+        {pending ? '참여 중…' : '참여하기'}
+      </button>
     );
   };
 

@@ -14,14 +14,11 @@ import type { MyProfile, MyCourse, CompletedCourse } from '@/features/users/type
 import type { StudyTimeGrassCell, LessonsGrassCell } from '@/features/grass/types';
 import type { MyRankingSummary } from '@/features/rankings/types';
 import { SectionHeader } from '@/components/common/SectionHeader';
+import type { ChatRoomListItem } from '@/features/chat/types';
+import ChatRoomListCard from '@/features/chat/components/ChatRoomListCard';
 
-/* ─────────────────────────── 목 데이터 (UI 표시용 — 채팅은 모듈 5 결정 전까지 mock 유지) ─────────────────────────── */
-
-const MOCK_CHATS = [
-  { chatId: 1, name: 'React 스터디 그룹', lastMessage: '다음 주 일정 확인 부탁드립니다', lastMessageAt: '2026.05.11 10:30', unread: 3 },
-  { chatId: 2, name: 'TypeScript 질문방', lastMessage: '제네릭 관련 자료 공유합니다', lastMessageAt: '2026.05.10 18:45', unread: 0 },
-  { chatId: 3, name: 'Node.js 개발자 모임', lastMessage: '프로젝트 진행 상황 공유', lastMessageAt: '2026.05.09 14:20', unread: 5 },
-];
+/** 마이페이지 개요에서 섹션당 최대 표시 개수(나머지는 "전체보기"). 시연 시 페이지가 길어지지 않게 고정. */
+const OVERVIEW_LIMIT = 3;
 
 /* ─────────────────────────── 보조 컴포넌트 ─────────────────────────── */
 
@@ -212,6 +209,7 @@ interface MyPageContentProps {
   studyTimeGrass: StudyTimeGrassCell[];
   lessonsGrass: LessonsGrassCell[];
   initialReviewedIds: number[];
+  chatRooms: ChatRoomListItem[];
 }
 
 export default function MyPageContent({
@@ -224,6 +222,7 @@ export default function MyPageContent({
   studyTimeGrass,
   lessonsGrass,
   initialReviewedIds,
+  chatRooms,
 }: MyPageContentProps) {
   const router = useRouter();
   const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
@@ -423,7 +422,7 @@ export default function MyPageContent({
                       <p className="text-xl font-bold text-[#1F2937]">수강 중인 강의가 없습니다.</p>
                       <p className="text-sm text-[#4B5563]">새로운 강의를 둘러보고 학습을 시작해보세요.</p>
                     </div>
-                  ) : (inProgress.map((c) => (
+                  ) : (inProgress.slice(0, OVERVIEW_LIMIT).map((c) => (
                     <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-5 flex flex-col sm:flex-row gap-3 sm:gap-5 sm:items-center">
                       <div className="w-24 h-20 sm:w-40 sm:h-24 bg-[#F8FAFC] rounded-2xl flex items-center justify-center flex-shrink-0">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -483,7 +482,7 @@ export default function MyPageContent({
                       <p className="text-xl font-bold text-[#1F2937]">아직 완료한 강의가 없습니다.</p>
                       <p className="text-sm text-[#4B5563]">학습을 완료하고 리뷰를 작성해보세요.</p>
                     </div>
-                  ) : (completed.map((c) => (
+                  ) : (completed.slice(0, OVERVIEW_LIMIT).map((c) => (
                     <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-5 flex flex-col sm:flex-row gap-3 sm:gap-5 sm:items-center">
                       <Link
                         href={`/courses/${c.courseId}`}
@@ -533,27 +532,19 @@ export default function MyPageContent({
               <SectionHeader title="내 채팅방" action={<ViewAllLink href="/mypage/chats" />} />
               <SectionCard>
                 <div className="p-[33px] flex flex-col gap-4">
-                  {MOCK_CHATS.map((c) => (
-                    <div
-                      key={c.chatId}
-                      className="border border-[#E2E8F0] rounded-[20px] p-5 cursor-pointer hover:bg-[#F8FAFC] transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <p className="text-lg font-semibold leading-7 text-[#1F2937]">{c.name}</p>
-                        {c.unread > 0 && (
-                          <span className="min-w-[28px] h-7 px-2.5 bg-[#EF4444] rounded-full text-white text-sm font-bold flex items-center justify-center">
-                            {c.unread}
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-3 mb-2 text-base font-medium text-[#4B5563]">{c.lastMessage}</p>
-                      <div className="flex items-center gap-2 text-sm font-medium text-[#4B5563]">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/icons/clockGrayIcon.svg" width={14} height={14} alt="" />
-                        <span>{c.lastMessageAt}</span>
-                      </div>
-                    </div>
-                  ))}
+                  {chatRooms.length === 0 ? (
+                    <p className="py-6 text-center text-base text-[#94A3B8]">
+                      참여 중인 채팅방이 없어요.
+                    </p>
+                  ) : (
+                    chatRooms.slice(0, OVERVIEW_LIMIT).map((c) => (
+                      <ChatRoomListCard
+                        key={c.chatRoomId}
+                        room={c}
+                        from="mypage"
+                      />
+                    ))
+                  )}
                 </div>
               </SectionCard>
             </div>
