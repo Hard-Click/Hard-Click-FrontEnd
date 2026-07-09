@@ -76,7 +76,7 @@ export function toPostListResponse(r: PostListApiResponse): PostListResponse {
   return { content: list.map(toPostListItem), totalPages: r.totalPages };
 }
 
-// 스터디는 별도 리소스(/api/studies) → StudyItem을 PostListItem으로 변환
+// 스터디는 별도 리소스(/api/study) → StudyItem을 PostListItem으로 변환
 function toStudyListItem(s: StudyItemApiResponse): PostListItem {
   return {
     // 스터디 상세/수정 링크는 groupId 사용
