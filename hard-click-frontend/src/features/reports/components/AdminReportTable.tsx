@@ -54,18 +54,19 @@ export default function AdminReportTable({
   useEffect(() => {
     if (!openReportKey || reopenedRef.current) return;
     const target = reports.find(
-      (r) => `${r.targetType}-${r.targetId}` === openReportKey
+      (r) => `${r.targetType}-${r.targetId}` === openReportKey,
     );
     if (!target) return;
     reopenedRef.current = true;
     void fetchReportDetailAction(target.reportId, target).then(
-      setSelectedReport
+      setSelectedReport,
     );
   }, [openReportKey, reports]);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white">
-      <table className="w-full">
+    <div className="overflow-x-auto rounded-2xl border border-[#E2E8F0] bg-white">
+      {/* 좁은 화면에서 표가 잘리지 않도록: 최소 폭 확보 + 넘치면 가로 스크롤 */}
+      <table className="w-full min-w-[960px]">
         <thead>
           <tr className="border-b border-[#E2E8F0] bg-[#F8FAFC]">
             <th className="whitespace-nowrap px-6 py-4 text-left text-sm font-semibold text-[#374151]">
@@ -146,7 +147,7 @@ export default function AdminReportTable({
                   </td>
                   {/* 신고 횟수 */}
                   <td className="px-6 py-4 text-center">
-                    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-[#EF4444]/10 px-3 py-1 text-xs font-semibold text-[#EF4444]">
+                    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-[#EF4444]/10 px-3 py-1 pr-5 text-xs font-semibold text-[#EF4444]">
                       <Image
                         src="/icons/RedFlag.svg"
                         alt="신고"
@@ -175,7 +176,7 @@ export default function AdminReportTable({
                             : setMemoReport(report)
                         }
                         disabled={loadingId === report.reportId}
-                        className="flex items-center gap-1 whitespace-nowrap rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-sm font-medium text-[#2F5DAA] hover:bg-[#F8FAFC] disabled:opacity-50"
+                        className="flex items-center gap-1 whitespace-nowrap rounded-lg border border-[#E2E8F0] px-3 pr-6 py-1.5 text-sm font-medium text-[#2F5DAA] hover:bg-[#F8FAFC] disabled:opacity-50"
                       >
                         <Image
                           src={
@@ -187,7 +188,11 @@ export default function AdminReportTable({
                           width={16}
                           height={16}
                         />
-                        {loadingId === report.reportId ? '로딩 중...' : isPending ? '상세보기' : '메모보기'}
+                        {loadingId === report.reportId
+                          ? '로딩 중...'
+                          : isPending
+                            ? '상세보기'
+                            : '메모보기'}
                       </button>
                     </div>
                   </td>

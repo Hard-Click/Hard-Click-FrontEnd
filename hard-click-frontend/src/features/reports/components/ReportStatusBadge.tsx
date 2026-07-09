@@ -31,7 +31,7 @@ export default function ReportStatusBadge({
   const { label, className, icon } = style;
   return (
     <span
-      className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${className}`}
+      className={`inline-flex item-center gap-1 whitespace-nowrap rounded-full px-2 pr-5 py-1 text-xs font-semibold ${className}`}
     >
       <Image src={icon} alt="" width={12} height={12} />
       {label}
