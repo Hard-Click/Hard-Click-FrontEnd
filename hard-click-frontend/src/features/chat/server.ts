@@ -69,9 +69,9 @@ export async function getChatRoomServer(
 ): Promise<ChatRoomDetail> {
   if (isMock('chat')) return toChatRoomDetail(mockChatRoomDetail);
 
-  // ── BE 연동 seam ── (hostId·title·subjectName 포함, 한 콜)
+  // ── BE 연동 seam ── GET /api/chat/rooms/{id} (BE 실코드 확정: ChatRoomController @RequestMapping("/api/chat/rooms")). hostId·title·subjectName 포함, 한 콜.
   const res = await serverApi.get<ChatRoomDetailApi>(
-    `/api/chat-rooms/${chatRoomId}`,
+    `/api/chat/rooms/${chatRoomId}`,
   );
   if (!res.success || !res.data) {
     throw new Error('채팅방 정보를 불러오지 못했습니다.');
@@ -96,10 +96,10 @@ export async function getChatHistoryServer(
     };
   }
 
-  // ── BE 연동 seam ──
+  // ── BE 연동 seam ── GET /api/chat/rooms/{id}/messages (BE 실코드 확정, 슬래시 패밀리).
   const query = cursorId ? `?cursorId=${cursorId}&size=20` : '?size=20';
   const res = await serverApi.get<ChatHistoryApi>(
-    `/api/chat-rooms/${chatRoomId}/messages${query}`,
+    `/api/chat/rooms/${chatRoomId}/messages${query}`,
   );
   if (!res.success || !res.data) {
     throw new Error('채팅 내역을 불러오지 못했습니다.');

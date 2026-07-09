@@ -32,7 +32,7 @@ export interface ChatParticipant {
   online: boolean;
 }
 
-/** 채팅방 정보 (GET /api/chat-rooms/{id} — BE 확정 §7: hostId·title·subjectName을 방정보 최상위로 제공, 한 콜).
+/** 채팅방 정보 (GET /api/chat/rooms/{id} — BE 확정 §7: hostId·title·subjectName을 방정보 최상위로 제공, 한 콜).
  *  방장 판별은 hostId===participants[].memberId. hostId가 null이면 방장 표시 숨김. */
 export interface ChatRoomDetail {
   chatRoomId: number;
