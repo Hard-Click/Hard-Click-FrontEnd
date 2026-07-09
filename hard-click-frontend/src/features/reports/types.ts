@@ -60,14 +60,19 @@ export function getLatestReason(item: ReportItem): string {
 }
 
 export const REASON_LABEL: Record<string, string> = {
+  // BE reportTypes enum (actions.ts REASON_TO_ENUM / ReportModal 기준)
+  ABUSIVE_LANGUAGE: '욕설/비속어',
+  COMMERCIAL: '상업적 광고',
+  PRIVACY: '개인정보 노출',
   SPAM: '스팸/광고',
   OBSCENE: '음란 행위',
   ABUSE: '욕설 및 비하',
+  OTHER: '기타',
+  // (구) 호환 키
   DEFAMATION: '명예훼손',
   FLOOD: '도배',
   INAPPROPRIATE: '부적절한 언어',
   SLANDER: '비방',
-  OTHER: '기타',
 };
 
 /** 백엔드 응답(ReportApiItem) → UI 타입 변환 */

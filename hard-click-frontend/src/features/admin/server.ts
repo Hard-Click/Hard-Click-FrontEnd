@@ -13,7 +13,7 @@ const REPORT_TYPE_LABEL: Record<string, string> = {
 };
 const REPORT_STATUS_LABEL: Record<string, string> = {
   PENDING: '대기 중',
-  COMPLETED: '처리 완료',
+  RESOLVED: '처리 완료', // BE 실제 enum은 RESOLVED (기존 COMPLETED 키는 매핑 안 돼 영어 노출됐음)
   REJECTED: '반려',
 };
 
