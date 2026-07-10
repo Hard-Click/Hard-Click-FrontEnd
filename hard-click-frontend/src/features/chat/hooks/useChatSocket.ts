@@ -1,22 +1,24 @@
 'use client';
 
 /**
- * 채팅 실시간 소켓 훅 — STOMP 연결 (BE origin/main 코드검증 2026-07-10, docs §7).
+ * 채팅 실시간 소켓 훅 — STOMP 연결 (근거: docs §7 명세 + 라이브 검증. BE 소스 직접대조는 불가 —
+ * 로컬 BE 클론이 chat 머지 전 스냅샷이라 chat 도메인 코드가 없음. 계약은 배포서버 라이브 호출로 확인).
  *
- * ⚠️ 현재 isMock('chat')=true(전역 USE_MOCK) → **live 분기는 실행되지 않는다.**
- *   - mock 모드: 디자인 확인용 choreography(입력중→수신 메시지)만 재생. 내 메시지는 로컬 낙관 반영.
- *     "되는 척"이 아니라 명시적 mock(§0.1). 실서버 붙기 전까지 진짜 송수신 아님.
- *   - live 모드(코드 완성·미검증): 아래가 실제 STOMP 배선. BE에 히스토리·목록 API가 main 머지되고
- *     로그인 200 검증이 끝나면 mocks/config MOCK_OVERRIDE에 chat:false 등록으로 활성화된다.
- *     ⚠️ 라이브 200·on-wire shape는 로그인 필요라 아직 미검증 — 검증 전 flip 금지.
+ * ⚠️ isMock('chat')=false(MOCK_OVERRIDE.chat) → **live 분기가 실행된다.**
+ *   - live: 아래 STOMP 실배선. 라이브 검증됨(2026-07-10 세션): REST 방정보/히스토리/목록 200,
+ *     socket-ticket 201, CONNECT 성공, 메시지 송수신 라운드트립 — **단 로컬(http) 프리뷰 기준.**
+ *   - mock 모드(isMock true일 때만): 디자인 확인용 choreography(입력중→수신)만 재생. 명시적 mock(§0.1).
+ *
+ * ⚠️ prod 배포 한계: WS_URL이 ws://(평문)인데 페이지가 https면 브라우저가 혼합콘텐츠로 차단한다.
+ *   NEXT_PUBLIC_API_BASE_URL이 prod에서 http(예: 13.125.94.217)면 실시간은 prod에서 안 된다(REST는 BFF라 정상).
+ *   → 아래 진입 가드가 그 조합을 감지해 STOMP를 아예 시도하지 않고 실시간만 비활성한다(무한재연결·조용한 실패 방지).
+ *   prod가 BE를 wss로 노출하면 가드는 발동 안 하고 실시간 정상. (prod env 실제 값은 확인 필요.)
  *
  * live 인증 흐름(2-step, httpOnly 쿠키를 WS에 못 실어서 티켓 우회):
  *   1) issueSocketTicketAction()  → BFF가 쿠키로 인증 · 30초 1회용 티켓(매 재연결마다 재발급)
  *   2) CONNECT `Authorization: Bearer <ticket>` → BE가 consume·memberId 확정(ChatPrincipal)
- *   3) subscribe `/sub/chat-rooms/{id}` → 이벤트 type 7분기(handleEvent)
- *      + subscribe `/user/queue/errors` → 발행 실패 per-user 에러(JSON {errorCode,message})
+ *   3) subscribe `/sub/chat-rooms/{id}` → 이벤트 type 분기(handleEvent) + `/user/queue/errors`(발행 실패)
  *   발행: `/pub/chat-rooms/{id}` {content} · `/pub/chat-rooms/{id}/typing` 빈 프레임.
- *   ⚠️ prod(https)에서 BE가 http면 ws:// 혼합콘텐츠 차단 → 로컬(http)에서 먼저 검증, prod는 BE wss 필요.
  *
  * 계약: onMessage·onParticipants·onTypingChange는 **안정 참조**(useCallback/setState)로 넘긴다.
  *       매 렌더 새 함수면 effect가 재실행되어 소켓이 재연결된다.
@@ -56,7 +58,7 @@ const TYPING_TTL_MS = 3000;
 /** 연속 STOMP 실패 이 횟수 넘으면 자동 재연결 포기(1회용 티켓 무한 소모 방지). onConnect 성공 시 리셋. */
 const MAX_STOMP_RETRIES = 3;
 
-/** WS 핸드셰이크 URL — http→ws / https→wss (BE 코드검증: raw WebSocket, SockJS 아님). */
+/** WS 핸드셰이크 URL — http→ws / https→wss (docs §7: raw WebSocket, SockJS 아님). */
 const WS_URL = `${(process.env.NEXT_PUBLIC_API_BASE_URL ?? '').replace(/^http/, 'ws')}/ws-chat`;
 
 export function useChatSocket({
@@ -121,14 +123,49 @@ export function useChatSocket({
       };
     }
 
-    // ── live: STOMP 실연결 (BE 코드검증 계약, 라이브 200 미검증) ──
+    // ── live 진입 가드: https 페이지 + 평문 ws:// = 혼합콘텐츠 차단 → 시도 자체를 막는다 ──
+    // (막지 않으면 핸드셰이크가 매번 실패하고 5초마다 재연결하며 1회용 티켓만 무한 소모한다.)
+    // WS_URL 미구성(env 누락)도 동일 처리. prod가 wss면 이 가드는 통과. §0.1 #4(안 되는데 되는 척 금지).
+    const wsUnusable =
+      !/^wss?:\/\//.test(WS_URL) ||
+      (typeof window !== 'undefined' &&
+        window.location.protocol === 'https:' &&
+        WS_URL.startsWith('ws://'));
+    if (wsUnusable) {
+      console.warn(
+        '[chat] 실시간 채팅 비활성 — WS 미구성 또는 https 페이지의 ws:// 혼합콘텐츠 차단(BE wss 필요). REST 조회는 정상.',
+      );
+      toast('실시간 채팅은 현재 배포 환경에서 미지원이에요. (메시지 조회는 정상)');
+      return; // STOMP 미시도 → 티켓 낭비·무한재연결 없음
+    }
+
+    // ── live: STOMP 실연결 (docs §7 계약 + 라이브 검증[로컬 http]) ──
     let stompFailCount = 0; // 연속 실패 카운터(onConnect 성공 시 0으로 리셋)
     let stompErrorToasted = false;
+    let bailed = false; // 재연결 영구 포기 후 중복 bail 방지
+    let tornDown = false; // effect cleanup(언마운트)로 우리가 끊은 정상 종료 표시
+
+    // 재시도 소진/영구실패 → 재연결(=매 티켓 재발급) 중단 + 1회 안내. onStompError·onWebSocketClose 공용.
+    const bail = (permanent: boolean) => {
+      if (bailed) return;
+      bailed = true;
+      void client.deactivate();
+      if (!stompErrorToasted) {
+        stompErrorToasted = true;
+        toast.error(
+          permanent
+            ? '이 채팅방에 접근할 수 없어요.'
+            : '실시간 연결에 실패했어요. 새로고침 해주세요.',
+        );
+      }
+    };
 
     const handleEvent = (e: ChatSocketEvent) => {
       switch (e.type) {
         case 'CHAT':
-          // 본인 것도 echo로 돌아온다(senderId===myMemberId → ChatRoomClient가 우측 렌더). senderName은 BE가 마스킹.
+          // 본인 것도 echo(senderId===myMemberId → ChatRoomClient가 우측 렌더).
+          // ⚠️ senderName·content는 BE가 마스킹한다고 가정(on-wire 미검증, §0.1). REST와 달리 BFF 매퍼를
+          //    안 거치므로 마스킹은 전적으로 BE 책임 — 라이브 on-wire 확인 시 이 가정 검증 필요.
           onMessage({
             messageId: e.messageId,
             type: 'CHAT',
@@ -145,7 +182,7 @@ export function useChatSocket({
             type: e.type,
             senderId: null,
             senderName: null,
-            content: e.message, // BE가 이미 마스킹한 문장(예: "홍*동님이 입장했습니다")
+            content: e.message, // ⚠️ BE가 마스킹했다고 가정한 문장(예: "홍*동님이 입장했습니다") — on-wire 미검증
             sentAt: new Date().toISOString(),
           });
           onParticipants(e.participants, e.participantCount);
@@ -171,7 +208,30 @@ export function useChatSocket({
         case 'PRESENCE_UPDATE':
           onParticipants(e.participants); // count 없음 → ChatRoomClient가 length로 보정
           return;
+        default: {
+          // 미지의 type(신 버전 BE 등)은 조용히 무시. never 할당으로 union 누락도 컴파일에서 잡는다.
+          const _exhaustive: never = e;
+          console.warn('[chat] 미지 이벤트 무시:', _exhaustive);
+        }
       }
+    };
+
+    // 소켓 페이로드는 신뢰 불가(BE·네트워크). 최소 shape 검증(§0.1 추측 방지) — 실패면 무시.
+    const parseEvent = (body: string): ChatSocketEvent | null => {
+      let raw: unknown;
+      try {
+        raw = JSON.parse(body);
+      } catch {
+        return null;
+      }
+      if (
+        typeof raw !== 'object' ||
+        raw === null ||
+        typeof (raw as { type?: unknown }).type !== 'string'
+      ) {
+        return null;
+      }
+      return raw as ChatSocketEvent;
     };
 
     const client = new Client({
@@ -188,11 +248,12 @@ export function useChatSocket({
         stompFailCount = 0; // 연결 성공 → 실패 카운터 리셋
         // 방 이벤트(7종 union)
         client.subscribe(`/sub/chat-rooms/${chatRoomId}`, (frame: IMessage) => {
-          try {
-            handleEvent(JSON.parse(frame.body) as ChatSocketEvent);
-          } catch {
-            console.error('[chat] 이벤트 파싱 실패:', frame.body);
+          const event = parseEvent(frame.body);
+          if (!event) {
+            console.error('[chat] 이벤트 파싱/shape 실패, 무시:', frame.body);
+            return;
           }
+          handleEvent(event);
         });
         // 발행(전송) 실패는 per-user 큐로 온다(JSON {errorCode,message}). Spring user-destination 규칙.
         client.subscribe('/user/queue/errors', (frame: IMessage) => {
@@ -209,23 +270,24 @@ export function useChatSocket({
         const reason = frame.headers['message'] ?? '';
         console.error('[chat] STOMP 오류:', reason);
         stompFailCount += 1;
-        // 참여자 아님/방 없음 = 영구 실패(재시도 무의미). 그 외도 연속 N회 넘으면 포기 →
-        // deactivate로 5초 자동 재연결(=매번 1회용 티켓 재발급) 무한 루프 차단(리뷰 confirmed).
+        // 참여자 아님/방 없음 = 영구 실패(재시도 무의미). ⚠️ 한글 부분문자열 매칭은 BE on-wire 메시지 가정(미검증) —
+        // 어긋나도 아래 카운트 상한(MAX_STOMP_RETRIES)으로 폴백해 무한재연결은 막힌다.
         const permanent =
           reason.includes('참여자') || reason.includes('존재하지 않는');
-        if (permanent || stompFailCount >= MAX_STOMP_RETRIES) {
-          void client.deactivate();
-          if (!stompErrorToasted) {
-            stompErrorToasted = true; // 토스트 1회만
-            toast.error(
-              permanent
-                ? '이 채팅방에 접근할 수 없어요.'
-                : '실시간 연결에 실패했어요. 새로고침 해주세요.',
-            );
-          }
-        }
+        if (permanent || stompFailCount >= MAX_STOMP_RETRIES) bail(permanent);
+      },
+      // 전송계층 실패(서버 다운·핸드셰이크 거부·혼합콘텐츠·소켓 조기 종료)는 STOMP ERROR 프레임이 아니라
+      // close/error로 온다. onStompError만 카운트하면 이 경로에선 stompFailCount가 안 올라 5초마다 무한 재연결
+      // (=매 티켓 재발급)한다(리뷰 confirmed #1). → 미연결 close도 실패로 세어 상한에서 재연결을 끊는다.
+      // (연결 성공 시 onConnect가 카운터를 리셋 → 정상 세션의 일시 끊김은 재연결 허용.)
+      onWebSocketClose: (evt: CloseEvent) => {
+        if (bailed || tornDown) return; // 우리가 deactivate한 정상 종료(포기·언마운트)는 제외
+        stompFailCount += 1;
+        console.error('[chat] WebSocket 종료(미연결):', evt?.code);
+        if (stompFailCount >= MAX_STOMP_RETRIES) bail(false);
       },
       onWebSocketError: (evt) => {
+        // 실제 재시도 중단은 onWebSocketClose가 담당(error 뒤 close가 항상 뒤따름).
         console.error('[chat] WebSocket 오류:', evt);
       },
     });
@@ -234,6 +296,7 @@ export function useChatSocket({
     client.activate();
 
     return () => {
+      tornDown = true; // onWebSocketClose가 이 정상 종료를 실패로 세지 않게
       clientRef.current = null;
       void client.deactivate(); // 구독 해제 + 소켓 종료
       typingTimers.forEach((t) => clearTimeout(t));

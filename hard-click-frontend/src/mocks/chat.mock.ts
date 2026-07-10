@@ -1,6 +1,6 @@
 /**
- * 채팅 도메인 목 데이터 — BE origin/main·feature/480 **코드검증 shape 그대로**(2026-07-10).
- * ⚠️ isMock('chat')=전역 USE_MOCK을 따라 mock으로 동작(라이브 200 미검증 → flip 전까지 mock).
+ * 채팅 도메인 목 데이터 — docs §7 명세 shape 그대로. (라이브 검증으로 실응답과 일치 확인, 2026-07-10 세션.)
+ * ⚠️ isMock('chat')=false라 평소엔 **live**(이 mock은 미사용). 전역 mock 프리뷰/E2E일 때만 쓰인다.
  *
  * - GET /api/chat/rooms/me                  내 채팅방 목록 (data는 배열 직접. ⚠️ feature/480, main 미머지)
  * - GET /api/chat/rooms/{chatRoomId}        방정보 — hostId·title·subjectName·participants(online) 최상위 (main 머지됨, 한 콜)

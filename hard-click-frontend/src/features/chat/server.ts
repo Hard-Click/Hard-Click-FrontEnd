@@ -1,12 +1,12 @@
 /**
  * 채팅 조회 (Server Component 전용). 격리막 — UI는 도메인 타입(types.ts)만 본다.
- * ⚠️ isMock('chat')=전역 USE_MOCK(true)라 지금은 항상 mock 분기.
- *    REST 경로 3개 모두 BE **origin/main·develop 머지 완료**(2026-07-10 확인, ChatRoomController):
+ * ⚠️ isMock('chat')=false(MOCK_OVERRIDE.chat) → 아래 3경로 모두 **라이브**(BFF 서버→BE, httpOnly 쿠키).
+ *    REST 3경로 라이브 검증 완료(2026-07-10 세션, 배포서버 200·shape 일치):
  *      - GET /api/chat/rooms/{id}            방정보
  *      - GET /api/chat/rooms/{id}/messages   히스토리
  *      - GET /api/chat/rooms/me              내 목록
- *    응답 shape는 BE record와 일치 확인. **남은 것 = 배포서버 가동 + 로그인 200 검증 후 MOCK_OVERRIDE에 chat:false.**
- *    (2026-07-10 시점: 배포서버 13.125.94.217 다운 상태라 라이브 검증 대기.)
+ *    ⚠️ 근거는 배포서버 라이브 호출 — 로컬 BE 클론은 chat 머지 전이라 소스 대조 불가(계약은 docs §7).
+ *    실시간(STOMP)은 useChatSocket. prod https+평문 ws:// 조합은 훅 가드가 실시간만 비활성(REST는 서버간이라 정상).
  */
 
 import { serverApi } from '@/lib/api';
@@ -85,7 +85,8 @@ export async function getChatRoomServer(
 }
 
 /**
- * 채팅 히스토리 조회 (커서 기반). BE는 최신순(desc)으로 준다.
+ * 채팅 히스토리 조회 (커서 기반). ⚠️ BE는 페이지 내부를 오래된→최신(asc)으로 주고(라인 아래 인라인 주석),
+ * FE 계약은 최신순(desc)이라 messageId 기준 desc로 정규화한다(ChatRoomClient가 reverse해 표시).
  */
 export async function getChatHistoryServer(
   chatRoomId: number,

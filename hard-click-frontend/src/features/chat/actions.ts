@@ -8,7 +8,7 @@ import type { ChatHistoryPage, SocketTicket } from './types';
 
 /**
  * 채팅방 이탈 액션 — 나가기 / 강퇴 / 방 삭제(해산). 전부 study 도메인(`/api/study/...`) 호출.
- *   - 나가기: POST /api/study/{groupId}/leave (BE 확인 2026-07-10: @PostMapping. 방장은 참여자 남으면 403)
+ *   - 나가기: POST /api/study/{groupId}/leave (라이브 검증 2026-07-10: DELETE→실패, POST→성공. 방장은 참여자 남으면 403)
  *   - 강퇴: DELETE /api/study/{groupId}/members/{memberId} (방장만·재입장 차단, 이슈 #460)
  *   - 삭제: DELETE /api/study/{groupId} (방장만·전원 강퇴 후, 이슈 #441)
  * 성공 시 revalidatePath로 커뮤니티·마이페이지 목록 캐시 무효화(§5). 실시간 갱신은 소켓 이벤트.
@@ -79,7 +79,9 @@ export async function leaveStudyChatAction(
 
   if (isMock('chat')) return { success: true, message: '채팅방에서 나갔습니다.' };
 
-  // ── BE 연동 seam ── POST /api/study/{groupId}/leave (BE=@PostMapping. 방장은 참여자 남으면 403 → res.message 안내)
+  // ── BE 연동 seam ── POST /api/study/{groupId}/leave
+  //   라이브 검증(2026-07-10): DELETE→실패, POST→성공(사용자 UI 확인). 방장은 참여자 남으면 403 → res.message 안내.
+  //   ⚠️ 로컬 BE 클론엔 chat/leave 미머지라 소스 대신 배포서버 라이브로 메서드 확정(§0.1: 추측 아님, 라이브 근거).
   const res = await serverApi.post(`/api/study/${groupId}/leave`);
   if (!res.success) {
     return { success: false, message: res.message || '나가기에 실패했어요.' };
