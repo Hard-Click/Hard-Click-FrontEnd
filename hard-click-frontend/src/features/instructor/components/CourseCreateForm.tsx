@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useRef, useState } from 'react';
 import DoubleBtnModal from '@/components/ui/doubleButtonModal';
+import SelectDropdown from '@/components/ui/SelectDropdown';
 import { useRouter } from 'next/navigation';
 import LoadingModal from '@/components/ui/loadingModal';
 import { createCourse, updateCourse, uploadCourseThumbnail } from '../services';
@@ -56,11 +57,16 @@ interface CourseDetail {
   level?: string;
   recommendedWeeks?: number;
   dailyStudyLimitMinutes?: number;
+  instructor?: string;
 }
 
 interface CourseCreateFormProps {
   mode?: 'create' | 'edit';
   initialData?: CourseDetail;
+  /** 있으면 강사 선택 필드 노출(관리자용). 없으면 강사 폼(기본). */
+  instructorOptions?: { label: string; value: string }[];
+  /** 성공/취소 후 이동 경로(기본: 강사 내 강의) */
+  redirectPath?: string;
 }
 
 const formatDuration = (seconds: number) => {
@@ -201,6 +207,8 @@ function SortableSectionItem({
 export default function CourseCreateForm({
   mode = 'create',
   initialData,
+  instructorOptions,
+  redirectPath = '/instructor/myCourses',
 }: CourseCreateFormProps) {
   const [title, setTitle] = useState(initialData?.title ?? '');
   const [subjects] = useState<Subject[]>(
@@ -208,6 +216,7 @@ export default function CourseCreateForm({
   );
   // 강의 소개 입력 UI는 제거됨 — 수정 모드에서 기존 값 보존용으로 값만 유지(payload 전송)
   const [description] = useState(initialData?.description ?? '');
+  const [instructor, setInstructor] = useState(initialData?.instructor ?? '');
   const [subjectId, setSubjectId] = useState<number>(
     initialData?.subjectId ?? 0,
   );
@@ -259,6 +268,7 @@ export default function CourseCreateForm({
     level: '',
     recommendedWeeks: '',
     dailyStudyLimit: '',
+    instructor: '',
   });
   const [firstErrorField, setFirstErrorField] = useState('');
 
@@ -270,6 +280,7 @@ export default function CourseCreateForm({
   const levelRef = useRef<HTMLDivElement>(null);
   const recommendedWeeksRef = useRef<HTMLInputElement>(null);
   const dailyStudyLimitRef = useRef<HTMLInputElement>(null);
+  const instructorRef = useRef<HTMLDivElement>(null);
   const thumbnailRef = useRef<HTMLDivElement>(null);
   const isComposingGoalRef = useRef(false);
   const isComposingTargetRef = useRef(false);
@@ -318,6 +329,7 @@ export default function CourseCreateForm({
       level: '',
       recommendedWeeks: '',
       dailyStudyLimit: '',
+      instructor: '',
     };
 
     let firstError = '';
@@ -341,6 +353,11 @@ export default function CourseCreateForm({
     if (!level) {
       newErrors.level = '난이도를 선택해주세요';
       if (!firstError) firstError = 'level';
+    }
+    // 강사 선택 (관리자 폼일 때만 노출·필수)
+    if (instructorOptions && !instructor) {
+      newErrors.instructor = '강사를 선택해주세요';
+      if (!firstError) firstError = 'instructor';
     }
     // 권장 완강 기간 — 필수, 정수 1주 이상
     const weeksRaw = recommendedWeeks.trim();
@@ -392,6 +409,7 @@ export default function CourseCreateForm({
         targetAudience: targetAudienceRef,
         techTags: techTagsRef,
         level: levelRef,
+        instructor: instructorRef,
         recommendedWeeks: recommendedWeeksRef,
         dailyStudyLimit: dailyStudyLimitRef,
         thumbnail: thumbnailRef,
@@ -542,6 +560,44 @@ export default function CourseCreateForm({
               )}
             </div>
           </div>
+
+          {/* 강사 선택 (관리자 폼일 때만 노출) */}
+          {instructorOptions && (
+            <div className="mb-8" ref={instructorRef}>
+              <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
+                강사 <span className="text-[#DC2626]">*</span>
+              </label>
+              <SelectDropdown
+                placeholder="강사 선택"
+                value={instructor}
+                options={instructorOptions.filter((o) => o.value !== '')}
+                onChange={(v) => {
+                  setInstructor(v);
+                  setErrors((prev) => ({
+                    ...prev,
+                    instructor: v ? '' : '강사를 선택해주세요',
+                  }));
+                  if (firstErrorField === 'instructor' && v)
+                    setFirstErrorField('');
+                }}
+                fullWidth
+                buttonClassName="h-14 rounded-2xl"
+              />
+              <div className="mt-2 min-h-[20px]">
+                {errors.instructor && (
+                  <div className="flex items-center gap-1">
+                    <Image
+                      src="/icons/error.svg"
+                      alt="error"
+                      width={14}
+                      height={14}
+                    />
+                    <p className="text-sm text-[#B91C1C]">{errors.instructor}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* 학습목표 */}
           <div className="mb-8" ref={learningGoalsRef}>
@@ -806,7 +862,7 @@ export default function CourseCreateForm({
           </div>
 
           {/* 난이도 · 권장 완강 기간 · 코스별 강도 상한 (한 행, 균등한 고정 간격) */}
-          <div className="mb-8 flex flex-col gap-8 sm:flex-row sm:items-start sm:gap-40">
+          <div className="mb-8 flex flex-col gap-8 sm:flex-row sm:flex-wrap sm:items-start sm:gap-x-16 sm:gap-y-8">
             {/* 난이도 */}
             <div ref={levelRef}>
               <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
@@ -1295,6 +1351,8 @@ export default function CourseCreateForm({
                   targetAudience,
                   techTags,
                   level: level || undefined,
+                  // ⚠️ BE 필드명 미확정 (§0.5) — 관리자 강사 지정용
+                  instructor: instructor || undefined,
                   // ⚠️ BE 필드명·지원 미확정 (§0.5) — AI 스케줄러 계약 확인 후 조정
                   recommendedWeeks: recommendedWeeks
                     ? Number(recommendedWeeks)
@@ -1437,7 +1495,7 @@ export default function CourseCreateForm({
                     if (uploadFailed) {
                       isSubmittingRef.current = false;
                       setIsLoading(false);
-                      router.push('/instructor/myCourses');
+                      router.push(redirectPath);
                       return;
                     }
                   }
@@ -1449,7 +1507,7 @@ export default function CourseCreateForm({
                 );
                 isSubmittingRef.current = false;
                 setIsLoading(false);
-                router.push('/instructor/myCourses');
+                router.push(redirectPath);
               } catch (error) {
                 isSubmittingRef.current = false;
                 setIsLoading(false);
@@ -1483,7 +1541,7 @@ export default function CourseCreateForm({
             onLeftClick={() => setIsCancelOpen(false)}
             onRightClick={() => {
               setIsCancelOpen(false);
-              router.push('/instructor/myCourses');
+              router.push(redirectPath);
             }}
           />
         )}

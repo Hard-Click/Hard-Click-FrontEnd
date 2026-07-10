@@ -91,6 +91,8 @@ export async function createCourse(payload: {
   targetAudience?: string[];
   techTags?: string[];
   level?: string;
+  // ⚠️ BE 필드명 미확정 (§0.5) — 관리자 강사 지정용
+  instructor?: string;
   // ⚠️ BE 필드명·지원 미확정 (§0.5) — AI 스케줄러 계약 확인 후 조정
   recommendedWeeks?: number;
   dailyStudyLimitMinutes?: number;
@@ -140,6 +142,8 @@ export async function updateCourse(
     targetAudience?: string[];
     techTags?: string[];
     level?: string;
+    // ⚠️ BE 필드명 미확정 (§0.5) — 관리자 강사 지정용
+    instructor?: string;
     // ⚠️ BE 필드명·지원 미확정 (§0.5) — AI 스케줄러 계약 확인 후 조정
     recommendedWeeks?: number;
     dailyStudyLimitMinutes?: number;
