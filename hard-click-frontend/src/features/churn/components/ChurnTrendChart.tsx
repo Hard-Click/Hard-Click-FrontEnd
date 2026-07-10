@@ -18,7 +18,7 @@ export default function ChurnTrendChart({
   data: ChurnTrendPoint[];
 }) {
   return (
-    <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm [&_.recharts-surface]:outline-none [&_.recharts-wrapper]:outline-none">
       <h2 className="text-xl font-bold text-[#1E293B]">이탈 위험 학생 추이</h2>
       <p className="mb-4 text-sm text-[#94A3B8]">최근 8주</p>
       <ChurnTrendChartView data={data} />
