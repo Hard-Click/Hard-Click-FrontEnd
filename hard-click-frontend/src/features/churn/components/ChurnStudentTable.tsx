@@ -148,7 +148,7 @@ export default function ChurnStudentTable({
                       s.riskScore,
                     )}`}
                   >
-                    {s.riskScore}
+                    {s.riskScore}점
                   </td>
                   <td className="whitespace-nowrap px-4 py-4 text-sm text-[#64748B]">
                     {s.lastActiveAt}

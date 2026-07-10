@@ -26,8 +26,8 @@ export default function ChurnTrendChartView({
       >
         <defs>
           <linearGradient id="churnTrendFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#EF4444" stopOpacity={0.25} />
-            <stop offset="100%" stopColor="#EF4444" stopOpacity={0} />
+            <stop offset="0%" stopColor="#9e0f0a" stopOpacity={0.25} />
+            <stop offset="100%" stopColor="#9e0f0a" stopOpacity={0} />
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="1 3" stroke="#E2E8F0" />
