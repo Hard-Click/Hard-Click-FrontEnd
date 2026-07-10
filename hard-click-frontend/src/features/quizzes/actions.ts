@@ -3,7 +3,13 @@
 import { revalidatePath } from 'next/cache';
 import { serverApi } from '@/lib/api';
 import { isMock } from '@/mocks/config';
-import type { QuizFormPayload } from './types';
+import {
+  getCourseSectionsServer,
+  getInstructorQuizDetailServer,
+  getAdminQuizDetailServer,
+  getQuizFormMetaServer,
+} from './server';
+import type { QuizFormPayload, Quiz } from './types';
 
 export interface QuizActionState {
   success: boolean;
@@ -11,13 +17,13 @@ export interface QuizActionState {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
- * 강사 퀴즈 쓰기(등록·수정·삭제) — 실 엔드포인트로 배선 완료. gate=isMock('quizzes')(=false 라이브).
- * ⚠️ BE 쓰기가 아직 **stub**(비즈니스 로직 대기 — 201/200만 반환, 저장 안 됨). BE 로직이 오면:
- *    - 삭제: 그대로 자동 동작 (엔드포인트 DELETE /api/instructor/quizzes/{id}, 바디 없음 — 검증된 계약).
- *    - 등록/수정: 아래 toInstructorQuizRequest의 **가정 2개**(sectionId·correctOptionId)를 검증/조정해야 함.
+ * 강사 퀴즈 쓰기(등록·수정·삭제) — 실서버 연동. gate=isMock('quizzes')(=false 라이브).
+ * BE(QuizController) 실구현 확인(2026-07-09 코드 검증). 등록/수정 요청 = sectionId(진짜)·correctOptionNumber(1~4)·optionText:
+ *   - "주차 → sectionId"는 resolveSectionId가 GET /api/courses/{id} 섹션 제목("섹션 N")에서 해석.
+ *   - correctOptionNumber = answerIndex+1, 보기는 optionText만(옵션 id는 BE가 부여).
  * ───────────────────────────────────────────────────────────────────────── */
 
-/** BE 강사 퀴즈 등록/수정 요청 DTO (격리막 — 매퍼 출력 형태 명시, §3). BE 계약 확정 시 여기서 조정. */
+/** BE 강사 퀴즈 등록/수정 요청 DTO (BE 확정 — QuizController.InstructorQuizRequest). */
 interface InstructorQuizRequest {
   quizTitle: string;
   courseId: number;
@@ -25,44 +31,70 @@ interface InstructorQuizRequest {
   questions: {
     questionText: string;
     explanation: string;
-    correctOptionId: number;
-    options: { optionId: number; optionText: string }[];
+    correctOptionNumber: number; // 정답 보기 번호 1~4 (= answerIndex + 1)
+    options: { optionText: string }[]; // BE는 보기 텍스트만 받음(optionId는 BE가 부여)
   }[];
 }
 
 /**
- * FE 폼(QuizFormPayload — 주차·정답index 기반) → BE InstructorQuizRequest(섹션·correctOptionId 기반) 매퍼.
- * ⚠️ BE 쓰기 stub이라 아래 2개는 **가정(§0.1)** — BE 비즈니스 로직 오면 반드시 검증:
- *   (가정1) sectionId ← week: BE는 sectionId를 요구하나 FE 폼은 "주차"만 받음 → 주차를 그대로 보냄.
- *           실제 강의 섹션ID와 주차가 다르면 폼을 "섹션 선택"으로 개편 필요할 수 있음.
- *   (가정2) correctOptionId ← answerIndex+1 / optionId ← i+1: ⚠️ **라이브 read가 이 가정을 반박함** —
- *           GET /api/instructor/quizzes/{id}를 보면 optionId는 **전역 DB id**(문제2 옵션은 5~8, 1~4 아님),
- *           문제별 1-based는 optionNumber이고 correctOptionId는 그 전역 optionId를 가리킴(+ 옵션마다 correct:boolean).
- *           즉 신규 작성은 optionId/correctOptionId를 FE가 못 만드니, 실제 생성 계약은 correct:boolean 또는
- *           optionNumber 기반일 가능성이 큼. BE 생성 DTO 확정 시 이 매퍼를 그 형태로 교체할 것.
+ * FE 폼(QuizFormPayload — 주차·정답index) → BE InstructorQuizRequest 매퍼.
+ * sectionId는 호출부에서 resolveSectionId로 "주차 → 진짜 sectionId" 해석해 넘겨받는다.
  */
 function toInstructorQuizRequest(
   payload: QuizFormPayload,
+  sectionId: number,
 ): InstructorQuizRequest {
   return {
     quizTitle: payload.title,
     courseId: payload.courseId,
-    sectionId: payload.week, // 가정1
+    sectionId,
     questions: payload.questions.map((q) => ({
       questionText: q.content,
       explanation: q.explanation,
-      correctOptionId: q.answerIndex + 1, // 가정2
-      options: q.options.map((optionText, i) => ({
-        optionId: i + 1, // 임시 id (신규 옵션)
-        optionText,
-      })),
+      correctOptionNumber: q.answerIndex + 1,
+      options: q.options.map((optionText) => ({ optionText })),
     })),
   };
 }
 
+/** 폼의 주차 → 강의 실제 sectionId 해석 (BE 등록/수정은 sectionId 요구). 매칭 섹션 없으면 null. */
+async function resolveSectionId(
+  payload: QuizFormPayload,
+): Promise<number | null> {
+  const sections = await getCourseSectionsServer(payload.courseId);
+  return sections.find((s) => s.week === payload.week)?.sectionId ?? null;
+}
+
+/** ① 수정 모달용 — 강사 퀴즈 상세(문항 포함) 조회. 클라(QuizListContent)가 편집 클릭 시 호출.
+ *  목록엔 문항이 없어 수정 시 실제 문항을 이걸로 채운다. */
+export async function getInstructorQuizDetailAction(
+  quizId: number,
+): Promise<Quiz | null> {
+  if (!Number.isInteger(quizId) || quizId <= 0) return null;
+  return getInstructorQuizDetailServer(quizId);
+}
+
+/** ① 관리자 수정 모달용 — 관리자 퀴즈 상세 조회(admin 패밀리). 관리자 페이지가 detailAction으로 명시 전달. */
+export async function getAdminQuizDetailAction(
+  quizId: number,
+): Promise<Quiz | null> {
+  if (!Number.isInteger(quizId) || quizId <= 0) return null;
+  return getAdminQuizDetailServer(quizId);
+}
+
+/** ②③ 등록 폼 메타 — 선택 강의의 실제 주차(섹션) + 이미 퀴즈 있는 주차. 클라가 강의 선택 시 호출. */
+export async function getQuizFormMetaAction(
+  courseId: number,
+): Promise<{ weeks: number[]; takenWeeks: number[] }> {
+  if (!Number.isInteger(courseId) || courseId <= 0) {
+    return { weeks: [], takenWeeks: [] };
+  }
+  return getQuizFormMetaServer(courseId);
+}
+
 /**
  * 퀴즈 삭제 (Server Action · BFF). DELETE /api/instructor/quizzes/{quizId}.
- * ✅ 계약 검증됨(바디 없음) — BE 로직 오면 자동으로 실삭제. 현재는 BE stub이라 성공만 반환.
+ * BE(QuizCommandService) 실삭제 — 바디 없음·success 검증. (mock이면 성공만.)
  */
 export async function deleteQuizAction(
   quizId: number,
@@ -150,10 +182,15 @@ export async function createQuizAction(
     return { success: true, message: '퀴즈가 등록되었습니다.' };
   }
 
+  const sectionId = await resolveSectionId(payload);
+  if (sectionId === null) {
+    return { success: false, message: '선택한 주차에 해당하는 섹션이 없습니다.' };
+  }
+
   try {
     const res = await serverApi.post<null>(
       '/api/instructor/quizzes',
-      toInstructorQuizRequest(payload),
+      toInstructorQuizRequest(payload, sectionId),
     );
     if (!res.success) {
       return { success: false, message: res.message ?? '등록에 실패했습니다.' };
@@ -183,10 +220,15 @@ export async function updateQuizAction(
     return { success: true, message: '퀴즈가 수정되었습니다.' };
   }
 
+  const sectionId = await resolveSectionId(payload);
+  if (sectionId === null) {
+    return { success: false, message: '선택한 주차에 해당하는 섹션이 없습니다.' };
+  }
+
   try {
     const res = await serverApi.put<null>(
       `/api/instructor/quizzes/${quizId}`,
-      toInstructorQuizRequest(payload),
+      toInstructorQuizRequest(payload, sectionId),
     );
     if (!res.success) {
       return { success: false, message: res.message ?? '수정에 실패했습니다.' };
@@ -213,10 +255,15 @@ export async function createAdminQuizAction(
     return { success: true, message: '퀴즈가 등록되었습니다.' };
   }
 
+  const sectionId = await resolveSectionId(payload);
+  if (sectionId === null) {
+    return { success: false, message: '선택한 주차에 해당하는 섹션이 없습니다.' };
+  }
+
   try {
     const res = await serverApi.post<null>(
       '/api/admin/quizzes',
-      toInstructorQuizRequest(payload),
+      toInstructorQuizRequest(payload, sectionId),
     );
     if (!res.success) {
       return { success: false, message: res.message ?? '등록에 실패했습니다.' };
@@ -243,10 +290,15 @@ export async function updateAdminQuizAction(
     return { success: true, message: '퀴즈가 수정되었습니다.' };
   }
 
+  const sectionId = await resolveSectionId(payload);
+  if (sectionId === null) {
+    return { success: false, message: '선택한 주차에 해당하는 섹션이 없습니다.' };
+  }
+
   try {
     const res = await serverApi.put<null>(
       `/api/admin/quizzes/${quizId}`,
-      toInstructorQuizRequest(payload),
+      toInstructorQuizRequest(payload, sectionId),
     );
     if (!res.success) {
       return { success: false, message: res.message ?? '수정에 실패했습니다.' };

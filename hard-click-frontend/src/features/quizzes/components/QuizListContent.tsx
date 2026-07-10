@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/lib/toast';
 import ConfirmModal from '@/components/ui/confirmModal';
@@ -8,7 +8,8 @@ import SelectDropdown from '@/components/ui/SelectDropdown';
 import QuizListItem from './QuizListItem';
 import QuizEmptyState from './QuizEmptyState';
 import QuizFormModal from './QuizFormModal';
-import { deleteQuizAction } from '../actions';
+import LoadingModal from '@/components/ui/loadingModal';
+import { deleteQuizAction, getInstructorQuizDetailAction } from '../actions';
 import type { Quiz, QuizFormPayload } from '../types';
 import type { QuizActionState } from '../actions';
 
@@ -25,6 +26,7 @@ export default function QuizListContent({
   basePath = '/instructor/quizzes',
   withInstructorSelect = false,
   deleteAction = deleteQuizAction,
+  detailAction = getInstructorQuizDetailAction,
   createAction,
   updateAction,
 }: {
@@ -36,18 +38,30 @@ export default function QuizListContent({
   basePath?: string;
   withInstructorSelect?: boolean;
   deleteAction?: (quizId: number, courseId: number) => Promise<QuizActionState>;
+  detailAction?: (quizId: number) => Promise<Quiz | null>;
   createAction?: (payload: QuizFormPayload) => Promise<QuizActionState>;
   updateAction?: (quizId: number, payload: QuizFormPayload) => Promise<QuizActionState>;
 }) {
   const [quizzes, setQuizzes] = useState<Quiz[]>(initialQuizzes);
   const [selectedWeek, setSelectedWeek] = useState<'all' | number>('all');
-
-  useEffect(() => {
+  // initialQuizzes(서버 재조회분)가 바뀌면 로컬 목록 동기화 — 렌더 중 조정(effect 내 setState 회피).
+  const [syncedFrom, setSyncedFrom] = useState(initialQuizzes);
+  if (syncedFrom !== initialQuizzes) {
+    setSyncedFrom(initialQuizzes);
     setQuizzes(initialQuizzes);
-  }, [initialQuizzes]);
+  }
   const [deleting, setDeleting] = useState<Quiz | null>(null);
   const [editing, setEditing] = useState<Quiz | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
   const router = useRouter();
+
+  // 수정 클릭 → 상세(문항 포함) 조회 후 모달 오픈. 목록 응답엔 문항이 없어 이 단계가 필수.
+  const handleEdit = async (quiz: Quiz) => {
+    setEditLoading(true);
+    const full = await detailAction(quiz.quizId);
+    setEditLoading(false);
+    setEditing(full ?? quiz); // 조회 실패 시 목록 데이터로라도 연다(문항은 비어있음)
+  };
 
   // 주차는 동적 — 실제 퀴즈에 존재하는 주차만 옵션으로
   const weeks = [...new Set(quizzes.map((q) => q.week))].sort((a, b) => a - b);
@@ -112,13 +126,21 @@ export default function QuizListContent({
                 onView={() =>
                   router.push(`${basePath}/${courseId}/${quiz.quizId}`)
                 }
-                onEdit={() => setEditing(quiz)}
+                onEdit={() => handleEdit(quiz)}
                 onDelete={() => setDeleting(quiz)}
               />
             ))}
           </div>
         )}
       </section>
+
+      {/* 수정 진입 — 상세(문항) 로딩 */}
+      {editLoading && (
+        <LoadingModal
+          title="퀴즈 정보를 불러오는 중"
+          description="잠시만 기다려주세요."
+        />
+      )}
 
       {/* 삭제 확인 — 공용 모달 재사용 */}
       {deleting && (

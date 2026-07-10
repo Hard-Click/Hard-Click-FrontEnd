@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import QuizFormModal from './QuizFormModal';
+import { getQuizFormMetaAction } from '../actions';
 import type { QuizFormPayload } from '../types';
 
 // next/navigation — router stub
@@ -26,6 +27,11 @@ jest.mock('next/image', () => ({
 jest.mock('../actions', () => ({
   createQuizAction: jest.fn(async () => ({ success: true })),
   updateQuizAction: jest.fn(async () => ({ success: true })),
+  // ② 등록폼이 강의 선택 시 실제 섹션(주차)을 로드 — 기본은 1~12주 전부 비어있음.
+  getQuizFormMetaAction: jest.fn(async () => ({
+    weeks: Array.from({ length: 12 }, (_, i) => i + 1),
+    takenWeeks: [] as number[],
+  })),
 }));
 
 // SelectDropdown → 네이티브 <select>로 치환(상호작용 단순화).
@@ -125,6 +131,8 @@ async function fillQuestion(
 async function fillTopFields(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByPlaceholderText('퀴즈 제목을 입력하세요'), '1주차 퀴즈');
   await user.selectOptions(screen.getByLabelText('강의 선택'), '1');
+  // ② 주차 옵션은 getQuizFormMetaAction(비동기)로 채워짐 → 옵션 뜰 때까지 대기
+  await screen.findByRole('option', { name: '1주' });
   await user.selectOptions(screen.getByLabelText('주차 선택'), '1');
 }
 
@@ -255,6 +263,13 @@ describe('QuizFormModal — 퀴즈 등록 모달 통합', () => {
       await user.click(screen.getAllByRole('button', { name: '삭제' })[1]);
       // 삭제 확인 모달
       const dialog = screen.getByRole('dialog', { name: '문제 삭제' });
+      // ③ 삭제 확인은 폼을 '대체'하지 않고 그 '위에 겹쳐' 뜬다 — 모달 열린 동안에도
+      //    폼(헤더·문제2)이 그대로 마운트돼 있어야 함. (early-return으로 폼 대체하던 옛 구현이면 실패)
+      expect(
+        screen.getByRole('heading', { name: '퀴즈 등록' }),
+      ).toBeInTheDocument();
+      expect(screen.getByText('문제 2')).toBeInTheDocument();
+
       await user.click(within(dialog).getByRole('button', { name: '삭제' }));
 
       expect(screen.queryByText('문제 2')).not.toBeInTheDocument();
@@ -362,14 +377,17 @@ describe('QuizFormModal — 퀴즈 등록 모달 통합', () => {
   describe('주차 소진 회귀 — noWeeksAvailable', () => {
     it('선택한 강의의 모든 주차가 차 있으면 안내 문구 표시', async () => {
       const user = userEvent.setup();
-      // 1~12주 전부 점유
-      const taken = { 1: Array.from({ length: 12 }, (_, i) => i + 1) };
-      renderCreate({ takenWeeksByCourse: taken });
+      // ② 주차는 getQuizFormMetaAction로 로드 → 이 강의는 1~12주 전부 점유로 응답
+      (getQuizFormMetaAction as jest.Mock).mockResolvedValueOnce({
+        weeks: Array.from({ length: 12 }, (_, i) => i + 1),
+        takenWeeks: Array.from({ length: 12 }, (_, i) => i + 1),
+      });
+      renderCreate();
 
       await user.selectOptions(screen.getByLabelText('강의 선택'), '1');
 
       expect(
-        screen.getByText('이 강의는 모든 주차에 퀴즈가 있어 등록할 수 없습니다.'),
+        await screen.findByText(/등록 가능한 주차가 없습니다/),
       ).toBeInTheDocument();
     });
   });
