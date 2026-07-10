@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import CourseCreateForm from '@/features/instructor/components/CourseCreateForm';
 import { getCourseDetailServer } from '@/features/courses/server';
 import { SUBJECTS } from '@/features/courses/subjects';
+import type { CurriculumSection, CurriculumLesson } from '@/features/courses/types';
 import { mockAdminInstructorOptions } from '@/mocks/admin.mock';
 
 interface Props {
@@ -41,6 +42,18 @@ export default async function AdminCourseEditPage({ params }: Props) {
         targetAudience: course.targetAudience,
         techTags: course.techTags,
         level: course.level,
+        // 수정 저장 시 기존 커리큘럼이 빈 배열로 덮이지 않도록 매핑 (CodeRabbit #775)
+        curriculum: (course.curriculum ?? []).map(
+          (section: CurriculumSection) => ({
+            id: String(section.sectionId),
+            title: section.title,
+            lectures: (section.lessons ?? []).map((lesson: CurriculumLesson) => ({
+              id: String(lesson.lessonId),
+              fileName: lesson.title,
+              duration: lesson.duration,
+            })),
+          }),
+        ),
       }}
     />
   );
