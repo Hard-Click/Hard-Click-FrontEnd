@@ -80,13 +80,25 @@ export default function MessageList({
 
     if (isPrepend) {
       el.scrollTop = el.scrollHeight - prevDistRef.current;
-      return;
-    }
-    // 내가 보낸 메시지는 위치 무관 항상 바닥으로. 그 외 append는 바닥 근처였을 때만(위 읽는 중 방해 X).
-    if (atBottomRef.current || lastMsg?.senderId === myMemberId) {
+    } else if (atBottomRef.current || lastMsg?.senderId === myMemberId) {
+      // 내가 보낸 메시지는 위치 무관 항상 바닥으로. 그 외 append는 바닥 근처였을 때만(위 읽는 중 방해 X).
       el.scrollTop = el.scrollHeight;
     }
-  }, [messages, myMemberId]);
+
+    // 콘텐츠가 뷰포트를 못 채워 스크롤바가 없으면(짧은 첫 페이지·큰 화면) onScroll이 안 떠
+    // 옛 메시지에 도달 못 함 → hasMore인 동안 자동으로 다음 페이지를 1회씩 당겨온다.
+    if (
+      hasMore &&
+      !loadingOlder &&
+      !triggeredRef.current &&
+      el.scrollHeight <= el.clientHeight
+    ) {
+      prevDistRef.current = el.scrollHeight - el.scrollTop;
+      prependingRef.current = true;
+      triggeredRef.current = true;
+      onLoadOlder();
+    }
+  }, [messages, myMemberId, hasMore, loadingOlder, onLoadOlder]);
 
   // 타이핑 표시 등장/변화 → 바닥 근처면 하단으로.
   useEffect(() => {

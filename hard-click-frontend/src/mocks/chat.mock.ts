@@ -60,7 +60,8 @@ export interface ChatRoomDetailApi {
   participantCount: number;
 }
 
-/** mock 기준 "나" = memberId 1 (김하드). Server page가 mock일 때 myMemberId를 1로 맞춘다. */
+/** mock 기준 "나" = memberId 1 (김하드). page.tsx의 `user?.memberId ?? (isMock('chat') ? MOCK_MY_MEMBER_ID : -1)`가
+ *  **비로그인 mock 프리뷰에서만** 이 값으로 대체한다(로그인 시엔 실 memberId 사용 → mock 방과 불일치할 수 있음). */
 export const MOCK_MY_MEMBER_ID = 1;
 
 export const mockChatRoomDetail: ChatRoomDetailApi = {

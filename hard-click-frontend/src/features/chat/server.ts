@@ -117,7 +117,8 @@ function toChatRoomListItem(api: ChatRoomApiItem): ChatRoomListItem {
     chatRoomId: api.chatRoomId,
     name: api.name,
     lastMessage: api.lastMessage,
-    lastMessageAt: relativeTime(api.lastMessageAt),
+    // 메시지 없는 방은 lastMessageAt이 null일 수 있음 — relativeTime(new Date(null)=0 → "1970.01.01") 방지.
+    lastMessageAt: api.lastMessageAt ? relativeTime(api.lastMessageAt) : '',
     unreadCount: api.unreadCount,
   };
 }

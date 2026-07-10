@@ -47,7 +47,9 @@ export default async function ChatRoomPage({
     <div className="h-[calc(100dvh-64px)] overflow-hidden bg-[#F8FAFC] px-4 py-4 sm:px-6 sm:py-5">
       <div className="mx-auto h-full max-w-[1120px]">
         <ChatRoomClient
-          key={room.chatRoomId}
+          // URL param 기준 remount — fetched room.chatRoomId가 방마다 안 바뀌어도(mock 상수 id 등)
+          // 방 전환 시 client state(messages·cursor)가 확실히 초기화되게 함.
+          key={chatRoomId}
           room={room}
           initialHistory={history}
           myMemberId={myMemberId}

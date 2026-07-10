@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/lib/toast';
 import { maskName } from '@/lib/formatter';
+import { isMock } from '@/mocks/config';
 import ConfirmModal from '@/components/ui/confirmModal';
 import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
@@ -80,7 +81,8 @@ export default function ChatRoomClient({
   const handleParticipants = useCallback(
     (next: ChatParticipant[], count?: number) => {
       setParticipants(next);
-      if (typeof count === 'number') setParticipantCount(count);
+      // PRESENCE_UPDATE는 count를 안 줄 수 있음 → 없으면 참여자 수로 보정(헤더 count ↔ 사이드바 length 불일치 방지).
+      setParticipantCount(typeof count === 'number' ? count : next.length);
     },
     [],
   );
@@ -151,19 +153,22 @@ export default function ChatRoomClient({
       toast.error(res.message);
       return;
     }
-    // mock 낙관: 참여자 제거 + 시스템 메시지. 실제는 소켓 SYSTEM_KICK(kickedMemberId)으로 갱신.
-    setParticipants((prev) =>
-      prev.filter((p) => p.memberId !== target.memberId),
-    );
-    setParticipantCount((c) => Math.max(0, c - 1));
-    handleIncoming({
-      messageId: Date.now(),
-      type: 'SYSTEM_KICK',
-      senderId: null,
-      senderName: null,
-      content: `${maskName(target.name)}님을 내보냈습니다`,
-      sentAt: new Date().toISOString(),
-    });
+    // 낙관 갱신(참여자 제거 + 시스템 메시지)은 mock 전용 — 라이브(STOMP)에선 소켓 SYSTEM_KICK 이벤트가
+    // 참여자/메시지를 갱신하므로, 여기서 또 하면 이중 반영·시스템 메시지 중복(sendMessage 낙관과 동일 이유로 게이팅).
+    if (isMock('chat')) {
+      setParticipants((prev) =>
+        prev.filter((p) => p.memberId !== target.memberId),
+      );
+      setParticipantCount((c) => Math.max(0, c - 1));
+      handleIncoming({
+        messageId: Date.now(),
+        type: 'SYSTEM_KICK',
+        senderId: null,
+        senderName: null,
+        content: `${maskName(target.name)}님을 내보냈습니다`,
+        sentAt: new Date().toISOString(),
+      });
+    }
     toast.success(res.message);
   };
 
