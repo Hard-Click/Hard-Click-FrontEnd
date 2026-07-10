@@ -1,8 +1,9 @@
 import Image from 'next/image';
+import type { ReactNode } from 'react';
 
 interface AdminStatCardProps {
   label: string;
-  value: string | number;
+  value: ReactNode;
   icon: string;
   valueColor: string;
   iconBg: string;
