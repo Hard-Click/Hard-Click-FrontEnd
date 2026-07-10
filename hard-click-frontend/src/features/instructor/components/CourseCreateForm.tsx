@@ -27,7 +27,6 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-
 interface Lecture {
   id: string;
   file?: File;
@@ -55,6 +54,8 @@ interface CourseDetail {
   learningGoals?: string[];
   targetAudience?: string[];
   level?: string;
+  recommendedWeeks?: number;
+  dailyStudyLimitMinutes?: number;
 }
 
 interface CourseCreateFormProps {
@@ -203,32 +204,48 @@ export default function CourseCreateForm({
 }: CourseCreateFormProps) {
   const [title, setTitle] = useState(initialData?.title ?? '');
   const [subjects] = useState<Subject[]>(
-    SUBJECTS.map((s) => ({ subjectId: s.subjectId, name: s.name }))
+    SUBJECTS.map((s) => ({ subjectId: s.subjectId, name: s.name })),
   );
-  const [description, setDescription] = useState(initialData?.description ?? '');
-  const [subjectId, setSubjectId] = useState<number>(initialData?.subjectId ?? 0);
+  // 강의 소개 입력 UI는 제거됨 — 수정 모드에서 기존 값 보존용으로 값만 유지(payload 전송)
+  const [description] = useState(initialData?.description ?? '');
+  const [subjectId, setSubjectId] = useState<number>(
+    initialData?.subjectId ?? 0,
+  );
   const [priceType, setPriceType] = useState<'FREE' | 'PAID'>(
-    initialData?.priceType ?? 'FREE'
+    initialData?.priceType ?? 'FREE',
   );
   const [price, setPrice] = useState(initialData?.price ?? '');
   const [thumbnailPreview, setThumbnailPreview] = useState(
-    initialData?.thumbnailUrl ?? ''
+    initialData?.thumbnailUrl ?? '',
   );
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [sections, setSections] = useState<Section[]>(
-    initialData?.curriculum ?? []
+    initialData?.curriculum ?? [],
   );
   const [learningGoals, setLearningGoals] = useState<string[]>(
-    initialData?.learningGoals ?? []
+    initialData?.learningGoals ?? [],
   );
   const [learningGoalInput, setLearningGoalInput] = useState('');
   const [targetAudience, setTargetAudience] = useState<string[]>(
-    initialData?.targetAudience ?? []
+    initialData?.targetAudience ?? [],
   );
   const [targetAudienceInput, setTargetAudienceInput] = useState('');
-  const [techTags, setTechTags] = useState<string[]>(initialData?.techTags ?? []);
+  const [techTags, setTechTags] = useState<string[]>(
+    initialData?.techTags ?? [],
+  );
   const [techTagInput, setTechTagInput] = useState('');
   const [level, setLevel] = useState(initialData?.level ?? '');
+  // 권장 완강 기간(주) / 코스별 강도 상한(하루 최대 학습 시간, 분) — 입력값은 문자열로 보관
+  const [recommendedWeeks, setRecommendedWeeks] = useState(
+    initialData?.recommendedWeeks != null
+      ? String(initialData.recommendedWeeks)
+      : '',
+  );
+  const [dailyStudyLimit, setDailyStudyLimit] = useState(
+    initialData?.dailyStudyLimitMinutes != null
+      ? String(initialData.dailyStudyLimitMinutes)
+      : '',
+  );
   const router = useRouter();
 
   const [errors, setErrors] = useState({
@@ -240,9 +257,10 @@ export default function CourseCreateForm({
     targetAudience: '',
     techTags: '',
     level: '',
+    recommendedWeeks: '',
+    dailyStudyLimit: '',
   });
   const [firstErrorField, setFirstErrorField] = useState('');
-
 
   const titleRef = useRef<HTMLInputElement>(null);
   const subjectRef = useRef<HTMLSelectElement>(null);
@@ -250,6 +268,8 @@ export default function CourseCreateForm({
   const learningGoalsRef = useRef<HTMLDivElement>(null);
   const targetAudienceRef = useRef<HTMLDivElement>(null);
   const levelRef = useRef<HTMLDivElement>(null);
+  const recommendedWeeksRef = useRef<HTMLInputElement>(null);
+  const dailyStudyLimitRef = useRef<HTMLInputElement>(null);
   const thumbnailRef = useRef<HTMLDivElement>(null);
   const isComposingGoalRef = useRef(false);
   const isComposingTargetRef = useRef(false);
@@ -296,6 +316,8 @@ export default function CourseCreateForm({
       targetAudience: '',
       techTags: '',
       level: '',
+      recommendedWeeks: '',
+      dailyStudyLimit: '',
     };
 
     let firstError = '';
@@ -320,6 +342,33 @@ export default function CourseCreateForm({
       newErrors.level = '난이도를 선택해주세요';
       if (!firstError) firstError = 'level';
     }
+    // 권장 완강 기간 — 필수, 정수 1주 이상
+    const weeksRaw = recommendedWeeks.trim();
+    if (!weeksRaw) {
+      newErrors.recommendedWeeks = '권장 완강 기간을 입력해주세요';
+      if (!firstError) firstError = 'recommendedWeeks';
+    } else if (!Number.isInteger(Number(weeksRaw))) {
+      newErrors.recommendedWeeks = '숫자만 입력해주세요.';
+      if (!firstError) firstError = 'recommendedWeeks';
+    } else if (Number(weeksRaw) < 1) {
+      newErrors.recommendedWeeks = '1주 이상으로 설정해주세요.';
+      if (!firstError) firstError = 'recommendedWeeks';
+    }
+    // 강도 상한 — 선택(비우면 120 적용), 입력 시 정수 1~120분
+    const dailyRaw = dailyStudyLimit.trim();
+    if (dailyRaw) {
+      const dailyNum = Number(dailyRaw);
+      if (!Number.isInteger(dailyNum)) {
+        newErrors.dailyStudyLimit = '숫자만 입력해주세요.';
+        if (!firstError) firstError = 'dailyStudyLimit';
+      } else if (dailyNum < 1) {
+        newErrors.dailyStudyLimit = '1분 이상으로 설정해주세요.';
+        if (!firstError) firstError = 'dailyStudyLimit';
+      } else if (dailyNum > 120) {
+        newErrors.dailyStudyLimit = '전역 기본값(120분) 이하로 설정해주세요.';
+        if (!firstError) firstError = 'dailyStudyLimit';
+      }
+    }
     if (!thumbnail && !thumbnailPreview) {
       newErrors.thumbnail = '썸네일을 등록해주세요';
       if (!firstError) firstError = 'thumbnail';
@@ -343,6 +392,8 @@ export default function CourseCreateForm({
         targetAudience: targetAudienceRef,
         techTags: techTagsRef,
         level: levelRef,
+        recommendedWeeks: recommendedWeeksRef,
+        dailyStudyLimit: dailyStudyLimitRef,
         thumbnail: thumbnailRef,
         price: priceRef,
       };
@@ -425,21 +476,6 @@ export default function CourseCreateForm({
             </div>
           </div>
 
-          {/* 강의 소개 */}
-          <div className="mb-8">
-            <label htmlFor="course-description" className="mb-3 block text-sm font-semibold text-[#1E293B]">
-              강의 소개
-            </label>
-            <textarea
-              id="course-description"
-              placeholder="강의 소개를 입력하세요"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-              className="w-full rounded-2xl border border-[#E2E8F0] px-5 py-4 text-base outline-none transition focus:border-[#2F5DAA] resize-none"
-            />
-          </div>
-
           {/* 과목 */}
           <div className="mb-8">
             <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
@@ -517,8 +553,12 @@ export default function CourseCreateForm({
                 type="text"
                 value={learningGoalInput}
                 onChange={(e) => setLearningGoalInput(e.target.value)}
-                onCompositionStart={() => { isComposingGoalRef.current = true; }}
-                onCompositionEnd={() => { isComposingGoalRef.current = false; }}
+                onCompositionStart={() => {
+                  isComposingGoalRef.current = true;
+                }}
+                onCompositionEnd={() => {
+                  isComposingGoalRef.current = false;
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !isComposingGoalRef.current) {
                     e.preventDefault();
@@ -526,7 +566,8 @@ export default function CourseCreateForm({
                     if (trimmed && !learningGoals.includes(trimmed)) {
                       setLearningGoals((prev) => [...prev, trimmed]);
                       setErrors((prev) => ({ ...prev, learningGoals: '' }));
-                      if (firstErrorField === 'learningGoals') setFirstErrorField('');
+                      if (firstErrorField === 'learningGoals')
+                        setFirstErrorField('');
                     }
                     setLearningGoalInput('');
                   }
@@ -541,7 +582,8 @@ export default function CourseCreateForm({
                   if (trimmed && !learningGoals.includes(trimmed)) {
                     setLearningGoals((prev) => [...prev, trimmed]);
                     setErrors((prev) => ({ ...prev, learningGoals: '' }));
-                    if (firstErrorField === 'learningGoals') setFirstErrorField('');
+                    if (firstErrorField === 'learningGoals')
+                      setFirstErrorField('');
                   }
                   setLearningGoalInput('');
                 }}
@@ -562,7 +604,7 @@ export default function CourseCreateForm({
                       type="button"
                       onClick={() =>
                         setLearningGoals((prev) =>
-                          prev.filter((_, i) => i !== idx)
+                          prev.filter((_, i) => i !== idx),
                         )
                       }
                       className="text-[#2F5DAA] opacity-60 hover:opacity-100"
@@ -576,8 +618,15 @@ export default function CourseCreateForm({
             <div className="mt-2 min-h-[20px]">
               {errors.learningGoals && (
                 <div className="flex items-center gap-1">
-                  <Image src="/icons/error.svg" alt="error" width={14} height={14} />
-                  <p className="text-sm text-[#B91C1C]">{errors.learningGoals}</p>
+                  <Image
+                    src="/icons/error.svg"
+                    alt="error"
+                    width={14}
+                    height={14}
+                  />
+                  <p className="text-sm text-[#B91C1C]">
+                    {errors.learningGoals}
+                  </p>
                 </div>
               )}
             </div>
@@ -593,8 +642,12 @@ export default function CourseCreateForm({
                 type="text"
                 value={targetAudienceInput}
                 onChange={(e) => setTargetAudienceInput(e.target.value)}
-                onCompositionStart={() => { isComposingTargetRef.current = true; }}
-                onCompositionEnd={() => { isComposingTargetRef.current = false; }}
+                onCompositionStart={() => {
+                  isComposingTargetRef.current = true;
+                }}
+                onCompositionEnd={() => {
+                  isComposingTargetRef.current = false;
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !isComposingTargetRef.current) {
                     e.preventDefault();
@@ -602,7 +655,8 @@ export default function CourseCreateForm({
                     if (trimmed && !targetAudience.includes(trimmed)) {
                       setTargetAudience((prev) => [...prev, trimmed]);
                       setErrors((prev) => ({ ...prev, targetAudience: '' }));
-                      if (firstErrorField === 'targetAudience') setFirstErrorField('');
+                      if (firstErrorField === 'targetAudience')
+                        setFirstErrorField('');
                     }
                     setTargetAudienceInput('');
                   }
@@ -617,7 +671,8 @@ export default function CourseCreateForm({
                   if (trimmed && !targetAudience.includes(trimmed)) {
                     setTargetAudience((prev) => [...prev, trimmed]);
                     setErrors((prev) => ({ ...prev, targetAudience: '' }));
-                    if (firstErrorField === 'targetAudience') setFirstErrorField('');
+                    if (firstErrorField === 'targetAudience')
+                      setFirstErrorField('');
                   }
                   setTargetAudienceInput('');
                 }}
@@ -638,7 +693,7 @@ export default function CourseCreateForm({
                       type="button"
                       onClick={() =>
                         setTargetAudience((prev) =>
-                          prev.filter((_, i) => i !== idx)
+                          prev.filter((_, i) => i !== idx),
                         )
                       }
                       className="text-[#2F5DAA] opacity-60 hover:opacity-100"
@@ -652,8 +707,15 @@ export default function CourseCreateForm({
             <div className="mt-2 min-h-[20px]">
               {errors.targetAudience && (
                 <div className="flex items-center gap-1">
-                  <Image src="/icons/error.svg" alt="error" width={14} height={14} />
-                  <p className="text-sm text-[#B91C1C]">{errors.targetAudience}</p>
+                  <Image
+                    src="/icons/error.svg"
+                    alt="error"
+                    width={14}
+                    height={14}
+                  />
+                  <p className="text-sm text-[#B91C1C]">
+                    {errors.targetAudience}
+                  </p>
                 </div>
               )}
             </div>
@@ -669,8 +731,12 @@ export default function CourseCreateForm({
                 type="text"
                 value={techTagInput}
                 onChange={(e) => setTechTagInput(e.target.value)}
-                onCompositionStart={() => { isComposingTagRef.current = true; }}
-                onCompositionEnd={() => { isComposingTagRef.current = false; }}
+                onCompositionStart={() => {
+                  isComposingTagRef.current = true;
+                }}
+                onCompositionEnd={() => {
+                  isComposingTagRef.current = false;
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !isComposingTagRef.current) {
                     e.preventDefault();
@@ -678,7 +744,8 @@ export default function CourseCreateForm({
                     if (trimmed && !techTags.includes(trimmed)) {
                       setTechTags((prev) => [...prev, trimmed]);
                       setErrors((prev) => ({ ...prev, techTags: '' }));
-                      if (firstErrorField === 'techTags') setFirstErrorField('');
+                      if (firstErrorField === 'techTags')
+                        setFirstErrorField('');
                     }
                     setTechTagInput('');
                   }
@@ -726,54 +793,151 @@ export default function CourseCreateForm({
             <div className="mt-2 min-h-[20px]">
               {errors.techTags && (
                 <div className="flex items-center gap-1">
-                  <Image src="/icons/error.svg" alt="error" width={14} height={14} />
+                  <Image
+                    src="/icons/error.svg"
+                    alt="error"
+                    width={14}
+                    height={14}
+                  />
                   <p className="text-sm text-[#B91C1C]">{errors.techTags}</p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* 난이도 */}
-          <div className="mb-8" ref={levelRef}>
-            <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
-              난이도 <span className="text-[#DC2626]">*</span>
-            </label>
-            <div className="flex gap-3">
-              {(
-                [
-                  { value: '입문', label: '입문' },
-                  { value: '중급', label: '중급' },
-                  { value: '심화', label: '심화' },
-                ] as const
-              ).map(({ value, label }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => {
-                    const newLevel = level === value ? '' : value;
-                    setLevel(newLevel);
-                    if (newLevel) {
-                      setErrors((prev) => ({ ...prev, level: '' }));
-                      if (firstErrorField === 'level') setFirstErrorField('');
+          {/* 난이도 · 권장 완강 기간 · 코스별 강도 상한 (한 행, 균등한 고정 간격) */}
+          <div className="mb-8 flex flex-col gap-8 sm:flex-row sm:items-start sm:gap-40">
+            {/* 난이도 */}
+            <div ref={levelRef}>
+              <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
+                난이도 <span className="text-[#DC2626]">*</span>
+              </label>
+              <div className="flex gap-3">
+                {(
+                  [
+                    { value: '입문', label: '입문' },
+                    { value: '중급', label: '중급' },
+                    { value: '심화', label: '심화' },
+                  ] as const
+                ).map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => {
+                      const newLevel = level === value ? '' : value;
+                      setLevel(newLevel);
+                      if (newLevel) {
+                        setErrors((prev) => ({ ...prev, level: '' }));
+                        if (firstErrorField === 'level') setFirstErrorField('');
+                      }
+                    }}
+                    className={`h-11 rounded-2xl px-8 text-sm font-semibold transition ${
+                      level === value
+                        ? 'bg-[#2F5DAA] text-white shadow-sm'
+                        : 'border border-[#E2E8F0] bg-white text-[#475569] hover:border-[#2F5DAA] hover:text-[#2F5DAA]'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-2 min-h-[20px]">
+                {errors.level && (
+                  <div className="flex items-center gap-1">
+                    <Image
+                      src="/icons/error.svg"
+                      alt="error"
+                      width={14}
+                      height={14}
+                    />
+                    <p className="text-sm text-[#B91C1C]">{errors.level}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 권장 완강 기간 */}
+            <div>
+              <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
+                권장 완강 기간 <span className="text-[#DC2626]">*</span>
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  ref={recommendedWeeksRef}
+                  type="number"
+                  min="1"
+                  value={recommendedWeeks}
+                  onChange={(e) => {
+                    setRecommendedWeeks(e.target.value);
+                    if (e.target.value.trim()) {
+                      setErrors((prev) => ({ ...prev, recommendedWeeks: '' }));
+                      if (firstErrorField === 'recommendedWeeks')
+                        setFirstErrorField('');
                     }
                   }}
-                  className={`h-11 rounded-2xl px-8 text-sm font-semibold transition ${
-                    level === value
-                      ? 'bg-[#2F5DAA] text-white shadow-sm'
-                      : 'border border-[#E2E8F0] bg-white text-[#475569] hover:border-[#2F5DAA] hover:text-[#2F5DAA]'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+                  className="h-11 w-24 rounded-2xl border border-[#E2E8F0] px-4 text-sm outline-none focus:border-[#2F5DAA]"
+                />
+                <span className="text-sm text-[#475569]">주</span>
+              </div>
+              <div className="mt-2 min-h-[20px]">
+                {errors.recommendedWeeks && (
+                  <div className="flex items-center gap-1">
+                    <Image
+                      src="/icons/error.svg"
+                      alt="error"
+                      width={14}
+                      height={14}
+                    />
+                    <p className="text-sm text-[#B91C1C]">
+                      {errors.recommendedWeeks}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="mt-2 min-h-[20px]">
-              {errors.level && (
-                <div className="flex items-center gap-1">
-                  <Image src="/icons/error.svg" alt="error" width={14} height={14} />
-                  <p className="text-sm text-[#B91C1C]">{errors.level}</p>
-                </div>
-              )}
+
+            {/* 코스별 강도 상한 (하루 최대 학습 시간) */}
+            <div>
+              <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
+                코스별 강도 상한 (하루 최대 학습 시간){' '}
+                <span className="text-[#DC2626]">*</span>
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  ref={dailyStudyLimitRef}
+                  type="number"
+                  min="1"
+                  max="120"
+                  placeholder="120"
+                  value={dailyStudyLimit}
+                  onChange={(e) => {
+                    setDailyStudyLimit(e.target.value);
+                    setErrors((prev) => ({ ...prev, dailyStudyLimit: '' }));
+                    if (firstErrorField === 'dailyStudyLimit')
+                      setFirstErrorField('');
+                  }}
+                  className="h-11 w-24 rounded-2xl border border-[#E2E8F0] px-4 text-sm outline-none focus:border-[#2F5DAA]"
+                />
+                <span className="text-sm text-[#475569]">분</span>
+              </div>
+              <p className="mt-1 text-xs text-[#94A3B8]">
+                전역 기본값 120분 이하 · 비우면 120분 적용
+              </p>
+              <div className="mt-1 min-h-[20px]">
+                {errors.dailyStudyLimit && (
+                  <div className="flex items-center gap-1">
+                    <Image
+                      src="/icons/error.svg"
+                      alt="error"
+                      width={14}
+                      height={14}
+                    />
+                    <p className="text-sm text-[#B91C1C]">
+                      {errors.dailyStudyLimit}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -923,12 +1087,16 @@ export default function CourseCreateForm({
                       const value = e.target.value;
                       setPrice(value);
                       const num = Number(value);
-                      const valid = value.trim() && Number.isFinite(num) && num >= 1;
+                      const valid =
+                        value.trim() && Number.isFinite(num) && num >= 1;
                       setErrors((prev) => ({
                         ...prev,
-                        price: valid ? '' : '1원 이상의 올바른 가격을 입력해주세요',
+                        price: valid
+                          ? ''
+                          : '1원 이상의 올바른 가격을 입력해주세요',
                       }));
-                      if (firstErrorField === 'price' && valid) setFirstErrorField('');
+                      if (firstErrorField === 'price' && valid)
+                        setFirstErrorField('');
                     }}
                     className="w-full bg-transparent text-base outline-none"
                   />
@@ -1008,13 +1176,13 @@ export default function CourseCreateForm({
                         onTitleChange={(id, title) =>
                           setSections((prev) =>
                             prev.map((item) =>
-                              item.id === id ? { ...item, title } : item
-                            )
+                              item.id === id ? { ...item, title } : item,
+                            ),
                           )
                         }
                         onRemove={(id) =>
                           setSections((prev) =>
-                            prev.filter((item) => item.id !== id)
+                            prev.filter((item) => item.id !== id),
                           )
                         }
                         onAddLecture={(sectionId, file, duration) =>
@@ -1033,8 +1201,8 @@ export default function CourseCreateForm({
                                       },
                                     ],
                                   }
-                                : item
-                            )
+                                : item,
+                            ),
                           )
                         }
                         onRemoveLecture={(sectionId, index) =>
@@ -1044,11 +1212,11 @@ export default function CourseCreateForm({
                                 ? {
                                     ...item,
                                     lectures: item.lectures.filter(
-                                      (_, i) => i !== index
+                                      (_, i) => i !== index,
                                     ),
                                   }
-                                : item
-                            )
+                                : item,
+                            ),
                           )
                         }
                       />
@@ -1127,12 +1295,24 @@ export default function CourseCreateForm({
                   targetAudience,
                   techTags,
                   level: level || undefined,
+                  // ⚠️ BE 필드명·지원 미확정 (§0.5) — AI 스케줄러 계약 확인 후 조정
+                  recommendedWeeks: recommendedWeeks
+                    ? Number(recommendedWeeks)
+                    : undefined,
+                  // 비우면 미전송 → BE가 기본값(120분) 적용
+                  dailyStudyLimitMinutes: dailyStudyLimit
+                    ? Number(dailyStudyLimit)
+                    : undefined,
                   sections: sections.map((sec, sIdx) => ({
-                    ...(mode === 'edit' && Number(sec.id) ? { sectionId: Number(sec.id) } : {}),
+                    ...(mode === 'edit' && Number(sec.id)
+                      ? { sectionId: Number(sec.id) }
+                      : {}),
                     title: sec.title,
                     orderIndex: sIdx,
                     lessons: sec.lectures.map((lec, lIdx) => ({
-                      ...(mode === 'edit' && Number(lec.id) ? { lessonId: Number(lec.id) } : {}),
+                      ...(mode === 'edit' && Number(lec.id)
+                        ? { lessonId: Number(lec.id) }
+                        : {}),
                       title: lec.fileName,
                       description: lec.fileName || undefined,
                       orderIndex: lIdx,
@@ -1142,7 +1322,9 @@ export default function CourseCreateForm({
                 };
 
                 if (mode === 'edit' && !initialData?.courseId) {
-                  toast.error('강의 정보를 불러올 수 없습니다. 페이지를 새로고침해주세요.');
+                  toast.error(
+                    '강의 정보를 불러올 수 없습니다. 페이지를 새로고침해주세요.',
+                  );
                   isSubmittingRef.current = false;
                   setIsLoading(false);
                   return;
@@ -1165,16 +1347,22 @@ export default function CourseCreateForm({
                   (mode === 'edit' ? (initialData?.courseId ?? 0) : 0);
 
                 const hasFiles = sections.some((sec) =>
-                  sec.lectures.some((lec) => lec.file)
+                  sec.lectures.some((lec) => lec.file),
                 );
 
                 if (hasFiles && savedCourseId) {
-                  interface LessonApiItem { lessonId: number; }
-                  interface SectionApiItem { lessons: LessonApiItem[]; }
-                  interface CourseDetailForUpload { sections: SectionApiItem[]; }
+                  interface LessonApiItem {
+                    lessonId: number;
+                  }
+                  interface SectionApiItem {
+                    lessons: LessonApiItem[];
+                  }
+                  interface CourseDetailForUpload {
+                    sections: SectionApiItem[];
+                  }
 
                   const detailRes = await api.get<CourseDetailForUpload>(
-                    `/api/courses/${savedCourseId}`
+                    `/api/courses/${savedCourseId}`,
                   );
                   if (detailRes.success && detailRes.data) {
                     const apiSections = detailRes.data.sections ?? [];
@@ -1205,7 +1393,7 @@ export default function CourseCreateForm({
                                 contentType?: string;
                               };
                             }>(
-                              `/api/courses/lessons/${apiLesson.lessonId}/video/presign?filename=${encodeURIComponent(lecture.file.name)}`
+                              `/api/courses/lessons/${apiLesson.lessonId}/video/presign?filename=${encodeURIComponent(lecture.file.name)}`,
                             );
                             const presign = presignRes.data?.data;
                             if (!presign?.presignedUrl || !presign?.s3Key) {
@@ -1214,26 +1402,32 @@ export default function CourseCreateForm({
                             // 2) S3 직접 PUT — 순수 axios(default, 인터셉터 없음)·절대 S3 URL이라
                             //    BFF/Authorization을 안 거침(인증 헤더 붙으면 S3 서명 검증 깨짐).
                             //    Content-Type은 presign이 서명한 값과 일치시킨다.
-                            await axios.put(presign.presignedUrl, lecture.file, {
-                              headers: {
-                                'Content-Type':
-                                  presign.contentType ?? lecture.file.type,
+                            await axios.put(
+                              presign.presignedUrl,
+                              lecture.file,
+                              {
+                                headers: {
+                                  'Content-Type':
+                                    presign.contentType ?? lecture.file.type,
+                                },
                               },
-                            });
+                            );
                             // 3) 확정 — s3Key·durationSeconds는 @RequestParam(쿼리). BFF가 인증 첨부.
                             //    durationSeconds는 BE가 받아 재생시간으로 저장.
                             const durationSeconds = durationToSeconds(
-                              lecture.duration
+                              lecture.duration,
                             );
                             await axios.patch(
-                              `/api/courses/lessons/${apiLesson.lessonId}/video?s3Key=${encodeURIComponent(presign.s3Key)}${durationSeconds != null ? `&durationSeconds=${durationSeconds}` : ''}`
+                              `/api/courses/lessons/${apiLesson.lessonId}/video?s3Key=${encodeURIComponent(presign.s3Key)}${durationSeconds != null ? `&durationSeconds=${durationSeconds}` : ''}`,
                             );
                           } catch (err) {
                             console.error(
                               `영상 업로드 실패 lessonId=${apiLesson.lessonId}`,
-                              err
+                              err,
                             );
-                            toast.error('영상 업로드에 실패했습니다. 강의는 등록되었으니 수정 페이지에서 다시 업로드해주세요.');
+                            toast.error(
+                              '영상 업로드에 실패했습니다. 강의는 등록되었으니 수정 페이지에서 다시 업로드해주세요.',
+                            );
                             uploadFailed = true;
                             break;
                           }
@@ -1251,7 +1445,7 @@ export default function CourseCreateForm({
 
                 sessionStorage.setItem(
                   'courseToastType',
-                  mode === 'edit' ? 'edit' : 'create'
+                  mode === 'edit' ? 'edit' : 'create',
                 );
                 isSubmittingRef.current = false;
                 setIsLoading(false);
