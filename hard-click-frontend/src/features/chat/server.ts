@@ -1,7 +1,12 @@
 /**
  * 채팅 조회 (Server Component 전용). 격리막 — UI는 도메인 타입(types.ts)만 본다.
- * ⚠️ 채팅 BE 미배포 → isMock('chat')=전역 USE_MOCK(true)라 지금은 항상 mock 분기.
- *    serverApi 호출은 연동 seam(라이브 검증 후 mocks/config MOCK_OVERRIDE에 chat:false 등록).
+ * ⚠️ isMock('chat')=전역 USE_MOCK(true)라 지금은 항상 mock 분기.
+ *    REST 경로 3개 모두 BE **origin/main·develop 머지 완료**(2026-07-10 확인, ChatRoomController):
+ *      - GET /api/chat/rooms/{id}            방정보
+ *      - GET /api/chat/rooms/{id}/messages   히스토리
+ *      - GET /api/chat/rooms/me              내 목록
+ *    응답 shape는 BE record와 일치 확인. **남은 것 = 배포서버 가동 + 로그인 200 검증 후 MOCK_OVERRIDE에 chat:false.**
+ *    (2026-07-10 시점: 배포서버 13.125.94.217 다운 상태라 라이브 검증 대기.)
  */
 
 import { serverApi } from '@/lib/api';
@@ -69,9 +74,9 @@ export async function getChatRoomServer(
 ): Promise<ChatRoomDetail> {
   if (isMock('chat')) return toChatRoomDetail(mockChatRoomDetail);
 
-  // ── BE 연동 seam ── (hostId·title·subjectName 포함, 한 콜)
+  // ── BE 연동 seam ── (hostId·title·subjectName 포함, 한 콜. BE 코드검증 경로)
   const res = await serverApi.get<ChatRoomDetailApi>(
-    `/api/chat-rooms/${chatRoomId}`,
+    `/api/chat/rooms/${chatRoomId}`,
   );
   if (!res.success || !res.data) {
     throw new Error('채팅방 정보를 불러오지 못했습니다.');
@@ -96,16 +101,22 @@ export async function getChatHistoryServer(
     };
   }
 
-  // ── BE 연동 seam ──
+  // ── BE 연동 seam ── (BE 코드검증 경로·쿼리파라미터: cursorId·size)
   const query = cursorId ? `?cursorId=${cursorId}&size=20` : '?size=20';
   const res = await serverApi.get<ChatHistoryApi>(
-    `/api/chat-rooms/${chatRoomId}/messages${query}`,
+    `/api/chat/rooms/${chatRoomId}/messages${query}`,
   );
   if (!res.success || !res.data) {
     throw new Error('채팅 내역을 불러오지 못했습니다.');
   }
+  // ⚠️ BE는 페이지 내부를 오래된→최신(asc)으로 준다(ChatMessageQueryService 확인). FE 계약은 최신순(desc,
+  //    ChatRoomClient가 reverse해 표시) → messageId(DB PK 단조증가) 기준 desc로 정규화(순서 소스 무관하게 안전).
+  //    (라이브 첫 페이지로 순서 재확인 필요 — 미실행 검증.)
+  const messages = [...res.data.messages]
+    .sort((a, b) => b.messageId - a.messageId)
+    .map(toChatMessage);
   return {
-    messages: res.data.messages.map(toChatMessage),
+    messages,
     hasNext: res.data.hasNext,
     nextCursorId: res.data.nextCursorId,
   };
@@ -129,10 +140,8 @@ function toChatRoomListItem(api: ChatRoomApiItem): ChatRoomListItem {
 export async function getMyChatRoomsServer(): Promise<ChatRoomListItem[]> {
   if (isMock('chat')) return mockChatRooms.map(toChatRoomListItem);
 
-  // ── BE 연동 seam ──
-  const res = await serverApi.get<ChatRoomApiItem[]>(
-    '/api/users/me/chat-rooms',
-  );
+  // ── BE 연동 seam ── (BE 코드검증 경로. data는 배열 직접)
+  const res = await serverApi.get<ChatRoomApiItem[]>('/api/chat/rooms/me');
   if (!res.success || !res.data) {
     throw new Error('채팅방 목록을 불러오지 못했습니다.');
   }

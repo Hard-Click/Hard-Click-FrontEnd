@@ -21,7 +21,8 @@ export interface ChatMessage {
   senderId: number | null;
   senderName: string | null;
   content: string;
-  /** ISO 8601 (예: 2026-07-07T21:00:00+09:00) */
+  /** ISO 8601. ⚠️ 소스별 형식 다름: REST 히스토리=`...+09:00`(offset O) / STOMP CHAT=offset 없는 LocalDateTime(KST).
+   *  → formatMessageTime이 offset 없으면 KST로 보정해 표시(utils.ts). */
   sentAt: string;
 }
 
@@ -32,8 +33,9 @@ export interface ChatParticipant {
   online: boolean;
 }
 
-/** 채팅방 정보 (GET /api/chat-rooms/{id} — BE 확정 §7: hostId·title·subjectName을 방정보 최상위로 제공, 한 콜).
- *  방장 판별은 hostId===participants[].memberId. hostId가 null이면 방장 표시 숨김. */
+/** 채팅방 정보 (GET /api/chat/rooms/{id} — BE 코드검증 2026-07-10: hostId·title·subjectName을 방정보 최상위로 제공, 한 콜).
+ *  방장 판별은 hostId===participants[].memberId. hostId가 null이면 방장 표시 숨김.
+ *  subjectName은 SubjectType enum **코드값**(예: MATH_1·KO_READING) → server.ts가 subjectLabel()로 한글화. */
 export interface ChatRoomDetail {
   chatRoomId: number;
   groupId: number;
@@ -45,7 +47,9 @@ export interface ChatRoomDetail {
   participantCount: number;
 }
 
-/** 채팅 히스토리 한 페이지 (커서 기반). BE는 최신순(desc)으로 준다. */
+/** 채팅 히스토리 한 페이지 (커서 기반).
+ *  ⚠️ BE는 페이지 **내부를 오래된→최신(asc)** 으로 준다(ChatMessageQueryService, 2026-07-10 코드검증).
+ *     FE 계약은 **최신순(desc)** (ChatRoomClient가 reverse해 표시) → server.ts에서 messageId desc로 정규화. */
 export interface ChatHistoryPage {
   messages: ChatMessage[];
   hasNext: boolean;
@@ -55,13 +59,21 @@ export interface ChatHistoryPage {
 /** 채팅방 진입 출처 — 이탈 시 돌아갈 곳(page의 returnUrl)을 결정. 오타 방지용 유니언. */
 export type ChatEntrySource = 'mypage' | 'mychats';
 
-/** 내 채팅방 목록 항목 (GET /api/users/me/chat-rooms). lastMessageAt은 표시용 상대시간. */
+/** 내 채팅방 목록 항목 (GET /api/chat/rooms/me). lastMessageAt은 표시용 상대시간.
+ *  ⚠️ BE unreadCount는 현재 하드코딩 0(실계산 예정, 2026-07-10 코드검증) — 미읽음 배지 실수치 아님. */
 export interface ChatRoomListItem {
   chatRoomId: number;
   name: string;
   lastMessage: string;
   lastMessageAt: string;
   unreadCount: number;
+}
+
+/** STOMP 소켓 티켓 (POST /api/chat/socket-tickets → CONNECT 헤더 `Authorization: Bearer <ticket>`).
+ *  30초·1회용(getAndDelete). 매 (재)연결마다 새로 발급받아야 한다. */
+export interface SocketTicket {
+  ticket: string;
+  expiresInSeconds: number;
 }
 
 /**

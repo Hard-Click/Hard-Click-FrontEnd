@@ -1,10 +1,10 @@
 /**
- * 채팅 도메인 목 데이터 — 백엔드 확정 명세(2026-07-08 유강현, docs §7) shape 그대로.
- * ⚠️ 채팅 BE 미배포 → isMock('chat')=전역 USE_MOCK을 따라 mock으로 동작.
+ * 채팅 도메인 목 데이터 — BE origin/main·feature/480 **코드검증 shape 그대로**(2026-07-10).
+ * ⚠️ isMock('chat')=전역 USE_MOCK을 따라 mock으로 동작(라이브 200 미검증 → flip 전까지 mock).
  *
- * - GET /api/users/me/chat-rooms          내 채팅방 목록 (data는 배열 직접)
- * - GET /api/chat-rooms/{chatRoomId}       방정보 — hostId·title·subjectName·participants(online) 최상위 (BE 확정 §7, 한 콜)
- * - GET /api/chat-rooms/{chatRoomId}/messages  히스토리(커서, 최신순, type=CHAT|SYSTEM_JOIN|SYSTEM_LEAVE)
+ * - GET /api/chat/rooms/me                  내 채팅방 목록 (data는 배열 직접. ⚠️ feature/480, main 미머지)
+ * - GET /api/chat/rooms/{chatRoomId}        방정보 — hostId·title·subjectName·participants(online) 최상위 (main 머지됨, 한 콜)
+ * - GET /api/chat/rooms/{chatRoomId}/messages  히스토리(커서 cursorId·size, ⚠️ feature/480 main 미머지, type=CHAT|SYSTEM_JOIN|SYSTEM_LEAVE)
  */
 
 /* ───────────── 내 채팅방 목록 (기존) ───────────── */
@@ -37,7 +37,7 @@ export const mockChatRooms: ChatRoomApiItem[] = [
 /** 빈 목록 응답 예시(명세의 empty data example) */
 export const mockChatRoomsEmpty: ChatRoomApiItem[] = [];
 
-/* ───────────── 채팅방 정보 (GET /api/chat-rooms/{id}) ───────────── */
+/* ───────────── 채팅방 정보 (GET /api/chat/rooms/{id}) ───────────── */
 
 export interface ChatParticipantApi {
   memberId: number;
@@ -99,7 +99,8 @@ export interface ChatHistoryApi {
   nextCursorId: number | null;
 }
 
-/** BE 순서 그대로 최신순(newest first). UI(ChatRoomClient)가 오래된→최신으로 뒤집어 표시. */
+/** mock은 최신순(newest first)로 authored. UI(ChatRoomClient)가 오래된→최신으로 뒤집어 표시.
+ *  ⚠️ 실 BE는 페이지 내부를 오래된→최신(asc)으로 주지만 server.ts가 messageId desc로 정규화하므로 계약 동일. */
 export const mockChatHistory: ChatHistoryApi = {
   messages: [
     {

@@ -54,7 +54,8 @@ const MOCK_OVERRIDE: Record<string, boolean> = {
   subscriptions: false, // GET /api/subscriptions/me(상태)+/plan(가격) 라이브 합성 → 구독 상태/플랜. ⚠️ 가격은 BE 고정 plan.price(FE 수능 D-day 동적가격은 placeholder였음). 구독하기(POST)는 결제 흐름(mock 규칙) 경유.
   notifications: false, // 헤더 종 알림 — GET /api/notifications(목록,data={content,hasNext})·/unread-count(미읽음수)·PATCH /api/notifications/{id}/read(읽음). 루트 layout에서 서버조회→NotificationProvider(AuthProvider 패턴 미러). 라이브 검증(2026-06-25). SSE 실시간(/api/notifications/stream→BE /subscribe)도 라이브(NotificationProvider SSE_ENABLED=true·EventSource 구독). 읽음=Provider 낙관적 갱신.
   learning: false, // 영상 재생/진도(/api/learning/*) — 라이브 전환(2026-06-27). BE가 영상 시드+lesson↔video 매핑 제공: courses/{id}/progress가 lessons[videoId] 줌, videos/{id}/play가 실 S3 streamingUrl(presigned) 줌. shape 라이브 검증 완료(play·progress·position·course progress 전부 FE 타입 일치). ⚠️ 영상 데이터는 일부만 연결(videoId 1=200, 나머지 404 L005=BE가 더 업로드해야) → 미연결은 VideoErrorState로 처리.
-  // ⚠️ 잔디 lessons/yearly/monthly는 콜드(첫호출) 200 후 연속 500 출렁(BE 작업중). members/me/profile-image=항상 500. subscriptions/me=500. quiz는 배포됨(미연동 도메인). chat=BE 없음.
+  chat: false, // 채팅 — GET /api/chat/rooms/{me,/{id},/{id}/messages} + STOMP(/ws-chat). BE main·develop 머지+재배포 확인(2026-07-10). ⏳ 라이브 200 검증 중(로그인 필요). ⚠️ 검증 후 커밋, 실패 시 원복.
+  // ⚠️ 잔디 lessons/yearly/monthly는 콜드(첫호출) 200 후 연속 500 출렁(BE 작업중). members/me/profile-image=항상 500. subscriptions/me=500. quiz는 배포됨(미연동 도메인).
   // 공지·커뮤니티·인증은 팀이 별도 플래그(USE_MOCK_NOTICES/COMMUNITY/AUTH)로 관리 → 여기서 관여하지 않음.
 };
 
