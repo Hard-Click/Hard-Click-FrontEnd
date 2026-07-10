@@ -27,7 +27,8 @@ interface ApiInstructorQuizList {
   quizzes: ApiInstructorQuizItem[];
 }
 
-/** "섹션 N: ..." 제목 → 주차 번호. 숫자 없으면 0. (섹션→주차 매핑) */
+/** 섹션 제목의 앞 숫자 → 주차 번호 (예 "1단원. 함수"→1, "3주차 …"→3). 숫자 없으면 0.
+ *  퀴즈는 번호 있는 커리큘럼 주차에만 출제 → 오리엔테이션 등 무번호 섹션은 0(=퀴즈 대상 아님)으로 걸러진다. */
 function sectionToWeek(sectionTitle: string | null | undefined): number {
   const m = sectionTitle?.match(/\d+/);
   return m ? Number(m[0]) : 0;
@@ -79,6 +80,122 @@ export async function getTakenWeeksByCourseServer(): Promise<
   }
   // TODO(Phase 2): 등록 연동 시 강의별 사용 주차 집계 (courseId별 GET /api/instructor/quizzes 호출)
   return {};
+}
+
+/** GET /api/courses/{courseId} → 섹션 목록 {sectionId, week}. 등록/수정 시 "주차 → 진짜 sectionId" 해석용.
+ *  BE 등록 DTO는 sectionId를 요구하나 FE 폼은 주차만 받으므로, 섹션 제목("섹션 N")의 N을 주차로 매칭. */
+export async function getCourseSectionsServer(
+  courseId: number,
+): Promise<{ sectionId: number; week: number }[]> {
+  const res = await serverApi.get<{
+    sections?: { sectionId: number; title: string }[];
+  }>(`/api/courses/${courseId}`);
+  if (!res.success || !Array.isArray(res.data?.sections)) return [];
+  return res.data.sections.map((s) => ({
+    sectionId: s.sectionId,
+    week: sectionToWeek(s.title),
+  }));
+}
+
+/** ① 강사 퀴즈 상세(문항 포함) — 수정 모달용. GET /api/instructor/quizzes/{quizId}.
+ *  목록 응답엔 questions가 없어(questions:[]), 수정 시 이걸 불러 실제 문항을 채운다.
+ *  정답 인덱스 = options[].correct 플래그(없으면 correctOptionId 매칭 폴백). */
+interface ApiInstructorQuizDetail {
+  quizId: number;
+  quizTitle: string;
+  courseId: number;
+  sectionTitle: string;
+  createdAt: string;
+  questions: {
+    questionId: number;
+    questionText: string;
+    explanation: string | null;
+    correctOptionId: number;
+    options: { optionId: number; optionText: string; correct: boolean }[];
+  }[];
+}
+/** 퀴즈 상세 응답 → Quiz(문항 포함) 매퍼. 정답 인덱스는 options[].correct 우선, 없으면 correctOptionId 매칭.
+ *  강사/관리자 상세가 동일 shape라 공유. */
+function toQuizDetail(d: ApiInstructorQuizDetail): Quiz {
+  return {
+    quizId: d.quizId,
+    courseId: d.courseId,
+    week: sectionToWeek(d.sectionTitle),
+    title: d.quizTitle,
+    questionCount: d.questions.length,
+    createdDate: d.createdAt ? d.createdAt.split('T')[0] : '',
+    questions: d.questions.map((q) => {
+      const byFlag = q.options.findIndex((o) => o.correct);
+      // 정상 응답은 correct=true 옵션 1개라 byFlag>=0. 둘 다 실패 시 -1(정답 미선택으로 열림,
+      // 저장 시 재선택 필요) — 빈 상태 degrade지 조용한 위조 아님. 정상 시드에선 도달 안 함.
+      return {
+        questionId: q.questionId,
+        content: q.questionText,
+        options: q.options.map((o) => o.optionText),
+        answerIndex:
+          byFlag >= 0
+            ? byFlag
+            : q.options.findIndex((o) => o.optionId === q.correctOptionId),
+        explanation: q.explanation ?? '',
+      };
+    }),
+  };
+}
+
+/** 강사 퀴즈 상세(수정 진입 문항 로드) — GET /api/instructor/quizzes/{id}. */
+export async function getInstructorQuizDetailServer(
+  quizId: number,
+): Promise<Quiz | null> {
+  if (isMock('quizzes')) {
+    return mockQuizzes.find((q) => q.quizId === quizId) ?? null;
+  }
+  const res = await serverApi.get<ApiInstructorQuizDetail>(
+    `/api/instructor/quizzes/${quizId}`,
+  );
+  if (!res.success || !res.data) return null;
+  return toQuizDetail(res.data);
+}
+
+/** 관리자 퀴즈 상세 — GET /api/admin/quizzes/{id}. 관리자 수정 흐름이 강사 엔드포인트로 새지 않게 admin 패밀리 사용.
+ *  ⚠️ BE 관리자 상세 실구현 대기(AdminQuizMockController에 detail 없음) → 라이브 404 시 상위(handleEdit)서 목록값 폴백. */
+export async function getAdminQuizDetailServer(
+  quizId: number,
+): Promise<Quiz | null> {
+  if (isMock('quizzes')) {
+    return mockQuizzes.find((q) => q.quizId === quizId) ?? null;
+  }
+  const res = await serverApi.get<ApiInstructorQuizDetail>(
+    `/api/admin/quizzes/${quizId}`,
+  );
+  if (!res.success || !res.data) return null;
+  return toQuizDetail(res.data);
+}
+
+/** ②③ 등록 폼 메타 — 강의의 실제 섹션(존재하는 주차) + 이미 퀴즈가 있는 주차.
+ *  ② 드롭다운을 실제 섹션 기반으로(1~12 하드코딩 대체) / ③ 1주1퀴즈 중복 제외(라이브 퀴즈 목록에서 집계). */
+export async function getQuizFormMetaServer(courseId: number): Promise<{
+  weeks: number[];
+  takenWeeks: number[];
+}> {
+  if (isMock('quizzes')) {
+    return {
+      weeks: Array.from({ length: 12 }, (_, i) => i + 1),
+      takenWeeks: mockQuizzes
+        .filter((q) => q.courseId === courseId)
+        .map((q) => q.week),
+    };
+  }
+  const [sections, quizzes] = await Promise.all([
+    getCourseSectionsServer(courseId),
+    getQuizzesServer(courseId),
+  ]);
+  return {
+    // w>0만: 무번호 섹션(오리엔테이션 등)은 퀴즈 주차가 아니므로 드롭다운서 의도적으로 제외.
+    weeks: [...new Set(sections.map((s) => s.week).filter((w) => w > 0))].sort(
+      (a, b) => a - b,
+    ),
+    takenWeeks: quizzes.map((q) => q.week),
+  };
 }
 
 /** GET /api/instructors/me/quizzes/{quizId}/statistics 응답 (라이브 검증). */
