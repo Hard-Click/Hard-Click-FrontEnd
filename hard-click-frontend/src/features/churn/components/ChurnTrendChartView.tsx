@@ -19,7 +19,11 @@ export default function ChurnTrendChartView({
 }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
-      <AreaChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+      <AreaChart
+        data={data}
+        margin={{ top: 8, right: 12, left: 4, bottom: 0 }}
+        accessibilityLayer={false}
+      >
         <defs>
           <linearGradient id="churnTrendFill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#EF4444" stopOpacity={0.25} />
@@ -38,7 +42,7 @@ export default function ChurnTrendChartView({
           axisLine={false}
           tick={{ fill: '#94A3B8', fontSize: 12 }}
           allowDecimals={false}
-          width={28}
+          width={32}
         />
         <Tooltip
           formatter={(value) => [`${value}명`, '위험 학생']}
