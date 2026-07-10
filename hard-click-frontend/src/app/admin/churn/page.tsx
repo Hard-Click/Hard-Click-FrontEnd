@@ -3,10 +3,11 @@ import { getChurnDashboardServer } from '@/features/churn/server';
 import ChurnStatCards from '@/features/churn/components/ChurnStatCards';
 import ChurnTrendChart from '@/features/churn/components/ChurnTrendChart';
 import ChurnReasonBars from '@/features/churn/components/ChurnReasonBars';
+import ChurnStudentTable from '@/features/churn/components/ChurnStudentTable';
 
 export default async function AdminChurnPage() {
   // 서버에서 이탈 대시보드 데이터 확보 (현재 mock — BE 이탈 관리 API 미구현)
-  const { stats, trend, reasons } = await getChurnDashboardServer();
+  const { stats, trend, reasons, students } = await getChurnDashboardServer();
 
   return (
     <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
@@ -42,7 +43,8 @@ export default async function AdminChurnPage() {
           <ChurnReasonBars reasons={reasons} />
         </div>
 
-        {/* 위험 학생 테이블(3단계) 후속 */}
+        {/* 위험 학생 테이블 */}
+        <ChurnStudentTable students={students} />
       </div>
     </div>
   );
