@@ -83,18 +83,22 @@ export default function ChurnStudentTable({
 
       {/* 테이블 */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[880px]">
+        <table className="w-full min-w-[880px] table-fixed ">
           <thead>
             <tr className="border-b border-[#E2E8F0] text-left text-sm text-[#94A3B8]">
               <th className="whitespace-nowrap px-4 py-3 font-medium">이름</th>
-              <th className="whitespace-nowrap px-4 py-3 font-medium">아이디</th>
+              <th className="whitespace-nowrap px-4 py-3 font-medium">
+                아이디
+              </th>
               <th className="whitespace-nowrap px-4 py-3 font-medium">메일</th>
-              <th className="whitespace-nowrap px-4 py-3 font-medium">위험도</th>
+              <th className="whitespace-nowrap px-4 py-3 text-center font-medium">
+                위험도
+              </th>
               <th className="whitespace-nowrap px-4 py-3 font-medium">사유</th>
               <th className="whitespace-nowrap px-4 py-3 text-center font-medium">
                 점수
               </th>
-              <th className="whitespace-nowrap px-4 py-3 font-medium">
+              <th className="whitespace-nowrap px-6 py-3  font-medium ">
                 최근 활동
               </th>
               <th className="whitespace-nowrap px-4 py-3 text-center font-medium">
@@ -127,9 +131,9 @@ export default function ChurnStudentTable({
                   <td className="whitespace-nowrap px-4 py-4 text-sm text-[#64748B]">
                     {s.email}
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="px-11 py-4">
                     <span
-                      className={`inline-block whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${
+                      className={`inline-block whitespace-nowrap text-center rounded-full px-3 py-1 text-xs  font-semibold ${
                         RISK_STYLE[s.riskLevel]
                       }`}
                     >
@@ -153,7 +157,7 @@ export default function ChurnStudentTable({
                     {/* TODO: 학생 상세/조치 라우트 연동 (BE 미구현) */}
                     <button
                       type="button"
-                      className="whitespace-nowrap text-sm font-medium text-[#2F5DAA] hover:underline"
+                      className="whitespace-nowrap text-sm font-medium text-[#2F5DAA] rounded-lg border border-[#E2E8F0] px-3 py-1.5 hover:bg-[#F8FAFC] disabled:opacity-50"
                     >
                       확인하기
                     </button>
