@@ -18,6 +18,21 @@ function isPublicRoute(pathname: string | null): boolean {
   return PUBLIC_ROUTE_PATTERNS.some((re) => re.test(pathname));
 }
 
+/** floating 순공 타이머(하단 중앙 고정)를 숨길 라우트.
+ *  전용 레이아웃(learning=인라인 위젯 / chat=전체화면) + 하단 중앙 CTA를 타이머가 가리는
+ *  focused 페이지(퀴즈 응시·해설 / 결제·결제결과 / 장바구니 / 구독권). 브라우징·목록엔 그대로 띄운다. */
+const TIMER_HIDDEN_PATTERNS: RegExp[] = [
+  /^\/auth(\/|$)/,
+  /^\/learning(\/|$)/,
+  /^\/chat(\/|$)/,
+  /^\/quizzes\/[^/]+\/[^/]+/, // 응시·해설만 (진입 /quizzes·목록 /quizzes/{c}는 유지)
+  /^\/checkout(\/|$)/,
+  /^\/payment-result(\/|$)/,
+  /^\/cart(\/|$)/,
+  /^\/subscriptions(\/|$)/,
+  /^\/mypage\/wishlist(\/|$)/, // 찜 카드 하단 CTA(학습하기 등)를 타이머가 가림
+];
+
 export default function UserLayout({
   children,
 }: {
@@ -25,10 +40,8 @@ export default function UserLayout({
 }) {
   const pathname = usePathname();
   const isAuthPage = pathname?.startsWith('/auth') ?? false;
-  // 강의 시청 페이지(/learning/*)는 inline 타이머 위젯을 쓰므로 floating panel 제외
-  const isLearningPage = pathname?.startsWith('/learning') ?? false;
-  // 채팅방(/chat/*)은 전체화면 카톡식 레이아웃이라 floating 타이머가 겹쳐 → 제외
-  const isChatPage = pathname?.startsWith('/chat') ?? false;
+  // floating 순공 타이머를 숨길 라우트인지 (위 TIMER_HIDDEN_PATTERNS)
+  const hideTimer = TIMER_HIDDEN_PATTERNS.some((re) => re.test(pathname ?? ''));
 
   // 인증 상태는 서버(루트 layout의 getCurrentUser)가 쿠키로 계산해 Context로 내려줌
   const { isLoggedIn, role } = useAuth();
@@ -41,9 +54,7 @@ export default function UserLayout({
       {!isAuthPage &&
         (role === 'INSTRUCTOR' ? <InstructorHeader /> : <UserHeader />)}
       {blocked ? <NotFoundView code="401" /> : children}
-      {!isAuthPage && !isLearningPage && !isChatPage && isLoggedIn && (
-        <StudyTimerPanel />
-      )}
+      {!hideTimer && isLoggedIn && <StudyTimerPanel />}
     </>
   );
 }
