@@ -30,7 +30,7 @@ export default function ChurnTrendChartView({
             <stop offset="100%" stopColor="#EF4444" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="1 3" vertical={false} stroke="#E2E8F0" />
+        <CartesianGrid strokeDasharray="1 3" stroke="#E2E8F0" />
         <XAxis
           dataKey="label"
           tickLine={false}
