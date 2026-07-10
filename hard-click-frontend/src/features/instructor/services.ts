@@ -91,6 +91,9 @@ export async function createCourse(payload: {
   targetAudience?: string[];
   techTags?: string[];
   level?: string;
+  // ⚠️ BE 필드명·지원 미확정 (§0.5) — AI 스케줄러 계약 확인 후 조정
+  recommendedWeeks?: number;
+  dailyStudyLimitMinutes?: number;
   sections: Array<{
     title: string;
     orderIndex: number;
@@ -137,6 +140,9 @@ export async function updateCourse(
     targetAudience?: string[];
     techTags?: string[];
     level?: string;
+    // ⚠️ BE 필드명·지원 미확정 (§0.5) — AI 스케줄러 계약 확인 후 조정
+    recommendedWeeks?: number;
+    dailyStudyLimitMinutes?: number;
     sections: Array<{
       sectionId?: number;
       title: string;
