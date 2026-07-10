@@ -1,6 +1,13 @@
 import AdminStatCard from '@/features/admin/components/AdminStatCard';
 import type { ChurnStats } from '../types';
 
+/** 평균 위험 점수 구간별 색: 35 미만 검정 / 35~70 미만 노랑 / 70 이상 빨강 */
+function riskScoreColor(score: number): string {
+  if (score >= 70) return 'text-[#DC2626]';
+  if (score >= 35) return 'text-[#D97706]';
+  return 'text-[#1E293B]';
+}
+
 /** 이탈 관리 상단 지표 카드 4개 (Server Component). */
 export default function ChurnStatCards({ stats }: { stats: ChurnStats }) {
   return (
@@ -28,9 +35,16 @@ export default function ChurnStatCards({ stats }: { stats: ChurnStats }) {
       />
       <AdminStatCard
         label="평균 위험 점수"
-        value={`${stats.avgRiskScore} / 100`}
+        value={
+          <>
+            <span className={riskScoreColor(stats.avgRiskScore)}>
+              {stats.avgRiskScore}
+            </span>
+            <span className="text-lg font-semibold text-[#94A3B8]"> / 100</span>
+          </>
+        }
         icon="/icons/targetIcon.svg"
-        valueColor="text-[#1E293B]"
+        valueColor=""
         iconBg="bg-[#F1F5F9]"
       />
     </div>
