@@ -13,7 +13,7 @@ export default async function AdminChurnPage() {
         <div className="mb-8 flex items-center gap-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-[26px] bg-[#2F5DAA]">
             <Image
-              src="/icons/security.svg"
+              src="/icons/AdminReportFlag.svg"
               alt="이탈 관리"
               width={32}
               height={32}
