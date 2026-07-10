@@ -17,7 +17,7 @@ const BACKEND = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
 export interface LoginActionState {
   success: boolean;
   message?: string;
-  /** 403: 5회 실패로 계정 잠금 → 계정 보호 인증 필요 (BE는 잠금/정지 모두 403) */
+  /** 계정 잠금(U004 423=방금 잠김 / U020 403=이미 잠김) → 계정 보호 인증 필요 */
   isLocked?: boolean;
 }
 
@@ -109,17 +109,16 @@ export async function loginAction(
     if (axios.isAxiosError(error) && error.response) {
       const status = error.response.status;
       const body = error.response.data as { message?: string; errorCode?: string };
-      // 403 = 계정 잠금(5회 실패) 또는 정지(SUSPENDED). BE가 둘 다 403으로 준다.
-      // 정지는 사용자가 스스로 풀 수 없으므로 안내만, 잠금은 계정 보호 인증(isLocked)으로 유도.
-      // TODO: BE의 잠금/정지 errorCode 확정 시 메시지 휴리스틱 대신 코드 기반으로 분기.
-      if (status === 403) {
-        const isSuspended = /정지/.test(body?.message ?? '');
-        if (isSuspended) {
-          return {
-            success: false,
-            message: body?.message ?? '정지된 계정입니다. 관리자에게 문의해주세요.',
-          };
-        }
+      // 계정 잠금은 errorCode 기반으로 분기 (BE 응답 본문의 errorCode 사용).
+      //  - U004(423 LOCKED): 5회 실패로 방금 잠김 → 잠금 해제 인증 메일 발송됨
+      //  - U020(403 FORBIDDEN): 이미 잠긴 계정
+      // 두 경우 모두 계정 보호 인증(isLocked)으로 유도한다.
+      // 탈퇴(AUTH_011)·정지 등 다른 403은 잠금이 아니므로 메시지만 안내한다.
+      const isLocked =
+        body?.errorCode === 'U004' ||
+        body?.errorCode === 'U020' ||
+        status === 423;
+      if (isLocked) {
         return {
           success: false,
           isLocked: true,
