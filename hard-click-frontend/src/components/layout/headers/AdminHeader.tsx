@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { label: '신고', href: '/admin/reports' },
   { label: '사용자', href: '/admin/users' },
   { label: '결제', href: '/admin/payments' },
+  { label: '이탈 관리', href: '/admin/churn' },
   { label: '대시보드', href: '/admin/dashboard' },
 ];
 
