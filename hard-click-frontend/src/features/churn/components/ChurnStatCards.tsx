@@ -8,7 +8,7 @@ export default function ChurnStatCards({ stats }: { stats: ChurnStats }) {
       <AdminStatCard
         label="고위험 학생"
         value={stats.highRiskCount}
-        icon="/icons/users.svg"
+        icon="/icons/RedFlag.svg"
         valueColor="text-[#DC2626]"
         iconBg="bg-[#FEF2F2]"
       />
@@ -22,14 +22,14 @@ export default function ChurnStatCards({ stats }: { stats: ChurnStats }) {
       <AdminStatCard
         label="이번 주 신규"
         value={stats.newThisWeekCount}
-        icon="/icons/bookIcon.svg"
+        icon="/icons/trendUpBlueIcon.svg"
         valueColor="text-[#2F5DAA]"
         iconBg="bg-[#EFF6FF]"
       />
       <AdminStatCard
         label="평균 위험 점수"
         value={`${stats.avgRiskScore} / 100`}
-        icon="/icons/bellIcon.svg"
+        icon="/icons/targetIcon.svg"
         valueColor="text-[#1E293B]"
         iconBg="bg-[#F1F5F9]"
       />
