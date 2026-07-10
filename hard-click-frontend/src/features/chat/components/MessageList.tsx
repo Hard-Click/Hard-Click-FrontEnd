@@ -88,6 +88,20 @@ export default function MessageList({
     }
   }, [messages, myMemberId]);
 
+  // 콘텐츠가 뷰포트를 못 채워 스크롤바가 없으면(짧은 첫 페이지·큰 화면) onScroll이 안 떠 옛 메시지에
+  // 도달 못 함 → hasMore인 동안 자동으로 다음 페이지를 당겨온다(뷰포트가 찰 때까지 한 페이지씩).
+  // ⚠️ 위 스크롤-복원 useLayoutEffect와 분리 — 그 effect의 deps에 loadingOlder를 넣으면 로딩 중
+  //    재실행돼 prepend 위치 복원이 깨지므로, 자동 로드는 별도 effect로 둔다.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !hasMore || loadingOlder) return;
+    if (el.scrollHeight <= el.clientHeight) {
+      prevDistRef.current = el.scrollHeight - el.scrollTop;
+      prependingRef.current = true; // 다음 messages 변경을 prepend로 인식해 위치 복원
+      onLoadOlder();
+    }
+  }, [messages, hasMore, loadingOlder, onLoadOlder]);
+
   // 타이핑 표시 등장/변화 → 바닥 근처면 하단으로.
   useEffect(() => {
     if (!atBottomRef.current) return;
