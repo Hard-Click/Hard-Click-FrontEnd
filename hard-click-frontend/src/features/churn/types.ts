@@ -25,6 +25,8 @@ export interface ChurnReason {
 export interface ChurnStudent {
   id: number;
   name: string;
+  username: string; // 아이디
+  email: string; // 메일
   riskLevel: ChurnRiskLevel;
   reason: string; // 예: '2주 밀림 · 5일 미접속'
   riskScore: number; // 0~100
