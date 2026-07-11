@@ -10,6 +10,7 @@ import {
   resumeStudySession,
   getCurrentSession,
 } from './services';
+import type { SessionStatus } from './types';
 
 // 순공시간 세션 시작
 export async function startTimerAction(): Promise<{
@@ -105,9 +106,17 @@ export async function endTimerAction(sessionId: number): Promise<boolean> {
       // 그 세션이 아직 활성 → 종료 가능 상태로 만든 뒤 재종료. PAUSED면 resume(→RUNNING) 먼저,
       // RUNNING이면(멀티탭 재개 등 레이스) 바로 재종료. end는 RUNNING만 허용하므로.
       if (cur.data.status === 'PAUSED') {
-        await resumeStudySession(sessionId, {
+        const resumeRes = await resumeStudySession(sessionId, {
           resumedAt: new Date().toISOString(),
         });
+        if (!resumeRes.success) {
+          // resume 실패면 end 재시도해도 또 ST003(PAUSED) → end 실패로 오표시하지 말고 실제 원인(resume 실패) 안내.
+          toast.error(
+            resumeRes.message || '세션 재개에 실패했어요. 다시 시도해 주세요.',
+            timerToastStyle,
+          );
+          return false;
+        }
       }
       res = await endStudySession(sessionId, {
         endedAt: new Date().toISOString(),
@@ -139,21 +148,23 @@ export async function fetchCurrentSessionAction() {
 // ⚠️ fetchCurrentSessionAction은 '조회 실패'와 '실행 세션 없음'을 둘 다 null로 뭉개므로,
 //    이어하기 전 재검증엔 이 함수를 쓴다: 'ended'(확정 종료)일 때만 배너를 정리하고,
 //    'unknown'(조회 실패)이면 살아있는 세션을 함부로 버리지 않는다.
-export async function probeSessionAction(
-  expectedSessionId: number,
-): Promise<'running' | 'ended' | 'unknown'> {
-  if (isMock('studyTimers')) return 'unknown';
+export async function probeSessionAction(expectedSessionId: number): Promise<{
+  state: 'running' | 'ended' | 'unknown';
+  status: SessionStatus | null;
+}> {
+  if (isMock('studyTimers')) return { state: 'unknown', status: null };
   const res = await getCurrentSession();
-  if (!res.success) return 'unknown'; // 조회 실패 — 상태 확정 불가
+  if (!res.success) return { state: 'unknown', status: null }; // 조회 실패 — 상태 확정 불가
   const session = res.data;
   // current는 ACTIVE_STATUSES=[RUNNING,PAUSED]를 반환한다(BE 코드검증 2026-07-11, 없으면 data=null).
-  // 활성(RUNNING·PAUSED)이고 그 세션이면 '살아있음' → 이어하기 대상. 그 외(없음/다른 세션)는 끝난 것.
+  // 활성(RUNNING·PAUSED)이고 그 세션이면 '살아있음' → 이어하기 대상 + 최신 status 반환(호출부가 stale
+  // 대신 이걸 쓰게). 그 외(없음/다른 세션)는 끝난 것.
   if (
     session &&
     (session.status === 'RUNNING' || session.status === 'PAUSED') &&
     session.sessionId === expectedSessionId
   ) {
-    return 'running';
+    return { state: 'running', status: session.status };
   }
-  return 'ended';
+  return { state: 'ended', status: null };
 }
