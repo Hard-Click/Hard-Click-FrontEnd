@@ -1,6 +1,7 @@
 import CourseList from '@/features/courses/components/CourseList';
 import CourseListControls from '@/features/courses/components/CourseListControls';
 import CourseNoticeBanner from '@/features/courses/components/CourseNoticeBanner';
+import CoursesHero from '@/features/courses/components/CoursesHero';
 import { getCoursesServer, getSubjectsServer } from '@/features/courses/server';
 import { getPinnedNoticesServer } from '@/features/notices/server';
 import type { CourseSortType } from '@/features/courses/types';
@@ -53,19 +54,8 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
       {/* 공지 배너 (client 잎사귀) */}
       <CourseNoticeBanner notices={notices} />
 
-      {/* 히어로 */}
-      <div className="w-full" style={{ backgroundColor: '#2F5DAA' }}>
-        <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 py-12 md:py-20">
-          <h1 className="text-white font-semibold text-3xl md:text-5xl leading-tight md:leading-[60px] tracking-wide mb-4 md:mb-6">
-            2027 수능
-            <br />1등급을 향한 여정
-          </h1>
-          <p className="text-white/95 text-base md:text-lg leading-relaxed max-w-2xl">
-            최고의 강사진과 체계적인 커리큘럼으로 목표 달성을 이루세요. 학습
-            타이머로 공부 습관을 만들어보세요.
-          </p>
-        </div>
-      </div>
+      {/* 히어로 (공용) */}
+      <CoursesHero />
 
       {/* 메인 콘텐츠 */}
       <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 pt-8 md:pt-10 pb-16">
