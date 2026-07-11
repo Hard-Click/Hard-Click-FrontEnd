@@ -152,7 +152,7 @@ export default function UserHeader() {
                     />
                   ) : (
                     <Image
-                      src="/icons/headerPerson.svg"
+                      src="/icons/headerperson.svg"
                       alt="프로필"
                       width={28}
                       height={28}
