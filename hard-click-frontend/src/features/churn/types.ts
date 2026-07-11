@@ -33,6 +33,30 @@ export interface ChurnStudent {
   lastActiveAt: string; // 최근 활동 (YYYY-MM-DD)
 }
 
+/** 위험 점수 기여 요인 (예: 진도 밀림 +35) */
+export interface ChurnRiskFactor {
+  label: string;
+  delta: number; // 위험 점수 가산분 (+값)
+}
+
+/** 학습 현황 */
+export interface ChurnLearningStatus {
+  progressRate: number; // 진도율 (%)
+  targetRate: number; // 목표 진도율 (%)
+  lastAccessLabel: string; // 예: '5일 전 (2026.07.02)'
+  recentQuizAvg: number; // 최근 퀴즈 평균 점수
+  recentQuizDelta: number; // 직전 대비 변화(음수=하락)
+  totalStudyHours: number; // 누적 순공 시간(시간)
+}
+
+/** 학생 위험 상세 */
+export interface ChurnStudentDetail extends ChurnStudent {
+  courseName: string; // 수강 강의명
+  courseWeek: number; // 수강 주차
+  factors: ChurnRiskFactor[]; // 위험 점수 기여 요인
+  learning: ChurnLearningStatus; // 학습 현황
+}
+
 /** 이탈 관리 대시보드 전체 데이터 */
 export interface ChurnDashboard {
   stats: ChurnStats;

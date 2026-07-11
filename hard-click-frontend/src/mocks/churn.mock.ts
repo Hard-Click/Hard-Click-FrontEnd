@@ -1,4 +1,8 @@
-import type { ChurnDashboard } from '@/features/churn/types';
+import type {
+  ChurnDashboard,
+  ChurnStudent,
+  ChurnStudentDetail,
+} from '@/features/churn/types';
 
 /**
  * 이탈 관리 대시보드 mock.
@@ -160,3 +164,57 @@ export const mockChurnDashboard: ChurnDashboard = {
     },
   ],
 };
+
+// ── 학생 위험 상세 (mock 빌더) ─────────────────────────────────────────────
+// BE 이탈 상세 API 미구현 → 목록 학생에서 결정적으로 상세를 합성한다.
+const REFERENCE_TODAY = new Date('2026-07-07');
+const COURSES = [
+  'React 완벽 가이드',
+  'Spring Boot 입문',
+  '알고리즘 마스터',
+  'TypeScript 심화',
+  'CS 기초 완성',
+];
+
+function daysAgo(dateStr: string): number {
+  const diff = REFERENCE_TODAY.getTime() - new Date(dateStr).getTime();
+  return Math.max(0, Math.round(diff / 86_400_000));
+}
+
+/** 위험 점수를 요인별로 분해(합 = riskScore). id1(81)=35/28/18로 목업과 일치. */
+function buildFactors(score: number): ChurnStudentDetail['factors'] {
+  const a = Math.round(score * 0.43);
+  const b = Math.round(score * 0.35);
+  return [
+    { label: '진도 밀림', delta: a },
+    { label: '장기 미접속', delta: b },
+    { label: '퀴즈 점수 하락', delta: score - a - b },
+  ];
+}
+
+function buildLearning(s: ChurnStudent): ChurnStudentDetail['learning'] {
+  const dot = s.lastActiveAt.replace(/-/g, '.');
+  return {
+    progressRate: Math.max(5, 84 - Math.round(s.riskScore * 0.52)),
+    targetRate: 68,
+    lastAccessLabel: `${daysAgo(s.lastActiveAt)}일 전 (${dot})`,
+    recentQuizAvg: Math.max(30, 95 - Math.round(s.riskScore * 0.53)),
+    recentQuizDelta: -Math.round(s.riskScore * 0.17),
+    totalStudyHours: Math.max(2, 46 - Math.round(s.riskScore * 0.35)),
+  };
+}
+
+/** 학생 id로 위험 상세 조회 (없으면 null). */
+export function getMockChurnStudentDetail(
+  id: number,
+): ChurnStudentDetail | null {
+  const s = mockChurnDashboard.students.find((st) => st.id === id);
+  if (!s) return null;
+  return {
+    ...s,
+    courseName: COURSES[(s.id - 1) % COURSES.length],
+    courseWeek: (s.id % 6) + 5,
+    factors: buildFactors(s.riskScore),
+    learning: buildLearning(s),
+  };
+}
