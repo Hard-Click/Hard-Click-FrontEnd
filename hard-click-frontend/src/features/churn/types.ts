@@ -51,8 +51,10 @@ export interface ChurnLearningStatus {
 
 /** 학생 위험 상세 */
 export interface ChurnStudentDetail extends ChurnStudent {
-  courseName: string; // 수강 강의명
-  courseWeek: number; // 수강 주차
+  id: number;
+  name: string;
+  username: string;
+  email: string;
   factors: ChurnRiskFactor[]; // 위험 점수 기여 요인
   learning: ChurnLearningStatus; // 학습 현황
 }

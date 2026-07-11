@@ -26,8 +26,8 @@ export default function ChurnDetailHeaderCard({
   return (
     <div className="flex items-center justify-between rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
       <div className="flex items-center gap-4">
-        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-[#EEF2FF] text-lg font-bold text-[#2F5DAA]">
-          {student.name.slice(0, 2)}
+        <div className="flex h-18 w-18 flex-shrink-0 items-center justify-center rounded-full bg-[#EEF2FF] text-lg font-bold text-[#2F5DAA]">
+          {student.name.slice(0, 3)}
         </div>
         <div>
           <div className="flex items-center gap-2">
@@ -42,16 +42,17 @@ export default function ChurnDetailHeaderCard({
               {RISK_LABEL[student.riskLevel]}
             </span>
           </div>
-          <p className="mt-1 text-sm text-[#64748B]">
-            {student.courseName} · 수강 {student.courseWeek}주차
-          </p>
+          <p className="mt-1 text-sm text-[#64748B]">ID : {student.username}</p>
+          <p className="mt-1 text-sm text-[#64748B]">Email : {student.email}</p>
         </div>
       </div>
 
       <div className="text-right">
         <p className="text-sm text-[#64748B]">위험 점수</p>
         <p className="mt-0.5">
-          <span className={`text-4xl font-bold ${scoreColor(student.riskScore)}`}>
+          <span
+            className={`text-4xl font-bold ${scoreColor(student.riskScore)}`}
+          >
             {student.riskScore}
           </span>
           <span className="text-base font-semibold text-[#94A3B8]">/100</span>
