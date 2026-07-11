@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Pagination from '@/features/admin/components/Pagination';
 import type { ChurnRiskLevel, ChurnStudent } from '../types';
 
@@ -28,10 +28,15 @@ export default function ChurnStudentTable({
   const [page, setPage] = useState(1);
 
   // 위험도 높은 순(고위험→중위험), 같은 등급이면 위험 점수 높은 순
-  const sorted = [...students].sort(
-    (a, b) =>
-      RISK_ORDER[a.riskLevel] - RISK_ORDER[b.riskLevel] ||
-      b.riskScore - a.riskScore,
+  // students 참조가 바뀔 때만 재정렬 (page 변경 시 불필요한 재계산 방지)
+  const sorted = useMemo(
+    () =>
+      [...students].sort(
+        (a, b) =>
+          RISK_ORDER[a.riskLevel] - RISK_ORDER[b.riskLevel] ||
+          b.riskScore - a.riskScore,
+      ),
+    [students],
   );
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
@@ -78,11 +83,21 @@ export default function ChurnStudentTable({
             </tr>
           </thead>
           <tbody>
-            {paged.map((s) => (
-              <tr
-                key={s.id}
-                className="border-b border-[#F1F5F9] last:border-none hover:bg-[#F8FAFC]"
-              >
+            {paged.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={7}
+                  className="py-16 text-center text-sm text-[#94A3B8]"
+                >
+                  위험 학생이 없습니다.
+                </td>
+              </tr>
+            ) : (
+              paged.map((s) => (
+                <tr
+                  key={s.id}
+                  className="border-b border-[#F1F5F9] last:border-none hover:bg-[#F8FAFC]"
+                >
                 <td className="truncate px-4 py-4 text-sm font-semibold text-[#1E293B]">
                   {s.name}
                 </td>
@@ -116,8 +131,9 @@ export default function ChurnStudentTable({
                     확인하기
                   </button>
                 </td>
-              </tr>
-            ))}
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
