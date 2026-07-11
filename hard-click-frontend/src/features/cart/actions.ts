@@ -46,12 +46,16 @@ export async function removeCartItemsAction(
   const results = await Promise.all(
     cartItemIds.map((id) => serverApi.delete(`/api/cart/${id}`)),
   );
-  if (results.some((r) => !r.success)) {
+  // 404(CART_ITEM_NOT_FOUND)=이미 없음 → 삭제 목적은 이미 달성(멱등). 그 외 실패만 진짜 실패로 본다.
+  const hardFailed = results.some((r) => !r.success && r.httpStatus !== 404);
+  // 성공/실패 무관하게 항상 재검증 — 부분 성공 시 실제로 삭제된 항목이 화면에 stale하게
+  // 남던 버그 방지(예전엔 하나라도 실패하면 revalidate 없이 통째로 실패 반환).
+  revalidatePath('/cart');
+  if (hardFailed) {
     return {
       success: false,
-      message: '삭제에 실패했어요. 잠시 후 다시 시도해주세요.',
+      message: '일부 항목을 삭제하지 못했어요. 잠시 후 다시 시도해주세요.',
     };
   }
-  revalidatePath('/cart');
   return { success: true, message: '장바구니가 삭제되었습니다.' };
 }
