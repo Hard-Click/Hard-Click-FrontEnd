@@ -1,7 +1,12 @@
 /**
  * 채팅 조회 (Server Component 전용). 격리막 — UI는 도메인 타입(types.ts)만 본다.
- * ⚠️ 채팅 BE 미배포 → isMock('chat')=전역 USE_MOCK(true)라 지금은 항상 mock 분기.
- *    serverApi 호출은 연동 seam(라이브 검증 후 mocks/config MOCK_OVERRIDE에 chat:false 등록).
+ * ⚠️ isMock('chat')=false(MOCK_OVERRIDE.chat) → 아래 3경로 모두 **라이브**(BFF 서버→BE, httpOnly 쿠키).
+ *    REST 3경로 라이브 검증 완료(2026-07-10 세션, 배포서버 200·shape 일치):
+ *      - GET /api/chat/rooms/{id}            방정보
+ *      - GET /api/chat/rooms/{id}/messages   히스토리
+ *      - GET /api/chat/rooms/me              내 목록
+ *    ⚠️ 근거는 배포서버 라이브 호출 — 로컬 BE 클론은 chat 머지 전이라 소스 대조 불가(계약은 docs §7).
+ *    실시간(STOMP)은 useChatSocket. prod https+평문 ws:// 조합은 훅 가드가 실시간만 비활성(REST는 서버간이라 정상).
  */
 
 import { serverApi } from '@/lib/api';
@@ -69,7 +74,7 @@ export async function getChatRoomServer(
 ): Promise<ChatRoomDetail> {
   if (isMock('chat')) return toChatRoomDetail(mockChatRoomDetail);
 
-  // ── BE 연동 seam ── GET /api/chat/rooms/{id} (BE 실코드 확정: ChatRoomController @RequestMapping("/api/chat/rooms")). hostId·title·subjectName 포함, 한 콜.
+  // ── BE 연동 seam ── (hostId·title·subjectName 포함, 한 콜. BE 코드검증 경로)
   const res = await serverApi.get<ChatRoomDetailApi>(
     `/api/chat/rooms/${chatRoomId}`,
   );
@@ -80,7 +85,8 @@ export async function getChatRoomServer(
 }
 
 /**
- * 채팅 히스토리 조회 (커서 기반). BE는 최신순(desc)으로 준다.
+ * 채팅 히스토리 조회 (커서 기반). ⚠️ BE는 페이지 내부를 오래된→최신(asc)으로 주고(라인 아래 인라인 주석),
+ * FE 계약은 최신순(desc)이라 messageId 기준 desc로 정규화한다(ChatRoomClient가 reverse해 표시).
  */
 export async function getChatHistoryServer(
   chatRoomId: number,
@@ -96,7 +102,7 @@ export async function getChatHistoryServer(
     };
   }
 
-  // ── BE 연동 seam ── GET /api/chat/rooms/{id}/messages (BE 실코드 확정, 슬래시 패밀리).
+  // ── BE 연동 seam ── (BE 코드검증 경로·쿼리파라미터: cursorId·size)
   const query = cursorId ? `?cursorId=${cursorId}&size=20` : '?size=20';
   const res = await serverApi.get<ChatHistoryApi>(
     `/api/chat/rooms/${chatRoomId}/messages${query}`,
@@ -104,8 +110,14 @@ export async function getChatHistoryServer(
   if (!res.success || !res.data) {
     throw new Error('채팅 내역을 불러오지 못했습니다.');
   }
+  // ⚠️ BE는 페이지 내부를 오래된→최신(asc)으로 준다(ChatMessageQueryService 확인). FE 계약은 최신순(desc,
+  //    ChatRoomClient가 reverse해 표시) → messageId(DB PK 단조증가) 기준 desc로 정규화(순서 소스 무관하게 안전).
+  //    (라이브 첫 페이지로 순서 재확인 필요 — 미실행 검증.)
+  const messages = [...res.data.messages]
+    .sort((a, b) => b.messageId - a.messageId)
+    .map(toChatMessage);
   return {
-    messages: res.data.messages.map(toChatMessage),
+    messages,
     hasNext: res.data.hasNext,
     nextCursorId: res.data.nextCursorId,
   };
@@ -129,8 +141,7 @@ function toChatRoomListItem(api: ChatRoomApiItem): ChatRoomListItem {
 export async function getMyChatRoomsServer(): Promise<ChatRoomListItem[]> {
   if (isMock('chat')) return mockChatRooms.map(toChatRoomListItem);
 
-  // ── BE 연동 seam ── BE 확정: GET /api/chat/rooms/me (기존 /api/chat/rooms 리소스 패밀리, 이슈 #480·PR #481).
-  //   lastMessageAt 최신순·메시지 없는 방 뒤로·unreadCount는 0 고정(BE).
+  // ── BE 연동 seam ── (BE 코드검증 경로. data는 배열 직접)
   const res = await serverApi.get<ChatRoomApiItem[]>('/api/chat/rooms/me');
   if (!res.success || !res.data) {
     throw new Error('채팅방 목록을 불러오지 못했습니다.');
