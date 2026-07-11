@@ -7,6 +7,10 @@ import type {
   HeartbeatResponse,
   EndSessionRequest,
   EndSessionResponse,
+  PauseSessionRequest,
+  PauseSessionResponse,
+  ResumeSessionRequest,
+  ResumeSessionResponse,
   CurrentSessionResponse,
   DailyStudyStats,
   DailyStatsQuery,
@@ -23,6 +27,14 @@ export const saveHeartbeat = (sessionId: number, body: HeartbeatRequest) =>
 // 순공시간 세션 종료 (ENDED 상태로 변경) — body.endedAt 필수
 export const endStudySession = (sessionId: number, body: EndSessionRequest) =>
   api.patch<EndSessionResponse>(`/api/study-timers/sessions/${sessionId}/end`, body);
+
+// 순공시간 일시정지 (PAUSED) — body.pausedAt 필수. 응답 accumulatedStudySeconds=정지 시점까지 확정 누적.
+export const pauseStudySession = (sessionId: number, body: PauseSessionRequest) =>
+  api.patch<PauseSessionResponse>(`/api/study-timers/sessions/${sessionId}/pause`, body);
+
+// 순공시간 재개 (RUNNING) — body.resumedAt 필수. BE가 정지구간을 누적에서 제외한다.
+export const resumeStudySession = (sessionId: number, body: ResumeSessionRequest) =>
+  api.patch<ResumeSessionResponse>(`/api/study-timers/sessions/${sessionId}/resume`, body);
 
 // 현재 실행 중인 세션 조회
 export const getCurrentSession = () =>

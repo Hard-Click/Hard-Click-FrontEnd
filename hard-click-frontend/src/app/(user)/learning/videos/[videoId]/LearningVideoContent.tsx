@@ -14,8 +14,11 @@ import {
   startTimerAction,
   endTimerAction,
   heartbeatAction,
+  resumeTimerAction,
   fetchCurrentSessionAction,
 } from '@/features/studyTimers/actions';
+import { markSessionLeaving } from '@/features/studyTimers/leaveSignal';
+import { isMock } from '@/mocks/config';
 import type {
   VideoPlayInfo,
   CourseProgress,
@@ -179,10 +182,12 @@ export default function LearningVideoContent({
   };
 
   const startTimerTicks = (sid: number) => {
+    if (tickRef.current) clearInterval(tickRef.current); // 멱등 — 중복 인터벌·누수 방지
     tickRef.current = setInterval(() => {
       timerSecondsRef.current += 1;
       setTimerSeconds((s) => s + 1);
     }, 1000);
+    if (heartbeatRef.current) clearInterval(heartbeatRef.current); // 멱등
     heartbeatRef.current = setInterval(async () => {
       // BE가 확정한 누적초로 보정 — 백그라운드 탭 throttle 등으로 1초 tick이 밀린
       // 화면-저장 드리프트를 해소한다(StudyTimerPanel과 동일).
@@ -207,12 +212,39 @@ export default function LearningVideoContent({
     timerSessionIdRef.current = timerSessionId;
   }, [timerSessionId]);
 
+  /* 하드 nav·새로고침·탭 닫기 — 페이지 unload 땐 아래 setTimeout 종료가 안 먹으므로 keepalive fetch로
+   * 즉시 종료 요청해 저장을 보장한다(keepalive는 unload 후에도 전송 유지. sendBeacon은 POST만이라 PATCH엔 부적합).
+   * 동일출처 /api/* → BFF 프록시가 httpOnly 쿠키로 인증. mock에선 실세션 없어 skip. */
+  useEffect(() => {
+    const endOnUnload = (e: PageTransitionEvent) => {
+      // bfcache 진입(뒤로/앞으로 캐시 — 복귀 가능)은 종료하지 않는다. 종료하면 복귀 시 얼린 인터벌이
+      // 끝난 세션 위에서 되살아나 화면 시간만 오르는 좀비(§0.1-2 가짜 수치)가 된다.
+      if (e.persisted) return;
+      if (isMock('studyTimers')) return;
+      const sid = timerSessionIdRef.current;
+      if (sid == null) return;
+      try {
+        void fetch(`/api/study-timers/sessions/${sid}/end`, {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ endedAt: new Date().toISOString() }),
+          keepalive: true,
+        });
+      } catch {
+        /* unload 중 실패는 무시 */
+      }
+    };
+    window.addEventListener('pagehide', endOnUnload);
+    return () => window.removeEventListener('pagehide', endOnUnload);
+  }, []);
+
   /* 페이지 진입 시 실행 중 세션 복원 */
   useEffect(() => {
     // 직전 인스턴스(레슨 전환 remount)가 예약한 세션 end 취소 → 레슨 바꿀 땐 세션 유지.
     if (pendingSessionEnd) {
       clearTimeout(pendingSessionEnd);
       pendingSessionEnd = null;
+      markSessionLeaving(null); // 레슨 전환(remount) = 이탈 아님 → 이탈 신호 해제
     }
     fetchCurrentSessionAction().then((session) => {
       // RUNNING 세션만 복원 — PAUSED/ENDED 세션 위에 tick을 다시 돌리면
@@ -227,10 +259,11 @@ export default function LearningVideoContent({
       stopTimerTicks();
       // 학습 이탈 시 순공 세션 end → 경과분이 daily_study_stats에 저장돼 마이페이지 오늘순공·랭킹 순공 반영.
       // 단 페이지가 key={videoId}라 레슨마다 remount → end를 잠깐 예약하고, 곧 새 인스턴스가 마운트되면
-      // (=레슨 전환) 위 effect에서 취소한다. 재마운트 없는 진짜 이탈일 때만 end 실행.
-      // (탭 닫기·새로고침은 sendBeacon 인프라 필요 — 별건.)
+      // (=레슨 전환) 위 effect에서 취소한다. 재마운트 없는 진짜 이탈일 때만 end 실행(소프트 nav).
+      // (하드 nav·새로고침·탭 닫기는 위 pagehide keepalive가 담당.)
       const sid = timerSessionIdRef.current;
       if (sid != null) {
+        markSessionLeaving(sid); // 전역 배너가 이 세션엔 "이어하기"를 안 띄우게(곧 종료됨, 이중관리 방지)
         pendingSessionEnd = setTimeout(() => {
           void endTimerAction(sid);
           pendingSessionEnd = null;
@@ -249,26 +282,61 @@ export default function LearningVideoContent({
     setTimerConfirmMode('end');
   };
 
+  const confirmInFlightRef = useRef(false);
   const handleTimerConfirm = async () => {
-    if (timerConfirmMode === 'start') {
-      setTimerConfirmMode(null);
-      const res = await startTimerAction();
-      if (!res) return;
-      setTimerSessionId(res.sessionId);
-      setTimerSeconds(0);
-      timerSecondsRef.current = 0;
-      startTimerTicks(res.sessionId);
-      toast.success('타이머가 켜졌습니다.');
-    } else if (timerConfirmMode === 'end') {
-      setTimerConfirmMode(null);
-      if (!timerSessionId) return;
-      stopTimerTicks();
-      const ok = await endTimerAction(timerSessionId);
-      if (!ok) return;
-      setTimerSessionId(null);
-      setTimerSeconds(0);
-      timerSecondsRef.current = 0;
-      toast.success('타이머가 종료되었습니다.');
+    // 이중 confirm 방지 — 서버 왕복(start/resume/end) 중 모달 재오픈으로 재진입해 세션이 이중 생성되거나
+    // 상태가 꼬이는 것을 차단(StudyTimerPanel의 transitioningRef 패턴 이식). learning엔 전역 잠금이 없음.
+    if (confirmInFlightRef.current) return;
+    confirmInFlightRef.current = true;
+    try {
+      if (timerConfirmMode === 'start') {
+        setTimerConfirmMode(null);
+        // 이미 활성(RUNNING/PAUSED) 세션이 있으면 새로 만들지 않고 이어받는다. learning 라우트는 전역
+        // 이어하기 배너가 숨겨져 있어(layout TIMER_HIDDEN_PATTERNS), 여기서 안 살리면 409로 막다른 길이 된다.
+        // PAUSED면 서버 RESUME(→RUNNING)하고 서버 확정 누적초부터 이어 켠다.
+        const existing = await fetchCurrentSessionAction();
+        if (
+          existing &&
+          (existing.status === 'RUNNING' || existing.status === 'PAUSED')
+        ) {
+          let accumulated = existing.accumulatedStudySeconds;
+          if (existing.status === 'PAUSED') {
+            const resumed = await resumeTimerAction(existing.sessionId);
+            if (resumed == null) {
+              // 재개 실패 → 서버 PAUSED 유지. 켜진 척(가짜 성공) 금지(§0.1) — 안내 후 중단, 재시도 가능.
+              toast.error('세션 재개에 실패했어요. 다시 시도해 주세요.');
+              return;
+            }
+            accumulated = resumed;
+          }
+          setTimerSessionId(existing.sessionId);
+          setTimerSeconds(accumulated);
+          timerSecondsRef.current = accumulated;
+          startTimerTicks(existing.sessionId);
+          toast.success('이전 순공 세션을 이어서 켰습니다.');
+          return;
+        }
+        // 활성 세션 없음 → 새로 시작
+        const res = await startTimerAction();
+        if (!res) return;
+        setTimerSessionId(res.sessionId);
+        setTimerSeconds(0);
+        timerSecondsRef.current = 0;
+        startTimerTicks(res.sessionId);
+        toast.success('타이머가 켜졌습니다.');
+      } else if (timerConfirmMode === 'end') {
+        setTimerConfirmMode(null);
+        if (!timerSessionId) return;
+        stopTimerTicks();
+        const ok = await endTimerAction(timerSessionId);
+        if (!ok) return;
+        setTimerSessionId(null);
+        setTimerSeconds(0);
+        timerSecondsRef.current = 0;
+        toast.success('타이머가 종료되었습니다.');
+      }
+    } finally {
+      confirmInFlightRef.current = false;
     }
   };
 
