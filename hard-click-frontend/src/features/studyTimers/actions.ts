@@ -6,6 +6,8 @@ import {
   startStudySession,
   saveHeartbeat,
   endStudySession,
+  pauseStudySession,
+  resumeStudySession,
   getCurrentSession,
 } from './services';
 
@@ -46,6 +48,37 @@ export async function heartbeatAction(
   return res.data.accumulatedStudySeconds;
 }
 
+// 순공시간 일시정지 — 서버에 PAUSED 기록. 반환: 서버 확정 누적 초(정지 시점까지). 실패 시 null.
+// BE가 정지 시점을 기록해 이후 정지구간을 누적에서 제외한다(경과시간 모델의 정지구간 과다누적 해소).
+export async function pauseTimerAction(
+  sessionId: number,
+): Promise<number | null> {
+  if (isMock('studyTimers')) return null; // mock: 클라 인터벌만 정지(서버 대상 없음)
+  const res = await pauseStudySession(sessionId, {
+    pausedAt: new Date().toISOString(),
+  });
+  if (!res.success) {
+    console.warn('[StudyTimer] pause 실패:', res.message);
+    return null;
+  }
+  return res.data.accumulatedStudySeconds;
+}
+
+// 순공시간 재개 — 서버에 RUNNING 기록. 반환: 서버 확정 누적 초. 실패 시 null.
+export async function resumeTimerAction(
+  sessionId: number,
+): Promise<number | null> {
+  if (isMock('studyTimers')) return null;
+  const res = await resumeStudySession(sessionId, {
+    resumedAt: new Date().toISOString(),
+  });
+  if (!res.success) {
+    console.warn('[StudyTimer] resume 실패:', res.message);
+    return null;
+  }
+  return res.data.accumulatedStudySeconds;
+}
+
 const timerToastStyle = {
   className: 'timer-toast',
   duration: 2000,
@@ -57,18 +90,36 @@ export async function endTimerAction(sessionId: number): Promise<boolean> {
     toast.success('순공시간이 저장되었습니다', timerToastStyle);
     return true;
   }
-  const res = await endStudySession(sessionId, {
+  let res = await endStudySession(sessionId, {
     endedAt: new Date().toISOString(),
   });
-  if (!res.success) {
-    // ST003(NOT_RUNNING): 학습 이탈 시 자동 종료 등으로 세션이 이미 끝난 경우 → 종료 의도는 달성됐고
-    // 경과분도 저장됐으므로 idempotent하게 성공 처리한다(이중 종료 방어).
-    // ⚠️ ST004(락 타임아웃)도 같은 409지만 이땐 저장이 안 됐으므로 성공 처리하면 안 됨(§0.1 '되는 척' 금지).
-    //    그래서 httpStatus가 아니라 errorCode로 구분한다. BE는 ErrorResponse.errorCode에 코드값('ST003')을 넣는다.
-    if (res.errorCode === 'ST003') {
+  // ST003(NOT_RUNNING) = "RUNNING 세션만 처리 가능". 두 경우로 갈린다:
+  //  (a) 이미 ENDED(이중 종료·이탈 자동종료) → /current에 없음 → 종료 의도 달성 → idempotent 성공.
+  //  (b) PAUSED 상태로 종료 시도 → /current에 PAUSED로 남아있음. BE는 RUNNING만 종료 가능하므로
+  //      먼저 resume(→RUNNING)한 뒤 재종료한다(라이브 검증 2026-07-11: PAUSED에 end=409 ST003).
+  //      안 그러면 가짜 성공→UI만 지워지고 서버 세션이 PAUSED로 남아 이어하기 배너가 계속 재출현한다.
+  //  ⚠️ ST004(락 타임아웃)도 같은 409지만 저장 안 됐으므로 성공 처리 금지 → errorCode로 구분(§0.1).
+  if (!res.success && res.errorCode === 'ST003') {
+    const cur = await getCurrentSession();
+    if (cur.success && cur.data != null && cur.data.sessionId === sessionId) {
+      // 그 세션이 아직 활성 → 종료 가능 상태로 만든 뒤 재종료. PAUSED면 resume(→RUNNING) 먼저,
+      // RUNNING이면(멀티탭 재개 등 레이스) 바로 재종료. end는 RUNNING만 허용하므로.
+      if (cur.data.status === 'PAUSED') {
+        await resumeStudySession(sessionId, {
+          resumedAt: new Date().toISOString(),
+        });
+      }
+      res = await endStudySession(sessionId, {
+        endedAt: new Date().toISOString(),
+      });
+    } else if (cur.success) {
+      // 조회 성공인데 그 세션이 활성 목록에 없음(null·다른 세션) = 확정 종료(이중 종료·이탈 자동종료) → idempotent 성공.
       toast.success('순공시간이 저장되었습니다', timerToastStyle);
       return true;
     }
+    // cur.success===false(조회 실패) → 종료 여부 확정 불가 → 가짜 성공 금지, 아래로 떨어져 실패 처리.
+  }
+  if (!res.success) {
     toast.error(res.message || '순공시간 저장에 실패했습니다.', timerToastStyle);
     return false;
   }
@@ -95,8 +146,13 @@ export async function probeSessionAction(
   const res = await getCurrentSession();
   if (!res.success) return 'unknown'; // 조회 실패 — 상태 확정 불가
   const session = res.data;
-  // current 엔드포인트는 RUNNING 세션만 반환(없으면 data=null). 다른/비RUNNING이면 그 세션은 끝난 것.
-  if (session && session.status === 'RUNNING' && session.sessionId === expectedSessionId) {
+  // current는 ACTIVE_STATUSES=[RUNNING,PAUSED]를 반환한다(BE 코드검증 2026-07-11, 없으면 data=null).
+  // 활성(RUNNING·PAUSED)이고 그 세션이면 '살아있음' → 이어하기 대상. 그 외(없음/다른 세션)는 끝난 것.
+  if (
+    session &&
+    (session.status === 'RUNNING' || session.status === 'PAUSED') &&
+    session.sessionId === expectedSessionId
+  ) {
     return 'running';
   }
   return 'ended';

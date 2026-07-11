@@ -22,6 +22,12 @@ export interface HeartbeatRequest {
 export interface EndSessionRequest {
   endedAt: string;
 }
+export interface PauseSessionRequest {
+  pausedAt: string;
+}
+export interface ResumeSessionRequest {
+  resumedAt: string;
+}
 
 export interface StartSessionResponse {
   sessionId: number;
@@ -39,6 +45,18 @@ export interface EndSessionResponse {
   status: SessionStatus;
   accumulatedStudySeconds: number;
   endedAt: string;
+}
+export interface PauseSessionResponse {
+  sessionId: number;
+  status: SessionStatus;
+  accumulatedStudySeconds: number;
+  pausedAt: string;
+}
+export interface ResumeSessionResponse {
+  sessionId: number;
+  status: SessionStatus;
+  accumulatedStudySeconds: number;
+  resumedAt: string;
 }
 export interface CurrentSessionResponse {
   sessionId: number;
