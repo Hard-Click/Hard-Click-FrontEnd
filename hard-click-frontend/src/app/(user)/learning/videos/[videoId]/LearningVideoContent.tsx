@@ -377,6 +377,13 @@ export default function LearningVideoContent({
       };
     });
     if (!video.completed) setVideo({ ...video, completed: true });
+
+    // 라우터 캐시 stale 방지 — '완료'는 서버 progress(완료 배지·전체 진도율·완료 개수)가 바뀌는 유일 시점.
+    // 클라 Router Cache를 무효화해 /learning/[courseId] 커리큘럼 페이지로 복귀(뒤로가기 포함)할 때
+    // 최신 진도를 다시 받게 한다. (courses/[courseId] enroll/장바구니 후 router.refresh와 동일 패턴.)
+    // video/progress/detail은 useState 초기값(prop 재동기화 없음)이고 페이지 key={videoId}가 고정이라,
+    // 현재 영상 페이지가 재요청돼도 재생은 끊기지 않는다.
+    router.refresh();
   };
 
   /* 첫 진입 자체가 실패한 경우만 fallback */
