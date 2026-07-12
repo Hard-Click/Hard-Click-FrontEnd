@@ -13,7 +13,8 @@ export interface CartActionResult {
 
 /**
  * 장바구니 항목 삭제 (Server Action) — 개별/전체 공용(cartItemIds).
- * mock: 존재하는 항목인지 확인 후 성공. 연동 시 DELETE /api/cart/{id}로 교체.
+ * 라이브: DELETE /api/cart/{courseId} 병렬 호출 — 404(이미 없음)는 멱등 성공으로 처리하고
+ *   부분 실패에도 항상 revalidate. mock: 존재 항목 확인 후 성공.
  */
 export async function removeCartItemsAction(
   cartItemIds: number[],
