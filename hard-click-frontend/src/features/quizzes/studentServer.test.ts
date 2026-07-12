@@ -86,6 +86,14 @@ describe('getStudentQuizReviewServer — 향상도 (라이브 매퍼, BE previou
     expect(r?.improvement).toBe(0);
   });
 
+  it('직전 있음·0점 동일 (score 0, previousScore 0 → previousScore 0·improvement 0, null과 구분)', async () => {
+    // falsy(0)와 null(이전없음) 구분 — 이 PR의 핵심. truthy 체크로 리팩터 시 즉시 잡힘.
+    setup(makeReport({ score: 0, previousScore: 0 }));
+    const r = await getStudentQuizReviewServer(1, 5);
+    expect(r?.previousScore).toBe(0);
+    expect(r?.improvement).toBe(0);
+  });
+
   it('직전 없음: previousScore null → previousScore null·improvement null (동점과 구분, §0.1)', async () => {
     setup(makeReport({ score: 100, previousScore: null }));
     const r = await getStudentQuizReviewServer(1, 5);
