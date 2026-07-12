@@ -8,7 +8,11 @@ import type { AdminCourseManageRow } from '@/mocks/admin.mock';
 /* ─────────────────────────────────────────────────────────────────────────
  * 퀴즈 도메인 — 강사 읽기(목록·점수통계) 실서버 연동 (2026-06-25, 라이브 검증 완료).
  * ⚠️ BE는 퀴즈를 "섹션(section)" 기반으로 관리. FE의 "주차(week)"는 목록 응답의 weekNumber(섹션
- *    orderIndex 기반, BE 제공)를 쓴다. 상세·통계·섹션 조회는 아직 sectionTitle 숫자 파싱(sectionToWeek, BE 미제공).
+ *    orderIndex 기반, BE 제공)를 쓴다. 상세(InstructorQuizDetail)·통계(InstructorQuizStatistics)는 BE가
+ *    weekNumber를 안 줘(sectionTitle만) sectionToWeek 제목파싱으로 폴백한다. ⚠️ 그래서 섹션 제목 숫자가
+ *    orderIndex와 어긋나면(자유텍스트·삭제 섹션) 목록 주차 ↔ 상세/통계 breadcrumb 주차가 불일치할 수 있다.
+ *    → BE에 상세·통계 응답에도 weekNumber 추가 요청함(오면 여기 폴백 제거하고 일원화). 통계는 sectionId도
+ *    없어 FE 매핑 자체 불가(BE 제공만이 유일 해법).
  * ⚠️ 작성/수정/삭제(actions.ts)·학생 흐름(studentServer/Actions)은 아직 USE_MOCK(mock) — Phase 2.
  * ───────────────────────────────────────────────────────────────────────── */
 
