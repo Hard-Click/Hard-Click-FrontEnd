@@ -7,16 +7,17 @@ import type { AdminCourseManageRow } from '@/mocks/admin.mock';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * 퀴즈 도메인 — 강사 읽기(목록·점수통계) 실서버 연동 (2026-06-25, 라이브 검증 완료).
- * ⚠️ BE는 퀴즈를 "섹션(section)" 기반으로 관리 → FE의 "주차(week)"는 sectionTitle("섹션 N: ...")의
- *    숫자를 파싱해 매핑(사용자 결정: 섹션을 주차처럼). 섹션명과 주차가 안 맞을 수 있음(허용).
+ * ⚠️ BE는 퀴즈를 "섹션(section)" 기반으로 관리. FE의 "주차(week)"는 목록 응답의 weekNumber(섹션
+ *    orderIndex 기반, BE 제공)를 쓴다. 상세·통계·섹션 조회는 아직 sectionTitle 숫자 파싱(sectionToWeek, BE 미제공).
  * ⚠️ 작성/수정/삭제(actions.ts)·학생 흐름(studentServer/Actions)은 아직 USE_MOCK(mock) — Phase 2.
  * ───────────────────────────────────────────────────────────────────────── */
 
-/** GET /api/instructor/quizzes?courseId= 응답 (라이브 검증). */
+/** GET /api/instructor/quizzes?courseId= 응답 (라이브 검증). 목록엔 BE가 weekNumber(섹션 orderIndex 기반)를 직접 준다. */
 interface ApiInstructorQuizItem {
   quizId: number;
   quizTitle: string;
   courseTitle: string;
+  weekNumber: number; // 섹션 orderIndex 기반 주차(BE 제공) — 제목 정규식 파싱 대체(자유텍스트·삭제섹션에 강건)
   sectionTitle: string;
   questionCount: number;
   createdAt: string;
@@ -54,7 +55,7 @@ export async function getQuizzesServer(courseId: number): Promise<Quiz[]> {
     .map((item) => ({
       quizId: item.quizId,
       courseId: cid,
-      week: sectionToWeek(item.sectionTitle),
+      week: item.weekNumber,
       title: item.quizTitle,
       questionCount: item.questionCount,
       createdDate: item.createdAt ? item.createdAt.split('T')[0] : '',
@@ -328,7 +329,7 @@ export async function getAdminCourseQuizzesServer(courseId: number): Promise<Qui
     .map((item) => ({
       quizId: item.quizId,
       courseId: cid,
-      week: sectionToWeek(item.sectionTitle),
+      week: item.weekNumber,
       title: item.quizTitle,
       questionCount: item.questionCount,
       createdDate: item.createdAt ? item.createdAt.split('T')[0] : '',
