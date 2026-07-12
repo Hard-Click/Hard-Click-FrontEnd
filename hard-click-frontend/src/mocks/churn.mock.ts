@@ -168,13 +168,6 @@ export const mockChurnDashboard: ChurnDashboard = {
 // ── 학생 위험 상세 (mock 빌더) ─────────────────────────────────────────────
 // BE 이탈 상세 API 미구현 → 목록 학생에서 결정적으로 상세를 합성한다.
 const REFERENCE_TODAY = new Date('2026-07-07');
-const COURSES = [
-  'React 완벽 가이드',
-  'Spring Boot 입문',
-  '알고리즘 마스터',
-  'TypeScript 심화',
-  'CS 기초 완성',
-];
 
 function daysAgo(dateStr: string): number {
   const diff = REFERENCE_TODAY.getTime() - new Date(dateStr).getTime();
@@ -212,8 +205,6 @@ export function getMockChurnStudentDetail(
   if (!s) return null;
   return {
     ...s,
-    courseName: COURSES[(s.id - 1) % COURSES.length],
-    courseWeek: (s.id % 6) + 5,
     factors: buildFactors(s.riskScore),
     learning: buildLearning(s),
   };
