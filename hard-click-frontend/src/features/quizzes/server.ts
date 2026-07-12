@@ -84,17 +84,19 @@ export async function getTakenWeeksByCourseServer(): Promise<
 }
 
 /** GET /api/courses/{courseId} → 섹션 목록 {sectionId, week}. 등록/수정 시 "주차 → 진짜 sectionId" 해석용.
- *  BE 등록 DTO는 sectionId를 요구하나 FE 폼은 주차만 받으므로, 섹션 제목("섹션 N")의 N을 주차로 매칭. */
+ *  ⚠️ week = 섹션 orderIndex(BE 제공)를 쓴다 — 퀴즈 목록의 weekNumber(=weekOf=orderIndex)와 동일 스킴이라야
+ *     getQuizFormMetaServer의 weeks(섹션)↔takenWeeks(퀴즈) 비교가 정합(1주1퀴즈 중복체크). 제목 정규식(sectionToWeek)은
+ *     제목 숫자↔orderIndex가 어긋나면 두 스킴이 달라져 중복체크가 깨진다. */
 export async function getCourseSectionsServer(
   courseId: number,
 ): Promise<{ sectionId: number; week: number }[]> {
   const res = await serverApi.get<{
-    sections?: { sectionId: number; title: string }[];
+    sections?: { sectionId: number; orderIndex: number }[];
   }>(`/api/courses/${courseId}`);
   if (!res.success || !Array.isArray(res.data?.sections)) return [];
   return res.data.sections.map((s) => ({
     sectionId: s.sectionId,
-    week: sectionToWeek(s.title),
+    week: s.orderIndex,
   }));
 }
 
@@ -309,10 +311,19 @@ export async function getAdminQuizCoursesServer(): Promise<AdminCourseManageRow[
   }));
 }
 
-/** GET /api/admin/quizzes/courses/{courseId} 응답 */
+/** GET /api/admin/quizzes/courses/{courseId} 응답. ⚠️ WeeklyQuiz는 강사 목록(ApiInstructorQuizItem)과
+ *  필드가 다르다 — 문제수는 totalQuestionCount, 등록일시는 examDate(BE가 응시일 필드명 유지). */
+interface ApiAdminWeeklyQuiz {
+  quizId: number;
+  weekNumber: number;
+  quizTitle: string;
+  status: string;
+  totalQuestionCount: number;
+  examDate: string | null;
+}
 interface ApiAdminQuizList {
   courseId: number;
-  weeks: ApiInstructorQuizItem[];
+  weeks: ApiAdminWeeklyQuiz[];
 }
 
 /** 관리자 — 강의별 주차 퀴즈 목록 (GET /api/admin/quizzes/courses/{courseId}). */
@@ -331,8 +342,9 @@ export async function getAdminCourseQuizzesServer(courseId: number): Promise<Qui
       courseId: cid,
       week: item.weekNumber,
       title: item.quizTitle,
-      questionCount: item.questionCount,
-      createdDate: item.createdAt ? item.createdAt.split('T')[0] : '',
+      // BE 관리자 목록은 totalQuestionCount·examDate로 준다(강사 목록의 questionCount·createdAt과 필드명 다름).
+      questionCount: item.totalQuestionCount,
+      createdDate: item.examDate ? item.examDate.split('T')[0] : '',
       questions: [],
     }))
     .sort(byWeekAsc);
