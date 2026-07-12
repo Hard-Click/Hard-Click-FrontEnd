@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import Pagination from '@/features/admin/components/Pagination';
 import type { ChurnRiskLevel, ChurnStudent } from '../types';
 
@@ -123,13 +124,12 @@ export default function ChurnStudentTable({
                   {s.lastActiveAt}
                 </td>
                 <td className="px-4 py-4 text-center">
-                  {/* TODO: 학생 상세/조치 라우트 연동 (BE 미구현) */}
-                  <button
-                    type="button"
-                    className="whitespace-nowrap rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-sm font-medium text-[#2F5DAA] hover:bg-[#F8FAFC]"
+                  <Link
+                    href={`/admin/churn/${s.id}`}
+                    className="inline-block whitespace-nowrap rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-sm font-medium text-[#2F5DAA] hover:bg-[#F8FAFC]"
                   >
                     확인하기
-                  </button>
+                  </Link>
                 </td>
                 </tr>
               ))
