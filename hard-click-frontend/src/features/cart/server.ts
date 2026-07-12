@@ -1,6 +1,7 @@
 import { serverApi } from '@/lib/api';
 import { isMock } from '@/mocks/config';
 import { getCurrentUser } from '@/features/auth/session';
+import type { EnrollmentStatus } from '@/features/enrollments/types';
 import {
   mockCart,
   type CartApiResponse,
@@ -60,21 +61,27 @@ function toCartFromApi(api: BeCartResponse): Cart {
 }
 
 /**
- * 내 수강중(구매 완료) courseId 집합 — 이미 산 강의를 장바구니에서 숨기기 위함.
- * courses/server.ts와 동일한 검증된 호출(GET /api/enrollments/me?status=ALL).
- * 비로그인이면 호출 생략. 실패 봉투든 예외든 빈 집합 → 필터 미적용(장바구니 노출 자체는
- * 막지 않음). serverApi.get는 보통 봉투를 반환하지만, 계약이 타입으로 강제되지 않으므로
- * 예외도 try/catch로 흡수해 "수강목록 조회 실패 시 장바구니는 그대로"를 보장한다.
+ * 내 "보유중(수강중/완료)" courseId 집합 — 이미 산 강의를 장바구니에서 숨기기 위함.
+ * courses/server.ts와 동일한 검증된 호출(GET /api/enrollments/me?status=ALL) + 동일한 필터.
+ * ⚠️ status=ALL은 환불(REFUNDED)·만료(EXPIRED)까지 포함하므로 active(IN_PROGRESS/COMPLETED)만
+ *    '보유중'으로 본다. REFUNDED를 '보유중'으로 오판하면 환불한 강의를 다시 담아도 장바구니에서
+ *    숨겨져 재구매가 막힌다(상세는 '수강신청'으로 뜨는데 장바구니 경로만 죽음). BE 영상접근·내강의
+ *    목록도 IN_PROGRESS/COMPLETED로만 판정 — 동일 정책.
+ * 비로그인이면 호출 생략. 실패 봉투든 예외든 빈 집합 → 필터 미적용(장바구니 노출 자체는 막지 않음).
  */
 async function getEnrolledCourseIds(): Promise<Set<number>> {
   const user = await getCurrentUser();
   if (!user) return new Set();
   try {
-    const res = await serverApi.get<{ courseId: number }[]>(
-      '/api/enrollments/me?status=ALL',
-    );
+    const res = await serverApi.get<
+      { courseId: number; status: EnrollmentStatus }[]
+    >('/api/enrollments/me?status=ALL');
     if (!res.success || !Array.isArray(res.data)) return new Set();
-    return new Set(res.data.map((e) => e.courseId));
+    return new Set(
+      res.data
+        .filter((e) => e.status === 'IN_PROGRESS' || e.status === 'COMPLETED')
+        .map((e) => e.courseId),
+    );
   } catch {
     return new Set();
   }
