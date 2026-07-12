@@ -1,6 +1,7 @@
 import { serverApi } from '@/lib/api';
 import { isMock } from '@/mocks/config';
 import { getCurrentUser } from '@/features/auth/session';
+import type { EnrollmentStatus } from '@/features/enrollments/types';
 import {
   mockCart,
   type CartApiResponse,
@@ -72,9 +73,9 @@ async function getEnrolledCourseIds(): Promise<Set<number>> {
   const user = await getCurrentUser();
   if (!user) return new Set();
   try {
-    const res = await serverApi.get<{ courseId: number; status: string }[]>(
-      '/api/enrollments/me?status=ALL',
-    );
+    const res = await serverApi.get<
+      { courseId: number; status: EnrollmentStatus }[]
+    >('/api/enrollments/me?status=ALL');
     if (!res.success || !Array.isArray(res.data)) return new Set();
     return new Set(
       res.data
