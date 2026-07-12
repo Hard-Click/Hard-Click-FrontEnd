@@ -2,6 +2,7 @@ import { serverApi } from '@/lib/api';
 import {
   getQuizFormMetaServer,
   getInstructorQuizDetailServer,
+  getAdminQuizDetailServer,
 } from './server';
 
 // private 매퍼(toQuizDetail 등)는 export 안 됨 → public getXServer로 검증.
@@ -111,5 +112,57 @@ describe('getInstructorQuizDetailServer — 상세 매퍼 (정답 인덱스 복�
     const quiz = await getInstructorQuizDetailServer(5);
     expect(quiz?.questions[0].answerIndex).toBe(0); // correctOptionId=21 → 0번째
     expect(quiz?.questions[0].explanation).toBe('');
+  });
+});
+
+describe('getAdminQuizDetailServer — 관리자 상세(문항 포함) 매핑 (라이브)', () => {
+  afterEach(() => jest.clearAllMocks());
+
+  it('GET /api/admin/quizzes/{id}(관리자 패밀리)로 조회 + 문항·정답인덱스·해설 매핑', async () => {
+    mockGet.mockResolvedValue(
+      ok({
+        quizId: 90,
+        quizTitle: '관리자 수정 퀴즈',
+        courseId: 1,
+        courseTitle: '수능 국어',
+        sectionId: 2,
+        sectionTitle: '2주차: 미분',
+        questionCount: 1,
+        createdAt: '2026-07-10T10:00:00Z',
+        questions: [
+          {
+            questionId: 1,
+            questionText: 'Q1',
+            explanation: '해설1',
+            correctOptionId: 12,
+            options: [
+              { optionId: 11, optionText: 'a', correct: false },
+              { optionId: 12, optionText: 'b', correct: true },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const quiz = await getAdminQuizDetailServer(90);
+
+    // 강사 엔드포인트로 새지 않고 admin 패밀리로 조회
+    expect(mockGet).toHaveBeenCalledWith('/api/admin/quizzes/90');
+    expect(quiz?.quizId).toBe(90);
+    expect(quiz?.week).toBe(2); // sectionTitle "2주차..." → 2
+    expect(quiz?.questions[0].content).toBe('Q1');
+    expect(quiz?.questions[0].options).toEqual(['a', 'b']);
+    expect(quiz?.questions[0].answerIndex).toBe(1); // correct=true인 2번째
+    expect(quiz?.questions[0].explanation).toBe('해설1');
+  });
+
+  it('조회 실패(success:false, 예: 없는 퀴즈)면 null', async () => {
+    mockGet.mockResolvedValue({
+      success: false,
+      httpStatus: 404,
+      message: '없음',
+      data: null,
+    });
+    expect(await getAdminQuizDetailServer(90)).toBeNull();
   });
 });

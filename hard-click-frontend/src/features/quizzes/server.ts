@@ -157,7 +157,8 @@ export async function getInstructorQuizDetailServer(
 }
 
 /** 관리자 퀴즈 상세 — GET /api/admin/quizzes/{id}. 관리자 수정 흐름이 강사 엔드포인트로 새지 않게 admin 패밀리 사용.
- *  ⚠️ BE 관리자 상세 실구현 대기(AdminQuizMockController에 detail 없음) → 라이브 404 시 상위(handleEdit)서 목록값 폴백. */
+ *  BE 상세 실구현됨(develop, AdminQuizController — 강사와 동일 InstructorQuizDetailResponse 반환) → toQuizDetail 공유.
+ *  조회 실패(null) 시 상위 handleEdit가 목록값으로 폴백(문항 없이 열림, 안전망). */
 export async function getAdminQuizDetailServer(
   quizId: number,
 ): Promise<Quiz | null> {
