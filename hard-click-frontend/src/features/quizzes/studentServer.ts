@@ -17,7 +17,7 @@ import type {
  * 수강생 퀴즈 — 실서버 연동. BE 확정 DTO(2026-07-09 재검증)에 맞춰 매퍼 정합.
  *  - 목록 GET /api/members/me/quizzes?courseId= : weekNumber·completed / courseId·courseTitle은 최상위
  *  - 상세 GET /api/quizzes/{id} : sectionTitle·submitted (→ sectionToWeek)
- *  - 리뷰 GET .../reports/me : week·scoreDiff(향상도=현재−직전주차, 이전없으면 BE가 0)
+ *  - 리뷰 GET .../reports/me : week·previousScore(직전 실점수, 없으면 null)·scoreDiff
  * ───────────────────────────────────────────────────────────────────────── */
 
 /** "섹션 N: ..." → 주차 N (server.ts와 동일 규칙). */
@@ -163,7 +163,7 @@ export async function getStudentQuizDetailServer(
   };
 }
 
-/** GET /api/quizzes/{id}/reports/me 응답 (BE 확정 DTO — week·scoreDiff. courseTitle·totalQuestionCount 없음). */
+/** GET /api/quizzes/{id}/reports/me 응답 (BE 확정 DTO — week·previousScore·scoreDiff. courseTitle·totalQuestionCount 없음). */
 interface ApiQuizReport {
   quizId: number;
   week: number;
@@ -173,7 +173,8 @@ interface ApiQuizReport {
   totalScore: number;
   correctCount: number;
   incorrectCount: number;
-  scoreDiff: number; // 현재 − 직전 주차(내 제출) 점수. 이전 없으면 BE가 0.
+  previousScore: number | null; // 직전 주차(내 제출) 실점수. 직전 응시 없으면 null.
+  scoreDiff: number; // 현재 − 직전 주차 점수. 직전 없으면 BE가 0.
   questions: {
     questionId: number;
     questionNumber: number;
@@ -261,10 +262,11 @@ export async function getStudentQuizReviewServer(
     score: d.score,
     correctCount: d.correctCount,
     totalCount: d.questions.length, // BE는 totalScore(만점)만 → 문항 수는 questions 길이
-    // BE scoreDiff = 현재−직전 주차 점수. 직전 점수 원값은 안 주지만 정의상 복원 가능: 직전 = 현재 − scoreDiff.
-    // scoreDiff=0은 "이전 없음"과 "동점"을 BE가 둘 다 0으로 줘 구분 불가 → 비교불가로 처리(동점 위조 안 함, §0.1).
-    previousScore: d.scoreDiff !== 0 ? d.score - d.scoreDiff : null,
-    improvement: d.scoreDiff !== 0 ? d.scoreDiff : null,
+    // BE가 직전 주차 실점수(previousScore)를 직접 준다(2026-07 반영, null이면 직전 응시 없음).
+    // → 예전 scoreDiff 역산의 "이전 없음 vs 동점" 모호성 해소: 동점(previousScore=score)은 improvement 0,
+    //   직전 없음(null)은 비교불가(null)로 정확히 구분(동점 위조·이전없음 오표기 모두 방지, §0.1).
+    previousScore: d.previousScore ?? null,
+    improvement: d.previousScore != null ? d.score - d.previousScore : null,
     questions: d.questions.map((q) => {
       const answerIndex = q.options.findIndex(
         (o) => o.optionId === q.correctOptionId,

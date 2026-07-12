@@ -27,22 +27,26 @@ const Q1 = {
   ],
 };
 
-/** 리포트 응답(reports/me) 생성 — 점수·scoreDiff·문항만 바꿔가며 씀. */
+/** 리포트 응답(reports/me) 생성 — 점수·previousScore·문항만 바꿔가며 씀. */
 function makeReport(over: {
   score?: number;
-  scoreDiff?: number;
+  previousScore?: number | null;
   questions?: typeof Q1[];
 }) {
+  const score = over.score ?? 90;
+  const previousScore = over.previousScore ?? null;
   return {
     quizId: 5,
     week: 2,
     quizTitle: '리뷰 퀴즈',
     submittedAt: '2026-07-10T10:00:00',
-    score: over.score ?? 90,
+    score,
     totalScore: 100,
     correctCount: 1,
     incorrectCount: 0,
-    scoreDiff: over.scoreDiff ?? 0,
+    previousScore,
+    // BE: 직전 없으면 0, 있으면 score − previousScore
+    scoreDiff: previousScore != null ? score - previousScore : 0,
     questions: over.questions ?? [Q1],
   };
 }
@@ -58,25 +62,32 @@ function setup(report: ReturnType<typeof makeReport>) {
   );
 }
 
-describe('getStudentQuizReviewServer — 향상도 복원 (라이브 매퍼)', () => {
+describe('getStudentQuizReviewServer — 향상도 (라이브 매퍼, BE previousScore 실배선)', () => {
   afterEach(() => jest.clearAllMocks());
 
-  it('scoreDiff>0: 직전 점수 복원 (score 90, +10 → previousScore 80·improvement +10)', async () => {
-    setup(makeReport({ score: 90, scoreDiff: 10 }));
+  it('직전 있음·향상 (score 90, previousScore 80 → previousScore 80·improvement +10)', async () => {
+    setup(makeReport({ score: 90, previousScore: 80 }));
     const r = await getStudentQuizReviewServer(1, 5);
     expect(r?.previousScore).toBe(80);
     expect(r?.improvement).toBe(10);
   });
 
-  it('scoreDiff<0: 하락도 복원 (score 70, -10 → previousScore 80·improvement -10)', async () => {
-    setup(makeReport({ score: 70, scoreDiff: -10 }));
+  it('직전 있음·하락 (score 70, previousScore 80 → previousScore 80·improvement -10)', async () => {
+    setup(makeReport({ score: 70, previousScore: 80 }));
     const r = await getStudentQuizReviewServer(1, 5);
     expect(r?.previousScore).toBe(80);
     expect(r?.improvement).toBe(-10);
   });
 
-  it('scoreDiff=0: "이전 없음/동점" 구분 불가 → 비교불가(null), 동점 위조 안 함 (§0.1)', async () => {
-    setup(makeReport({ score: 100, scoreDiff: 0 }));
+  it('동점: score 100·previousScore 100 → previousScore 100·improvement 0 (이전없음과 구분 — 핵심 fix)', async () => {
+    setup(makeReport({ score: 100, previousScore: 100 }));
+    const r = await getStudentQuizReviewServer(1, 5);
+    expect(r?.previousScore).toBe(100);
+    expect(r?.improvement).toBe(0);
+  });
+
+  it('직전 없음: previousScore null → previousScore null·improvement null (동점과 구분, §0.1)', async () => {
+    setup(makeReport({ score: 100, previousScore: null }));
     const r = await getStudentQuizReviewServer(1, 5);
     expect(r?.previousScore).toBeNull();
     expect(r?.improvement).toBeNull();
