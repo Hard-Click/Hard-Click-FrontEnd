@@ -19,7 +19,7 @@ export interface QuizActionState {
 /* ─────────────────────────────────────────────────────────────────────────
  * 강사 퀴즈 쓰기(등록·수정·삭제) — 실서버 연동. gate=isMock('quizzes')(=false 라이브).
  * BE(QuizController) 실구현 확인(2026-07-09 코드 검증). 등록/수정 요청 = sectionId(진짜)·correctOptionNumber(1~4)·optionText:
- *   - "주차 → sectionId"는 resolveSectionId가 GET /api/courses/{id} 섹션 제목("섹션 N")에서 해석.
+ *   - "주차 → sectionId"는 resolveSectionId가 GET /api/courses/{id} 섹션 orderIndex(=목록 weekNumber와 동일 스킴)로 해석.
  *   - correctOptionNumber = answerIndex+1, 보기는 optionText만(옵션 id는 BE가 부여).
  * ───────────────────────────────────────────────────────────────────────── */
 
