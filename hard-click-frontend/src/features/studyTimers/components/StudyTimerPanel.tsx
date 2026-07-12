@@ -49,6 +49,8 @@ export default function StudyTimerPanel() {
   const secondsRef = useRef(0);
   // pause↔resume 전이 in-flight 잠금 — 재개/일시정지 연타로 인터벌 중복·서버 이중호출·상태 경쟁 방지.
   const transitioningRef = useRef(false);
+  // heartbeat 세대 — 세션 종료/재시작 시 증가. 이전 세션의 in-flight heartbeat 응답이 새 세션 시간을 덮어쓰지 않게.
+  const heartbeatGenRef = useRef(0);
 
   // 서버 확정 누적초로 로컬 카운터 보정. seconds·todaySeconds를 같은 델타로 맞춰 표시 일관 유지
   // (서버 보정 시 '오늘 총 학습시간'이 '학습 중'과 어긋나는 드리프트 방지).
@@ -96,16 +98,20 @@ export default function StudyTimerPanel() {
   const startHeartbeat = useCallback(
     (sid: number) => {
       if (heartbeatRef.current) clearInterval(heartbeatRef.current); // 멱등
+      const gen = ++heartbeatGenRef.current; // 이 heartbeat 세대 캡처
       heartbeatRef.current = setInterval(async () => {
         const serverSeconds = await heartbeatAction(sid);
-        // 서버가 확정한 누적시간으로 로컬 카운터 보정 — 백그라운드 탭 throttle 등 드리프트 해소
-        if (serverSeconds != null) applyServerSeconds(serverSeconds);
+        // 서버 확정 누적시간으로 보정 — 응답 도착 시 세션이 바뀌었으면(세대 불일치) 무시(stale 덮어쓰기 방지).
+        if (serverSeconds != null && heartbeatGenRef.current === gen) {
+          applyServerSeconds(serverSeconds);
+        }
       }, HEARTBEAT_INTERVAL_MS);
     },
     [applyServerSeconds],
   );
 
   const stopIntervals = useCallback(() => {
+    heartbeatGenRef.current++; // in-flight heartbeat 응답 무효화(종료/전환 시 stale 반영 방지)
     if (tickRef.current) clearInterval(tickRef.current);
     if (heartbeatRef.current) clearInterval(heartbeatRef.current);
     tickRef.current = null;
@@ -151,8 +157,8 @@ export default function StudyTimerPanel() {
     try {
       // 'ended'(확정 종료)일 때만 배너 정리. 'unknown'(조회 실패)이면 살아있는 세션을 버리지 않고
       // 낙관적으로 재개한다(실제로 끝났다면 종료가 idempotent하게 정리).
-      const state = await probeSessionAction(resumeSession.sessionId);
-      if (state === 'ended') {
+      const probe = await probeSessionAction(resumeSession.sessionId);
+      if (probe.state === 'ended') {
         setResumeSession(null);
         toast('이미 종료된 세션이에요. 새로 시작해 주세요.', {
           className: 'timer-toast',
@@ -160,9 +166,11 @@ export default function StudyTimerPanel() {
         });
         return;
       }
-      // 복원 대상이 PAUSED였다면 서버 RESUME(→RUNNING)부터. 실패하면 재개하지 않고(가짜 재개=시간 유실
-      // 방지, §0.1) 배너를 유지해 재시도하게 한다. RUNNING이면 서버가 이미 도는 중 → tick만 재개.
-      if (resumeSession.status === 'PAUSED') {
+      // 재조회한 최신 status로 판단(resumeSession.status는 복원 시점 값이라 stale일 수 있음). 조회 실패(unknown)면 폴백.
+      // PAUSED면 서버 RESUME(→RUNNING)부터. 실패하면 재개 안 함(가짜 재개=시간 유실 방지, §0.1) 배너 유지·재시도.
+      // RUNNING이면 서버가 이미 도는 중 → tick만 재개.
+      const status = probe.status ?? resumeSession.status;
+      if (status === 'PAUSED') {
         const serverSeconds = await resumeTimerAction(resumeSession.sessionId);
         if (serverSeconds == null && !isMock('studyTimers')) {
           // live 재개 실패 → 재개 안 함(가짜 재개 금지). 배너 유지·재시도 가능.
