@@ -47,6 +47,10 @@ const initialValues: RegisterFormValues = {
   emailVerificationToken: '',
 };
 
+// 이메일 인증코드 유효시간(초) — BE code-ttl(180000ms = 3분)과 일치시킨다.
+//   BE가 5분→3분으로 변경(2026-07-13)해 카운트다운도 맞춤. 값이 어긋나면 화면 시간이 실제와 안 맞는다.
+const EMAIL_CODE_TTL_SECONDS = 180;
+
 export function useRegisterForm() {
   const [step, setStep] = useState<RegisterStep>(1);
   const [values, setValues] = useState<RegisterFormValues>(initialValues);
@@ -81,7 +85,9 @@ export function useRegisterForm() {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [emailSendCount, setEmailSendCount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [remainingSeconds, setRemainingSeconds] = useState(300);
+  const [remainingSeconds, setRemainingSeconds] = useState(
+    EMAIL_CODE_TTL_SECONDS,
+  );
 
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
@@ -169,7 +175,7 @@ export function useRegisterForm() {
       setIsEmailVerified(false);
       setEmailStatus(null);
       setVerificationStatus(null);
-      setRemainingSeconds(300);
+      setRemainingSeconds(EMAIL_CODE_TTL_SECONDS);
       setEmailSendCount(0);
     }
 
@@ -348,7 +354,7 @@ export function useRegisterForm() {
     setEmailSendCount((prev) => prev + 1);
     setIsEmailSent(true);
     setIsEmailVerified(false);
-    setRemainingSeconds(300);
+    setRemainingSeconds(EMAIL_CODE_TTL_SECONDS);
     // 재발송 시 이전 토큰/코드 초기화
     setValues((prev) => ({
       ...prev,
@@ -582,7 +588,7 @@ export function useRegisterForm() {
       if (result.httpStatus === 401) {
         setIsEmailVerified(false);
         setIsEmailSent(false);
-        setRemainingSeconds(300);
+        setRemainingSeconds(EMAIL_CODE_TTL_SECONDS);
         setValues((prev) => ({
           ...prev,
           emailVerificationToken: '',

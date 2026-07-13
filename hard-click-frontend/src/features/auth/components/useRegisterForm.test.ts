@@ -63,10 +63,10 @@ describe('useRegisterForm — 초기 상태', () => {
     expect(result.current.isEmailVerified).toBe(false);
   });
 
-  it('남은 시간 포맷이 5:00으로 초기화된다', () => {
+  it('남은 시간 포맷이 3:00으로 초기화된다 (BE code-ttl 3분과 일치)', () => {
     const { result } = renderHook(() => useRegisterForm());
 
-    expect(result.current.formattedRemainingTime).toBe('5:00');
+    expect(result.current.formattedRemainingTime).toBe('3:00');
   });
 });
 
