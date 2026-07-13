@@ -90,20 +90,19 @@ interface CategoryColor {
 }
 
 /**
- * ⚠️ 사용자 지정 파스텔 팔레트(2026-07-13) — "Winter Color Palettes" 참고 이미지(25색)에서
- * 최대한 안 겹치는 8개를 골라 추출. 원본 소재 자체가 블루그레이·더스티핑크 위주라
- * dataviz 6-checks CVD 분리는 통과 못 하지만(사용자가 이 트레이드오프를 인지하고 선택),
- * 톤 자체를 우선한 결정.
+ * 밝은 파스텔 톤(2026-07-13 재작업) — 이전 vivid 8색(Tailwind 500~800)과 동일한 hue를 유지한 채
+ * 명도를 더 올려 밝게(사용자 요청). ⚠️ 이 정도 채도/명도에서는 dataviz 6-checks CVD 분리를
+ * 통과 못 함(트레이드오프 인지하고 선택 — 항상 라벨 병행 표시로 완화).
  */
 const CATEGORY_COLOR: Record<SubjectCategory, CategoryColor> = {
-  MATH: { light: '#50b4d8', dark: '#50b4d8' }, // 비비드 sky blue
-  SCIENCE: { light: '#57838d', dark: '#57838d' }, // 톤다운 teal-gray
-  REVIEW: { light: '#a7d9c9', dark: '#a7d9c9' }, // sage green
-  KOREAN_HISTORY: { light: '#f7e5b7', dark: '#f7e5b7' }, // pale yellow
-  ENGLISH: { light: '#ffe4c9', dark: '#ffe4c9' }, // peach
-  FOREIGN_LANGUAGE: { light: '#cab3c1', dark: '#cab3c1' }, // dusty lilac (ENGLISH 살구톤과 헷갈려서 salmon에서 변경)
-  SOCIAL: { light: '#c29ba3', dark: '#c29ba3' }, // dusty rose
-  KOREAN: { light: '#d7e2ea', dark: '#d7e2ea' }, // 페일 blue-gray (SOCIAL 더스티로즈와 헷갈려서 lilac에서 변경)
+  KOREAN: { light: '#bfa4ea', dark: '#bfa4ea' }, // 밝은 파스텔 violet
+  MATH: { light: '#a4baea', dark: '#a4baea' }, // 밝은 파스텔 blue
+  ENGLISH: { light: '#f4977b', dark: '#f4977b' }, // 코랄(갈색빛 안 나게 채도↑·hue를 코랄 쪽으로)
+  KOREAN_HISTORY: { light: '#f5eb89', dark: '#f5eb89' }, // 레몬 옐로우(갈색빛 안 나게 hue를 노랑 쪽으로)
+  SOCIAL: { light: '#eaa4c3', dark: '#eaa4c3' }, // 밝은 파스텔 rose
+  SCIENCE: { light: '#a4eae4', dark: '#a4eae4' }, // 밝은 파스텔 teal
+  FOREIGN_LANGUAGE: { light: '#f17e92', dark: '#f17e92' }, // 로즈 레드(갈색빛 안 나게 채도↑)
+  REVIEW: { light: '#a4eabe', dark: '#a4eabe' }, // 밝은 파스텔 green
 };
 
 /** BE 과목 enum 값("KO_READING" 등) → 대분류. 세부과목 접두사 기준(§ CATEGORY_COLOR). */

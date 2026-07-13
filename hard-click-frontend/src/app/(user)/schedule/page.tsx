@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getSubscriptionServer } from '@/features/subscriptions/server';
-import { getTodayTasksServer } from '@/features/schedule/server';
+import { getScheduleBlocksServer, getTodayTasksServer } from '@/features/schedule/server';
 import { ScheduleCalendarCard } from '@/features/schedule/components/ScheduleCalendarCard';
 import { TodayTaskPanel } from '@/features/schedule/components/TodayTaskPanel';
 
@@ -12,7 +12,10 @@ export default async function SchedulePage() {
   }
 
   const today = new Date();
-  const todayTasks = await getTodayTasksServer(today);
+  const [todayTasks, scheduleBlocks] = await Promise.all([
+    getTodayTasksServer(today),
+    getScheduleBlocksServer(),
+  ]);
 
   return (
     <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
@@ -24,14 +27,18 @@ export default async function SchedulePage() {
 
         <div className="mt-8 flex flex-col items-stretch gap-6 lg:flex-row">
           <div className="w-full lg:flex-[2]">
-            <ScheduleCalendarCard year={today.getFullYear()} month={today.getMonth()} />
+            <ScheduleCalendarCard
+              year={today.getFullYear()}
+              month={today.getMonth()}
+              blocks={scheduleBlocks}
+            />
           </div>
           <div className="w-full lg:w-[300px] lg:flex-none">
             <TodayTaskPanel date={todayTasks.date} tasks={todayTasks.tasks} />
           </div>
         </div>
 
-        {/* 과목 학습바(#818) · AI 학습 코치(#820) 후속 */}
+        {/* AI 학습 코치(#820) 후속 */}
       </div>
     </div>
   );

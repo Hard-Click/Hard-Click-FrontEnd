@@ -1,4 +1,4 @@
-import type { ScheduleCalendarDay } from './types';
+import type { ScheduleBlock, ScheduleCalendarDay, WeekBarSegment } from './types';
 
 function toISODate(year: number, month: number, day: number): string {
   const mm = String(month + 1).padStart(2, '0');
@@ -67,4 +67,27 @@ const WEEKDAY_SHORT_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 export function formatShortDateWithWeekday(date: Date): string {
   const weekday = WEEKDAY_SHORT_LABELS[date.getDay()];
   return `${date.getMonth() + 1}/${date.getDate()} (${weekday})`;
+}
+
+/**
+ * 이 주(week, 7칸)와 겹치는 학습 구간들을 그 주 안으로 clamp해서 grid-column 위치로 변환.
+ * 구간이 주 경계를 넘어가면(예: 화~다음주 목) 이 주에 걸친 부분만큼만 잘라 반환 —
+ * 다음 주 호출에서 나머지 부분이 별도 세그먼트로 다시 계산된다.
+ */
+export function getWeekBarSegments(
+  week: readonly ScheduleCalendarDay[],
+  blocks: readonly ScheduleBlock[],
+): WeekBarSegment[] {
+  const weekStart = week[0].date;
+  const weekEnd = week[week.length - 1].date;
+
+  return blocks
+    .filter((block) => block.endDate >= weekStart && block.startDate <= weekEnd)
+    .map((block) => {
+      const clampedStart = block.startDate < weekStart ? weekStart : block.startDate;
+      const clampedEnd = block.endDate > weekEnd ? weekEnd : block.endDate;
+      const startCol = week.findIndex((day) => day.date === clampedStart) + 1;
+      const endCol = week.findIndex((day) => day.date === clampedEnd) + 1;
+      return { block, startCol, span: endCol - startCol + 1 };
+    });
 }
