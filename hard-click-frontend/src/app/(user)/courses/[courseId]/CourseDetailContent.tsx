@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import CourseNoticeSection from '@/features/courses/components/CourseNoticeSection';
+import BackButton from '@/components/common/BackButton';
 import { toast } from '@/lib/toast';
 import { useAuth } from '@/features/auth/AuthProvider';
 // TODO: 수강신청 모달 — 팀원 결제 모달 확인 후 연결
@@ -366,6 +367,19 @@ export default function CourseDetailContent({
       <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 lg:px-[157.5px]">
         {/* 내부 패딩 */}
         <div className="pt-6 md:pt-10 px-0 md:px-8 pb-0 flex flex-col gap-8">
+          {/* 이전으로 돌아가기 — 앱 공통 형식(공용 BackButton, 장바구니·결제·주문과 통일) */}
+          <BackButton
+            ariaLabel="이전으로 돌아가기"
+            className="inline-flex w-fit items-center gap-1.5 text-base font-semibold text-[#4B5563] transition hover:text-[#1F2937]"
+          >
+            <Image
+              src="/icons/arrowLeftIcon.svg"
+              alt=""
+              width={20}
+              height={20}
+            />{' '}
+            이전으로 돌아가기
+          </BackButton>
           {/* ── 히어로 카드 ── */}
           <div className="bg-white border border-[#D5D8DD] p-5 pb-[1px] md:p-[33px] md:pb-[1px]">
             <div className="flex flex-col gap-6">
