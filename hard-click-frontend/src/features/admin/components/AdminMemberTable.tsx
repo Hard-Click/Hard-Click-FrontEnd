@@ -35,34 +35,34 @@ export default function AdminMemberTable({
 }: AdminMemberTableProps) {
   return (
     <div className="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white">
-      <table className="w-full">
+      <table className="w-full table-fixed">
         <thead>
           <tr className="border-b border-[#E2E8F0] bg-[#F8FAFC]">
-            <th className="whitespace-nowrap px-6 py-4 text-left text-sm font-semibold text-[#374151]">
+            <th className="w-[12%] whitespace-nowrap px-6 py-4 text-left text-sm font-semibold text-[#374151]">
               이름
             </th>
-            <th className="whitespace-nowrap px-6 py-4 text-left text-sm font-semibold text-[#374151]">
+            <th className="w-[12%] whitespace-nowrap px-6 py-4 text-left text-sm font-semibold text-[#374151]">
               아이디
             </th>
-            <th className="whitespace-nowrap py-4 pl-2 pr-6 text-center text-sm font-semibold text-[#374151]">
+            <th className="w-[18%] whitespace-nowrap py-4 pl-2 pr-6 text-center text-sm font-semibold text-[#374151]">
               이메일
             </th>
-            <th className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
+            <th className="w-[9%] whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
               역할
             </th>
-            <th className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
+            <th className="w-[10%] whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
               계정 상태
             </th>
-            <th className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
+            <th className="w-[10%] whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
               가입일
             </th>
-            <th className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
+            <th className="w-[12%] whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
               최근 로그인
             </th>
-            <th className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
+            <th className="w-[9%] whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
               누적 신고수
             </th>
-            <th className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
+            <th className="w-[8%] whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
               관리
             </th>
           </tr>
@@ -84,21 +84,21 @@ export default function AdminMemberTable({
                 className="border-b border-[#E2E8F0] last:border-none hover:bg-[#F8FAFC]"
               >
                 {/* 이름 */}
-                <td className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-[#1E293B]">
+                <td className="truncate px-6 py-4 text-sm font-semibold text-[#1E293B]">
                   {user.name}
                 </td>
                 {/* 아이디 */}
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-[#64748B]">
+                <td className="truncate px-6 py-4 text-sm text-[#64748B]">
                   {user.username}
                 </td>
                 {/* 이메일 */}
-                <td className="whitespace-nowrap py-4 pl-2 pr-6 text-sm text-center text-[#64748B]">
+                <td className="truncate py-4 pl-2 pr-6 text-sm text-center text-[#64748B]">
                   {user.email}
                 </td>
                 {/* 역할 */}
-                <td className="px-6 py-4 text-center">
+                <td className="w-24 px-6 py-4 text-center">
                   <span
-                    className={`inline-block whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${
+                    className={`inline-flex w-16 items-center justify-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${
                       ROLE_STYLE[user.role]
                     }`}
                   >
@@ -106,9 +106,9 @@ export default function AdminMemberTable({
                   </span>
                 </td>
                 {/* 계정 상태 */}
-                <td className="px-6 py-4 text-center">
+                <td className="w-28 px-6 py-4 text-center">
                   <span
-                    className={`inline-block whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${
+                    className={`inline-flex w-20 items-center justify-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${
                       STATUS_STYLE[user.status]
                     }`}
                   >
@@ -120,7 +120,7 @@ export default function AdminMemberTable({
                   {user.createdAt}
                 </td>
                 {/* 최근 로그인 */}
-                <td className="whitespace-nowrap px-6 py-4 text-center text-sm text-[#64748B]">
+                <td className="truncate px-6 py-4 text-center text-sm text-[#64748B]">
                   {user.lastLoginAt ?? '-'}
                 </td>
                 {/* 누적 신고수 */}
