@@ -47,10 +47,10 @@ export default function AdminMemberTable({
             <th className="whitespace-nowrap py-4 pl-2 pr-6 text-center text-sm font-semibold text-[#374151]">
               이메일
             </th>
-            <th className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
+            <th className="w-24 whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
               역할
             </th>
-            <th className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
+            <th className="w-28 whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
               계정 상태
             </th>
             <th className="whitespace-nowrap px-6 py-4 text-center text-sm font-semibold text-[#374151]">
@@ -96,9 +96,9 @@ export default function AdminMemberTable({
                   {user.email}
                 </td>
                 {/* 역할 */}
-                <td className="px-6 py-4 text-center">
+                <td className="w-24 px-6 py-4 text-center">
                   <span
-                    className={`inline-block whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${
+                    className={`inline-flex w-16 items-center justify-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${
                       ROLE_STYLE[user.role]
                     }`}
                   >
@@ -106,9 +106,9 @@ export default function AdminMemberTable({
                   </span>
                 </td>
                 {/* 계정 상태 */}
-                <td className="px-6 py-4 text-center">
+                <td className="w-28 px-6 py-4 text-center">
                   <span
-                    className={`inline-block whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${
+                    className={`inline-flex w-20 items-center justify-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${
                       STATUS_STYLE[user.status]
                     }`}
                   >
