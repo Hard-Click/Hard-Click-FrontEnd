@@ -126,6 +126,8 @@ export default function LearningVideoContent({
   const timerSecondsRef = useRef(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // heartbeat 세대 — 종료/재시작 시 증가. 이전 세션의 in-flight heartbeat 응답이 새 세션 시간을 덮어쓰지 않게.
+  const timerGenRef = useRef(0);
 
   /* 영상 변경 시 이어보기 모달 여부 결정.
    * 백엔드 video.lastPositionSec 기준 + localStorage 폴백 */
@@ -188,11 +190,11 @@ export default function LearningVideoContent({
       setTimerSeconds((s) => s + 1);
     }, 1000);
     if (heartbeatRef.current) clearInterval(heartbeatRef.current); // 멱등
+    const gen = ++timerGenRef.current; // 이 heartbeat 세대 캡처
     heartbeatRef.current = setInterval(async () => {
-      // BE가 확정한 누적초로 보정 — 백그라운드 탭 throttle 등으로 1초 tick이 밀린
-      // 화면-저장 드리프트를 해소한다(StudyTimerPanel과 동일).
+      // BE 확정 누적초로 보정 — 응답 도착 시 세션이 바뀌었으면(세대 불일치) 무시(stale 덮어쓰기 방지).
       const serverSeconds = await heartbeatAction(sid);
-      if (serverSeconds != null) {
+      if (serverSeconds != null && timerGenRef.current === gen) {
         timerSecondsRef.current = serverSeconds;
         setTimerSeconds(serverSeconds);
       }
@@ -200,6 +202,7 @@ export default function LearningVideoContent({
   };
 
   const stopTimerTicks = () => {
+    timerGenRef.current++; // in-flight heartbeat 응답 무효화(종료/전환 시 stale 반영 방지)
     if (tickRef.current) clearInterval(tickRef.current);
     if (heartbeatRef.current) clearInterval(heartbeatRef.current);
     tickRef.current = null;
@@ -265,7 +268,9 @@ export default function LearningVideoContent({
       if (sid != null) {
         markSessionLeaving(sid); // 전역 배너가 이 세션엔 "이어하기"를 안 띄우게(곧 종료됨, 이중관리 방지)
         pendingSessionEnd = setTimeout(() => {
-          void endTimerAction(sid);
+          // 종료 완료(성공/실패) 시 이탈 신호 해제 — TTL은 hang 대비 failsafe. 실패면 신호 풀려 다음 진입 때
+          // 미아 세션이 배너로 다시 보인다(숨긴 채 방치 방지).
+          void endTimerAction(sid).finally(() => markSessionLeaving(null));
           pendingSessionEnd = null;
         }, LESSON_SWITCH_GRACE_MS);
       }
@@ -329,7 +334,17 @@ export default function LearningVideoContent({
         if (!timerSessionId) return;
         stopTimerTicks();
         const ok = await endTimerAction(timerSessionId);
-        if (!ok) return;
+        if (!ok) {
+          // 종료 실패 → 서버 세션이 아직 RUNNING이면 화면만 멈춘 죽은 상태 → 재조회 후 서버 누적초로 보정하고
+          // tick·heartbeat 재가동(재시도 가능). 세션이 이미 없으면(끝남) 그대로 정리.
+          const cur = await fetchCurrentSessionAction();
+          if (cur && cur.status === 'RUNNING' && cur.sessionId === timerSessionId) {
+            setTimerSeconds(cur.accumulatedStudySeconds);
+            timerSecondsRef.current = cur.accumulatedStudySeconds;
+            startTimerTicks(cur.sessionId);
+          }
+          return;
+        }
         setTimerSessionId(null);
         setTimerSeconds(0);
         timerSecondsRef.current = 0;
@@ -377,6 +392,13 @@ export default function LearningVideoContent({
       };
     });
     if (!video.completed) setVideo({ ...video, completed: true });
+
+    // 라우터 캐시 stale 방지 — '완료'는 서버 progress(완료 배지·전체 진도율·완료 개수)가 바뀌는 유일 시점.
+    // 클라 Router Cache를 무효화해 /learning/[courseId] 커리큘럼 페이지로 복귀(뒤로가기 포함)할 때
+    // 최신 진도를 다시 받게 한다. (courses/[courseId] enroll/장바구니 후 router.refresh와 동일 패턴.)
+    // video/progress/detail은 useState 초기값(prop 재동기화 없음)이고 페이지 key={videoId}가 고정이라,
+    // 현재 영상 페이지가 재요청돼도 재생은 끊기지 않는다.
+    router.refresh();
   };
 
   /* 첫 진입 자체가 실패한 경우만 fallback */

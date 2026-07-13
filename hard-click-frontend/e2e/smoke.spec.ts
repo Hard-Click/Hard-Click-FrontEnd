@@ -13,8 +13,9 @@ test.describe('스모크 — 공개 페이지 렌더', () => {
     await expect(page).toHaveURL(/\/courses/); // app/page.tsx redirect('/courses')
     await expect(page.getByText('FLOWN')).toBeVisible(); // 공통 헤더 브랜드
     await expect(page.getByRole('heading', { level: 1 })).toContainText(
-      '2027 수능',
-    ); // 히어로 h1
+      '1등급을 향한 여정',
+    ); // 히어로 h1 (재디자인: '2027 수능'은 h1→D-day 배지로 이동)
+    await expect(page.getByText(/2027 수능까지 D-/)).toBeVisible(); // 수능 D-day 배지
   });
 
   test('강의 목록 페이지에 강의 섹션이 보인다', async ({ page }) => {

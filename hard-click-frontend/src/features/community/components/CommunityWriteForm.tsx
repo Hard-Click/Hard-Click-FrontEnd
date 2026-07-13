@@ -532,7 +532,7 @@ export default function CommunityWriteForm({
                 {previewImages.length === 0 ? (
                   <>
                     <Image
-                      src="/icons/image.svg"
+                      src="/icons/Image.svg"
                       alt="upload"
                       width={28}
                       height={28}
