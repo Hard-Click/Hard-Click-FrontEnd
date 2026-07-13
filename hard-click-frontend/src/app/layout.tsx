@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/features/auth/session';
 import { AuthProvider } from '@/features/auth/AuthProvider';
 import { getNotificationsServer } from '@/features/notifications/server';
 import { NotificationProvider } from '@/features/notifications/NotificationProvider';
+import { getSubscriptionServer } from '@/features/subscriptions/server';
 import { MemberStatusProvider } from '@/features/community/MemberStatusProvider';
 
 // 전 페이지 기본 <title>·메타 설명 (PSI: 'title 요소 없음'·'메타 설명 없음' 지적 해소 → SEO·접근성)
@@ -44,11 +45,11 @@ export default async function RootLayout({
   // 인증 정보는 서버에서 쿠키로 계산해 Context로 내려준다 (클라의 localStorage 대체)
   const user = await getCurrentUser();
 
-  // 헤더 종 알림도 서버에서 받아 Context로 내려준다 (AuthProvider와 동일 패턴).
-  // 로그인 사용자만 조회 → 비로그인은 빈 종. §12 "useEffect 데이터 페칭 금지" 준수.
-  const notifications = user
-    ? await getNotificationsServer()
-    : { notifications: [], unreadCount: 0 };
+  // 헤더 종 알림 + 구독 상태를 서버에서 받아 Context로 내려준다 (AuthProvider와 동일 패턴).
+  // 로그인 사용자만 조회(병렬) → 비로그인은 빈 종·미구독. §12 "useEffect 데이터 페칭 금지" 준수.
+  const [notifications, subscription] = user
+    ? await Promise.all([getNotificationsServer(), getSubscriptionServer()])
+    : [{ notifications: [], unreadCount: 0 }, null];
 
   return (
     <html lang="ko">
@@ -58,6 +59,7 @@ export default async function RootLayout({
             isLoggedIn: !!user,
             role: user?.role ?? null,
             memberId: user?.memberId ?? null,
+            isSubscribed: subscription?.subscribed ?? false,
           }}
         >
           <NotificationProvider value={notifications}>
