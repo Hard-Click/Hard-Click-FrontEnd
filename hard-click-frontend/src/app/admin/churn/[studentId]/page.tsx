@@ -5,6 +5,7 @@ import ChurnDetailHeaderCard from '@/features/churn/components/ChurnDetailHeader
 import ChurnRiskFactors from '@/features/churn/components/ChurnRiskFactors';
 import ChurnLearningStatus from '@/features/churn/components/ChurnLearningStatus';
 import ChurnDetailActions from '@/features/churn/components/ChurnDetailActions';
+import { ScrollToTop } from '@/features/churn/components/ScrollToTop';
 
 interface Props {
   params: Promise<{ studentId: string }>;
@@ -21,6 +22,7 @@ export default async function AdminChurnStudentDetailPage({ params }: Props) {
   return (
     <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
       <div className="mx-auto w-full max-w-[880px]">
+        <ScrollToTop />
         {/* 브레드크럼 */}
         <Link
           href="/admin/churn"
