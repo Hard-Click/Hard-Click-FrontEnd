@@ -1,0 +1,79 @@
+'use client';
+
+import { useState } from 'react';
+import { categoryColor } from '@/features/courses/subjects';
+import type { TodayTask } from '../types';
+
+interface TodayTaskChecklistProps {
+  tasks: readonly TodayTask[];
+}
+
+export function TodayTaskChecklist({ tasks: initialTasks }: TodayTaskChecklistProps) {
+  const [tasks, setTasks] = useState(initialTasks);
+  const doneCount = tasks.filter((task) => task.done).length;
+  const progressPercent = tasks.length === 0 ? 0 : Math.round((doneCount / tasks.length) * 100);
+
+  function toggleTask(id: string) {
+    setTasks((prev) => prev.map((task) => (task.id === id ? { ...task, done: !task.done } : task)));
+  }
+
+  return (
+    <div className="flex h-full flex-col">
+      <ul className="flex flex-1 flex-col gap-3">
+        {tasks.map((task) => (
+          <li key={task.id}>
+            <button
+              type="button"
+              onClick={() => toggleTask(task.id)}
+              aria-pressed={task.done}
+              className="flex w-full items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-3.5 text-left"
+            >
+              <span
+                className={
+                  task.done
+                    ? 'flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#22C55E] text-white'
+                    : 'h-5 w-5 shrink-0 rounded-md border-2 border-[#CBD5E1]'
+                }
+                aria-hidden
+              >
+                {task.done && (
+                  <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" aria-hidden>
+                    <path
+                      d="M3.5 8.5L6.5 11.5L12.5 4.5"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </span>
+              <span
+                className={`flex-1 text-sm ${task.done ? 'text-[#94A3B8] line-through' : 'text-[#1E293B]'}`}
+              >
+                {task.title}
+              </span>
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                style={{ backgroundColor: categoryColor(task.category).light }}
+                aria-hidden
+              />
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-5">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-[#64748B]">오늘 진행률</span>
+          <span className="font-semibold text-[#1E293B]">
+            {doneCount}/{tasks.length}
+          </span>
+        </div>
+        <div className="mt-2 h-1.5 w-full rounded-full bg-[#E2E8F0]">
+          <div className="h-1.5 rounded-full bg-[#1D4ED8]" style={{ width: `${progressPercent}%` }} />
+        </div>
+      </div>
+    </div>
+  );
+}
