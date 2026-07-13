@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { serverApi } from '@/lib/api';
 import { isMock } from '@/mocks/config';
 import {
@@ -55,7 +56,7 @@ function unsubscribedFallback(): SubscriptionInfo {
  * 본인 구독 상태 조회 (Server Component 전용). 미구독/구독 중을 SubscriptionInfo 하나로 반환.
  * 라이브: GET /api/subscriptions/me(상태) + GET /api/subscriptions/plan(플랜·가격) 병렬 조회 후 합침.
  */
-export async function getSubscriptionServer(): Promise<SubscriptionInfo> {
+export const getSubscriptionServer = cache(async (): Promise<SubscriptionInfo> => {
   if (isMock('subscriptions')) {
     const s = mockSubscriptionStatus;
     return {
@@ -93,4 +94,4 @@ export async function getSubscriptionServer(): Promise<SubscriptionInfo> {
     // 실 만료일 = BE me.expiredAt(결제일+구독기간). 하드코딩 수능일을 만료일로 쓰던 §0.1② 정정.
     expiresAt: subscribed && me?.expiredAt ? me.expiredAt.split('T')[0] : null,
   };
-}
+});
