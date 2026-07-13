@@ -251,7 +251,7 @@ describe('useRegisterForm — handleCheckUsername (중복 확인)', () => {
     });
     const { result } = renderHook(() => useRegisterForm());
 
-    act(() => result.current.updateValue('username', 'dup'));
+    act(() => result.current.updateValue('username', 'dupuser'));
     await act(async () => {
       await result.current.handleCheckUsername();
     });
@@ -643,6 +643,98 @@ describe('useRegisterForm — handleSubmit (최종 제출 검증)', () => {
 
     expect(result.current.step).not.toBe(4);
     expect(result.current.formMessage?.type).toBe('error');
+    expect(result.current.formMessage?.text).toBe('회원가입에 실패했습니다');
+    // httpStatus 미지정(비401) 실패는 인증 상태를 건드리지 않는다(리셋은 401 전용).
+    expect(result.current.isEmailVerified).toBe(true);
+  });
+
+  it('register가 401(이메일 인증 토큰 만료)로 실패하면 인증 상태를 리셋해 재인증을 유도한다', async () => {
+    mockCheckEmail.mockResolvedValue({ success: true, data: { exists: false } });
+    mockSendEmail.mockResolvedValue({ success: true });
+    mockVerifyEmail.mockResolvedValue({
+      success: true,
+      data: { emailVerificationToken: 'token-123' },
+    });
+    // BE가 만료/무효 토큰을 401(ErrorCode C003)로 거부
+    mockRegister.mockResolvedValue({
+      success: false,
+      httpStatus: 401,
+      message: '인증이 필요합니다',
+    });
+    const { result } = renderHook(() => useRegisterForm());
+
+    act(() => result.current.updateValue('emailId', 'tester'));
+    await act(async () => {
+      await result.current.handleCheckEmail();
+    });
+    await act(async () => {
+      await result.current.handleSendEmailCode();
+    });
+    act(() => result.current.updateValue('verificationCode', '123456'));
+    await act(async () => {
+      await result.current.handleVerifyEmailCode();
+    });
+    act(() => result.current.updateValue('agreeTerms', true));
+    act(() => result.current.updateValue('agreePrivacy', true));
+    expect(result.current.isEmailVerified).toBe(true);
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    // 초록 '인증 완료'가 stuck돼 401만 반복되지 않도록 인증 서브플로우를 초기 상태로 되돌린다.
+    expect(result.current.step).not.toBe(4);
+    expect(result.current.isEmailVerified).toBe(false);
+    expect(result.current.isEmailSent).toBe(false); // 발송 상태까지 리셋(stale 카운트다운 방지)
+    expect(result.current.values.emailVerificationToken).toBe('');
+    expect(result.current.values.verificationCode).toBe(''); // 코드 입력값도 리셋
+    expect(result.current.verificationStatus?.type).toBe('error');
+    expect(result.current.verificationStatus?.text).toBe(
+      '이메일 인증이 만료되었거나 유효하지 않습니다. 다시 인증해주세요',
+    );
+  });
+
+  it('register가 400(비-401 실패)이면 인증 상태를 그대로 유지한다 (리셋은 401 전용)', async () => {
+    mockCheckEmail.mockResolvedValue({ success: true, data: { exists: false } });
+    mockSendEmail.mockResolvedValue({ success: true });
+    mockVerifyEmail.mockResolvedValue({
+      success: true,
+      data: { emailVerificationToken: 'token-123' },
+    });
+    // 이메일 인증과 무관한 400 실패(예: 아이디 형식/중복) — 초록 '인증 완료'는 유지돼야 한다.
+    mockRegister.mockResolvedValue({
+      success: false,
+      httpStatus: 400,
+      message: '회원가입에 실패했습니다',
+    });
+    const { result } = renderHook(() => useRegisterForm());
+
+    act(() => result.current.updateValue('emailId', 'tester'));
+    await act(async () => {
+      await result.current.handleCheckEmail();
+    });
+    await act(async () => {
+      await result.current.handleSendEmailCode();
+    });
+    act(() => result.current.updateValue('verificationCode', '123456'));
+    await act(async () => {
+      await result.current.handleVerifyEmailCode();
+    });
+    act(() => result.current.updateValue('agreeTerms', true));
+    act(() => result.current.updateValue('agreePrivacy', true));
+    expect(result.current.isEmailVerified).toBe(true);
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    // 401이 아니므로 인증 상태·토큰이 보존되고, formMessage에만 에러가 남는다(리셋은 401 전용).
+    expect(result.current.step).not.toBe(4);
+    expect(result.current.isEmailVerified).toBe(true);
+    expect(result.current.values.emailVerificationToken).toBe('token-123');
+    expect(result.current.verificationStatus?.text).not.toBe(
+      '이메일 인증이 만료되었거나 유효하지 않습니다. 다시 인증해주세요',
+    );
     expect(result.current.formMessage?.text).toBe('회원가입에 실패했습니다');
   });
 });
