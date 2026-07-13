@@ -31,7 +31,7 @@ export function TodayTaskChecklist({ tasks: initialTasks }: TodayTaskChecklistPr
               <span
                 className={
                   task.done
-                    ? 'flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#22C55E] text-white'
+                    ? 'flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#2F5DAA] text-white'
                     : 'h-5 w-5 shrink-0 rounded-md border-2 border-[#CBD5E1]'
                 }
                 aria-hidden
@@ -71,7 +71,7 @@ export function TodayTaskChecklist({ tasks: initialTasks }: TodayTaskChecklistPr
           </span>
         </div>
         <div className="mt-2 h-1.5 w-full rounded-full bg-[#E2E8F0]">
-          <div className="h-1.5 rounded-full bg-[#1D4ED8]" style={{ width: `${progressPercent}%` }} />
+          <div className="h-1.5 rounded-full bg-[#2F5DAA]" style={{ width: `${progressPercent}%` }} />
         </div>
       </div>
     </div>
