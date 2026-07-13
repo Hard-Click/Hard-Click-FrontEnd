@@ -6,9 +6,17 @@ export const getEmail = (
   return `${values.emailId}@${values.emailDomain}`;
 };
 
-export const getUsernameError = (username: string) => {
-  if (!username.trim()) {
+export const getUsernameError = (username: string): string => {
+  const trimmed = username.trim();
+  if (!trimmed) {
     return '아이디를 입력해주세요';
+  }
+
+  // BE SignupRequest.username @Pattern("^[a-zA-Z0-9]{4,20}$")와 동일 규칙으로 사전 검증.
+  //   FE가 형식을 안 막으면 한글·특수문자·4자미만 아이디가 중복확인(형식 미검증)까지 통과한 뒤
+  //   마지막 가입에서만 BE 400으로 거부돼, 사용자는 원인 안내 없이 "가입이 안 된다"만 겪는다.
+  if (!/^[a-zA-Z0-9]{4,20}$/.test(trimmed)) {
+    return '아이디는 영문, 숫자 조합으로 4자 이상 20자 이하여야 합니다';
   }
 
   return '';
