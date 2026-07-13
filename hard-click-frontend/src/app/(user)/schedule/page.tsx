@@ -1,8 +1,13 @@
 import { redirect } from 'next/navigation';
 import { getSubscriptionServer } from '@/features/subscriptions/server';
-import { getScheduleBlocksServer, getTodayTasksServer } from '@/features/schedule/server';
+import {
+  getAiCoachCommentServer,
+  getScheduleBlocksServer,
+  getTodayTasksServer,
+} from '@/features/schedule/server';
 import { ScheduleCalendarCard } from '@/features/schedule/components/ScheduleCalendarCard';
 import { TodayTaskPanel } from '@/features/schedule/components/TodayTaskPanel';
+import { AiCoachBanner } from '@/features/schedule/components/AiCoachBanner';
 
 export default async function SchedulePage() {
   // 패스 구독자 전용 — 비구독자가 URL로 직접 진입하면 구독권 페이지로 유도
@@ -12,9 +17,10 @@ export default async function SchedulePage() {
   }
 
   const today = new Date();
-  const [todayTasks, scheduleBlocks] = await Promise.all([
+  const [todayTasks, scheduleBlocks, aiCoachComment] = await Promise.all([
     getTodayTasksServer(today),
     getScheduleBlocksServer(),
+    getAiCoachCommentServer(),
   ]);
 
   return (
@@ -38,7 +44,9 @@ export default async function SchedulePage() {
           </div>
         </div>
 
-        {/* AI 학습 코치(#820) 후속 */}
+        <div className="mt-6">
+          <AiCoachBanner comment={aiCoachComment} />
+        </div>
       </div>
     </div>
   );

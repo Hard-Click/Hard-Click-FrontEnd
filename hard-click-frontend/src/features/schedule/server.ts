@@ -1,4 +1,4 @@
-import { mockScheduleBlocks, mockTodayTasks } from '@/mocks/schedule.mock';
+import { mockAiCoachComment, mockScheduleBlocks, mockTodayTasks } from '@/mocks/schedule.mock';
 import type { ScheduleBlock, TodayTasksSummary } from './types';
 
 function toISODate(date: Date): string {
@@ -25,4 +25,12 @@ export async function getTodayTasksServer(today: Date = new Date()): Promise<Tod
  */
 export async function getScheduleBlocksServer(): Promise<ScheduleBlock[]> {
   return [...mockScheduleBlocks];
+}
+
+/**
+ * AI 학습 코치 코멘트 조회 (Server Component 전용).
+ * ⚠️ BE 진도 분석 로직 없음(2026-07-13 기준) — 항상 mock 고정 문구.
+ */
+export async function getAiCoachCommentServer(): Promise<string> {
+  return mockAiCoachComment;
 }

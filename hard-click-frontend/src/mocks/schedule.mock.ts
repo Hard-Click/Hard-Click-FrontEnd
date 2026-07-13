@@ -24,3 +24,7 @@ export const mockScheduleBlocks: readonly ScheduleBlock[] = [
   { id: 'block-10', category: 'KOREAN', startDate: '2026-07-20', endDate: '2026-07-22' },
   { id: 'block-11', category: 'MATH', startDate: '2026-07-23', endDate: '2026-07-26' },
 ];
+
+/** AI 학습 코치 배너 임의 코멘트. */
+export const mockAiCoachComment =
+  '이번 주 페이스 좋아요! 수학이 하루 밀렸는데 오늘 2강까지 들으면 딱 회복돼요.';
