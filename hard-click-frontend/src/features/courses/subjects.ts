@@ -130,6 +130,11 @@ export function reviewColor(): CategoryColor {
   return CATEGORY_COLOR.REVIEW;
 }
 
+/** 대분류(SubjectCategory) → 색. 이미 대분류로 판정된 값을 다룰 때(예: 오늘 할 일 항목) 사용. */
+export function categoryColor(category: SubjectCategory): CategoryColor {
+  return CATEGORY_COLOR[category];
+}
+
 const CATEGORY_LABEL: Record<SubjectCategory, string> = {
   KOREAN: '국어',
   MATH: '수학',

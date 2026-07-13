@@ -60,3 +60,11 @@ export function getMonthCalendarWeeks(
 export function formatMonthTitle(year: number, month: number): string {
   return `${year}년 ${month + 1}월`;
 }
+
+const WEEKDAY_SHORT_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+
+/** "7/7 (월)" 형식. */
+export function formatShortDateWithWeekday(date: Date): string {
+  const weekday = WEEKDAY_SHORT_LABELS[date.getDay()];
+  return `${date.getMonth() + 1}/${date.getDate()} (${weekday})`;
+}
