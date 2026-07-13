@@ -50,10 +50,9 @@ export function CalendarGrid({ year, month, blocks = [] }: CalendarGridProps) {
                 {segments.map((segment) => (
                   <div key={segment.block.id} className="grid grid-cols-7">
                     <div
-                      className="h-2 rounded-full"
+                      className="mx-1 h-2 rounded-full"
                       style={{
                         gridColumn: `${segment.startCol} / span ${segment.span}`,
-                        marginInline: '4px',
                         backgroundColor: categoryColor(segment.block.category).light,
                       }}
                     />
