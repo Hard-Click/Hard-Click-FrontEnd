@@ -66,3 +66,92 @@ export function subjectLabel(value: string | null | undefined): string {
 export function subjectValueById(subjectId: number): string | undefined {
   return VALUE_BY_ID.get(subjectId);
 }
+
+/**
+ * 대분류 색상 (학습 스케줄러 캘린더용).
+ *
+ * 38개 세부과목을 전부 다른 hue로 칠하면 색약 구분(CVD)이 무너져(dataviz 6-checks
+ * 카테고리 hue는 8개 고정), 접두사로 뽑은 **대분류 7개 + 복습 1개 = 8개**만 고정 hue를
+ * 배정한다(scheduler 최상단 범례와 1:1). validate_palette.js로 통과 확인된 팔레트.
+ */
+export type SubjectCategory =
+  | 'KOREAN'
+  | 'MATH'
+  | 'ENGLISH'
+  | 'KOREAN_HISTORY'
+  | 'SOCIAL'
+  | 'SCIENCE'
+  | 'FOREIGN_LANGUAGE'
+  | 'REVIEW';
+
+interface CategoryColor {
+  light: string;
+  dark: string;
+}
+
+/**
+ * ⚠️ 사용자 지정 파스텔 팔레트(2026-07-13) — "Winter Color Palettes" 참고 이미지(25색)에서
+ * 최대한 안 겹치는 8개를 골라 추출. 원본 소재 자체가 블루그레이·더스티핑크 위주라
+ * dataviz 6-checks CVD 분리는 통과 못 하지만(사용자가 이 트레이드오프를 인지하고 선택),
+ * 톤 자체를 우선한 결정.
+ */
+const CATEGORY_COLOR: Record<SubjectCategory, CategoryColor> = {
+  MATH: { light: '#50b4d8', dark: '#50b4d8' }, // 비비드 sky blue
+  SCIENCE: { light: '#57838d', dark: '#57838d' }, // 톤다운 teal-gray
+  REVIEW: { light: '#a7d9c9', dark: '#a7d9c9' }, // sage green
+  KOREAN_HISTORY: { light: '#f7e5b7', dark: '#f7e5b7' }, // pale yellow
+  ENGLISH: { light: '#ffe4c9', dark: '#ffe4c9' }, // peach
+  FOREIGN_LANGUAGE: { light: '#cab3c1', dark: '#cab3c1' }, // dusty lilac (ENGLISH 살구톤과 헷갈려서 salmon에서 변경)
+  SOCIAL: { light: '#c29ba3', dark: '#c29ba3' }, // dusty rose
+  KOREAN: { light: '#d7e2ea', dark: '#d7e2ea' }, // 페일 blue-gray (SOCIAL 더스티로즈와 헷갈려서 lilac에서 변경)
+};
+
+/** BE 과목 enum 값("KO_READING" 등) → 대분류. 세부과목 접두사 기준(§ CATEGORY_COLOR). */
+export function subjectCategory(value: string | null | undefined): SubjectCategory | null {
+  if (!value) return null;
+  if (value === 'KOR_HISTORY') return 'KOREAN_HISTORY';
+  if (value.startsWith('KO_')) return 'KOREAN';
+  if (value.startsWith('MATH_')) return 'MATH';
+  if (value.startsWith('ENG_')) return 'ENGLISH';
+  if (value.startsWith('SO_')) return 'SOCIAL';
+  if (value.startsWith('SC_')) return 'SCIENCE';
+  if (value.startsWith('FL_')) return 'FOREIGN_LANGUAGE';
+  return null;
+}
+
+/** 과목 enum 값 → 캘린더 색(light/dark). 미매칭 값은 null(호출부에서 회색 등 기본값 처리). */
+export function subjectColor(value: string | null | undefined): CategoryColor | null {
+  const category = subjectCategory(value);
+  return category ? CATEGORY_COLOR[category] : null;
+}
+
+/** 복습(과목 무관, 스케줄러 자체 카테고리) 색. */
+export function reviewColor(): CategoryColor {
+  return CATEGORY_COLOR.REVIEW;
+}
+
+const CATEGORY_LABEL: Record<SubjectCategory, string> = {
+  KOREAN: '국어',
+  MATH: '수학',
+  ENGLISH: '영어',
+  KOREAN_HISTORY: '한국사',
+  SOCIAL: '사회',
+  SCIENCE: '과학',
+  FOREIGN_LANGUAGE: '외국어',
+  REVIEW: '복습',
+};
+
+export interface ScheduleLegendItem {
+  category: SubjectCategory;
+  label: string;
+  color: CategoryColor;
+}
+
+/** 학습 스케줄러 범례(대분류 7개 + 복습, 표시 순서 고정). */
+export const SCHEDULE_LEGEND: readonly ScheduleLegendItem[] = (
+  ['KOREAN', 'MATH', 'ENGLISH', 'KOREAN_HISTORY', 'SOCIAL', 'SCIENCE', 'FOREIGN_LANGUAGE', 'REVIEW'] as const
+).map((category) => ({
+  category,
+  label: CATEGORY_LABEL[category],
+  color: CATEGORY_COLOR[category],
+}));
