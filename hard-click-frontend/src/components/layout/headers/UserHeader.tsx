@@ -39,7 +39,7 @@ export default function UserHeader() {
 
   const router = useRouter();
   // 인증 상태는 서버 쿠키 기반 Context에서 (localStorage 대체)
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, isSubscribed } = useAuth();
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -132,6 +132,23 @@ export default function UserHeader() {
         <div className="flex items-center gap-3 md:gap-6 justify-end">
           {isLoggedIn ? (
             <>
+              {/* 학습 스케줄 (패스 구독자 전용) — 알림 옆 캘린더 아이콘 */}
+              {isSubscribed && (
+                <Link
+                  href="/schedule"
+                  aria-label="학습 스케줄"
+                  className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-white/10 md:-mr-3"
+                >
+                  <Image
+                    src="/icons/calendarIcon.svg"
+                    alt="학습 스케줄"
+                    width={21}
+                    height={21}
+                    className="brightness-0 invert"
+                  />
+                </Link>
+              )}
+
               {/* 알림 */}
               <NotificationDropdown />
 
@@ -206,7 +223,16 @@ export default function UserHeader() {
             onClick={() => setMobileMenuOpen((p) => !p)}
             className="md:hidden w-9 h-9 flex items-center justify-center text-white"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               {mobileMenuOpen ? (
                 <>
                   <path d="M6 6l12 12" />
