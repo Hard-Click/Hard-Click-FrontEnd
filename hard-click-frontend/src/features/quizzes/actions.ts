@@ -31,6 +31,7 @@ interface InstructorQuizRequest {
   questions: {
     questionText: string;
     explanation: string;
+    difficulty: number; // 난이도 1=하/2=중/3=상 (BE @NotNull — 필수)
     correctOptionNumber: number; // 정답 보기 번호 1~4 (= answerIndex + 1)
     options: { optionText: string }[]; // BE는 보기 텍스트만 받음(optionId는 BE가 부여)
   }[];
@@ -51,6 +52,7 @@ function toInstructorQuizRequest(
     questions: payload.questions.map((q) => ({
       questionText: q.content,
       explanation: q.explanation,
+      difficulty: q.difficulty,
       correctOptionNumber: q.answerIndex + 1,
       options: q.options.map((optionText) => ({ optionText })),
     })),
@@ -160,6 +162,14 @@ function validatePayload(payload: QuizFormPayload): string | null {
       q.answerIndex > 3
     ) {
       return '정답을 선택해주세요.';
+    }
+    if (
+      !Number.isInteger(q.difficulty) ||
+      q.difficulty < 1 ||
+      q.difficulty > 3
+    ) {
+      // BE가 난이도를 @NotNull(1~3)로 요구 — 안 보내면 400. 서버 경계에서도 막는다.
+      return '난이도를 선택해주세요.';
     }
     if (typeof q.explanation !== 'string' || !q.explanation.trim()) {
       return '해설을 입력해주세요.';

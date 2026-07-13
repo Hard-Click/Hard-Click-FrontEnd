@@ -117,6 +117,7 @@ interface ApiInstructorQuizDetail {
     questionId: number;
     questionText: string;
     explanation: string | null;
+    difficulty: number | null; // 난이도 1=하/2=중/3=상 (BE 제공, 기존 문항은 null 가능)
     correctOptionId: number;
     options: { optionId: number; optionText: string; correct: boolean }[];
   }[];
@@ -144,6 +145,7 @@ function toQuizDetail(d: ApiInstructorQuizDetail): Quiz {
             ? byFlag
             : q.options.findIndex((o) => o.optionId === q.correctOptionId),
         explanation: q.explanation ?? '',
+        difficulty: q.difficulty ?? 0, // 수정 진입 시 프리필(기존 미지정은 0=미선택)
       };
     }),
   };

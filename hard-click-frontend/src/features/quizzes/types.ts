@@ -11,6 +11,7 @@ export interface QuizQuestion {
   options: string[]; // 보기 (4개)
   answerIndex: number; // 정답 인덱스 (0~3)
   explanation: string; // 해설 (필수 — 모든 문제가 해설 보유)
+  difficulty: number; // 난이도 1=하/2=중/3=상 (BE 필수 필드, 기존 문항은 0=미지정일 수 있음)
 }
 
 /** 강사 퀴즈 — 강의 + 주차(week)별 */
@@ -30,6 +31,7 @@ export interface QuizQuestionInput {
   options: string[]; // 보기 4개
   answerIndex: number; // 정답 0~3 (미선택 -1)
   explanation: string; // 해설 (필수 — 빈 문자열 불가)
+  difficulty: number; // 난이도 1=하/2=중/3=상 (필수, 미선택 0). BE @NotNull이라 안 보내면 400
 }
 
 /** 등록/수정 폼 전체 payload */

@@ -8,7 +8,15 @@ export interface QuestionErrors {
   options: string[]; // 길이 4
   answer: string;
   explanation: string;
+  difficulty: string;
 }
+
+/** 난이도 선택지 — BE 값(1=하/2=중/3=상). 표시는 상→하 순(팀 "문제 위에 상중하 표시"). */
+const DIFFICULTY_OPTIONS: { value: number; label: string }[] = [
+  { value: 3, label: '상' },
+  { value: 2, label: '중' },
+  { value: 1, label: '하' },
+];
 
 /**
  * 등록/수정 폼의 문제 1개 (문제·보기4·정답·해설).
@@ -49,6 +57,32 @@ export default function QuizQuestionFields({
             삭제
           </button>
         )}
+      </div>
+
+      {/* 난이도 (필수, 문제 위) — 정답 선택과 동일한 세그먼트 버튼(선택=브랜드 블루) */}
+      <div className="mb-4">
+        <label className="mb-2 block text-sm font-semibold text-[#1F2937]">
+          난이도
+        </label>
+        <div className="grid grid-cols-3 gap-2">
+          {DIFFICULTY_OPTIONS.map(({ value, label }) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => update({ difficulty: value })}
+              aria-pressed={question.difficulty === value}
+              aria-label={`난이도: ${label}`}
+              className={`h-10 rounded-[10px] border text-base font-semibold transition ${
+                question.difficulty === value
+                  ? 'border-[#2F5DAA] bg-[#2F5DAA] text-white'
+                  : 'border-[#E2E8F0] bg-white text-[#4B5563] hover:bg-[#F1F5F9]'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <FieldError message={errors?.difficulty} />
       </div>
 
       {/* 문제 (내용 길어지면 자동으로 늘어남) */}
