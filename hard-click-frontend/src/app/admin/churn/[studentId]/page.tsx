@@ -26,9 +26,21 @@ export default async function AdminChurnStudentDetailPage({ params }: Props) {
         {/* 브레드크럼 */}
         <Link
           href="/admin/churn"
-          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-[#2F5DAA] hover:underline"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-[#2F5DAA] hover:text-[#1D4ED8]"
         >
-          ← 이탈관리 <span className="text-[#94A3B8]">/ 학생 위험 상세</span>
+          <svg
+            viewBox="0 0 24 24"
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+          이탈관리 <span className="text-[#94A3B8]">/ 학생 위험 상세</span>
         </Link>
 
         {/* 헤더 카드 */}
