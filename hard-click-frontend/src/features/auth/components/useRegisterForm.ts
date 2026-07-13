@@ -573,26 +573,24 @@ export function useRegisterForm() {
     if (!result.success) {
       // BE가 이메일 인증 토큰을 만료·무효·재사용·미인증으로 거부하면 401(ErrorCode C003)로 온다.
       //   초록 '인증 완료'를 그대로 두면 죽은 토큰으로 계속 재제출해 401만 반복되므로, 인증 서브플로우를
-      //   초기 상태로 되돌려 "다시 인증받기"부터 새로 하게 한다. (isEmailVerified만 내리면 isEmailSent가
-      //   true로 남아 RegisterStep3의 코드입력+카운트다운이 stale 값으로 되살아난다.)
+      //   초기 상태로 되돌려(초록 잔상 포함) "다시 인증받기"부터 새로 하게 한다. (isEmailVerified만 내리면
+      //   isEmailSent가 true로 남아 RegisterStep3의 코드입력+카운트다운이 stale 값으로 되살아난다.)
       //   ⚠️ handleSubmit이 이 401을 직접 받는 건 등록이 /auth/register라 services/api.ts의
       //      401→로그인 리다이렉트 인터셉터가 '/auth' 경로를 건너뛰기 때문이다. 라우트를 /auth 밖으로
       //      옮기면 401이 여기로 안 오고 로그인으로 튕기니, 그때는 재인증 처리를 옮겨야 한다.
       //   (registerAction의 프론트 사전검증 실패는 전부 400이라, 401은 BE 토큰 케이스로만 특정된다.)
+      //   메시지는 별도 커스텀 문구를 만들지 않고, 아래 공통 formMessage로 BE 원문을 그대로 노출한다
+      //   (다른 실패와 동일한 설계된 에러 자리·스타일 유지).
       if (result.httpStatus === 401) {
         setIsEmailVerified(false);
         setIsEmailSent(false);
         setRemainingSeconds(300);
+        setVerificationStatus(null); // 초록 '인증 완료' 잔상 제거(재인증 유도)
         setValues((prev) => ({
           ...prev,
           emailVerificationToken: '',
           verificationCode: '',
         }));
-        setVerificationStatus({
-          type: 'error',
-          text: '이메일 인증이 만료되었거나 유효하지 않습니다. 다시 인증해주세요',
-        });
-        return; // 재인증 안내(verificationStatus)로 충분 — formMessage 중복 노출 방지
       }
       setFormMessage({
         type: 'error',
