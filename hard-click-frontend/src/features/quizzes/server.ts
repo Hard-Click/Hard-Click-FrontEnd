@@ -7,12 +7,11 @@ import type { AdminCourseManageRow } from '@/mocks/admin.mock';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * 퀴즈 도메인 — 강사 읽기(목록·점수통계) 실서버 연동 (2026-06-25, 라이브 검증 완료).
- * ⚠️ BE는 퀴즈를 "섹션(section)" 기반으로 관리. FE의 "주차(week)"는 목록 응답의 weekNumber(섹션
- *    orderIndex 기반, BE 제공)를 쓴다. 상세(InstructorQuizDetail)·통계(InstructorQuizStatistics)는 BE가
- *    weekNumber를 안 줘(sectionTitle만) sectionToWeek 제목파싱으로 폴백한다. ⚠️ 그래서 섹션 제목 숫자가
- *    orderIndex와 어긋나면(자유텍스트·삭제 섹션) 목록 주차 ↔ 상세/통계 breadcrumb 주차가 불일치할 수 있다.
- *    → BE에 상세·통계 응답에도 weekNumber 추가 요청함(오면 여기 폴백 제거하고 일원화). 통계는 sectionId도
- *    없어 FE 매핑 자체 불가(BE 제공만이 유일 해법).
+ * ⚠️ BE는 퀴즈를 "섹션(section)" 기반으로 관리. FE의 "주차(week)"는 목록·통계 응답의 weekNumber(섹션
+ *    orderIndex 기반, BE 제공)를 쓴다. 통계(InstructorQuizStatistics)는 2026-07-13 BE가 weekNumber를
+ *    추가해 목록과 정합됨(제목파싱 폐기). 상세(InstructorQuizDetail)만 아직 weekNumber를 안 줘(sectionTitle만)
+ *    sectionToWeek 제목파싱으로 폴백한다 — 섹션 제목 숫자가 orderIndex와 어긋나면(자유텍스트·삭제 섹션)
+ *    목록/통계 주차 ↔ 상세 breadcrumb 주차가 불일치할 수 있다. → BE에 상세 응답 weekNumber 추가 요청 남음.
  * ⚠️ 작성/수정/삭제(actions.ts)·학생 흐름(studentServer/Actions)은 아직 USE_MOCK(mock) — Phase 2.
  * ───────────────────────────────────────────────────────────────────────── */
 
@@ -216,6 +215,7 @@ interface ApiQuizStudentScore {
 }
 interface ApiQuizStatistics {
   courseTitle: string;
+  weekNumber: number; // 섹션 orderIndex 기반 주차(BE 제공, 2026-07-13) — 목록·리포트와 동일 스킴
   sectionTitle: string;
   quizTitle: string;
   summary: {
@@ -257,7 +257,7 @@ export async function getQuizScoresServer(
   return {
     quizId,
     courseId,
-    week: sectionToWeek(res.data.sectionTitle),
+    week: res.data.weekNumber, // BE 제공 weekNumber(목록 스킴) — 제목파싱 폐기, 목록↔통계 주차 정합
     title: res.data.quizTitle,
     rows: res.data.students.map((s) => ({
       studentId: s.userId,
@@ -380,7 +380,7 @@ export async function getAdminQuizScoresServer(
   return {
     quizId,
     courseId,
-    week: sectionToWeek(res.data.sectionTitle),
+    week: res.data.weekNumber, // BE 제공 weekNumber(목록 스킴) — 제목파싱 폐기, 목록↔통계 주차 정합
     title: res.data.quizTitle,
     rows: res.data.students.map((s) => ({
       studentId: s.userId,
