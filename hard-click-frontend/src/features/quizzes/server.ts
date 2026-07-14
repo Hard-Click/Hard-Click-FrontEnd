@@ -70,8 +70,9 @@ export async function getQuizzesServer(courseId: number): Promise<Quiz[]> {
 
 /**
  * 강의별 "이미 퀴즈가 있는 주차" 맵 — 1주 1퀴즈 규칙용(등록 폼).
- * ⚠️ 등록 폼(actions.ts)은 아직 mock이라 이 값도 mock 사용. 라이브 분기는 BE가 courseId별 집계
- *    엔드포인트가 없어(목록 item에 courseId 없음) 비워둠 → Phase 2(등록 연동)에서 강의별 집계.
+ * ℹ️ 등록/수정(actions.ts)은 이미 라이브다. 이 페이지 레벨 헬퍼의 라이브 분기는 BE가 courseId별 집계
+ *    엔드포인트가 없어(목록 item에 courseId 없음) 의도적으로 {} 반환 — 실제 1주1퀴즈 점유 주차는
+ *    등록 폼(QuizFormModal)이 강의 선택 시 getQuizFormMetaServer(라이브 getQuizzesServer 집계)로 별도 계산한다.
  */
 export async function getTakenWeeksByCourseServer(): Promise<
   Record<number, number[]>
@@ -83,7 +84,7 @@ export async function getTakenWeeksByCourseServer(): Promise<
     }
     return map;
   }
-  // TODO(Phase 2): 등록 연동 시 강의별 사용 주차 집계 (courseId별 GET /api/instructor/quizzes 호출)
+  // 강의별 집계 엔드포인트가 없어 라이브 분기는 {}. 실제 점유 주차는 등록 폼의 getQuizFormMetaServer가 강의 선택 시 라이브 계산.
   return {};
 }
 
