@@ -143,9 +143,16 @@ export default function QuizFormModal({
     const metaAction = adminMeta
       ? getAdminQuizFormMetaAction
       : getQuizFormMetaAction;
-    metaAction(courseId).then((m) => {
-      if (!cancelled) setMeta({ courseId, ...m });
-    });
+    metaAction(courseId)
+      .then((m) => {
+        if (!cancelled) setMeta({ courseId, ...m });
+      })
+      .catch(() => {
+        // 실패를 빈 주차로 폴백하면 '등록 가능한 주차가 없습니다'로 오표시돼(§0.1),
+        // 조용히 삼키지 않고 사용자에게 알린다. 주차 드롭다운은 로딩 상태로 남아 오등록을 막는다.
+        if (!cancelled)
+          toast.error('주차 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+      });
     return () => {
       cancelled = true;
     };

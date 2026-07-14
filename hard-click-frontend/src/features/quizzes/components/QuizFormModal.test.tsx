@@ -1,5 +1,6 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { toast } from '@/lib/toast';
 import QuizFormModal from './QuizFormModal';
 import { getQuizFormMetaAction, getAdminQuizFormMetaAction } from '../actions';
 import type { QuizFormPayload } from '../types';
@@ -491,6 +492,30 @@ describe('QuizFormModal — 퀴즈 등록 모달 통합', () => {
 
       expect(getAdminQuizFormMetaAction).toHaveBeenCalledWith(1);
       expect(getQuizFormMetaAction).not.toHaveBeenCalled();
+    });
+
+    // 메타 로드 실패를 빈 주차로 폴백하면 '등록 가능한 주차가 없습니다'로 오표시(§0.1) → 대신 토스트로 알림(CodeRabbit 지적).
+    it('메타 로드 실패 시 조용히 삼키지 않고 사용자에게 토스트로 알림', async () => {
+      (getAdminQuizFormMetaAction as jest.Mock).mockRejectedValueOnce(
+        new Error('network'),
+      );
+      render(
+        <QuizFormModal
+          mode="create"
+          courses={COURSES}
+          takenWeeksByCourse={{}}
+          presetCourseId={1}
+          adminMeta
+          onClose={jest.fn()}
+          createAction={jest.fn(async () => ({ success: true }))}
+        />,
+      );
+
+      await waitFor(() => expect(toast.error).toHaveBeenCalled());
+      // 실패인데 '주차 없음'으로 오표시하지 않음
+      expect(
+        screen.queryByText('등록 가능한 주차가 없습니다'),
+      ).not.toBeInTheDocument();
     });
   });
 });
