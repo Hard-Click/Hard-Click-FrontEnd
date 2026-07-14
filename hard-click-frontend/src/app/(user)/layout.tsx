@@ -20,7 +20,7 @@ function isPublicRoute(pathname: string | null): boolean {
 
 /** floating 순공 타이머(하단 중앙 고정)를 숨길 라우트.
  *  전용 레이아웃(learning=인라인 위젯 / chat=전체화면) + 하단 중앙 CTA를 타이머가 가리는
- *  focused 페이지(퀴즈 응시·해설 / 결제·결제결과 / 장바구니 / 구독권). 브라우징·목록엔 그대로 띄운다. */
+ *  focused 페이지(퀴즈 응시·해설 / 결제·결제결과 / 장바구니 / 구독권 / 학습 스케줄러). 브라우징·목록엔 그대로 띄운다. */
 const TIMER_HIDDEN_PATTERNS: RegExp[] = [
   /^\/auth(\/|$)/,
   /^\/learning(\/|$)/,
@@ -28,6 +28,7 @@ const TIMER_HIDDEN_PATTERNS: RegExp[] = [
   /^\/quizzes\/[^/]+\/[^/]+/, // 응시·해설만 (진입 /quizzes·목록 /quizzes/{c}는 유지)
   /^\/checkout(\/|$)/,
   /^\/payment-result(\/|$)/,
+  /^\/schedule(\/|$)/, // AI 코치 배너 등 하단 콘텐츠와 겹침
   /^\/cart(\/|$)/,
   /^\/subscriptions(\/|$)/,
   /^\/mypage\/wishlist(\/|$)/, // 찜 카드 하단 CTA(학습하기 등)를 타이머가 가림
