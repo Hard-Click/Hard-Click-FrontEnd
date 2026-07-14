@@ -124,7 +124,7 @@ async function fillQuestion(
     await user.type(scope.getByLabelText(`보기 ${i}`), `보기${i}`);
   }
   await user.click(scope.getByRole('button', { name: '정답: 보기 1' }));
-  await user.click(scope.getByRole('button', { name: '난이도: 중' }));
+  await user.click(scope.getByRole('button', { name: '난이도: 상' })); // 상 → value 3
   await user.type(scope.getByLabelText('해설'), '해설 내용');
 }
 
@@ -334,6 +334,7 @@ describe('QuizFormModal — 퀴즈 등록 모달 통합', () => {
         options: ['보기1', '보기2', '보기3', '보기4'],
         answerIndex: 0,
         explanation: '해설 내용',
+        difficulty: 3, // '상' 선택 → 3 (라벨↔값 뒤집힘 회귀 방지)
       });
       expect(onSuccess).toHaveBeenCalled();
       expect(onClose).toHaveBeenCalled();
