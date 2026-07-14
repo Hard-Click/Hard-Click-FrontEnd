@@ -28,6 +28,7 @@ const blankQuestion = (): QuizQuestionInput => ({
   options: ['', '', '', ''],
   answerIndex: -1,
   explanation: '',
+  difficulty: 0, // 미선택 — 필수라 저장 전 선택 필요
 });
 
 /**
@@ -88,6 +89,7 @@ export default function QuizFormModal({
           options: q.options,
           answerIndex: q.answerIndex,
           explanation: q.explanation ?? '',
+          difficulty: q.difficulty ?? 0, // BE 상세가 difficulty 제공 → 수정 시 프리필
         }))
       : [blankQuestion()]
   );
@@ -164,6 +166,8 @@ export default function QuizFormModal({
         q.content.trim() !== '' &&
         q.options.every((o) => o.trim() !== '') &&
         q.answerIndex >= 0 &&
+        q.difficulty >= 1 &&
+        q.difficulty <= 3 &&
         q.explanation.trim() !== ''
     );
 
@@ -182,6 +186,8 @@ export default function QuizFormModal({
       options: q.options.map((o) => (o.trim() ? '' : '보기를 입력해주세요')),
       answer: q.answerIndex >= 0 ? '' : '정답을 선택해주세요',
       explanation: q.explanation.trim() ? '' : '해설을 입력해주세요',
+      difficulty:
+        q.difficulty >= 1 && q.difficulty <= 3 ? '' : '난이도를 선택해주세요',
     })),
   });
 
@@ -199,6 +205,8 @@ export default function QuizFormModal({
         !q.content.trim() ||
         q.options.some((o) => !o.trim()) ||
         q.answerIndex < 0 ||
+        q.difficulty < 1 ||
+        q.difficulty > 3 ||
         !q.explanation.trim()
       ) {
         return `quiz-field-q${i}`;

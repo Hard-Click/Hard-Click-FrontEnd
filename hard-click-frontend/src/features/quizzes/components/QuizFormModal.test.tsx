@@ -124,6 +124,7 @@ async function fillQuestion(
     await user.type(scope.getByLabelText(`보기 ${i}`), `보기${i}`);
   }
   await user.click(scope.getByRole('button', { name: '정답: 보기 1' }));
+  await user.click(scope.getByRole('button', { name: '난이도: 상' })); // 상 → value 3
   await user.type(scope.getByLabelText('해설'), '해설 내용');
 }
 
@@ -186,6 +187,7 @@ describe('QuizFormModal — 퀴즈 등록 모달 통합', () => {
       expect(screen.getByText('문제를 입력해주세요')).toBeInTheDocument();
       expect(screen.getAllByText('보기를 입력해주세요')).toHaveLength(4);
       expect(screen.getByText('정답을 선택해주세요')).toBeInTheDocument();
+      expect(screen.getByText('난이도를 선택해주세요')).toBeInTheDocument();
       expect(screen.getByText('해설을 입력해주세요')).toBeInTheDocument();
       // 검증 실패 → 확인 모달(고유 문구) 안 뜸 + 액션 미호출
       expect(
@@ -223,6 +225,20 @@ describe('QuizFormModal — 퀴즈 등록 모달 통합', () => {
       await user.click(screen.getByRole('button', { name: '정답: 보기 2' }));
 
       expect(screen.queryByText('정답을 선택해주세요')).not.toBeInTheDocument();
+    });
+
+    it('난이도 선택하면 난이도 에러 해제 (BE 필수 필드)', async () => {
+      const user = userEvent.setup();
+      renderCreate();
+
+      await user.click(screen.getByRole('button', { name: /등록 완료/ }));
+      expect(screen.getByText('난이도를 선택해주세요')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: '난이도: 상' }));
+
+      expect(
+        screen.queryByText('난이도를 선택해주세요'),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -318,6 +334,7 @@ describe('QuizFormModal — 퀴즈 등록 모달 통합', () => {
         options: ['보기1', '보기2', '보기3', '보기4'],
         answerIndex: 0,
         explanation: '해설 내용',
+        difficulty: 3, // '상' 선택 → 3 (라벨↔값 뒤집힘 회귀 방지)
       });
       expect(onSuccess).toHaveBeenCalled();
       expect(onClose).toHaveBeenCalled();
