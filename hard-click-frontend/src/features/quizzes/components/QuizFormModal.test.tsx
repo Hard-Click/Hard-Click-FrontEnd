@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import QuizFormModal from './QuizFormModal';
-import { getQuizFormMetaAction } from '../actions';
+import { getQuizFormMetaAction, getAdminQuizFormMetaAction } from '../actions';
 import type { QuizFormPayload } from '../types';
 
 // next/navigation — router stub
@@ -29,6 +29,11 @@ jest.mock('../actions', () => ({
   updateQuizAction: jest.fn(async () => ({ success: true })),
   // ② 등록폼이 강의 선택 시 실제 섹션(주차)을 로드 — 기본은 1~12주 전부 비어있음.
   getQuizFormMetaAction: jest.fn(async () => ({
+    weeks: Array.from({ length: 12 }, (_, i) => i + 1),
+    takenWeeks: [] as number[],
+  })),
+  // 관리자 경로(adminMeta): 소유자무관 목록으로 takenWeeks 로드.
+  getAdminQuizFormMetaAction: jest.fn(async () => ({
     weeks: Array.from({ length: 12 }, (_, i) => i + 1),
     takenWeeks: [] as number[],
   })),
@@ -406,6 +411,62 @@ describe('QuizFormModal — 퀴즈 등록 모달 통합', () => {
       expect(
         await screen.findByText(/등록 가능한 주차가 없습니다/),
       ).toBeInTheDocument();
+    });
+  });
+
+  // 관리자 개별 강의 페이지(#869)의 "퀴즈 등록" 버튼은 adminMeta로 소유자무관 목록에서 takenWeeks를 로드해야
+  // 1주1퀴즈 중복차단이 동작한다. 강사 소유자필터 엔드포인트(getQuizFormMetaAction)를 타면 관리자 소유 0개라
+  // takenWeeks가 비어 중복이 뚫린다(회귀 방지).
+  describe('관리자 메타 라우팅 — adminMeta', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('adminMeta + presetCourseId → 관리자 메타 액션으로 로드(강사 액션 미사용) + 강사선택 UI 없음', async () => {
+      // 이 강의는 1~12주 전부 점유 → 관리자 액션이 쓰였다면 "등록 가능한 주차가 없습니다"가 떠야 함
+      (getAdminQuizFormMetaAction as jest.Mock).mockResolvedValueOnce({
+        weeks: Array.from({ length: 12 }, (_, i) => i + 1),
+        takenWeeks: Array.from({ length: 12 }, (_, i) => i + 1),
+      });
+      render(
+        <QuizFormModal
+          mode="create"
+          courses={COURSES}
+          takenWeeksByCourse={{}}
+          presetCourseId={1}
+          adminMeta
+          onClose={jest.fn()}
+          createAction={jest.fn(async () => ({ success: true }))}
+        />,
+      );
+
+      // 관리자 액션이 courseId로 호출되고, 강사 소유자필터 액션은 호출되지 않음
+      expect(
+        await screen.findByText(/등록 가능한 주차가 없습니다/),
+      ).toBeInTheDocument();
+      expect(getAdminQuizFormMetaAction).toHaveBeenCalledWith(1);
+      expect(getQuizFormMetaAction).not.toHaveBeenCalled();
+      // 강의 고정(preset)이라 강사선택 드롭다운은 렌더하지 않음(스턱 방지)
+      expect(screen.queryByLabelText('강사 선택')).not.toBeInTheDocument();
+    });
+
+    it('플래그 없으면(강사 경로) 강사 메타 액션으로 로드 — 라우팅 스위치 회귀 방지', async () => {
+      const user = userEvent.setup();
+      render(
+        <QuizFormModal
+          mode="create"
+          courses={COURSES}
+          takenWeeksByCourse={{}}
+          onClose={jest.fn()}
+          createAction={jest.fn(async () => ({ success: true }))}
+        />,
+      );
+
+      await user.selectOptions(screen.getByLabelText('강의 선택'), '1');
+      await screen.findByRole('option', { name: '1주' });
+
+      expect(getQuizFormMetaAction).toHaveBeenCalledWith(1);
+      expect(getAdminQuizFormMetaAction).not.toHaveBeenCalled();
     });
   });
 });

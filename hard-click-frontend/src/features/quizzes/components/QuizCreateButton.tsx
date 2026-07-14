@@ -12,6 +12,7 @@ export default function QuizCreateButton({
   takenWeeksByCourse,
   presetCourseId,
   withInstructorSelect = false,
+  adminMeta,
   createAction,
   updateAction,
 }: {
@@ -19,6 +20,8 @@ export default function QuizCreateButton({
   takenWeeksByCourse: Record<number, number[]>;
   presetCourseId?: number;
   withInstructorSelect?: boolean;
+  // 관리자 메타 라우팅(강사선택 UI 없이 소유자무관 takenWeeks). 미지정 시 withInstructorSelect를 따른다.
+  adminMeta?: boolean;
   createAction?: (payload: QuizFormPayload) => Promise<QuizActionState>;
   updateAction?: (quizId: number, payload: QuizFormPayload) => Promise<QuizActionState>;
 }) {
@@ -42,6 +45,7 @@ export default function QuizCreateButton({
           takenWeeksByCourse={takenWeeksByCourse}
           presetCourseId={presetCourseId}
           withInstructorSelect={withInstructorSelect}
+          {...(adminMeta !== undefined ? { adminMeta } : {})}
           onClose={() => setOpen(false)}
           {...(createAction ? { createAction } : {})}
           {...(updateAction ? { updateAction } : {})}
