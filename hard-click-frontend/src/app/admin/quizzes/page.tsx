@@ -14,7 +14,14 @@ export default async function AdminQuizzesPage() {
   ]);
 
   // admin quiz courses API가 데이터를 반환하면 사용, 없으면 전체 강의 목록으로 폴백
-  const courses = adminQuizCourses.length > 0 ? adminQuizCourses : fallbackCourses;
+  const base = adminQuizCourses.length > 0 ? adminQuizCourses : fallbackCourses;
+  // ⚠️ 퀴즈 courses API(/api/admin/quizzes/courses)는 subjectName을 안 줘서 과목 필터가 '전체'만 뜬다
+  //    (일반 강의목록 API엔 있음). 이미 함께 조회한 fallbackCourses(subject 보유)에서 courseId로 채운다.
+  const subjectById = new Map(fallbackCourses.map((c) => [c.id, c.subject]));
+  const courses = base.map((c) => ({
+    ...c,
+    subject: c.subject || subjectById.get(c.id) || '',
+  }));
 
   const quizFormCourses = courses.map((c) => ({
     courseId: c.id,
