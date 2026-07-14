@@ -9,11 +9,13 @@ import {
   priceOn,
 } from '@/mocks/subscriptions.mock';
 import type { SubscriptionInfo } from './types';
+import { subscriptionRemainingDays } from './utils';
 
 /* ─────────────────────────────────────────────────────────────────────────
  * 구독권 — 실서버 연동 (2026-06-25). BE는 me(상태)·plan(가격) 2개로 분리 → 합쳐서 SubscriptionInfo로.
  * ⚠️ 모델 차이: FE는 "수능 D-day 동적가격"이었으나 BE는 "고정 플랜가(plan.price) + 구독 만료(remainingDays)".
- *    → 가격은 BE plan.price(실값) 사용(원래 placeholder였음). 남은기간은 구독 중일 때 BE remainingDays.
+ *    → 가격은 BE plan.price(실값) 사용(원래 placeholder였음). 남은기간은 구독 중일 때 만료일(expiredAt)에서
+ *    파생(utils.subscriptionRemainingDays) — BE remainingDays는 환불 시 만료일과 어긋나 안 씀.
  * ───────────────────────────────────────────────────────────────────────── */
 
 /** GET /api/subscriptions/me (라이브 검증). */
@@ -64,7 +66,9 @@ export const getSubscriptionServer = cache(async (): Promise<SubscriptionInfo> =
       planName: s.planName,
       benefits: SUBSCRIPTION_BENEFITS,
       suneungDate: SUNEUNG_DATE,
-      daysUntilSuneung: daysUntilSuneung(),
+      daysUntilSuneung: s.subscribed
+        ? subscriptionRemainingDays(s.expiresAt)
+        : daysUntilSuneung(),
       currentPrice: priceOn(),
       paidAt: s.subscribed ? s.paidAt : null,
       paidAmount: s.subscribed ? s.paidAmount : null,
@@ -86,8 +90,12 @@ export const getSubscriptionServer = cache(async (): Promise<SubscriptionInfo> =
     planName: plan?.name ?? mockSubscriptionStatus.planName,
     benefits: plan?.benefits ?? SUBSCRIPTION_BENEFITS,
     suneungDate: SUNEUNG_DATE,
-    // 구독 중: BE remainingDays(구독 만료까지) / 미구독: 수능 D-day(표시용, 가격은 plan.price 고정)
-    daysUntilSuneung: subscribed ? (me?.remainingDays ?? 0) : daysUntilSuneung(),
+    // 구독 중: 남은 기간을 만료일(expiredAt)에서 파생 — BE remainingDays는 환불 시 만료일과 어긋나므로 안 씀
+    //   (환불하면 BE가 expiredAt만 당일로 당기고 remainingDays는 원래값을 줘 "만료일=오늘, 남은 365일" 불일치).
+    // 미구독: 수능 D-day(표시용, 가격은 plan.price 고정).
+    daysUntilSuneung: subscribed
+      ? subscriptionRemainingDays(me?.expiredAt)
+      : daysUntilSuneung(),
     currentPrice: plan?.price ?? priceOn(),
     paidAt: subscribed && me?.startedAt ? me.startedAt.split('T')[0] : null,
     paidAmount: subscribed ? (me?.paidAmount ?? null) : null,

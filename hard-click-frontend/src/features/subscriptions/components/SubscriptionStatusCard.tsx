@@ -31,7 +31,7 @@ const SparkleWhite = (
 
 /**
  * 구독 이용 내용 카드 (Server·표시용) — 구독 중 화면 하단.
- * 결제일 / 남은 기간(BE remainingDays) / 결제 금액. (실 만료일은 SubscriptionPlanCard에서 expiresAt로 표시)
+ * 결제일 / 남은 기간(만료일에서 파생, 만료 당일=0은 "오늘까지") / 결제 금액. (실 만료일은 SubscriptionPlanCard에서 expiresAt로 표시)
  */
 export default function SubscriptionStatusCard({
   info,
@@ -40,7 +40,12 @@ export default function SubscriptionStatusCard({
 }) {
   const stats: { icon: React.ReactNode; label: string; value: string; accent: boolean }[] = [
     { icon: CalendarIcon, label: '결제일', value: info.paidAt ? dotDate(info.paidAt) : '-', accent: false },
-    { icon: ClockIcon, label: '남은 기간', value: `${info.daysUntilSuneung}일`, accent: true },
+    {
+      icon: ClockIcon,
+      label: '남은 기간',
+      value: info.daysUntilSuneung <= 0 ? '오늘까지' : `${info.daysUntilSuneung}일`,
+      accent: true,
+    },
     {
       icon: CardIcon,
       label: '결제 금액',
