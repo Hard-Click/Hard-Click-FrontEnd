@@ -1,14 +1,13 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { forwardRef, useRef, useState } from 'react';
-import { SUBJECTS } from '@/features/courses/subjects';
-
-const KOREAN_ELECTIVES = SUBJECTS.filter((s) => s.value.startsWith('KO_') && s.subjectId >= 3);
-const MATH_ELECTIVES = SUBJECTS.filter((s) => s.value.startsWith('MATH_') && s.value !== 'MATH_1' && s.value !== 'MATH_2');
-const SOCIAL_SUBJECTS = SUBJECTS.filter((s) => s.value.startsWith('SO_'));
-const SCIENCE_SUBJECTS = SUBJECTS.filter((s) => s.value.startsWith('SC_'));
-const FOREIGN_LANGUAGE_SUBJECTS = SUBJECTS.filter((s) => s.value.startsWith('FL_'));
+import {
+  FOREIGN_LANGUAGE_SUBJECTS,
+  KOREAN_ELECTIVES,
+  MATH_ELECTIVES,
+  SCIENCE_SUBJECTS,
+  SOCIAL_SUBJECTS,
+} from '../subjectPools';
 
 type ExamStrategy = 'REGULAR' | 'EARLY' | 'BOTH';
 type ExploreTrack = 'SOCIAL' | 'SCIENCE' | 'MIXED';
@@ -143,13 +142,9 @@ const REQUIRED_SELECT_MESSAGE = '과목을 선택해주세요';
 
 /**
  * 학습 스케줄 초기 설정 폼 (client 섬) — 구독 직후 1회 입력.
- * "다음" 클릭 시 불가능한 시간 체크(주간 시간 블록) → 모의고사 성적 입력 화면으로 이어지는 흐름은
- * 후속 이슈에서 구현 — 지금은 입력값 검증(빈 값 에러 메시지)까지만.
- * ⚠️ BE 저장 API 없음(2026-07-14 기준) — 검증 통과 시에도 서버 저장 없이 캘린더로 이동만 한다.
+ * "다음" 클릭 시 불가능한 시간 체크(주간 시간 블록) 화면으로 이어진다(onNext, #855).
  */
-export function ScheduleSetupForm() {
-  const router = useRouter();
-
+export function ScheduleSetupForm({ onNext }: { onNext: () => void }) {
   const [targetSchool, setTargetSchool] = useState('');
   const [targetMajor, setTargetMajor] = useState('');
   const [examStrategy, setExamStrategy] = useState<ExamStrategy>('BOTH');
@@ -221,7 +216,7 @@ export function ScheduleSetupForm() {
       fieldRefs[firstInvalid].current?.focus();
       return;
     }
-    router.push('/schedule');
+    onNext();
   };
 
   return (
