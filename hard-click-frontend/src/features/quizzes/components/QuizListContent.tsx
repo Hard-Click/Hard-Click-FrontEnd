@@ -101,7 +101,7 @@ export default function QuizListContent({
             setSelectedWeek(val === 'all' ? 'all' : Number(val))
           }
           fullWidth
-          className="w-[499px] max-w-full"
+          className="w-[200px] max-w-full"
         />
       </div>
 
