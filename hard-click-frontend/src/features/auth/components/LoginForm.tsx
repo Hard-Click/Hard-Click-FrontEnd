@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 
@@ -35,17 +35,27 @@ export default function LoginForm() {
   // 수업 자료 패턴: useActionState로 Server Action 결과 관리
   const [state, formAction] = useActionState(loginAction, initialState);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [failCount, setFailCount] = useState(0);
+  // 아이디별 실패 횟수(계정마다 따로 카운트) — 같은 아이디로 돌아오면 이어서 누적된다.
+  const [failCounts, setFailCounts] = useState<Record<string, number>>({});
+  // 제출 시점의 아이디를 스냅샷 — pending 중 loginId를 고쳐도 이 값은 안 바뀐다(경쟁 상태 방지).
+  const submittedLoginIdRef = useRef('');
+
+  const handleFormAction = (formData: FormData) => {
+    submittedLoginIdRef.current = String(formData.get('username') ?? '');
+    formAction(formData);
+  };
 
   // 5회 실패 잠금(423) → 계정 보호 인증 모달
   useEffect(() => {
     if (state.isLocked) {
       setIsConfirmModalOpen(true);
     } else if (state.message && !state.success) {
-      setFailCount((prev) => Math.min(prev + 1, 5));
+      const id = submittedLoginIdRef.current;
+      setFailCounts((prev) => ({ ...prev, [id]: Math.min((prev[id] ?? 0) + 1, 5) }));
     }
   }, [state]);
 
+  const failCount = failCounts[loginId] ?? 0;
   const hasError = !!state.message;
   const errorMessage = state.message && !state.isLocked && failCount > 0
     ? `${state.message} (${failCount} / 5)`
@@ -149,8 +159,8 @@ export default function LoginForm() {
             계정 정보를 입력하고 FLOWN을 시작하세요.
           </p>
 
-          {/* 수업 자료 패턴: <form action={Server Action}> */}
-          <form action={formAction}>
+          {/* 수업 자료 패턴: <form action={Server Action}> (제출 시점 아이디 스냅샷을 위해 래핑) */}
+          <form action={handleFormAction}>
             {/* ID */}
             <div className="mb-8">
               <label className="mb-3 block text-lg font-semibold text-[#1F2937]">
