@@ -180,7 +180,9 @@ function validatePayload(payload: QuizFormPayload): string | null {
 
 /**
  * 퀴즈 등록 (Server Action · BFF). POST /api/instructor/quizzes (body=InstructorQuizRequest).
- * ⚠️ BE stub + 가정 매퍼(sectionId·correctOptionId) — BE 로직 오면 가정 검증 후 동작.
+ * BE 실구현 라이브(stub 아님) — QuizCommandService.create가 소유권 검증 후 실 JPA 영속(quizRepository.save,
+ * develop·main 코드 확인). 매퍼(toInstructorQuizRequest)는 BE 요청 DTO와 필드 일치: sectionId=주차→섹션
+ * orderIndex 해석(resolveSectionId), correctOptionNumber=answerIndex+1, difficulty(1~3 @NotNull).
  */
 export async function createQuizAction(
   payload: QuizFormPayload,
@@ -214,7 +216,8 @@ export async function createQuizAction(
 
 /**
  * 퀴즈 수정 (Server Action · BFF). PUT /api/instructor/quizzes/{quizId} (body=InstructorQuizRequest).
- * ⚠️ BE stub + 가정 매퍼 — BE 로직 오면 가정 검증(특히 기존 문항/옵션 id 처리) 후 동작.
+ * BE 실구현 라이브(stub 아님) — QuizCommandService.update가 소유권 검증 후 quiz.update→repository.update
+ * (develop·main 코드 확인). 문항은 등록과 동일 InstructorQuizRequest 전체 전송(difficulty 포함); optionId는 BE가 재부여.
  */
 export async function updateQuizAction(
   quizId: number,
