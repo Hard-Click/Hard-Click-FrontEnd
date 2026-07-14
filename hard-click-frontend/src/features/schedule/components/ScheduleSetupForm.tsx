@@ -7,6 +7,7 @@ import {
   MATH_ELECTIVES,
   SCIENCE_SUBJECTS,
   SOCIAL_SUBJECTS,
+  type SelectedSubjects,
 } from '../subjectPools';
 
 type ExamStrategy = 'REGULAR' | 'EARLY' | 'BOTH';
@@ -143,8 +144,9 @@ const REQUIRED_SELECT_MESSAGE = '과목을 선택해주세요';
 /**
  * 학습 스케줄 초기 설정 폼 (client 섬) — 구독 직후 1회 입력.
  * "다음" 클릭 시 불가능한 시간 체크(주간 시간 블록) 화면으로 이어진다(onNext, #855).
+ * 여기서 고른 과목(국어·수학·탐구1/2·제2외국어)은 모의고사 성적 화면(#857)의 기본값으로 이어받는다.
  */
-export function ScheduleSetupForm({ onNext }: { onNext: () => void }) {
+export function ScheduleSetupForm({ onNext }: { onNext: (selected: SelectedSubjects) => void }) {
   const [targetSchool, setTargetSchool] = useState('');
   const [targetMajor, setTargetMajor] = useState('');
   const [examStrategy, setExamStrategy] = useState<ExamStrategy>('BOTH');
@@ -216,7 +218,7 @@ export function ScheduleSetupForm({ onNext }: { onNext: () => void }) {
       fieldRefs[firstInvalid].current?.focus();
       return;
     }
-    onNext();
+    onNext({ korean, math, explore1, explore2, hasSecondLanguage, secondLanguage });
   };
 
   return (

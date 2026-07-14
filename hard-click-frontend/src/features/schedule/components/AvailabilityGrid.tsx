@@ -18,10 +18,9 @@ function cellKey(day: string, hour: number): string {
  * 불가능한 시간 체크 — 요일×시간대 그리드 (client 섬, #855).
  * 기본은 전부 "가능"이고, 클릭 또는 드래그로 지나간 칸이 "불가능"으로 토글된다.
  * 드래그 시작 칸의 반대 상태로 드래그 중 지나간 모든 칸을 맞춘다(칸마다 개별 토글 아님).
- * ⚠️ BE 저장 API 없음(2026-07-14 기준) — "저장하고 일정 생성" 클릭 시 서버 저장 없이 캘린더로 이동만 한다.
- * (모의고사 성적 입력 화면은 별도 이슈/PR에서 이어붙일 예정 — 지금은 이 화면이 마지막 단계)
+ * "다음" 클릭 시 최근 모의고사 성적 입력 화면으로 이어진다(onNext, #857).
  */
-export function AvailabilityGrid({ onSubmit }: { onSubmit: () => void }) {
+export function AvailabilityGrid({ onNext }: { onNext: () => void }) {
   const [blocked, setBlocked] = useState<Set<string>>(new Set());
   const draggingRef = useRef(false);
   const dragValueRef = useRef(false);
@@ -55,7 +54,7 @@ export function AvailabilityGrid({ onSubmit }: { onSubmit: () => void }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit();
+    onNext();
   };
 
   return (
@@ -124,7 +123,7 @@ export function AvailabilityGrid({ onSubmit }: { onSubmit: () => void }) {
           type="submit"
           className="flex h-12 w-full items-center justify-center rounded-xl bg-[#2F5DAA] text-sm font-semibold text-white shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] transition hover:bg-[#274C8B]"
         >
-          저장하고 일정 생성
+          다음
         </button>
       </div>
     </form>

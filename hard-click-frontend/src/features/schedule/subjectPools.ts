@@ -12,3 +12,14 @@ export const SCIENCE_SUBJECTS = SUBJECTS.filter((s) => s.value.startsWith('SC_')
 export const EXPLORE_SUBJECTS = [...SOCIAL_SUBJECTS, ...SCIENCE_SUBJECTS];
 /** 제2외국어/한문(9과목). */
 export const FOREIGN_LANGUAGE_SUBJECTS = SUBJECTS.filter((s) => s.value.startsWith('FL_'));
+
+/** 스케줄 설정 폼에서 고른 과목 — 모의고사 성적 화면의 응시과목 기본값으로 이어받는다. */
+export interface SelectedSubjects {
+  korean: string;
+  math: string;
+  explore1: string;
+  explore2: string;
+  /** false면 제2외국어/한문 응시 안 함 — 모의고사 성적 화면에 그 행 자체를 안 보여준다. */
+  hasSecondLanguage: boolean;
+  secondLanguage: string;
+}
