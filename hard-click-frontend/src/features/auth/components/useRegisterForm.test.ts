@@ -686,12 +686,15 @@ describe('useRegisterForm — handleSubmit (최종 제출 검증)', () => {
     expect(result.current.step).not.toBe(4);
     expect(result.current.isEmailVerified).toBe(false);
     expect(result.current.isEmailSent).toBe(false); // 발송 상태까지 리셋(stale 카운트다운 방지)
+    expect(result.current.isEmailSendLimitExceeded).toBe(false); // 발송 상한도 리셋(재인증 데드엔드 방지)
     expect(result.current.values.emailVerificationToken).toBe('');
     expect(result.current.values.verificationCode).toBe(''); // 코드 입력값도 리셋
-    expect(result.current.verificationStatus).toBeNull(); // 초록 잔상 제거, 커스텀 문구 안 씀
-    // 에러 메시지는 별도 커스텀이 아니라 공통 formMessage에 BE 원문 그대로.
+    expect(result.current.verificationStatus).toBeNull(); // 초록 잔상 제거
+    // 메시지는 설계된 formMessage 자리에, 애매한 BE 원문 대신 재인증 의도를 명확히.
     expect(result.current.formMessage?.type).toBe('error');
-    expect(result.current.formMessage?.text).toBe('인증이 필요합니다');
+    expect(result.current.formMessage?.text).toBe(
+      '이메일 인증이 만료되었거나 유효하지 않습니다. 아래에서 다시 인증해주세요.',
+    );
   });
 
   it('register가 400(비-401 실패)이면 인증 상태를 그대로 유지한다 (리셋은 401 전용)', async () => {
