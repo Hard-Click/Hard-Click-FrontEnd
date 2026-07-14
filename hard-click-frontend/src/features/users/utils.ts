@@ -10,9 +10,21 @@
  *
  * → 별도 오리진에서 실제로 불러올 수 있는 **절대 http(s) URL**(presigned S3 등)만 이미지로 인정하고,
  *   그 외(상대경로 기본 이미지·빈 문자열)는 `null`로 정규화해 FE가 설계된 폴백 아이콘을 그리게 한다.
+ *   접두사 정규식이 아니라 `new URL()`로 파싱해 **http(s) 프로토콜 + 호스트 존재**까지 확인한다
+ *   (`"https://"`처럼 호스트 없는 반쪽 값이 통과해 깨진 이미지가 되는 것 방지).
  */
 export function normalizeProfileImageUrl(
   url: string | null | undefined,
 ): string | null {
-  return url && /^https?:\/\//i.test(url) ? url : null;
+  const value = url?.trim();
+  if (!value) return null;
+  try {
+    const { protocol, host } = new URL(value);
+    if ((protocol === 'http:' || protocol === 'https:') && host) {
+      return value;
+    }
+  } catch {
+    // 상대경로(BE 기본 "/images/default-profile.png")·호스트 없는 값·비URL → 파싱 실패 → null
+  }
+  return null;
 }
