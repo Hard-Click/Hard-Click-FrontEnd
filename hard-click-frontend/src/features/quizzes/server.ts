@@ -12,7 +12,8 @@ import type { AdminCourseManageRow } from '@/mocks/admin.mock';
  *    추가해 목록과 정합됨(제목파싱 폐기). 상세(InstructorQuizDetail)만 아직 weekNumber를 안 줘(sectionTitle만)
  *    sectionToWeek 제목파싱으로 폴백한다 — 섹션 제목 숫자가 orderIndex와 어긋나면(자유텍스트·삭제 섹션)
  *    목록/통계 주차 ↔ 상세 breadcrumb 주차가 불일치할 수 있다. → BE에 상세 응답 weekNumber 추가 요청 남음.
- * ⚠️ 작성/수정/삭제(actions.ts)·학생 흐름(studentServer/Actions)은 아직 USE_MOCK(mock) — Phase 2.
+ * ⚠️ 작성/수정/삭제(actions.ts)·학생 흐름(studentServer/Actions)도 라이브(isMock('quizzes')=false).
+ *    BE 강사/관리자 쓰기(QuizController·AdminQuizController)도 실구현됨(2026-07 develop) — mock 아님.
  * ───────────────────────────────────────────────────────────────────────── */
 
 /** GET /api/instructor/quizzes?courseId= 응답 (라이브 검증). 목록엔 BE가 weekNumber(섹션 orderIndex 기반)를 직접 준다. */
