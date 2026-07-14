@@ -13,7 +13,11 @@ export interface SubscriptionInfo {
   benefits: string[];
   /** 수능일 — 미구독 mock 가격(D-day) 산정용. ⚠️ 실제 만료일은 expiresAt (수능일 아님). YYYY-MM-DD */
   suneungDate: string;
-  /** 오늘 → 수능 남은 일수 (미구독 mock 가격 산정용) */
+  /**
+   * 표시용 남은 일수 — 상태에 따라 두 의미로 오버로드.
+   *  - 미구독: 오늘 → 수능 남은 일수 (mock D-day 가격 산정용)
+   *  - 구독 중: 만료일(expiresAt)까지 남은 일수 (SubscriptionStatusCard "남은 기간", 0이면 "오늘까지")
+   */
   daysUntilSuneung: number;
   /** 오늘 기준 가격(원) — 미구독 결제 예정액 */
   currentPrice: number;

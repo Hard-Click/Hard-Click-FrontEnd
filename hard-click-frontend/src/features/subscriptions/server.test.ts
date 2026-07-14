@@ -35,7 +35,14 @@ const PLAN = {
 };
 
 describe('getSubscriptionServer 매퍼 (라이브)', () => {
-  beforeEach(() => mockedGet.mockReset());
+  // 시스템 시간 고정(KST 2026-07-14 정오) → 남은기간 파생 계산이 결정적(자정 경계 flaky 제거).
+  beforeEach(() => {
+    mockedGet.mockReset();
+    jest.useFakeTimers().setSystemTime(new Date('2026-07-14T03:00:00Z'));
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
 
   it('구독 중이면 만료일을 BE me.expiredAt로 매핑한다(하드코딩 수능일 아님)', async () => {
     wireMeAndPlan(
@@ -77,13 +84,23 @@ describe('getSubscriptionServer 매퍼 (라이브)', () => {
     expect(info.expiresAt).toBeNull();
   });
 
-  it('구독 중 결제금액/남은기간/가격을 BE 값으로 매핑한다', async () => {
+  it('구독 중 결제금액/가격을 BE 값으로, 남은기간은 만료일에서 파생한다', async () => {
+    // 남은 기간은 만료일(expiredAt)에서 파생하므로 오늘 기준 상대 만료일로 검증(시간 무관).
+    const todayKst = new Date(Date.now() + 9 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+    const expiredIn300 = new Date(
+      Date.parse(`${todayKst}T00:00:00Z`) + 300 * 86_400_000,
+    )
+      .toISOString()
+      .slice(0, 10);
+
     wireMeAndPlan(
       {
         subscribed: true,
-        expiredAt: '2027-05-20T00:00:00',
+        expiredAt: `${expiredIn300}T00:00:00`,
         startedAt: '2026-05-20T00:00:00',
-        remainingDays: 300,
+        remainingDays: 999, // BE remainingDays는 이제 안 씀(만료일에서 파생) — stale여도 무관함을 증명
         paidAmount: 4_320_000,
       },
       PLAN,
@@ -92,7 +109,7 @@ describe('getSubscriptionServer 매퍼 (라이브)', () => {
     const info = await getSubscriptionServer();
 
     expect(info.paidAmount).toBe(4_320_000);
-    expect(info.daysUntilSuneung).toBe(300); // 구독 중엔 BE remainingDays
+    expect(info.daysUntilSuneung).toBe(300); // 만료일 기준 파생(BE remainingDays 999 무시)
     expect(info.currentPrice).toBe(1_580_000); // BE plan.price
   });
 });
