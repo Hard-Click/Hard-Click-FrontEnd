@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { ScheduleSetupForm } from './ScheduleSetupForm';
 import { AvailabilityGrid } from './AvailabilityGrid';
 import { ExamScoreForm } from './ExamScoreForm';
+import type { SelectedSubjects } from '../subjectPools';
 
 type Step = 'form' | 'availability' | 'examScore';
 
@@ -12,12 +13,20 @@ type Step = 'form' | 'availability' | 'examScore';
 export function ScheduleSetupFlow() {
   const router = useRouter();
   const [step, setStep] = useState<Step>('form');
+  const [selectedSubjects, setSelectedSubjects] = useState<SelectedSubjects | null>(null);
 
-  if (step === 'examScore') {
-    return <ExamScoreForm onSubmit={() => router.push('/schedule')} />;
+  if (step === 'examScore' && selectedSubjects) {
+    return <ExamScoreForm initialSubjects={selectedSubjects} onSubmit={() => router.push('/schedule')} />;
   }
   if (step === 'availability') {
     return <AvailabilityGrid onNext={() => setStep('examScore')} />;
   }
-  return <ScheduleSetupForm onNext={() => setStep('availability')} />;
+  return (
+    <ScheduleSetupForm
+      onNext={(selected) => {
+        setSelectedSubjects(selected);
+        setStep('availability');
+      }}
+    />
+  );
 }

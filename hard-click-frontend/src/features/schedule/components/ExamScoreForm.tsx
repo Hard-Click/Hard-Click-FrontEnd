@@ -6,6 +6,7 @@ import {
   FOREIGN_LANGUAGE_SUBJECTS,
   KOREAN_ELECTIVES,
   MATH_ELECTIVES,
+  type SelectedSubjects,
 } from '../subjectPools';
 
 interface SubjectOption {
@@ -79,20 +80,27 @@ function ScoreRow({
 /**
  * 최근 모의고사 성적 입력 (client 섬, #855 후속 화면).
  * 수능 응시영역 순서대로 과목 선택 + 원점수 입력.
+ * 응시과목 기본값은 이전 단계(스케줄 설정 폼)에서 고른 과목을 그대로 이어받되, 드롭다운으로 바꿀 수 있다.
  * ⚠️ BE 저장 API 없음(2026-07-14 기준) — 제출 시 서버 저장 없이 캘린더로 이동만 한다.
  */
-export function ExamScoreForm({ onSubmit }: { onSubmit: () => void }) {
-  const [korean, setKorean] = useState('');
+export function ExamScoreForm({
+  initialSubjects,
+  onSubmit,
+}: {
+  initialSubjects: SelectedSubjects;
+  onSubmit: () => void;
+}) {
+  const [korean, setKorean] = useState(initialSubjects.korean);
   const [koreanScore, setKoreanScore] = useState('');
-  const [math, setMath] = useState('');
+  const [math, setMath] = useState(initialSubjects.math);
   const [mathScore, setMathScore] = useState('');
   const [englishScore, setEnglishScore] = useState('');
   const [koreanHistoryScore, setKoreanHistoryScore] = useState('');
-  const [explore1, setExplore1] = useState('');
+  const [explore1, setExplore1] = useState(initialSubjects.explore1);
   const [explore1Score, setExplore1Score] = useState('');
-  const [explore2, setExplore2] = useState('');
+  const [explore2, setExplore2] = useState(initialSubjects.explore2);
   const [explore2Score, setExplore2Score] = useState('');
-  const [secondLanguage, setSecondLanguage] = useState('');
+  const [secondLanguage, setSecondLanguage] = useState(initialSubjects.secondLanguage);
   const [secondLanguageScore, setSecondLanguageScore] = useState('');
 
   const explore1Options = EXPLORE_SUBJECTS.filter((s) => s.value !== explore2);
@@ -153,14 +161,16 @@ export function ExamScoreForm({ onSubmit }: { onSubmit: () => void }) {
           score={explore2Score}
           onScoreChange={setExplore2Score}
         />
-        <ScoreRow
-          label="제2외국어/한문"
-          subject={
-            <SubjectSelect value={secondLanguage} onChange={setSecondLanguage} options={FOREIGN_LANGUAGE_SUBJECTS} />
-          }
-          score={secondLanguageScore}
-          onScoreChange={setSecondLanguageScore}
-        />
+        {initialSubjects.hasSecondLanguage && (
+          <ScoreRow
+            label="제2외국어/한문"
+            subject={
+              <SubjectSelect value={secondLanguage} onChange={setSecondLanguage} options={FOREIGN_LANGUAGE_SUBJECTS} />
+            }
+            score={secondLanguageScore}
+            onScoreChange={setSecondLanguageScore}
+          />
+        )}
       </div>
 
       <div className="mt-8 border-t border-[#E2E8F0] pt-6">
