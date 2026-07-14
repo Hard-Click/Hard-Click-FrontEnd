@@ -194,17 +194,19 @@ export default function PaymentResultClient() {
 
       <div className="mt-8 flex gap-3">
         <Link
-          href={isSubscription ? '/courses' : '/mypage/courses/in-progress'}
+          href={isSubscription ? '/schedule/setup' : '/mypage/courses/in-progress'}
           className="flex h-12 flex-1 items-center justify-center rounded-xl bg-[#2F5DAA] text-base font-semibold text-white transition hover:bg-[#274C8B]"
         >
-          {isSubscription ? '강의 둘러보기' : '내 학습 바로가기'}
+          {isSubscription ? '스케줄 입력하기' : '내 학습 바로가기'}
         </Link>
-        <Link
-          href={isSubscription ? '/subscriptions' : '/courses'}
-          className="flex h-12 flex-1 items-center justify-center rounded-xl border border-[#E2E8F0] text-base font-semibold text-[#475569] transition hover:bg-[#F8FAFC]"
-        >
-          {isSubscription ? '구독 확인' : '홈으로'}
-        </Link>
+        {!isSubscription && (
+          <Link
+            href="/courses"
+            className="flex h-12 flex-1 items-center justify-center rounded-xl border border-[#E2E8F0] text-base font-semibold text-[#475569] transition hover:bg-[#F8FAFC]"
+          >
+            홈으로
+          </Link>
+        )}
       </div>
     </Card>
   );
