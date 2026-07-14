@@ -57,6 +57,18 @@ const BENEFIT_META: { color: string; bg: string; paths: React.ReactNode }[] = [
       </>
     ),
   },
+  {
+    color: '#2F5DAA',
+    bg: 'bg-[#2F5DAA]/10',
+    paths: (
+      <>
+        <rect x="4" y="5" width="16" height="16" rx="2" />
+        <path d="M4 10h16" />
+        <path d="M8 3v4" />
+        <path d="M16 3v4" />
+      </>
+    ),
+  },
 ];
 
 const CheckIcon = (
