@@ -8,6 +8,7 @@ import type {
   AdminUserListApiResponse,
 } from './types';
 import { toAdminUser } from './types';
+import { normalizeProfileImageUrl } from './utils';
 import { USE_MOCK, isMock } from '@/mocks/config';
 import {
   mockMyEnrolledCourses,
@@ -32,7 +33,7 @@ export async function getMyProfileServer(): Promise<MyProfile | null> {
     userId: res.data.memberId,
     name: res.data.name,
     email: res.data.email,
-    profileImageUrl: res.data.profileImageUrl,
+    profileImageUrl: normalizeProfileImageUrl(res.data.profileImageUrl),
   };
 }
 
