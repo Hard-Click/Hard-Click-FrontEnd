@@ -63,10 +63,53 @@ describe('useRegisterForm — 초기 상태', () => {
     expect(result.current.isEmailVerified).toBe(false);
   });
 
-  it('남은 시간 포맷이 5:00으로 초기화된다', () => {
+  it('남은 시간 포맷이 3:00으로 초기화된다 (BE code-ttl 3분과 일치)', () => {
     const { result } = renderHook(() => useRegisterForm());
 
-    expect(result.current.formattedRemainingTime).toBe('5:00');
+    expect(result.current.formattedRemainingTime).toBe('3:00');
+  });
+});
+
+describe('useRegisterForm — 카운트다운 리셋 경로 (전부 3:00 = TTL 3분)', () => {
+  // 초기값이 이미 3:00이라, 리셋을 검증하려면 먼저 카운트다운을 진행시켜(2:55) '리셋됐다'를 증명해야 한다.
+  // 진행 후에도 3:00이면 리셋값이 180초(3분)임이 확정된다 — 옛 300초였다면 4:55/5:00으로 남는다.
+  async function startCountdown(result: {
+    current: ReturnType<typeof useRegisterForm>;
+  }) {
+    mockCheckEmail.mockResolvedValue({ success: true, data: { exists: false } });
+    mockSendEmail.mockResolvedValue({ success: true });
+    act(() => result.current.updateValue('emailId', 'tester'));
+    await act(async () => {
+      await result.current.handleCheckEmail();
+    });
+    await act(async () => {
+      await result.current.handleSendEmailCode();
+    });
+    // 5초 경과 → 2:55 (카운트다운이 실제로 도는지 확인)
+    act(() => {
+      jest.advanceTimersByTime(5000);
+    });
+    expect(result.current.formattedRemainingTime).toBe('2:55');
+  }
+
+  it('이메일을 변경하면 카운트다운이 3:00으로 리셋된다', async () => {
+    const { result } = renderHook(() => useRegisterForm());
+    await startCountdown(result);
+
+    act(() => result.current.updateValue('emailId', 'other'));
+
+    expect(result.current.formattedRemainingTime).toBe('3:00');
+  });
+
+  it('인증번호를 재발송하면 카운트다운이 3:00으로 리셋된다', async () => {
+    const { result } = renderHook(() => useRegisterForm());
+    await startCountdown(result);
+
+    await act(async () => {
+      await result.current.handleSendEmailCode(true);
+    });
+
+    expect(result.current.formattedRemainingTime).toBe('3:00');
   });
 });
 
@@ -686,6 +729,7 @@ describe('useRegisterForm — handleSubmit (최종 제출 검증)', () => {
     expect(result.current.step).not.toBe(4);
     expect(result.current.isEmailVerified).toBe(false);
     expect(result.current.isEmailSent).toBe(false); // 발송 상태까지 리셋(stale 카운트다운 방지)
+    expect(result.current.formattedRemainingTime).toBe('3:00'); // 카운트다운도 TTL(3분)로 리셋 — 옛 300초 회귀 방지
     expect(result.current.values.emailVerificationToken).toBe('');
     expect(result.current.values.verificationCode).toBe(''); // 코드 입력값도 리셋
     expect(result.current.verificationStatus?.type).toBe('error');
