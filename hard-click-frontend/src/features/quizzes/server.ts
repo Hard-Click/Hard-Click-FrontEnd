@@ -145,7 +145,9 @@ function toQuizDetail(d: ApiInstructorQuizDetail): Quiz {
             ? byFlag
             : q.options.findIndex((o) => o.optionId === q.correctOptionId),
         explanation: q.explanation ?? '',
-        difficulty: q.difficulty ?? 0, // 수정 진입 시 프리필(기존 미지정은 0=미선택)
+        // 난이도 도입(V3.5.1) 이전 문항은 BE가 difficulty=null → 수정 진입 시 '중'(2)으로 기본 선택해
+        //   문항마다 다시 고르는 수고를 던다(BE @NotNull이라 값은 필요). 편집 폼에서 사용자가 보고 바꿀 수 있음.
+        difficulty: q.difficulty ?? 2,
       };
     }),
   };
