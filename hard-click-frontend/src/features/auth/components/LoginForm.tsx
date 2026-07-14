@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 
@@ -35,17 +35,24 @@ export default function LoginForm() {
   // 수업 자료 패턴: useActionState로 Server Action 결과 관리
   const [state, formAction] = useActionState(loginAction, initialState);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [failCount, setFailCount] = useState(0);
+  // 아이디별 실패 횟수(계정마다 따로 카운트) — 같은 아이디로 돌아오면 이어서 누적된다.
+  const [failCounts, setFailCounts] = useState<Record<string, number>>({});
+  const loginIdRef = useRef(loginId);
+  useEffect(() => {
+    loginIdRef.current = loginId;
+  }, [loginId]);
 
   // 5회 실패 잠금(423) → 계정 보호 인증 모달
   useEffect(() => {
     if (state.isLocked) {
       setIsConfirmModalOpen(true);
     } else if (state.message && !state.success) {
-      setFailCount((prev) => Math.min(prev + 1, 5));
+      const id = loginIdRef.current;
+      setFailCounts((prev) => ({ ...prev, [id]: Math.min((prev[id] ?? 0) + 1, 5) }));
     }
   }, [state]);
 
+  const failCount = failCounts[loginId] ?? 0;
   const hasError = !!state.message;
   const errorMessage = state.message && !state.isLocked && failCount > 0
     ? `${state.message} (${failCount} / 5)`
