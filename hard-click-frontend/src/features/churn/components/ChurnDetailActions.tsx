@@ -25,23 +25,6 @@ export default function ChurnDetailActions({
         />
         독려 알림 보내기
       </button>
-      <button
-        type="button"
-        // TODO: 스케줄 재조정 권유 API 연동 (BE 미구현)
-        onClick={() =>
-          toast.success(`${studentName}님에게 스케줄 재조정을 권유했습니다.`)
-        }
-        className="flex h-12 items-center gap-2 rounded-xl bg-[#2F5DAA] px-5 text-sm font-semibold text-white transition hover:opacity-90"
-      >
-        <Image
-          src="/icons/calendarIcon.svg"
-          alt=""
-          width={18}
-          height={18}
-          className="brightness-0 invert"
-        />
-        스케줄 재조정 권유
-      </button>
     </div>
   );
 }
