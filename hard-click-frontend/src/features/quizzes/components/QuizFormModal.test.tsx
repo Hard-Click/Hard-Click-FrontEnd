@@ -468,5 +468,29 @@ describe('QuizFormModal — 퀴즈 등록 모달 통합', () => {
       expect(getQuizFormMetaAction).toHaveBeenCalledWith(1);
       expect(getAdminQuizFormMetaAction).not.toHaveBeenCalled();
     });
+
+    // 최상위 관리자 페이지(/admin/quizzes)는 withInstructorSelect만 넘기고 adminMeta는 생략한다.
+    // 그 페이지의 관리자 메타 라우팅은 오직 기본값 `adminMeta = withInstructorSelect`(QuizFormModal.tsx)에
+    // 의존하므로, 이 조합을 고정하지 않으면 기본값을 끊어도(예: `= false`) 테스트가 green으로 통과해
+    // 주 관리자 화면에서 #869 중복차단 뚫림이 무음 재발할 수 있다(clToki 지적).
+    it('withInstructorSelect=true + adminMeta 생략(최상위 관리자 페이지 경로) → 관리자 액션', async () => {
+      const user = userEvent.setup();
+      render(
+        <QuizFormModal
+          mode="create"
+          courses={COURSES}
+          takenWeeksByCourse={{}}
+          withInstructorSelect
+          onClose={jest.fn()}
+          createAction={jest.fn(async () => ({ success: true }))}
+        />,
+      );
+
+      await user.selectOptions(screen.getByLabelText('강의 선택'), '1');
+      await screen.findByRole('option', { name: '1주' });
+
+      expect(getAdminQuizFormMetaAction).toHaveBeenCalledWith(1);
+      expect(getQuizFormMetaAction).not.toHaveBeenCalled();
+    });
   });
 });
