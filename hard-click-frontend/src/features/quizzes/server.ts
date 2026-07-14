@@ -185,11 +185,14 @@ export async function getAdminQuizDetailServer(
 }
 
 /** ②③ 등록 폼 메타 — 강의의 실제 섹션(존재하는 주차) + 이미 퀴즈가 있는 주차.
- *  ② 드롭다운을 실제 섹션 기반으로(1~12 하드코딩 대체) / ③ 1주1퀴즈 중복 제외(라이브 퀴즈 목록에서 집계). */
-export async function getQuizFormMetaServer(courseId: number): Promise<{
-  weeks: number[];
-  takenWeeks: number[];
-}> {
+ *  ② 드롭다운을 실제 섹션 기반으로(1~12 하드코딩 대체) / ③ 1주1퀴즈 중복 제외(라이브 퀴즈 목록에서 집계).
+ *  ⚠️ takenWeeks 소스가 역할별로 다르다: 강사=getQuizzesServer(GET /api/instructor/quizzes — BE가 로그인 강사
+ *     소유 memberId로 필터) / 관리자=getAdminCourseQuizzesServer(GET /api/admin/quizzes/courses/{id} — 소유자무관
+ *     강의 전체). 관리자가 강사 엔드포인트를 쓰면 본인 소유 퀴즈 0개→takenWeeks 빈값→1주1퀴즈 중복차단이 안 된다. */
+async function buildQuizFormMeta(
+  courseId: number,
+  quizzesFetcher: (id: number) => Promise<Quiz[]>,
+): Promise<{ weeks: number[]; takenWeeks: number[] }> {
   if (isMock('quizzes')) {
     return {
       weeks: Array.from({ length: 12 }, (_, i) => i + 1),
@@ -200,7 +203,7 @@ export async function getQuizFormMetaServer(courseId: number): Promise<{
   }
   const [sections, quizzes] = await Promise.all([
     getCourseSectionsServer(courseId),
-    getQuizzesServer(courseId),
+    quizzesFetcher(courseId),
   ]);
   return {
     // w>0만: 무번호 섹션(오리엔테이션 등)은 퀴즈 주차가 아니므로 드롭다운서 의도적으로 제외.
@@ -209,6 +212,21 @@ export async function getQuizFormMetaServer(courseId: number): Promise<{
     ),
     takenWeeks: quizzes.map((q) => q.week),
   };
+}
+
+/** 강사 등록 폼 메타 — takenWeeks는 본인 소유 퀴즈(GET /api/instructor/quizzes) 기준. */
+export async function getQuizFormMetaServer(
+  courseId: number,
+): Promise<{ weeks: number[]; takenWeeks: number[] }> {
+  return buildQuizFormMeta(courseId, getQuizzesServer);
+}
+
+/** 관리자 등록 폼 메타 — takenWeeks는 강의 전체 퀴즈(GET /api/admin/quizzes/courses/{id}, 소유자무관) 기준.
+ *  강사 엔드포인트는 관리자 소유 퀴즈만 반환(0개)이라 중복차단이 안 되므로 관리자 목록으로 집계한다. */
+export async function getAdminQuizFormMetaServer(
+  courseId: number,
+): Promise<{ weeks: number[]; takenWeeks: number[] }> {
+  return buildQuizFormMeta(courseId, getAdminCourseQuizzesServer);
 }
 
 /** GET /api/instructors/me/quizzes/{quizId}/statistics 응답 (라이브 검증). */

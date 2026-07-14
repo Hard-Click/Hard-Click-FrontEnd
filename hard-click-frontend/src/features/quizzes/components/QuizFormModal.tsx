@@ -13,6 +13,7 @@ import {
   createQuizAction,
   updateQuizAction,
   getQuizFormMetaAction,
+  getAdminQuizFormMetaAction,
 } from '../actions';
 import type { Quiz, QuizQuestionInput, QuizFormPayload } from '../types';
 
@@ -132,13 +133,18 @@ export default function QuizFormModal({
   useEffect(() => {
     if (mode !== 'create' || courseId <= 0) return;
     let cancelled = false;
-    getQuizFormMetaAction(courseId).then((m) => {
+    // 관리자(withInstructorSelect)는 소유자무관 관리자 목록으로 takenWeeks 집계 —
+    //   강사 엔드포인트(/api/instructor/quizzes)는 로그인 관리자 소유 퀴즈만 반환(0개)이라 1주1퀴즈 중복차단이 안 됨.
+    const metaAction = withInstructorSelect
+      ? getAdminQuizFormMetaAction
+      : getQuizFormMetaAction;
+    metaAction(courseId).then((m) => {
       if (!cancelled) setMeta({ courseId, ...m });
     });
     return () => {
       cancelled = true;
     };
-  }, [courseId, mode]);
+  }, [courseId, mode, withInstructorSelect]);
   // 로딩 = 선택 강의 기준 meta가 아직 안 옴 (파생, 동기 setState 없음).
   const metaLoading =
     mode === 'create' && courseId > 0 && meta.courseId !== courseId;

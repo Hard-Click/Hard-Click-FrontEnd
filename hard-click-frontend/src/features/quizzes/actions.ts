@@ -8,6 +8,7 @@ import {
   getInstructorQuizDetailServer,
   getAdminQuizDetailServer,
   getQuizFormMetaServer,
+  getAdminQuizFormMetaServer,
 } from './server';
 import type { QuizFormPayload, Quiz } from './types';
 
@@ -92,6 +93,16 @@ export async function getQuizFormMetaAction(
     return { weeks: [], takenWeeks: [] };
   }
   return getQuizFormMetaServer(courseId);
+}
+
+/** 관리자용 등록 폼 메타 — takenWeeks를 소유자무관 관리자 목록에서 집계(강사 엔드포인트는 관리자 소유 0개라 중복차단 실패). */
+export async function getAdminQuizFormMetaAction(
+  courseId: number,
+): Promise<{ weeks: number[]; takenWeeks: number[] }> {
+  if (!Number.isInteger(courseId) || courseId <= 0) {
+    return { weeks: [], takenWeeks: [] };
+  }
+  return getAdminQuizFormMetaServer(courseId);
 }
 
 /**
