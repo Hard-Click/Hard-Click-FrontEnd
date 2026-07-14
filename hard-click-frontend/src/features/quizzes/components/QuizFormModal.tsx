@@ -407,10 +407,7 @@ export default function QuizFormModal({
                 fullWidth
               />
               {noWeeksAvailable ? (
-                <p className="mt-1.5 text-sm text-[#B91C1C]">
-                  등록 가능한 주차가 없습니다 (모든 섹션에 퀴즈가 있거나 섹션이
-                  없어요).
-                </p>
+                <FieldError message="등록 가능한 주차가 없습니다" />
               ) : (
                 <FieldError message={errors?.week} />
               )}
