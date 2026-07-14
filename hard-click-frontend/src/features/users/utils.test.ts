@@ -14,6 +14,12 @@ describe('normalizeProfileImageUrl', () => {
     );
   });
 
+  it('presigned S3 URL(쿼리스트링 서명 포함)도 verbatim 통과 (서명 보존)', () => {
+    const presigned =
+      'https://flown-bucket.s3.ap-northeast-2.amazonaws.com/profile/1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=3600&X-Amz-Signature=abc123';
+    expect(normalizeProfileImageUrl(presigned)).toBe(presigned);
+  });
+
   it('null·undefined·빈 문자열·공백·기타 상대경로는 null', () => {
     expect(normalizeProfileImageUrl(null)).toBeNull();
     expect(normalizeProfileImageUrl(undefined)).toBeNull();
