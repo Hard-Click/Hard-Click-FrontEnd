@@ -35,7 +35,14 @@ const PLAN = {
 };
 
 describe('getSubscriptionServer 매퍼 (라이브)', () => {
-  beforeEach(() => mockedGet.mockReset());
+  // 시스템 시간 고정(KST 2026-07-14 정오) → 남은기간 파생 계산이 결정적(자정 경계 flaky 제거).
+  beforeEach(() => {
+    mockedGet.mockReset();
+    jest.useFakeTimers().setSystemTime(new Date('2026-07-14T03:00:00Z'));
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
 
   it('구독 중이면 만료일을 BE me.expiredAt로 매핑한다(하드코딩 수능일 아님)', async () => {
     wireMeAndPlan(

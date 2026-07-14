@@ -28,4 +28,10 @@ describe('SubscriptionStatusCard — 남은 기간 표시', () => {
     expect(screen.getByText('오늘까지')).toBeInTheDocument();
     expect(screen.queryByText('0일')).not.toBeInTheDocument();
   });
+
+  it('만료일이 지난 경우(음수)도 "오늘까지"로 표시 (<=0 방어)', () => {
+    render(<SubscriptionStatusCard info={makeInfo({ daysUntilSuneung: -1 })} />);
+    expect(screen.getByText('오늘까지')).toBeInTheDocument();
+    expect(screen.queryByText('-1일')).not.toBeInTheDocument();
+  });
 });
