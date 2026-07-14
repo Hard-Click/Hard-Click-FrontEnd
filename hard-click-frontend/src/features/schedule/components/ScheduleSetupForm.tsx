@@ -73,6 +73,7 @@ function SegmentedToggle<T extends string>({
 const Select = forwardRef<
   HTMLSelectElement,
   {
+    label: string;
     value: string;
     onChange: (v: string) => void;
     placeholder: string;
@@ -80,11 +81,12 @@ const Select = forwardRef<
     error?: string;
     highlight?: boolean;
   }
->(function Select({ value, onChange, placeholder, options, error, highlight }, ref) {
+>(function Select({ label, value, onChange, placeholder, options, error, highlight }, ref) {
   return (
     <div>
       <select
         ref={ref}
+        aria-label={label}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={`h-12 w-full rounded-xl border bg-white px-4 text-sm text-[#1F2937] outline-none focus:border-[#2F5DAA] ${
@@ -106,17 +108,19 @@ const Select = forwardRef<
 const TextField = forwardRef<
   HTMLInputElement,
   {
+    label: string;
     value: string;
     onChange: (v: string) => void;
     placeholder: string;
     error?: string;
     highlight?: boolean;
   }
->(function TextField({ value, onChange, placeholder, error, highlight }, ref) {
+>(function TextField({ label, value, onChange, placeholder, error, highlight }, ref) {
   return (
     <div>
       <input
         ref={ref}
+        aria-label={label}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
@@ -236,6 +240,7 @@ export function ScheduleSetupForm() {
         <div className="mt-3 grid grid-cols-2 gap-3">
           <TextField
             ref={targetSchoolRef}
+            label="목표 대학"
             value={targetSchool}
             onChange={setTargetSchool}
             placeholder="목표 대학 (예: 서울대학교)"
@@ -244,6 +249,7 @@ export function ScheduleSetupForm() {
           />
           <TextField
             ref={targetMajorRef}
+            label="목표 학과"
             value={targetMajor}
             onChange={setTargetMajor}
             placeholder="목표 학과 (예: 컴퓨터공학부)"
@@ -273,6 +279,7 @@ export function ScheduleSetupForm() {
             <p className="mb-2 text-xs text-[#64748B]">국어</p>
             <Select
               ref={koreanRef}
+              label="국어 선택과목"
               value={korean}
               onChange={setKorean}
               placeholder="선택"
@@ -285,6 +292,7 @@ export function ScheduleSetupForm() {
             <p className="mb-2 text-xs text-[#64748B]">수학</p>
             <Select
               ref={mathRef}
+              label="수학 선택과목"
               value={math}
               onChange={setMath}
               placeholder="선택"
@@ -306,6 +314,7 @@ export function ScheduleSetupForm() {
         <div className="grid grid-cols-2 gap-4">
           <Select
             ref={explore1Ref}
+            label="탐구 1 과목"
             value={explore1}
             onChange={setExplore1}
             placeholder="탐구 1"
@@ -315,6 +324,7 @@ export function ScheduleSetupForm() {
           />
           <Select
             ref={explore2Ref}
+            label="탐구 2 과목"
             value={explore2}
             onChange={setExplore2}
             placeholder="탐구 2"
@@ -340,6 +350,7 @@ export function ScheduleSetupForm() {
           <div className="mt-3">
             <Select
               ref={secondLanguageRef}
+              label="제2외국어/한문 과목"
               value={secondLanguage}
               onChange={setSecondLanguage}
               placeholder="선택"
