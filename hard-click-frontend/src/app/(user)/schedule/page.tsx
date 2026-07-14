@@ -24,7 +24,7 @@ export default async function SchedulePage() {
   ]);
 
   return (
-    <div className="min-h-screen bg-[#F5F7FB] px-8 py-10">
+    <div className="min-h-screen bg-[#F5F7FB] px-8 py-8">
       <div className="mx-auto w-full max-w-[1120px]">
         <h1 className="text-3xl font-bold text-[#1E293B]">학습 스케줄</h1>
         <p className="mt-1 text-sm text-[#64748B]">
