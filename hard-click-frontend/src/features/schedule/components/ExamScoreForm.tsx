@@ -24,22 +24,43 @@ function SubjectSelect({
   options: SubjectOption[];
 }) {
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="h-11 w-full rounded-xl border border-[#E2E8F0] bg-white px-4 text-sm text-[#1F2937] outline-none focus:border-[#2F5DAA]"
-    >
-      <option value="">선택</option>
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.name}
-        </option>
-      ))}
-    </select>
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`h-11 w-full appearance-none rounded-xl border border-[#E2E8F0] bg-white px-4 pr-10 text-sm outline-none focus:border-[#2F5DAA] ${
+          value ? 'text-[#1F2937]' : 'text-[#94A3B8]'
+        }`}
+      >
+        <option value="">선택</option>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.name}
+          </option>
+        ))}
+      </select>
+      <svg
+        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#94A3B8]"
+        width="18"
+        height="18"
+        viewBox="0 0 20 20"
+        fill="none"
+      >
+        <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
   );
 }
 
-function ScoreInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function ScoreInput({
+  value,
+  onChange,
+  error,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  error?: boolean;
+}) {
   return (
     <input
       type="number"
@@ -49,7 +70,9 @@ function ScoreInput({ value, onChange }: { value: string; onChange: (v: string) 
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder="원점수"
-      className="h-11 w-full rounded-xl border border-[#E2E8F0] px-4 text-sm outline-none placeholder:text-[#94A3B8] focus:border-[#2F5DAA]"
+      className={`h-11 w-full rounded-xl border px-4 text-sm outline-none placeholder:text-[#94A3B8] focus:border-[#2F5DAA] ${
+        error ? 'border-[#DC2626]' : 'border-[#E2E8F0]'
+      }`}
     />
   );
 }
@@ -59,18 +82,20 @@ function ScoreRow({
   subject,
   score,
   onScoreChange,
+  error,
 }: {
   label: string;
   subject: React.ReactNode;
   score: string;
   onScoreChange: (v: string) => void;
+  error?: boolean;
 }) {
   return (
     <div className="grid grid-cols-[100px_1fr_140px] items-center gap-4">
       <span className="text-sm font-semibold text-[#1E293B]">{label}</span>
       <div>{subject}</div>
       <div className="flex items-center gap-2">
-        <ScoreInput value={score} onChange={onScoreChange} />
+        <ScoreInput value={score} onChange={onScoreChange} error={error} />
         <span className="text-sm text-[#64748B]">점</span>
       </div>
     </div>
@@ -102,12 +127,27 @@ export function ExamScoreForm({
   const [explore2Score, setExplore2Score] = useState('');
   const [secondLanguage, setSecondLanguage] = useState(initialSubjects.secondLanguage);
   const [secondLanguageScore, setSecondLanguageScore] = useState('');
+  const [submitted, setSubmitted] = useState(false);
 
   const explore1Options = EXPLORE_SUBJECTS.filter((s) => s.value !== explore2);
   const explore2Options = EXPLORE_SUBJECTS.filter((s) => s.value !== explore1);
 
+  const requiredScores = [
+    koreanScore,
+    mathScore,
+    englishScore,
+    koreanHistoryScore,
+    explore1Score,
+    explore2Score,
+    ...(initialSubjects.hasSecondLanguage ? [secondLanguageScore] : []),
+  ];
+  const hasEmptyScore = requiredScores.some((s) => !s.trim());
+  const showError = submitted && hasEmptyScore;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitted(true);
+    if (requiredScores.some((s) => !s.trim())) return;
     onSubmit();
   };
 
@@ -130,36 +170,42 @@ export function ExamScoreForm({
           subject={<SubjectSelect value={korean} onChange={setKorean} options={KOREAN_ELECTIVES} />}
           score={koreanScore}
           onScoreChange={setKoreanScore}
+          error={showError && !koreanScore.trim()}
         />
         <ScoreRow
           label="수학"
           subject={<SubjectSelect value={math} onChange={setMath} options={MATH_ELECTIVES} />}
           score={mathScore}
           onScoreChange={setMathScore}
+          error={showError && !mathScore.trim()}
         />
         <ScoreRow
           label="영어"
           subject={<span className="text-sm text-[#94A3B8]">-</span>}
           score={englishScore}
           onScoreChange={setEnglishScore}
+          error={showError && !englishScore.trim()}
         />
         <ScoreRow
           label="한국사"
           subject={<span className="text-sm text-[#94A3B8]">-</span>}
           score={koreanHistoryScore}
           onScoreChange={setKoreanHistoryScore}
+          error={showError && !koreanHistoryScore.trim()}
         />
         <ScoreRow
           label="탐구1"
           subject={<SubjectSelect value={explore1} onChange={setExplore1} options={explore1Options} />}
           score={explore1Score}
           onScoreChange={setExplore1Score}
+          error={showError && !explore1Score.trim()}
         />
         <ScoreRow
           label="탐구2"
           subject={<SubjectSelect value={explore2} onChange={setExplore2} options={explore2Options} />}
           score={explore2Score}
           onScoreChange={setExplore2Score}
+          error={showError && !explore2Score.trim()}
         />
         {initialSubjects.hasSecondLanguage && (
           <ScoreRow
@@ -167,6 +213,7 @@ export function ExamScoreForm({
             subject={
               <SubjectSelect value={secondLanguage} onChange={setSecondLanguage} options={FOREIGN_LANGUAGE_SUBJECTS} />
             }
+            error={showError && !secondLanguageScore.trim()}
             score={secondLanguageScore}
             onScoreChange={setSecondLanguageScore}
           />
@@ -174,6 +221,9 @@ export function ExamScoreForm({
       </div>
 
       <div className="mt-8 border-t border-[#E2E8F0] pt-6">
+        <p className={`mb-4 h-5 text-sm font-medium text-[#DC2626] ${showError ? '' : 'invisible'}`}>
+          모든 점수를 입력해주세요.
+        </p>
         <button
           type="submit"
           className="flex h-12 w-full items-center justify-center rounded-xl bg-[#2F5DAA] text-sm font-semibold text-white shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] transition hover:bg-[#274C8B]"
