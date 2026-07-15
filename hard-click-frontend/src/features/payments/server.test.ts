@@ -222,28 +222,29 @@ describe('삭제된 강의 행 — null 필드 통과 (가드)', () => {
   });
 });
 
-describe('폴백 — 실패 응답·빈 데이터·예외', () => {
-  it('빈 content 는 빈 배열을 반환한다 (경계값)', async () => {
+describe('실패 정직 처리(§0.1④) — 실패를 빈 상태로 위장하지 않음', () => {
+  it('빈 content 는 빈 배열을 반환한다 (성공+빈 = 진짜 결제 이력 없음)', async () => {
     mockedGet.mockResolvedValue(ok(pageOf([])));
     expect(await getMyPaymentsServer()).toEqual([]);
   });
 
-  it('success=false 면 빈 배열로 폴백한다', async () => {
+  it('success=false 면 빈 배열로 삼키지 않고 throw한다', async () => {
     mockedGet.mockResolvedValue({
       success: false,
       httpStatus: 500,
       data: null,
     });
-    expect(await getMyPaymentsServer()).toEqual([]);
+    // '결제 내역 없음' 위장 대신 error.tsx로 노출되도록 reject
+    await expect(getMyPaymentsServer()).rejects.toThrow();
   });
 
-  it('data 가 null 이면 빈 배열로 폴백한다', async () => {
+  it('data 가 null 이면 throw한다', async () => {
     mockedGet.mockResolvedValue({ success: true, httpStatus: 200, data: null });
-    expect(await getMyPaymentsServer()).toEqual([]);
+    await expect(getMyPaymentsServer()).rejects.toThrow();
   });
 
-  it('get 이 throw 하면(네트워크 등) 빈 배열로 폴백한다', async () => {
+  it('get 이 throw 하면(네트워크 등) 삼키지 않고 그대로 전파한다', async () => {
     mockedGet.mockRejectedValue(new Error('network down'));
-    expect(await getMyPaymentsServer()).toEqual([]);
+    await expect(getMyPaymentsServer()).rejects.toThrow('network down');
   });
 });

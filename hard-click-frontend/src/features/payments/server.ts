@@ -49,14 +49,14 @@ export async function getMyPaymentsServer(): Promise<PaymentHistory[]> {
   //    결제내역(강의·구독) 전체가 안 뜨던 버그. confirm(/api/payments/confirm)과 경로 체계 일치. 라이브 검증: 복수 200.
   // ⚠️ 삭제된 강의 행은 orderId/orderNo/paymentType(+FAILED는 paidAt) null로 내려옴 → 매퍼·카드가 null 가드.
   // 페이지네이션 미적용(첫 page=10건만 표시) — 추후.
-  try {
-    const res =
-      await serverApi.get<MyPaymentHistoryPageResponse>('/api/payments/me');
-    if (!res.success || !res.data) return [];
-    return res.data.content.map(toPaymentHistory);
-  } catch {
-    return [];
+  const res =
+    await serverApi.get<MyPaymentHistoryPageResponse>('/api/payments/me');
+  // 실패를 '결제 내역 없음'으로 위장하지 않는다(§0.1④) — 결제한 사용자가 내역을 못 보는 오인·문의 방지.
+  //   /orders 페이지가 catch 없이 호출 → error.tsx로 노출. (serverApi는 4xx/5xx에 throw 없이 {success:false})
+  if (!res.success || !res.data) {
+    throw new Error(`결제 내역 조회 실패 (${res.httpStatus}): ${res.message}`);
   }
+  return res.data.content.map(toPaymentHistory);
 }
 
 /** BE 주문 상세 → UI 계약 매퍼(격리막) */
