@@ -5,9 +5,7 @@ import {
   getScheduleBlocksServer,
   getTodayTasksServer,
 } from '@/features/schedule/server';
-import { ScheduleCalendarCard } from '@/features/schedule/components/ScheduleCalendarCard';
-import { TodayScheduleGroup } from '@/features/schedule/components/TodayScheduleGroup';
-import { AiCoachBanner } from '@/features/schedule/components/AiCoachBanner';
+import { ScheduleClientRoot } from '@/features/schedule/components/ScheduleClientRoot';
 
 export default async function SchedulePage() {
   // 패스 구독자 전용 — 비구독자가 URL로 직접 진입하면 구독권 페이지로 유도
@@ -34,17 +32,14 @@ export default async function SchedulePage() {
         </div>
 
         <div className="mt-4 flex min-h-0 flex-1 flex-col items-stretch gap-4 lg:flex-row">
-          <ScheduleCalendarCard
+          <ScheduleClientRoot
             year={today.getFullYear()}
             month={today.getMonth()}
-            blocks={scheduleBlocks}
-            className="lg:flex-1"
+            date={todayTasks.date}
+            initialTasks={todayTasks.tasks}
+            scheduleBlocks={scheduleBlocks}
+            aiCoachComment={aiCoachComment}
           />
-          {/* 오늘 할 일 + 타임테이블 + AI 코치 묶음 — 이 전체 높이가 캘린더와 동일해야(flex 형제 stretch) 끝선이 맞는다 */}
-          <div className="flex w-full flex-col gap-4 lg:w-[536px] lg:flex-none">
-            <TodayScheduleGroup date={todayTasks.date} initialTasks={todayTasks.tasks} />
-            <AiCoachBanner comment={aiCoachComment} />
-          </div>
         </div>
       </div>
     </div>

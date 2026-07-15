@@ -1,10 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import type { TodayTask } from '../types';
 import { AddTaskModal, type NewTaskInput } from './AddTaskModal';
 
 /** 할 일 추가 버튼 (client 섬) — 클릭 시 날짜·시작/끝 시간을 고를 수 있는 추가 모달을 띄운다. */
-export function AddTaskButton({ onAdd }: { onAdd: (task: NewTaskInput) => void }) {
+export function AddTaskButton({
+  tasks,
+  onAdd,
+}: {
+  tasks: readonly TodayTask[];
+  onAdd: (task: NewTaskInput) => void;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -19,7 +26,7 @@ export function AddTaskButton({ onAdd }: { onAdd: (task: NewTaskInput) => void }
         </svg>
         할 일 추가
       </button>
-      {open && <AddTaskModal onClose={() => setOpen(false)} onSave={onAdd} />}
+      {open && <AddTaskModal existingTasks={tasks} onClose={() => setOpen(false)} onSave={onAdd} />}
     </>
   );
 }

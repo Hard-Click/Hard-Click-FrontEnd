@@ -19,7 +19,7 @@ export function TodayTaskPanel({ date, tasks, onToggle, onAdd }: TodayTaskPanelP
         <h2 className="text-lg font-bold text-[#1E293B]">
           {Number(month)}/{Number(day)}
         </h2>
-        <AddTaskButton onAdd={onAdd} />
+        <AddTaskButton tasks={tasks} onAdd={onAdd} />
       </div>
 
       <div className="mt-4 flex flex-1 flex-col">
