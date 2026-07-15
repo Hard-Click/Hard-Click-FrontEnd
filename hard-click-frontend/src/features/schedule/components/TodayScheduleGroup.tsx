@@ -31,7 +31,7 @@ export function TodayScheduleGroup({
         id: crypto.randomUUID(),
         title: input.title,
         done: false,
-        category: 'REVIEW',
+        category: 'OTHER',
         startTime: input.startTime,
         endTime: input.endTime,
       },

@@ -10,7 +10,7 @@ export interface ScheduleCalendarDay {
   isToday: boolean;
 }
 
-/** "오늘 할 일" 패널 항목 하나. category가 'REVIEW'면 과목 무관 복습 항목. */
+/** "오늘 할 일" 패널 항목 하나. category가 'REVIEW'면 과목 무관 복습 항목, 'OTHER'면 과목 미지정(직접 추가) 항목. */
 export interface TodayTask {
   id: string;
   title: string;
