@@ -74,6 +74,7 @@ export default async function AdminCourseQuizzesPage({
           courses={quizFormCourses}
           takenWeeksByCourse={takenWeeksByCourse}
           presetCourseId={courseId}
+          adminMeta
           createAction={createAdminQuizAction}
           updateAction={updateAdminQuizAction}
         />

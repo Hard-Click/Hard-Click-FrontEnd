@@ -13,6 +13,7 @@ import {
   createQuizAction,
   updateQuizAction,
   getQuizFormMetaAction,
+  getAdminQuizFormMetaAction,
 } from '../actions';
 import type { Quiz, QuizQuestionInput, QuizFormPayload } from '../types';
 
@@ -43,6 +44,7 @@ export default function QuizFormModal({
   initialData,
   presetCourseId,
   withInstructorSelect = false,
+  adminMeta = withInstructorSelect,
   onClose,
   onSuccess,
   createAction = createQuizAction,
@@ -51,6 +53,10 @@ export default function QuizFormModal({
   courses: { courseId: number; title: string; instructor?: string }[];
   takenWeeksByCourse: Record<number, number[]>;
   withInstructorSelect?: boolean;
+  // 관리자 컨텍스트: takenWeeks를 소유자무관 관리자 목록에서 로드할지 여부.
+  // 강사선택 UI(withInstructorSelect)와 분리 — 개별 강의 페이지는 강의가 고정(presetCourseId)이라
+  // 강사선택은 필요 없지만 관리자 메타 라우팅은 필요하다. 미지정 시 withInstructorSelect를 따른다.
+  adminMeta?: boolean;
   onClose: () => void;
   onSuccess?: () => void;
   createAction?: (payload: QuizFormPayload) => Promise<{ success: boolean; message?: string }>;
@@ -132,13 +138,25 @@ export default function QuizFormModal({
   useEffect(() => {
     if (mode !== 'create' || courseId <= 0) return;
     let cancelled = false;
-    getQuizFormMetaAction(courseId).then((m) => {
-      if (!cancelled) setMeta({ courseId, ...m });
-    });
+    // 관리자(adminMeta)는 소유자무관 관리자 목록으로 takenWeeks 집계 —
+    //   강사 엔드포인트(/api/instructor/quizzes)는 로그인 관리자 소유 퀴즈만 반환(0개)이라 1주1퀴즈 중복차단이 안 됨.
+    const metaAction = adminMeta
+      ? getAdminQuizFormMetaAction
+      : getQuizFormMetaAction;
+    metaAction(courseId)
+      .then((m) => {
+        if (!cancelled) setMeta({ courseId, ...m });
+      })
+      .catch(() => {
+        // 실패를 빈 주차로 폴백하면 '등록 가능한 주차가 없습니다'로 오표시돼(§0.1),
+        // 조용히 삼키지 않고 사용자에게 알린다. 주차 드롭다운은 로딩 상태로 남아 오등록을 막는다.
+        if (!cancelled)
+          toast.error('주차 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+      });
     return () => {
       cancelled = true;
     };
-  }, [courseId, mode]);
+  }, [courseId, mode, adminMeta]);
   // 로딩 = 선택 강의 기준 meta가 아직 안 옴 (파생, 동기 setState 없음).
   const metaLoading =
     mode === 'create' && courseId > 0 && meta.courseId !== courseId;
