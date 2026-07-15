@@ -1,16 +1,12 @@
 import { Fragment } from 'react';
 import { categoryColor, type SubjectCategory } from '@/features/courses/subjects';
 import type { TodayTask } from '../types';
+import { toMinutes } from '../utils';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 function hourLabel(hour: number): string {
   return `${String(hour).padStart(2, '0')}:00`;
-}
-
-function toMinutes(time: string): number {
-  const [h, m] = time.split(':').map(Number);
-  return h * 60 + m;
 }
 
 /**

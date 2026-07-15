@@ -68,6 +68,27 @@ export function nextDateISO(dateStr: string): string {
   return toISODate(next.getFullYear(), next.getMonth(), next.getDate());
 }
 
+/** "HH:mm" → 자정 기준 분(minute). */
+export function toMinutes(time: string): number {
+  const [h, m] = time.split(':').map(Number);
+  return h * 60 + m;
+}
+
+/** 끝 시간이 시작 시간보다 같거나 빠르면 다음날로 넘어간 것으로 보고 24시간을 더해 range로 만든다. */
+export function toRange(startTime: string, endTime: string): [number, number] {
+  const s = toMinutes(startTime);
+  let e = toMinutes(endTime);
+  if (e <= s) e += 24 * 60;
+  return [s, e];
+}
+
+/** 두 [시작,끝) 시간 구간이 겹치는지(자정 넘김 포함) 판정. */
+export function rangesOverlap(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
+  const [as, ae] = toRange(aStart, aEnd);
+  const [bs, be] = toRange(bStart, bEnd);
+  return as < be && ae > bs;
+}
+
 const WEEKDAY_SHORT_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
 /** "7/7 (월)" 형식. */
