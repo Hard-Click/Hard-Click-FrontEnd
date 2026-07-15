@@ -33,10 +33,7 @@ export function TodayTimeTable({ tasks }: { tasks: readonly TodayTask[] }) {
     <div className="flex h-full flex-col rounded-2xl border border-[#E2E8F0] bg-white px-3 pb-6 pt-4">
       <h2 className="text-xs font-semibold uppercase tracking-wide text-[#64748B]">Time Table</h2>
       <div className="mt-2 min-h-0 flex-1 overflow-hidden rounded-xl border border-[#E2E8F0]">
-        <div
-          className="grid h-full grid-cols-[52px_1fr]"
-          style={{ gridTemplateRows: 'repeat(24, minmax(0, 1fr))' }}
-        >
+        <div className="grid h-full grid-cols-[52px_1fr] grid-rows-[repeat(24,minmax(0,1fr))]">
           {HOURS.map((hour) => {
             const category = categories[hour];
             const nextCategory = hour < 23 ? categories[hour + 1] : null;
