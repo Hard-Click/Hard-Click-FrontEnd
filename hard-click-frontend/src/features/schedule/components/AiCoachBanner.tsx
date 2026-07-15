@@ -15,9 +15,9 @@ export function AiCoachBanner({ comment }: AiCoachBannerProps) {
           <path d="M7 16.5C7.45 18.55 9.05 18.55 9.5 19 9.05 19.45 7.45 19.45 7 21.5 6.55 19.45 4.95 19.45 4.5 19 4.95 18.55 6.55 18.55 7 16.5Z" />
         </svg>
       </span>
-      <div>
+      <div className="min-w-0 flex-1">
         <h2 className="text-sm font-bold text-[#2F5DAA]">AI 학습 코치</h2>
-        <p className="mt-1 text-sm text-[#334155]">{comment}</p>
+        <p className="mt-1 break-keep text-sm leading-relaxed text-[#334155]">{comment}</p>
       </div>
     </div>
   );

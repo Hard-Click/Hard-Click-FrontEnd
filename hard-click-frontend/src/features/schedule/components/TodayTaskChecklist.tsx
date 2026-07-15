@@ -19,14 +19,14 @@ export function TodayTaskChecklist({ tasks: initialTasks }: TodayTaskChecklistPr
 
   return (
     <div className="flex h-full flex-col">
-      <ul className="flex flex-1 flex-col gap-3">
+      <ul className="flex flex-1 flex-col gap-2">
         {tasks.map((task) => (
           <li key={task.id}>
             <button
               type="button"
               onClick={() => toggleTask(task.id)}
               aria-pressed={task.done}
-              className="flex w-full items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-3.5 text-left"
+              className="flex w-full items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2 text-left"
             >
               <span
                 className={
@@ -48,10 +48,15 @@ export function TodayTaskChecklist({ tasks: initialTasks }: TodayTaskChecklistPr
                   </svg>
                 )}
               </span>
-              <span
-                className={`flex-1 text-sm ${task.done ? 'text-[#94A3B8] line-through' : 'text-[#1E293B]'}`}
-              >
-                {task.title}
+              <span className="flex-1">
+                <span
+                  className={`block text-sm ${task.done ? 'text-[#94A3B8] line-through' : 'text-[#1E293B]'}`}
+                >
+                  {task.title}
+                </span>
+                <span className="mt-0.5 block text-xs text-[#94A3B8]">
+                  {task.startTime}-{task.endTime}
+                </span>
               </span>
               <span
                 className="h-2.5 w-2.5 shrink-0 rounded-sm"

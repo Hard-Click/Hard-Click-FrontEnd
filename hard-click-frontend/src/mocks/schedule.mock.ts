@@ -5,9 +5,9 @@ import type { ScheduleBlock, TodayTask } from '@/features/schedule/types';
  * §0.5 정직성: 없는데 있는 것처럼 채우지 않기 위해 mock임을 이 파일·server.ts 양쪽에 명시.
  */
 export const mockTodayTasks: readonly TodayTask[] = [
-  { id: 'today-1', title: '영어 Unit 3 듣기', done: true, category: 'ENGLISH' },
-  { id: 'today-2', title: '수학 미적분 2강', done: false, category: 'MATH' },
-  { id: 'today-3', title: '지난주 복습 퀴즈', done: false, category: 'REVIEW' },
+  { id: 'today-1', title: '영어 Unit 3 듣기', done: true, category: 'ENGLISH', startTime: '07:00', endTime: '08:00' },
+  { id: 'today-2', title: '수학 미적분 2강', done: false, category: 'MATH', startTime: '14:00', endTime: '16:00' },
+  { id: 'today-3', title: '지난주 복습 퀴즈', done: false, category: 'REVIEW', startTime: '20:00', endTime: '21:00' },
 ];
 
 /** 2026년 7월 캘린더 렌더링 검증용 임의 학습 구간(주 경계를 넘는 케이스 포함). */

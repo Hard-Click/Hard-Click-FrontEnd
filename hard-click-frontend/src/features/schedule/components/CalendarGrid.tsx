@@ -15,7 +15,7 @@ export function CalendarGrid({ year, month, blocks = [] }: CalendarGridProps) {
   const weeks = getMonthCalendarWeeks(year, month);
 
   return (
-    <div>
+    <div className="flex h-full flex-col">
       <div className="grid grid-cols-7 text-center text-sm font-medium text-[#94A3B8]">
         {WEEKDAY_LABELS.map((label) => (
           <div key={label} className="py-2">
@@ -23,12 +23,12 @@ export function CalendarGrid({ year, month, blocks = [] }: CalendarGridProps) {
           </div>
         ))}
       </div>
-      <div className="flex flex-col gap-3">
+      <div className="flex min-h-0 flex-1 flex-col gap-1">
         {weeks.map((week) => {
           const segments = getWeekBarSegments(week, blocks);
 
           return (
-            <div key={week[0].date} className="min-h-[56px]">
+            <div key={week[0].date} className="flex-1">
               <div className="grid grid-cols-7">
                 {week.map((cell) => (
                   <div key={cell.date} className="flex justify-center py-1">
