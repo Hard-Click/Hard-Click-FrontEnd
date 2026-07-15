@@ -13,11 +13,21 @@ function toMinutes(time: string): number {
   return h * 60 + m;
 }
 
-/** 이 시간(정시~정시+1시간)에 걸쳐 있는 오늘 할 일의 과목(있으면). 10분 단위 시작/종료 시각 기준 겹침 판정. */
+/**
+ * 이 시간(정시~정시+1시간)에 걸쳐 있는 오늘 할 일의 과목(있으면). 10분 단위 시작/종료 시각 기준 겹침 판정.
+ * 이 표는 "오늘" 하루(00~23시)만 그리므로, 끝 시간이 시작 시간보다 같거나 빠르면(예: 21:00~01:00)
+ * 자정을 넘겨 다음날 새벽까지 이어지는 일정으로 보고 표의 맨 아래(23시)까지만 칠한다.
+ * 표 위쪽 0~1시 칸은 "오늘"의 지난 새벽 시간이라, 다음날 새벽을 그 칸에 겹쳐 칠하면 안 된다.
+ */
 function categoryAtHour(hour: number, tasks: readonly TodayTask[]): SubjectCategory | null {
   const hourStart = hour * 60;
   const hourEnd = hourStart + 60;
-  const task = tasks.find((t) => toMinutes(t.startTime) < hourEnd && toMinutes(t.endTime) > hourStart);
+  const task = tasks.find((t) => {
+    const s = toMinutes(t.startTime);
+    const e = toMinutes(t.endTime);
+    if (e <= s) return s < hourEnd;
+    return s < hourEnd && e > hourStart;
+  });
   return task?.category ?? null;
 }
 

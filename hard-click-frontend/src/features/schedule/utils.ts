@@ -61,6 +61,13 @@ export function formatMonthTitle(year: number, month: number): string {
   return `${year}년 ${month + 1}월`;
 }
 
+/** "yyyy-MM-dd" → 그 다음 날 "yyyy-MM-dd" (자정 넘어가는 할 일 표시용). */
+export function nextDateISO(dateStr: string): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const next = new Date(y, m - 1, d + 1);
+  return toISODate(next.getFullYear(), next.getMonth(), next.getDate());
+}
+
 const WEEKDAY_SHORT_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
 /** "7/7 (월)" 형식. */
