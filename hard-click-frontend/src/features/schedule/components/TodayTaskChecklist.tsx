@@ -1,21 +1,16 @@
 'use client';
 
-import { useState } from 'react';
 import { categoryColor } from '@/features/courses/subjects';
 import type { TodayTask } from '../types';
 
 interface TodayTaskChecklistProps {
   tasks: readonly TodayTask[];
+  onToggle: (id: string) => void;
 }
 
-export function TodayTaskChecklist({ tasks: initialTasks }: TodayTaskChecklistProps) {
-  const [tasks, setTasks] = useState(initialTasks);
+export function TodayTaskChecklist({ tasks, onToggle }: TodayTaskChecklistProps) {
   const doneCount = tasks.filter((task) => task.done).length;
   const progressPercent = tasks.length === 0 ? 0 : Math.round((doneCount / tasks.length) * 100);
-
-  function toggleTask(id: string) {
-    setTasks((prev) => prev.map((task) => (task.id === id ? { ...task, done: !task.done } : task)));
-  }
 
   return (
     <div className="flex h-full flex-col">
@@ -24,7 +19,7 @@ export function TodayTaskChecklist({ tasks: initialTasks }: TodayTaskChecklistPr
           <li key={task.id}>
             <button
               type="button"
-              onClick={() => toggleTask(task.id)}
+              onClick={() => onToggle(task.id)}
               aria-pressed={task.done}
               className="flex w-full items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2 text-left"
             >

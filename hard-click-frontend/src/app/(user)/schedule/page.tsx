@@ -6,8 +6,7 @@ import {
   getTodayTasksServer,
 } from '@/features/schedule/server';
 import { ScheduleCalendarCard } from '@/features/schedule/components/ScheduleCalendarCard';
-import { TodayTaskPanel } from '@/features/schedule/components/TodayTaskPanel';
-import { TodayTimeTable } from '@/features/schedule/components/TodayTimeTable';
+import { TodayScheduleGroup } from '@/features/schedule/components/TodayScheduleGroup';
 import { AiCoachBanner } from '@/features/schedule/components/AiCoachBanner';
 
 export default async function SchedulePage() {
@@ -43,14 +42,7 @@ export default async function SchedulePage() {
           />
           {/* 오늘 할 일 + 타임테이블 + AI 코치 묶음 — 이 전체 높이가 캘린더와 동일해야(flex 형제 stretch) 끝선이 맞는다 */}
           <div className="flex w-full flex-col gap-4 lg:w-[536px] lg:flex-none">
-            <div className="flex min-h-0 flex-1 gap-4">
-              <div className="w-full lg:w-[260px]">
-                <TodayTaskPanel date={todayTasks.date} tasks={todayTasks.tasks} />
-              </div>
-              <div className="w-full lg:w-[260px]">
-                <TodayTimeTable tasks={todayTasks.tasks} />
-              </div>
-            </div>
+            <TodayScheduleGroup date={todayTasks.date} initialTasks={todayTasks.tasks} />
             <AiCoachBanner comment={aiCoachComment} />
           </div>
         </div>
