@@ -2,15 +2,17 @@ import type { TodayTask } from '../types';
 import { TodayTaskChecklist } from './TodayTaskChecklist';
 import { AddTaskButton } from './AddTaskButton';
 import type { NewTaskInput } from './AddTaskModal';
+import type { EditTaskInput } from './EditTaskModal';
 
 interface TodayTaskPanelProps {
   date: string;
   tasks: readonly TodayTask[];
   onToggle: (id: string) => void;
   onAdd: (task: NewTaskInput) => void;
+  onEdit: (id: string, input: EditTaskInput) => void;
 }
 
-export function TodayTaskPanel({ date, tasks, onToggle, onAdd }: TodayTaskPanelProps) {
+export function TodayTaskPanel({ date, tasks, onToggle, onAdd, onEdit }: TodayTaskPanelProps) {
   const [, month, day] = date.split('-');
 
   return (
@@ -23,7 +25,7 @@ export function TodayTaskPanel({ date, tasks, onToggle, onAdd }: TodayTaskPanelP
       </div>
 
       <div className="mt-4 flex flex-1 flex-col">
-        <TodayTaskChecklist tasks={tasks} onToggle={onToggle} />
+        <TodayTaskChecklist tasks={tasks} onToggle={onToggle} onEdit={onEdit} />
       </div>
     </div>
   );
