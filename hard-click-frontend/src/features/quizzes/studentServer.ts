@@ -37,7 +37,11 @@ export async function getEnrolledCoursesServer(): Promise<
   const res = await serverApi.get<{ courseId: number; courseTitle: string }[]>(
     '/api/members/me/courses',
   );
-  if (!res.success || !res.data) return [];
+  // 실패를 빈 목록으로 삼키면 '수강 없음'/유효 URL 404로 위장되므로 throw(§0.1④).
+  //   진입·수강 게이트(핵심)는 error.tsx로 노출 / courseTitle 브레드크럼(장식) 콜러는 .catch로 degrade.
+  if (!res.success || !res.data) {
+    throw new Error(`수강 목록 조회 실패 (${res.httpStatus}): ${res.message}`);
+  }
   return res.data.map((c) => ({ courseId: c.courseId, title: c.courseTitle }));
 }
 
@@ -247,7 +251,8 @@ export async function getStudentQuizReviewServer(
   // 리포트와 수강목록(courseTitle 브레드크럼용)은 서로 독립 → 병렬 조회로 라운드트립 단축.
   const [res, courses] = await Promise.all([
     serverApi.get<ApiQuizReport>(`/api/quizzes/${quizId}/reports/me`),
-    getEnrolledCoursesServer(),
+    // courseTitle 브레드크럼(장식)용 — 수강목록 실패해도 리뷰 본문은 살린다(핵심 아님, 의도적 degrade).
+    getEnrolledCoursesServer().catch(() => []),
   ]);
   if (!res.success || !res.data) return null;
   const d = res.data;

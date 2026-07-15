@@ -21,7 +21,8 @@ export default async function QuizTakePage({
 
   const [detail, courses] = await Promise.all([
     getStudentQuizDetailServer(courseId, quizId),
-    getEnrolledCoursesServer(),
+    // courseTitle 헤더(장식)용 — 수강목록 실패해도 응시 화면은 살린다(핵심 아님, 의도적 degrade).
+    getEnrolledCoursesServer().catch(() => []),
   ]);
   if (!detail || detail.questions.length === 0) notFound();
   // 재응시 없음 — 이미 응시한 퀴즈는 결과(해설) 화면으로 리다이렉트
