@@ -7,6 +7,7 @@ import {
 } from '@/features/schedule/server';
 import { ScheduleCalendarCard } from '@/features/schedule/components/ScheduleCalendarCard';
 import { TodayTaskPanel } from '@/features/schedule/components/TodayTaskPanel';
+import { TodayTimeTable } from '@/features/schedule/components/TodayTimeTable';
 import { AiCoachBanner } from '@/features/schedule/components/AiCoachBanner';
 
 export default async function SchedulePage() {
@@ -24,28 +25,34 @@ export default async function SchedulePage() {
   ]);
 
   return (
-    <div className="min-h-screen bg-[#F5F7FB] px-8 py-8">
-      <div className="mx-auto w-full max-w-[1120px]">
-        <h1 className="text-3xl font-bold text-[#1E293B]">학습 스케줄</h1>
-        <p className="mt-1 text-sm text-[#64748B]">
-          AI가 목표와 진도에 맞춰 짜주는 나만의 학습 스케줄이에요.
-        </p>
-
-        <div className="mt-8 flex flex-col items-stretch gap-6 lg:flex-row">
-          <div className="w-full lg:flex-[2]">
-            <ScheduleCalendarCard
-              year={today.getFullYear()}
-              month={today.getMonth()}
-              blocks={scheduleBlocks}
-            />
-          </div>
-          <div className="w-full lg:w-[300px] lg:flex-none">
-            <TodayTaskPanel date={todayTasks.date} tasks={todayTasks.tasks} />
-          </div>
+    <div className="flex h-[calc(100vh-64px)] flex-col overflow-hidden bg-[#F5F7FB] px-8 py-6">
+      <div className="mx-auto flex w-full max-w-[1320px] flex-1 flex-col overflow-hidden">
+        <div className="flex-none">
+          <h1 className="text-2xl font-bold text-[#1E293B]">학습 스케줄</h1>
+          <p className="mt-1 text-sm text-[#64748B]">
+            AI가 목표와 진도에 맞춰 짜주는 나만의 학습 스케줄이에요.
+          </p>
         </div>
 
-        <div className="mt-6">
-          <AiCoachBanner comment={aiCoachComment} />
+        <div className="mt-4 flex min-h-0 flex-1 flex-col items-stretch gap-4 lg:flex-row">
+          <ScheduleCalendarCard
+            year={today.getFullYear()}
+            month={today.getMonth()}
+            blocks={scheduleBlocks}
+            className="lg:flex-1"
+          />
+          {/* 오늘 할 일 + 타임테이블 + AI 코치 묶음 — 이 전체 높이가 캘린더와 동일해야(flex 형제 stretch) 끝선이 맞는다 */}
+          <div className="flex w-full flex-col gap-4 lg:w-[536px] lg:flex-none">
+            <div className="flex min-h-0 flex-1 gap-4">
+              <div className="w-full lg:w-[260px]">
+                <TodayTaskPanel date={todayTasks.date} tasks={todayTasks.tasks} />
+              </div>
+              <div className="w-full lg:w-[260px]">
+                <TodayTimeTable tasks={todayTasks.tasks} />
+              </div>
+            </div>
+            <AiCoachBanner comment={aiCoachComment} />
+          </div>
         </div>
       </div>
     </div>

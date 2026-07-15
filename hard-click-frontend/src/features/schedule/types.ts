@@ -16,6 +16,9 @@ export interface TodayTask {
   title: string;
   done: boolean;
   category: SubjectCategory;
+  /** "HH:mm" 24시간제. 오늘 타임테이블 색상 구간도 이 시간대로 그린다. */
+  startTime: string;
+  endTime: string;
 }
 
 export interface TodayTasksSummary {
