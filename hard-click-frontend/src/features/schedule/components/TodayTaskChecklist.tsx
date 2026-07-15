@@ -17,19 +17,17 @@ export function TodayTaskChecklist({ tasks, onToggle }: TodayTaskChecklistProps)
       <ul className="flex flex-1 flex-col gap-2">
         {tasks.map((task) => (
           <li key={task.id}>
-            <button
-              type="button"
-              onClick={() => onToggle(task.id)}
-              aria-pressed={task.done}
-              className="flex w-full items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2 text-left"
-            >
-              <span
+            <div className="flex w-full items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2 text-left">
+              <button
+                type="button"
+                onClick={() => onToggle(task.id)}
+                aria-pressed={task.done}
+                aria-label={task.done ? '완료 취소' : '완료로 표시'}
                 className={
                   task.done
                     ? 'flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#2F5DAA] text-white'
                     : 'h-5 w-5 shrink-0 rounded-md border-2 border-[#CBD5E1]'
                 }
-                aria-hidden
               >
                 {task.done && (
                   <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" aria-hidden>
@@ -42,7 +40,7 @@ export function TodayTaskChecklist({ tasks, onToggle }: TodayTaskChecklistProps)
                     />
                   </svg>
                 )}
-              </span>
+              </button>
               <span className="flex-1">
                 <span
                   className={`block text-sm ${task.done ? 'text-[#94A3B8] line-through' : 'text-[#1E293B]'}`}
@@ -58,7 +56,7 @@ export function TodayTaskChecklist({ tasks, onToggle }: TodayTaskChecklistProps)
                 style={{ backgroundColor: categoryColor(task.category).light }}
                 aria-hidden
               />
-            </button>
+            </div>
           </li>
         ))}
       </ul>
