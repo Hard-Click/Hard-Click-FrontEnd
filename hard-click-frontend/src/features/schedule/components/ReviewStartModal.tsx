@@ -26,13 +26,16 @@ export function ReviewStartModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="review-start-modal-title"
         className="w-full max-w-[340px] rounded-[20px] bg-white p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E6F1FB] text-[#185FA5]">
           {RefreshIcon}
         </div>
-        <p className="mt-3.5 text-[17px] font-medium text-[#1E293B]">복습을 시작할까요?</p>
+        <p id="review-start-modal-title" className="mt-3.5 text-[17px] font-medium text-[#1E293B]">복습을 시작할까요?</p>
         <p className="mt-1.5 text-[13px] leading-relaxed text-[#64748B]">
           오답 문항과 유사 문제로 구성된 복습 퀴즈예요.
         </p>
