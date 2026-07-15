@@ -69,6 +69,34 @@ const HeroSparkle = (
 export default async function SubscriptionPage() {
   const info = await getSubscriptionServer();
 
+  // 구독 상태 불명(BE 조회 실패) → '미구독 + 지금 구독하기'로 위장하지 않고 에러 안내(구독자 재결제 방지, §0.1④).
+  if (!info.statusKnown) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC]">
+        <section className="bg-gradient-to-br from-[#2F5DAA] to-[#1E3A8A] px-8 py-16 text-center text-white">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-base font-semibold">
+            {HeroSparkle} 연간 구독권
+          </span>
+          <h1 className="mt-6 text-4xl font-bold">FLOWN 연간 패스</h1>
+        </section>
+        <div className="mx-auto max-w-[640px] px-8 py-20 text-center">
+          <h2 className="text-2xl font-bold text-[#1F2937]">
+            구독 정보를 불러오지 못했어요
+          </h2>
+          <p className="mt-3 text-base text-[#4B5563]">
+            일시적인 오류일 수 있어요. 잠시 후 다시 시도해주세요.
+          </p>
+          <a
+            href="/subscriptions"
+            className="mt-8 inline-flex h-12 items-center justify-center rounded-[10px] bg-[#2F5DAA] px-6 text-base font-semibold text-white transition hover:bg-[#274C8B]"
+          >
+            다시 시도
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       {/* Hero */}

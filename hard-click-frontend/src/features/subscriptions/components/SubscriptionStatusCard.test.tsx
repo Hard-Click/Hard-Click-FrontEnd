@@ -5,6 +5,7 @@ import type { SubscriptionInfo } from '../types';
 function makeInfo(overrides: Partial<SubscriptionInfo>): SubscriptionInfo {
   return {
     subscribed: true,
+    statusKnown: true,
     planName: 'FLOWN 연간 패스',
     benefits: [],
     suneungDate: '2026-11-19',

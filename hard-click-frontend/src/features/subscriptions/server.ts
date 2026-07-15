@@ -39,10 +39,11 @@ interface ApiSubscriptionPlan {
   benefits: string[];
 }
 
-/** 미구독 기본값(조회 실패 폴백) — 가격 규칙은 도메인 상수로 계산 */
-function unsubscribedFallback(): SubscriptionInfo {
+/** 상태 불명 폴백(구독 조회 실패) — statusKnown=false로 '미구독 위장'을 막는다(페이지가 에러 안내). */
+function unknownStatusFallback(): SubscriptionInfo {
   return {
     subscribed: false,
+    statusKnown: false,
     planName: mockSubscriptionStatus.planName,
     benefits: SUBSCRIPTION_BENEFITS,
     suneungDate: SUNEUNG_DATE,
@@ -63,6 +64,7 @@ export const getSubscriptionServer = cache(async (): Promise<SubscriptionInfo> =
     const s = mockSubscriptionStatus;
     return {
       subscribed: s.subscribed,
+      statusKnown: true,
       planName: s.planName,
       benefits: SUBSCRIPTION_BENEFITS,
       suneungDate: SUNEUNG_DATE,
@@ -80,13 +82,16 @@ export const getSubscriptionServer = cache(async (): Promise<SubscriptionInfo> =
     serverApi.get<ApiSubscriptionMe>('/api/subscriptions/me'),
     serverApi.get<ApiSubscriptionPlan>('/api/subscriptions/plan'),
   ]);
-  const me = meRes.success ? meRes.data : null;
+  // /me(구독 상태) 실패 = 상태 불명 → '미구독'으로 위장하면 구독자가 재결제할 수 있으므로 statusKnown=false(§0.1④).
+  //   throw 안 함: getSubscriptionServer는 루트 layout이 catch 없이 쓰므로 throw 시 앱 전체가 깨진다 → degrade.
+  if (!meRes.success) return unknownStatusFallback();
+  const me = meRes.data;
   const plan = planRes.success ? planRes.data : null;
-  if (!me && !plan) return unsubscribedFallback();
 
   const subscribed = me?.subscribed ?? false;
   return {
     subscribed,
+    statusKnown: true,
     planName: plan?.name ?? mockSubscriptionStatus.planName,
     benefits: plan?.benefits ?? SUBSCRIPTION_BENEFITS,
     suneungDate: SUNEUNG_DATE,

@@ -7,6 +7,11 @@
 export interface SubscriptionInfo {
   /** 구독 중 여부 */
   subscribed: boolean;
+  /**
+   * 구독 상태 조회 성공 여부. false면 BE 조회 실패로 상태가 **불명**이다.
+   * 페이지는 이때 subscribed(=false)를 '미구독'으로 렌더하면 안 된다(구독자 재결제 위험, §0.1④) — 에러 안내로 처리.
+   */
+  statusKnown: boolean;
   /** 플랜명 (예: FLOWN 연간 패스) */
   planName: string;
   /** 혜택 목록 */
