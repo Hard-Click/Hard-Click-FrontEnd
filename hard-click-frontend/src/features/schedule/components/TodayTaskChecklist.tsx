@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { categoryColor } from '@/features/courses/subjects';
 import type { TodayTask } from '../types';
 import { EditTaskModal, type EditTaskInput } from './EditTaskModal';
+import { ReviewStartModal } from './ReviewStartModal';
 
 interface TodayTaskChecklistProps {
   tasks: readonly TodayTask[];
@@ -13,6 +14,7 @@ interface TodayTaskChecklistProps {
 
 export function TodayTaskChecklist({ tasks, onToggle, onEdit }: TodayTaskChecklistProps) {
   const [editingTask, setEditingTask] = useState<TodayTask | null>(null);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const doneCount = tasks.filter((task) => task.done).length;
   const progressPercent = tasks.length === 0 ? 0 : Math.round((doneCount / tasks.length) * 100);
 
@@ -22,25 +24,34 @@ export function TodayTaskChecklist({ tasks, onToggle, onEdit }: TodayTaskCheckli
         {tasks.map((task) => {
           // 수정 모달은 직접 추가한 할 일(OTHER 카테고리)만 — 원래 스케줄에 있던 과목별 항목은 수정 대상 아님.
           const editable = task.category === 'OTHER';
+          // 복습 항목(REVIEW 카테고리)은 수정이 아니라 복습 시작 확인 모달을 띄운다.
+          // 복습 퀴즈를 실제로 풀기 전까지는 체크박스로 완료 체크를 할 수 없다(아래 checkbox disabled 처리).
+          const isReview = task.category === 'REVIEW';
+          const handleClick = editable
+            ? () => setEditingTask(task)
+            : isReview
+              ? () => setReviewModalOpen(true)
+              : undefined;
           return (
           <li key={task.id}>
             <div
-              onClick={editable ? () => setEditingTask(task) : undefined}
-              className={`flex w-full items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2 text-left ${editable ? 'cursor-pointer' : ''}`}
+              onClick={handleClick}
+              className={`flex w-full items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2 text-left ${handleClick ? 'cursor-pointer' : ''}`}
             >
               <button
                 type="button"
+                disabled={isReview}
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggle(task.id);
                 }}
                 aria-pressed={task.done}
-                aria-label={task.done ? '완료 취소' : '완료로 표시'}
-                className={
+                aria-label={isReview ? '복습 퀴즈를 풀어야 완료 체크할 수 있어요' : task.done ? '완료 취소' : '완료로 표시'}
+                className={`${
                   task.done
                     ? 'flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#2F5DAA] text-white'
                     : 'h-5 w-5 shrink-0 rounded-md border-2 border-[#CBD5E1]'
-                }
+                } ${isReview ? 'cursor-not-allowed opacity-50' : ''}`}
               >
                 {task.done && (
                   <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" aria-hidden>
@@ -95,6 +106,7 @@ export function TodayTaskChecklist({ tasks, onToggle, onEdit }: TodayTaskCheckli
           onSave={(input) => onEdit(editingTask.id, input)}
         />
       )}
+      {reviewModalOpen && <ReviewStartModal onClose={() => setReviewModalOpen(false)} />}
     </div>
   );
 }
