@@ -110,16 +110,22 @@ export default function SimilarQuizTakeClient({
 
   const handleConfirmSubmit = async () => {
     setSubmitting(true);
-    const res = await submitSimilarQuizAction(detail.similarQuizId, answers);
-    setSubmitting(false);
-    if (!res.success || !res.result) {
-      toast.error(res.message ?? '제출에 실패했습니다.');
-      return;
+    try {
+      const res = await submitSimilarQuizAction(detail.similarQuizId, answers);
+      if (!res.success || !res.result) {
+        toast.error(res.message ?? '제출에 실패했습니다.');
+        return;
+      }
+      setShowModal(false);
+      toast.success(`채점 완료! 점수 ${res.result.score}점`);
+      // 기존 퀴즈와 달리 목록으로 이동하지 않고 같은 화면에서 해설(결과)로 전환.
+      onComplete(res.result);
+    } catch {
+      // 액션이 인프라 레벨에서 reject되어도 사용자 피드백·상태 복구 보장(모달 영구 비활성 방지).
+      toast.error('제출에 실패했습니다.');
+    } finally {
+      setSubmitting(false);
     }
-    setShowModal(false);
-    toast.success(`채점 완료! 점수 ${res.result.score}점`);
-    // 기존 퀴즈와 달리 목록으로 이동하지 않고 같은 화면에서 해설(결과)로 전환.
-    onComplete(res.result);
   };
 
   return (

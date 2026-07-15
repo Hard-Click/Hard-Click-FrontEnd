@@ -47,6 +47,23 @@ export async function submitSimilarQuizAction(
     return { success: false, message: '제출 데이터가 올바르지 않습니다.' };
   }
 
+  // Server Action 입력은 불신(§5) — mock/live 분기 전에 답안을 검증(questionId 양의 정수·selectedIndex 0~3).
+  // BE 계약: answers=[{questionId, selectedIndex}]. Record → 검증하며 배열로 변환.
+  const answerList: { questionId: number; selectedIndex: number }[] = [];
+  for (const [qid, idx] of Object.entries(answers)) {
+    const questionId = Number(qid);
+    if (
+      !Number.isInteger(questionId) ||
+      questionId <= 0 ||
+      !Number.isInteger(idx) ||
+      idx < 0 ||
+      idx > 3
+    ) {
+      return { success: false, message: '제출 데이터가 올바르지 않습니다.' };
+    }
+    answerList.push({ questionId, selectedIndex: idx });
+  }
+
   if (isMock('similarQuiz')) {
     const result = gradeSimilarQuizMock(similarQuizId, answers);
     if (!result) {
@@ -57,16 +74,6 @@ export async function submitSimilarQuizAction(
 
   // ── 라이브(BE 완성 후) — 가정 shape, 미검증 ──
   try {
-    // BE 계약: answers=[{questionId, selectedIndex(0~3)}]. Record → 배열 변환.
-    const answerList: { questionId: number; selectedIndex: number }[] = [];
-    for (const [qid, idx] of Object.entries(answers)) {
-      const questionId = Number(qid);
-      if (!Number.isInteger(questionId) || !Number.isInteger(idx)) {
-        return { success: false, message: '제출 데이터가 올바르지 않습니다.' };
-      }
-      answerList.push({ questionId, selectedIndex: idx });
-    }
-
     const res = await serverApi.post<ApiSimilarQuizResult>(
       `/api/similar-quizzes/${similarQuizId}/submit`,
       { answers: answerList },
