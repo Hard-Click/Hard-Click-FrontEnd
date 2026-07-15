@@ -84,22 +84,33 @@ const Select = forwardRef<
 >(function Select({ label, value, onChange, placeholder, options, error, highlight }, ref) {
   return (
     <div>
-      <select
-        ref={ref}
-        aria-label={label}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`h-12 w-full rounded-xl border bg-white px-4 text-sm text-[#1F2937] outline-none focus:border-[#2F5DAA] ${
-          highlight ? 'border-[#DC2626]' : 'border-[#E2E8F0]'
-        }`}
-      >
-        <option value="">{placeholder}</option>
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.name}
-          </option>
-        ))}
-      </select>
+      <div className="relative">
+        <select
+          ref={ref}
+          aria-label={label}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={`h-12 w-full appearance-none rounded-xl border bg-white px-4 pr-10 text-sm outline-none focus:border-[#2F5DAA] ${
+            highlight ? 'border-[#DC2626]' : 'border-[#E2E8F0]'
+          } ${value ? 'text-[#1F2937]' : 'text-[#94A3B8]'}`}
+        >
+          <option value="">{placeholder}</option>
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.name}
+            </option>
+          ))}
+        </select>
+        <svg
+          className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#94A3B8]"
+          width="18"
+          height="18"
+          viewBox="0 0 20 20"
+          fill="none"
+        >
+          <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
       {error && <p className="mt-1 text-xs text-[#DC2626]">{error}</p>}
     </div>
   );
