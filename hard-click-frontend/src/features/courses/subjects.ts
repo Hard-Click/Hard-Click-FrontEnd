@@ -82,7 +82,8 @@ export type SubjectCategory =
   | 'SOCIAL'
   | 'SCIENCE'
   | 'FOREIGN_LANGUAGE'
-  | 'REVIEW';
+  | 'REVIEW'
+  | 'OTHER';
 
 interface CategoryColor {
   light: string;
@@ -103,6 +104,7 @@ const CATEGORY_COLOR: Record<SubjectCategory, CategoryColor> = {
   SCIENCE: { light: '#a4eae4', dark: '#a4eae4' }, // 밝은 파스텔 teal
   FOREIGN_LANGUAGE: { light: '#f17e92', dark: '#f17e92' }, // 로즈 레드(갈색빛 안 나게 채도↑)
   REVIEW: { light: '#a4eabe', dark: '#a4eabe' }, // 밝은 파스텔 green
+  OTHER: { light: '#cbd5e1', dark: '#cbd5e1' }, // 무채색 회색 — 8색 범주 팔레트와 안 겹치는 "기타"용
 };
 
 /** BE 과목 enum 값("KO_READING" 등) → 대분류. 세부과목 접두사 기준(§ CATEGORY_COLOR). */
@@ -143,6 +145,7 @@ const CATEGORY_LABEL: Record<SubjectCategory, string> = {
   SCIENCE: '과학',
   FOREIGN_LANGUAGE: '외국어',
   REVIEW: '복습',
+  OTHER: '기타',
 };
 
 export interface ScheduleLegendItem {
@@ -151,9 +154,9 @@ export interface ScheduleLegendItem {
   color: CategoryColor;
 }
 
-/** 학습 스케줄러 범례(대분류 7개 + 복습, 표시 순서 고정). */
+/** 학습 스케줄러 범례(대분류 7개 + 복습 + 기타, 표시 순서 고정). */
 export const SCHEDULE_LEGEND: readonly ScheduleLegendItem[] = (
-  ['KOREAN', 'MATH', 'ENGLISH', 'KOREAN_HISTORY', 'SOCIAL', 'SCIENCE', 'FOREIGN_LANGUAGE', 'REVIEW'] as const
+  ['KOREAN', 'MATH', 'ENGLISH', 'KOREAN_HISTORY', 'SOCIAL', 'SCIENCE', 'FOREIGN_LANGUAGE', 'REVIEW', 'OTHER'] as const
 ).map((category) => ({
   category,
   label: CATEGORY_LABEL[category],
