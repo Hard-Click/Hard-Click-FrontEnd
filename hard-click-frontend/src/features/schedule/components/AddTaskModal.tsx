@@ -14,7 +14,7 @@ const ClockIcon = (
 const HOURS_24 = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const MINUTES_10 = ['00', '10', '20', '30', '40', '50'];
 
-function TimePillField({
+export function TimePillField({
   label,
   value,
   onChange,

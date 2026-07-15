@@ -1,26 +1,39 @@
 'use client';
 
+import { useState } from 'react';
 import { categoryColor } from '@/features/courses/subjects';
 import type { TodayTask } from '../types';
+import { EditTaskModal, type EditTaskInput } from './EditTaskModal';
 
 interface TodayTaskChecklistProps {
   tasks: readonly TodayTask[];
   onToggle: (id: string) => void;
+  onEdit: (id: string, input: EditTaskInput) => void;
 }
 
-export function TodayTaskChecklist({ tasks, onToggle }: TodayTaskChecklistProps) {
+export function TodayTaskChecklist({ tasks, onToggle, onEdit }: TodayTaskChecklistProps) {
+  const [editingTask, setEditingTask] = useState<TodayTask | null>(null);
   const doneCount = tasks.filter((task) => task.done).length;
   const progressPercent = tasks.length === 0 ? 0 : Math.round((doneCount / tasks.length) * 100);
 
   return (
     <div className="flex h-full flex-col">
       <ul className="flex flex-1 flex-col gap-2">
-        {tasks.map((task) => (
+        {tasks.map((task) => {
+          // 수정 모달은 직접 추가한 할 일(OTHER 카테고리)만 — 원래 스케줄에 있던 과목별 항목은 수정 대상 아님.
+          const editable = task.category === 'OTHER';
+          return (
           <li key={task.id}>
-            <div className="flex w-full items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2 text-left">
+            <div
+              onClick={editable ? () => setEditingTask(task) : undefined}
+              className={`flex w-full items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2 text-left ${editable ? 'cursor-pointer' : ''}`}
+            >
               <button
                 type="button"
-                onClick={() => onToggle(task.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggle(task.id);
+                }}
                 aria-pressed={task.done}
                 aria-label={task.done ? '완료 취소' : '완료로 표시'}
                 className={
@@ -58,7 +71,8 @@ export function TodayTaskChecklist({ tasks, onToggle }: TodayTaskChecklistProps)
               />
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
 
       <div className="mt-5">
@@ -72,6 +86,15 @@ export function TodayTaskChecklist({ tasks, onToggle }: TodayTaskChecklistProps)
           <div className="h-1.5 rounded-full bg-[#2F5DAA]" style={{ width: `${progressPercent}%` }} />
         </div>
       </div>
+
+      {editingTask && (
+        <EditTaskModal
+          task={editingTask}
+          existingTasks={tasks.filter((t) => t.id !== editingTask.id)}
+          onClose={() => setEditingTask(null)}
+          onSave={(input) => onEdit(editingTask.id, input)}
+        />
+      )}
     </div>
   );
 }

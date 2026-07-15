@@ -8,6 +8,7 @@ import { TodayTaskPanel } from './TodayTaskPanel';
 import { TodayTimeTable } from './TodayTimeTable';
 import { AiCoachBanner } from './AiCoachBanner';
 import type { NewTaskInput } from './AddTaskModal';
+import type { EditTaskInput } from './EditTaskModal';
 
 interface ScheduleClientRootProps {
   year: number;
@@ -53,6 +54,12 @@ export function ScheduleClientRoot({
     ]);
   };
 
+  const editTask = (id: string, input: EditTaskInput) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, title: input.title, startTime: input.startTime, endTime: input.endTime } : t)),
+    );
+  };
+
   // 자정을 넘겨 다음날로 이어지는 할 일(끝 시간 <= 시작 시간)은 캘린더에도 오늘~다음날 막대로 보여준다.
   const overnightBlocks: ScheduleBlock[] = tasks
     .filter((t) => t.endTime <= t.startTime)
@@ -65,7 +72,7 @@ export function ScheduleClientRoot({
       <div className="flex w-full flex-col gap-4 lg:w-[536px] lg:flex-none">
         <div className="flex min-h-0 flex-1 gap-4">
           <div className="w-full lg:w-[260px]">
-            <TodayTaskPanel date={date} tasks={tasks} onToggle={toggleTask} onAdd={addTask} />
+            <TodayTaskPanel date={date} tasks={tasks} onToggle={toggleTask} onAdd={addTask} onEdit={editTask} />
           </div>
           <div className="w-full lg:w-[260px]">
             <TodayTimeTable tasks={tasks} />
