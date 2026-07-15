@@ -196,9 +196,6 @@ function formatStudyTime(seconds: number): string {
   return h > 0 ? `${h}시간 ${m}분` : `${m}분`;
 }
 
-const HEATMAP_YEAR = 2026;
-const HEATMAP_MONTH = 5;
-
 interface MyPageContentProps {
   profile: MyProfile | null;
   ranking: MyRankingSummary | null;
@@ -210,6 +207,8 @@ interface MyPageContentProps {
   lessonsGrass: LessonsGrassCell[];
   initialReviewedIds: number[];
   chatRooms: ChatRoomListItem[];
+  heatmapYear: number;
+  heatmapMonth: number; // 잔디 히트맵 표시 월 (1-indexed) — page에서 현재 월 주입
 }
 
 export default function MyPageContent({
@@ -223,6 +222,8 @@ export default function MyPageContent({
   lessonsGrass,
   initialReviewedIds,
   chatRooms,
+  heatmapYear,
+  heatmapMonth,
 }: MyPageContentProps) {
   const router = useRouter();
   const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
@@ -233,8 +234,8 @@ export default function MyPageContent({
   const [reviewTargetId, setReviewTargetId] = useState<number | null>(null);
 
   // 서버에서 받은 잔디 원본 → 표시용 셀로 변환 (페칭 아님, 순수 변환이라 client 계산 OK)
-  const studyTimeCells = buildMonthHeatmap('orange', HEATMAP_YEAR, HEATMAP_MONTH, studyTimeGrass);
-  const lessonCells = buildMonthHeatmap('green', HEATMAP_YEAR, HEATMAP_MONTH, lessonsGrass);
+  const studyTimeCells = buildMonthHeatmap('orange', heatmapYear, heatmapMonth, studyTimeGrass);
+  const lessonCells = buildMonthHeatmap('green', heatmapYear, heatmapMonth, lessonsGrass);
 
   const reviewTarget = completed.find((c) => c.courseId === reviewTargetId);
 
@@ -395,13 +396,13 @@ export default function MyPageContent({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-[84px]">
                     <Heatmap
                       type="green"
-                      monthLabel={`${HEATMAP_YEAR}년 ${HEATMAP_MONTH}월`}
+                      monthLabel={`${heatmapYear}년 ${heatmapMonth}월`}
                       cells={lessonCells}
                       onViewAll={() => setYearlyModalType('green')}
                     />
                     <Heatmap
                       type="orange"
-                      monthLabel={`${HEATMAP_YEAR}년 ${HEATMAP_MONTH}월`}
+                      monthLabel={`${heatmapYear}년 ${heatmapMonth}월`}
                       cells={studyTimeCells}
                       onViewAll={() => setYearlyModalType('orange')}
                     />
