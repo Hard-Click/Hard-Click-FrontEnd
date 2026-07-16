@@ -1,5 +1,8 @@
 import { serverApi } from '@/lib/api';
-import { getStudentQuizReviewServer } from './studentServer';
+import {
+  getStudentQuizReviewServer,
+  getEnrolledCoursesServer,
+} from './studentServer';
 
 // private 리뷰 매퍼는 export 안 됨 → public getStudentQuizReviewServer로 검증.
 // 라이브 분기 강제(isMock=false)해 실서버 매퍼(향상도 복원)를 타게 한다.
@@ -116,5 +119,25 @@ describe('getStudentQuizReviewServer — 향상도 (라이브 매퍼, BE previou
     });
     const r = await getStudentQuizReviewServer(1, 5);
     expect(r).toBeNull();
+  });
+});
+
+describe('getEnrolledCoursesServer — 실패 정직 처리(§0.1④)', () => {
+  beforeEach(() => mockGet.mockReset());
+
+  it('조회 실패(success:false)면 빈 목록으로 삼키지 않고 throw한다', async () => {
+    mockGet.mockResolvedValue({ success: false, httpStatus: 500, message: '서버 오류' });
+    // 빈 배열 반환('수강 없음'/404 위장)이 아니라 reject되어야 함 → 콜러가 error.tsx로 처리
+    await expect(getEnrolledCoursesServer()).rejects.toThrow();
+  });
+
+  it('성공이면 courseTitle→title 매핑한 목록 반환', async () => {
+    mockGet.mockResolvedValue({
+      success: true,
+      httpStatus: 200,
+      data: [{ courseId: 9001, courseTitle: '수능 미적분 마스터' }],
+    });
+    const courses = await getEnrolledCoursesServer();
+    expect(courses).toEqual([{ courseId: 9001, title: '수능 미적분 마스터' }]);
   });
 });
