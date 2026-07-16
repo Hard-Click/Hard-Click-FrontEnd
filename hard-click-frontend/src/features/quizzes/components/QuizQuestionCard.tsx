@@ -33,15 +33,15 @@ export default function QuizQuestionCard({
   onSelect: (optionIndex: number) => void;
 }) {
   return (
-    <section className="rounded-2xl border border-[#E2E8F0] bg-white p-8 shadow-[0_4px_10px_rgba(0,0,0,0.06)]">
-      <span className="inline-flex items-center rounded-2xl bg-[#2F5DAA1a] px-4 py-2 text-base font-semibold text-[#2F5DAA]">
+    <section className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-[0_4px_10px_rgba(0,0,0,0.06)]">
+      <span className="inline-flex items-center rounded-xl bg-[#2F5DAA1a] px-3 py-1.5 text-sm font-semibold text-[#2F5DAA]">
         문제 {index + 1}
       </span>
-      <h2 className="mt-6 text-2xl font-bold leading-relaxed text-[#1F2937]">
+      <h2 className="mt-3 text-xl font-bold leading-snug text-[#1F2937]">
         {question.content}
       </h2>
 
-      <div className="mt-6 flex flex-col gap-3">
+      <div className="mt-4 flex flex-col gap-2.5">
         {question.options.map((opt, i) => {
           const selected = selectedIndex === i;
           return (
@@ -50,14 +50,14 @@ export default function QuizQuestionCard({
               type="button"
               onClick={() => onSelect(i)}
               aria-pressed={selected}
-              className={`flex w-full items-center gap-4 rounded-[20px] border-2 px-6 py-6 text-left transition-colors ${
+              className={`flex w-full items-center gap-3 rounded-2xl border-2 px-5 py-3.5 text-left transition-colors ${
                 selected
                   ? 'border-[#2F5DAA] bg-[rgba(47,93,170,0.05)]'
                   : 'border-[#E2E8F0] bg-white hover:border-[#CBD5E1]'
               }`}
             >
               <span
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 ${
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 ${
                   selected
                     ? 'border-[#2F5DAA] bg-[#2F5DAA]'
                     : 'border-[#E2E8F0] bg-white'

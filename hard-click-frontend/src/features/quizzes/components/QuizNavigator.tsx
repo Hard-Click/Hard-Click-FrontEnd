@@ -58,9 +58,9 @@ export default function QuizNavigator({
   const paged = pageCount > 1;
 
   return (
-    <section className="rounded-2xl border border-[#E2E8F0] bg-white p-8 shadow-[0_4px_10px_rgba(0,0,0,0.06)]">
+    <section className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-[0_4px_10px_rgba(0,0,0,0.06)]">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-[#1F2937]">문항 바로가기</h3>
+        <h3 className="text-base font-bold text-[#1F2937]">문항 바로가기</h3>
         {paged && (
           <span className="text-sm text-[#64748B]">
             {navPage + 1} / {pageCount} 페이지
@@ -68,20 +68,20 @@ export default function QuizNavigator({
         )}
       </div>
 
-      <div className="mt-4 flex items-center gap-3">
+      <div className="mt-3 flex items-center gap-2">
         {paged && (
           <button
             type="button"
             onClick={onPrevPage}
             disabled={navPage === 0}
             aria-label="이전 문항 페이지"
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[10px] border-2 border-[#E2E8F0] text-[#4B5563] transition hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border-2 border-[#E2E8F0] text-[#4B5563] transition hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {ChevronLeft}
           </button>
         )}
 
-        <div className="grid flex-1 grid-cols-5 gap-3">
+        <div className="grid flex-1 grid-cols-5 gap-2">
           {Array.from({ length: pageSize }, (_, k) => {
             const i = start + k;
             // 문항 없는 칸은 비워 둠 — 마지막 페이지 버튼이 늘어나지 않게 5칸 크기 유지
@@ -100,7 +100,7 @@ export default function QuizNavigator({
                 onClick={() => onJump(i)}
                 aria-label={`${i + 1}번 문항${answered ? ' (응시 완료)' : ''}`}
                 aria-current={isCurrent ? 'true' : undefined}
-                className={`h-12 rounded-[10px] text-base font-semibold transition ${style}`}
+                className={`h-11 rounded-[10px] text-sm font-semibold transition ${style}`}
               >
                 {i + 1}
               </button>
@@ -114,7 +114,7 @@ export default function QuizNavigator({
             onClick={onNextPage}
             disabled={navPage >= pageCount - 1}
             aria-label="다음 문항 페이지"
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[10px] border-2 border-[#E2E8F0] text-[#4B5563] transition hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border-2 border-[#E2E8F0] text-[#4B5563] transition hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {ChevronRight}
           </button>
