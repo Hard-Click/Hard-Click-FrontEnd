@@ -14,10 +14,6 @@ import {
 import { getDailyStudyStatsServer } from '@/features/studyTimers/server';
 import { getMyChatRoomsServer } from '@/features/chat/server';
 
-/** 잔디 히트맵 표시 기준 연·월 (MyPageContent의 buildMonthHeatmap과 동일하게 유지) */
-const HEATMAP_YEAR = 2026;
-const HEATMAP_MONTH = 5;
-
 /**
  * 마이페이지 (Server Component, Server-First).
  * 데이터는 서버에서 조회해 client 섬(MyPageContent)에 props로 전달한다. (CLAUDE.md §0·§4)
@@ -30,6 +26,9 @@ const HEATMAP_MONTH = 5;
 export default async function MyPage() {
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  // 잔디 히트맵 = 현재 연·월 (grass 조회와 MyPageContent 그리드가 같은 값 사용 — props로 단일 소스, 하드코딩 stale 방지)
+  const heatmapYear = today.getFullYear();
+  const heatmapMonth = today.getMonth() + 1; // 1-indexed
 
   const [
     profile,
@@ -53,10 +52,10 @@ export default async function MyPage() {
       () => [],
     ), // 라이브 /api/study-timers/stats/daily
     getStudyTimeGrassServer({
-      year: HEATMAP_YEAR,
-      month: HEATMAP_MONTH,
+      year: heatmapYear,
+      month: heatmapMonth,
     }).catch(() => []), // 라이브 /api/grass/study-time
-    getLessonsGrassServer({ year: HEATMAP_YEAR, month: HEATMAP_MONTH }).catch(
+    getLessonsGrassServer({ year: heatmapYear, month: heatmapMonth }).catch(
       () => [],
     ), // 라이브 /api/grass/lessons (BE 200↔500 출렁 → 500이면 빈 셀)
     getMyChatRoomsServer().catch(() => []), // 내 채팅방 목록 (chat mock/seam)
@@ -79,6 +78,8 @@ export default async function MyPage() {
       lessonsGrass={lessonsGrass}
       initialReviewedIds={initialReviewedIds}
       chatRooms={chatRooms}
+      heatmapYear={heatmapYear}
+      heatmapMonth={heatmapMonth}
     />
   );
 }
