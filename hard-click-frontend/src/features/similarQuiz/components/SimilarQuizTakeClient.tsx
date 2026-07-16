@@ -139,7 +139,7 @@ export default function SimilarQuizTakeClient({
   };
 
   return (
-    <div className="mx-auto max-w-[896px] px-8 py-6">
+    <div className="mx-auto flex min-h-[100dvh] max-w-[896px] flex-col justify-center px-8 py-6">
       {/* 헤더 — 강의명·제목·진행 통계·진행바 */}
       <header className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-[0_4px_10px_rgba(0,0,0,0.06)]">
         <p className="text-sm text-[#4B5563]">{detail.courseTitle}</p>
