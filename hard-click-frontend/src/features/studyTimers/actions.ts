@@ -9,6 +9,7 @@ import {
   pauseStudySession,
   resumeStudySession,
   getCurrentSession,
+  getDailyStudyStats,
 } from './services';
 import type { SessionStatus } from './types';
 
@@ -142,6 +143,19 @@ export async function fetchCurrentSessionAction() {
   const res = await getCurrentSession();
   if (!res.success) return null;
   return res.data;
+}
+
+// 오늘 저장된 순공 누적초(종료된 세션 합계) — 집중 모드 '오늘 총 학습 시간' seed용.
+//  마이페이지 '오늘 순공시간'과 동일 소스(/stats/daily)라 두 화면 값이 일치한다.
+//  ⚠️ daily_study_stats는 세션 종료 시점에 기록되므로(BE) 진행 중 세션은 아직 미포함 →
+//     패널이 여기 값(base) + 현재 세션 초를 더해 표시한다(이중 집계 없음).
+//  조회 실패/미집계면 0(가짜 값 금지, §0.1). getDailyStudyStats가 mock 분기를 내부 처리.
+export async function fetchTodayStudySecondsAction(): Promise<number> {
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const res = await getDailyStudyStats({ startDate: today, endDate: today });
+  if (!res.success || !res.data) return 0;
+  return res.data.find((d) => d.date === today)?.studySeconds ?? 0;
 }
 
 // 특정 세션이 아직 살아있는지 확정 조회(이어하기 재검증용).

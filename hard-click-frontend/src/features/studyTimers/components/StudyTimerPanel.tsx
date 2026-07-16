@@ -12,6 +12,7 @@ import {
   resumeTimerAction,
   fetchCurrentSessionAction,
   probeSessionAction,
+  fetchTodayStudySecondsAction,
 } from '../actions';
 import { isMock } from '@/mocks/config';
 import { isSessionLeaving } from '../leaveSignal';
@@ -36,7 +37,9 @@ export default function StudyTimerPanel() {
   const [isPaused, setIsPaused] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
   const [seconds, setSeconds] = useState(0);
-  const [todaySeconds, setTodaySeconds] = useState(0);
+  // 오늘 종료된 세션들의 누적초(=/stats/daily 오늘 총합, 마이페이지 '오늘 순공시간'과 동일 소스).
+  // 화면의 '오늘 총 학습 시간'은 이 base + 현재 세션(seconds)로 파생한다(진행 중 세션은 daily에 아직 미반영).
+  const [dailyBaseSeconds, setDailyBaseSeconds] = useState(0);
   const [resumeSession, setResumeSession] = useState<{
     sessionId: number;
     startedAt: string;
@@ -52,13 +55,11 @@ export default function StudyTimerPanel() {
   // heartbeat 세대 — 세션 종료/재시작 시 증가. 이전 세션의 in-flight heartbeat 응답이 새 세션 시간을 덮어쓰지 않게.
   const heartbeatGenRef = useRef(0);
 
-  // 서버 확정 누적초로 로컬 카운터 보정. seconds·todaySeconds를 같은 델타로 맞춰 표시 일관 유지
-  // (서버 보정 시 '오늘 총 학습시간'이 '학습 중'과 어긋나는 드리프트 방지).
+  // 서버 확정 누적초로 로컬 카운터 보정(백그라운드 탭 throttle 등 화면-저장 드리프트 해소).
+  // '오늘 총 학습시간'은 dailyBaseSeconds + seconds로 파생되므로 여기서 별도 보정이 필요 없다.
   const applyServerSeconds = useCallback((serverSeconds: number) => {
-    const delta = serverSeconds - secondsRef.current;
     secondsRef.current = serverSeconds;
     setSeconds(serverSeconds);
-    setTodaySeconds((t) => Math.max(0, t + delta));
   }, []);
 
   // 페이지 진입 시 활성 세션 복원 — RUNNING/PAUSED 둘 다 이어하기 대상.
@@ -80,10 +81,14 @@ export default function StudyTimerPanel() {
           status: session.status,
         });
         setSeconds(session.accumulatedStudySeconds);
-        setTodaySeconds(session.accumulatedStudySeconds); // 오늘 학습시간도 함께 seed('학습 중' 카운터와 정합)
         secondsRef.current = session.accumulatedStudySeconds;
       }
     });
+  }, []);
+
+  // 오늘 저장된 순공 총합(종료분) 로드 — '오늘 총 학습 시간' base. 현재 세션(seconds)은 표시 시 더해진다.
+  useEffect(() => {
+    fetchTodayStudySecondsAction().then(setDailyBaseSeconds);
   }, []);
 
   const startTick = useCallback(() => {
@@ -91,7 +96,6 @@ export default function StudyTimerPanel() {
     tickRef.current = setInterval(() => {
       secondsRef.current += 1;
       setSeconds((s) => s + 1);
-      setTodaySeconds((s) => s + 1);
     }, 1000);
   }, []);
 
@@ -135,7 +139,6 @@ export default function StudyTimerPanel() {
           status: session.status,
         });
         setSeconds(session.accumulatedStudySeconds);
-        setTodaySeconds(session.accumulatedStudySeconds); // 오늘 학습시간도 함께 seed('학습 중' 카운터와 정합)
         secondsRef.current = session.accumulatedStudySeconds;
       }
       return;
@@ -268,6 +271,9 @@ export default function StudyTimerPanel() {
     try {
       const success = await endTimerAction(sid);
       if (success) {
+        // 종료한 세션 시간을 '오늘 총' base에 낙관적으로 누적(재조회 없이 start→end→start 정합 유지).
+        // 다음 마운트 시 /stats/daily 재조회로 정확값으로 대체됨.
+        setDailyBaseSeconds((b) => b + secondsRef.current);
         setIsRunning(false);
         setIsPaused(false);
         setShowOverlay(false);
@@ -339,7 +345,7 @@ export default function StudyTimerPanel() {
       {showOverlay && (
         <FocusModeOverlay
           seconds={seconds}
-          todaySeconds={todaySeconds}
+          todaySeconds={dailyBaseSeconds + seconds}
           isPaused={isPaused}
           onPause={handlePause}
           onResume={handleResumeTimer}
