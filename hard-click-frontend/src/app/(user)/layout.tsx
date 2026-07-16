@@ -25,6 +25,7 @@ const TIMER_HIDDEN_PATTERNS: RegExp[] = [
   /^\/auth(\/|$)/,
   /^\/learning(\/|$)/,
   /^\/chat(\/|$)/,
+  /^\/quizzes\/similar(\/|$)/, // 유사퀴즈 응시·결과(단일 라우트, 상태전환)
   /^\/quizzes\/[^/]+\/[^/]+/, // 응시·해설만 (진입 /quizzes·목록 /quizzes/{c}는 유지)
   /^\/checkout(\/|$)/,
   /^\/payment-result(\/|$)/,
