@@ -112,4 +112,26 @@ describe('getSubscriptionServer 매퍼 (라이브)', () => {
     expect(info.daysUntilSuneung).toBe(300); // 만료일 기준 파생(BE remainingDays 999 무시)
     expect(info.currentPrice).toBe(1_580_000); // BE plan.price
   });
+
+  it('/me 조회 실패면 statusKnown=false — 미구독으로 위장하지 않는다(§0.1④, 이중결제 방지)', async () => {
+    // /me는 500 실패, /plan은 성공(가장 흔한 케이스) → subscribed=false지만 상태 불명이므로 statusKnown=false
+    mockedGet.mockImplementation((url: string) =>
+      url.includes('/me')
+        ? Promise.resolve({ success: false, httpStatus: 500, message: '서버 오류' })
+        : Promise.resolve({ success: true, httpStatus: 200, data: PLAN }),
+    );
+
+    const info = await getSubscriptionServer();
+
+    expect(info.statusKnown).toBe(false); // 상태 불명 → 페이지가 '미구독'으로 렌더 안 함
+    expect(info.subscribed).toBe(false); // 안전 기본값(gate용) — 단 statusKnown=false라 CTA 노출 안 됨
+  });
+
+  it('/me 조회 성공이면 statusKnown=true', async () => {
+    wireMeAndPlan({ subscribed: false, expiredAt: null }, PLAN);
+
+    const info = await getSubscriptionServer();
+
+    expect(info.statusKnown).toBe(true);
+  });
 });
