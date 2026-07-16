@@ -15,6 +15,8 @@ export interface QuizSubmitState {
 /**
  * 퀴즈 제출 + 채점 (Server Action · BFF).
  * answers = { [questionId]: 선택한 보기 인덱스(0~3) }.
+ * timeSpentByQuestion = { [questionId]: 문제별 머문 시간(초) } — AI 복습 추천용(BE 요청).
+ *   BE가 필드 optional(없으면 NULL)로 받으므로 값이 없으면 0으로 전송한다. 상한 처리는 서버 몫.
  * 격리막: 채점은 서버에서만 → 클라이언트는 점수만 받는다.
  * 라이브: BE는 selectedOptionId를 요구 → 응시 상세(GET /api/quizzes/{id})를 재조회해
  *   answerIndex를 optionId로 변환 후 POST /api/quizzes/{id}/submissions.
@@ -23,6 +25,7 @@ export async function submitQuizAction(
   courseId: number,
   quizId: number,
   answers: Record<number, number>,
+  timeSpentByQuestion: Record<number, number> = {},
 ): Promise<QuizSubmitState> {
   if (
     !Number.isInteger(courseId) ||
@@ -71,7 +74,12 @@ export async function submitQuizAction(
     }
 
     // 2) answerIndex → selectedOptionId. 매핑 실패는 조용히 누락하지 않고 에러 반환(부분 제출 방지).
-    const answerList: { questionId: number; selectedOptionId: number }[] = [];
+    //    + timeSpentSeconds: 클라가 준 문제별 초. Server Action 경계라 음수·비정수·비유한 값은 0으로 방어(§5).
+    const answerList: {
+      questionId: number;
+      selectedOptionId: number;
+      timeSpentSeconds: number;
+    }[] = [];
     for (const [qid, idx] of Object.entries(answers)) {
       const questionId = Number(qid);
       const opts = optionIdsByQ.get(questionId);
@@ -83,7 +91,10 @@ export async function submitQuizAction(
       ) {
         return { success: false, message: '제출 데이터가 올바르지 않습니다.' };
       }
-      answerList.push({ questionId, selectedOptionId: opts[idx] });
+      const t = timeSpentByQuestion[questionId];
+      const timeSpentSeconds =
+        Number.isFinite(t) && t >= 0 ? Math.round(t) : 0;
+      answerList.push({ questionId, selectedOptionId: opts[idx], timeSpentSeconds });
     }
 
     // 3) 제출

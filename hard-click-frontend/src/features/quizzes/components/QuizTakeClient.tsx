@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/lib/toast';
 import QuizQuestionCard from './QuizQuestionCard';
@@ -94,8 +94,45 @@ export default function QuizTakeClient({
     (q) => answers[q.questionId] === undefined,
   );
 
+  // ── 문제별 풀이 시간 측정 (AI 복습 추천용, BE 요청) — 화면엔 표시 안 함 ──────────
+  // performance.now()(단조 시계, 기기 시간 변경에 안전)로 현재 문제에 머문 시간을 누적한다.
+  const timeSpentRef = useRef<Record<number, number>>({}); // questionId → 누적 ms
+  const segmentStartRef = useRef<number | null>(null); // 현재 구간 시작(ms), null=일시정지(탭 이탈)
+  const currentRef = useRef(0); // current 미러 — 비동기 가시성 핸들러의 stale 클로저 방지
+
+  // 현재 문제에 머문 구간 시간을 맵에 누적하고 구간을 재시작. 일시정지(null) 중엔 no-op.
+  const flushSegment = useCallback(() => {
+    if (segmentStartRef.current == null) return;
+    const now = performance.now();
+    const qid = questions[currentRef.current]?.questionId;
+    if (qid != null) {
+      timeSpentRef.current[qid] =
+        (timeSpentRef.current[qid] ?? 0) + (now - segmentStartRef.current);
+    }
+    segmentStartRef.current = now;
+  }, [questions]);
+
+  // 진입 시 첫 문제 타이머 시작 + 탭 이탈/복귀 일시정지·재개(자리 비운 시간 제외).
+  useEffect(() => {
+    segmentStartRef.current = performance.now();
+    const onVisibility = () => {
+      if (document.hidden) {
+        flushSegment(); // 이탈 직전까지 누적
+        segmentStartRef.current = null; // 일시정지
+      } else {
+        segmentStartRef.current = performance.now(); // 복귀 — 재개
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () =>
+      document.removeEventListener('visibilitychange', onVisibility);
+  }, [flushSegment]);
+
   const goTo = (i: number) => {
-    if (i < 0 || i >= total) return;
+    if (i < 0 || i >= total || i === current) return;
+    flushSegment(); // 떠나는 문제 시간 누적
+    currentRef.current = i; // 미러 먼저 갱신(가시성 핸들러 정합)
+    segmentStartRef.current = performance.now(); // 새 문제 타이머 시작
     setCurrent(i);
     setNavPage(Math.floor(i / PAGE_SIZE)); // 네비 페이지를 현재 문항에 동기화
   };
@@ -110,8 +147,21 @@ export default function QuizTakeClient({
   };
 
   const handleConfirmSubmit = async () => {
+    flushSegment(); // 제출 시점까지 현재 문제 시간 마저 누적
+    // 누적 ms → 초 정수 반올림 (문제별). 상한은 서버가 처리.
+    const timeSpentByQuestion: Record<number, number> = {};
+    for (const qid in timeSpentRef.current) {
+      timeSpentByQuestion[Number(qid)] = Math.round(
+        timeSpentRef.current[qid] / 1000,
+      );
+    }
     setSubmitting(true);
-    const res = await submitQuizAction(detail.courseId, detail.quizId, answers);
+    const res = await submitQuizAction(
+      detail.courseId,
+      detail.quizId,
+      answers,
+      timeSpentByQuestion,
+    );
     setSubmitting(false);
     if (!res.success || !res.result) {
       toast.error(res.message ?? '제출에 실패했습니다.');
