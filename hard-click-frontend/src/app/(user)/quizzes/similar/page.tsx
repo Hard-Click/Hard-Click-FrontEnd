@@ -32,5 +32,11 @@ export default async function SimilarQuizPage({
     return <SimilarQuizEmptyState variant="empty" courseId={courseId} />;
   }
 
-  return <SimilarQuizClient detail={detail} />;
+  // 응시 전용 배경 — 일반 퀴즈 응시와 동일한 은은한 브랜드 톤 그라데이션(헤더 숨김 보완).
+  //   SimilarQuizClient가 응시↔결과 상태전환을 감싸므로 두 단계 모두 이 배경 위에 뜬다.
+  return (
+    <div className="min-h-[100dvh] bg-gradient-to-b from-[#EEF3FA] to-[#F8FAFC]">
+      <SimilarQuizClient detail={detail} />
+    </div>
+  );
 }
