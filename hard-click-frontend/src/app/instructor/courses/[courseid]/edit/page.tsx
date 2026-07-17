@@ -37,6 +37,8 @@ export default async function EditCoursePage({ params }: EditCoursePageProps) {
         targetAudience: data.targetAudience ?? [],
         techTags: data.techTags ?? [],
         level: data.level ?? '',
+        recommendedWeeks: data.recommendedWeeks ?? undefined,
+        dailyMaxMinutes: data.dailyMaxMinutes ?? undefined,
         curriculum: (data.curriculum ?? []).map((section: CurriculumSection) => ({
           id: String(section.sectionId),
           title: section.title,

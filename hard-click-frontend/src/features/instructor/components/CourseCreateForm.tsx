@@ -56,7 +56,7 @@ interface CourseDetail {
   targetAudience?: string[];
   level?: string;
   recommendedWeeks?: number;
-  dailyStudyLimitMinutes?: number;
+  dailyMaxMinutes?: number;
   instructor?: string;
 }
 
@@ -251,8 +251,8 @@ export default function CourseCreateForm({
       : '',
   );
   const [dailyStudyLimit, setDailyStudyLimit] = useState(
-    initialData?.dailyStudyLimitMinutes != null
-      ? String(initialData.dailyStudyLimitMinutes)
+    initialData?.dailyMaxMinutes != null
+      ? String(initialData.dailyMaxMinutes)
       : '',
   );
   const router = useRouter();
@@ -359,19 +359,18 @@ export default function CourseCreateForm({
       newErrors.instructor = '강사를 선택해주세요';
       if (!firstError) firstError = 'instructor';
     }
-    // 권장 완강 기간 — 필수, 정수 1주 이상
+    // 권장 완강 기간 — 선택(비우면 미전송), 입력 시 정수 1주 이상
     const weeksRaw = recommendedWeeks.trim();
-    if (!weeksRaw) {
-      newErrors.recommendedWeeks = '권장 완강 기간을 입력해주세요';
-      if (!firstError) firstError = 'recommendedWeeks';
-    } else if (!Number.isInteger(Number(weeksRaw))) {
-      newErrors.recommendedWeeks = '숫자만 입력해주세요.';
-      if (!firstError) firstError = 'recommendedWeeks';
-    } else if (Number(weeksRaw) < 1) {
-      newErrors.recommendedWeeks = '1주 이상으로 설정해주세요.';
-      if (!firstError) firstError = 'recommendedWeeks';
+    if (weeksRaw) {
+      if (!Number.isInteger(Number(weeksRaw))) {
+        newErrors.recommendedWeeks = '숫자만 입력해주세요.';
+        if (!firstError) firstError = 'recommendedWeeks';
+      } else if (Number(weeksRaw) < 1) {
+        newErrors.recommendedWeeks = '1주 이상으로 설정해주세요.';
+        if (!firstError) firstError = 'recommendedWeeks';
+      }
     }
-    // 강도 상한 — 선택(비우면 120 적용), 입력 시 정수 1~120분
+    // 강도 상한 — 선택(비우면 서버 기본 120분 적용), 입력 시 정수 1분 이상(상한 없음)
     const dailyRaw = dailyStudyLimit.trim();
     if (dailyRaw) {
       const dailyNum = Number(dailyRaw);
@@ -380,9 +379,6 @@ export default function CourseCreateForm({
         if (!firstError) firstError = 'dailyStudyLimit';
       } else if (dailyNum < 1) {
         newErrors.dailyStudyLimit = '1분 이상으로 설정해주세요.';
-        if (!firstError) firstError = 'dailyStudyLimit';
-      } else if (dailyNum > 120) {
-        newErrors.dailyStudyLimit = '전역 기본값(120분) 이하로 설정해주세요.';
         if (!firstError) firstError = 'dailyStudyLimit';
       }
     }
@@ -915,7 +911,7 @@ export default function CourseCreateForm({
             {/* 권장 완강 기간 */}
             <div>
               <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
-                권장 완강 기간 <span className="text-[#DC2626]">*</span>
+                권장 완강 기간
               </label>
               <div className="flex items-center gap-2">
                 <input
@@ -955,15 +951,13 @@ export default function CourseCreateForm({
             {/* 코스별 강도 상한 (하루 최대 학습 시간) */}
             <div>
               <label className="mb-3 block text-sm font-semibold text-[#1E293B]">
-                코스별 강도 상한 (하루 최대 학습 시간){' '}
-                <span className="text-[#DC2626]">*</span>
+                코스별 강도 상한 (하루 최대 학습 시간)
               </label>
               <div className="flex items-center gap-2">
                 <input
                   ref={dailyStudyLimitRef}
                   type="number"
                   min="1"
-                  max="120"
                   placeholder="120"
                   value={dailyStudyLimit}
                   onChange={(e) => {
@@ -977,7 +971,7 @@ export default function CourseCreateForm({
                 <span className="text-sm text-[#475569]">분</span>
               </div>
               <p className="mt-1 text-xs text-[#94A3B8]">
-                전역 기본값 120분 이하 · 비우면 120분 적용
+                비우면 서버 기본값(120분) 적용
               </p>
               <div className="mt-1 min-h-[20px]">
                 {errors.dailyStudyLimit && (
@@ -1353,13 +1347,14 @@ export default function CourseCreateForm({
                   level: level || undefined,
                   // ⚠️ BE 필드명 미확정 (§0.5) — 관리자 강사 지정용
                   instructor: instructor || undefined,
-                  // ⚠️ BE 필드명·지원 미확정 (§0.5) — AI 스케줄러 계약 확인 후 조정
-                  recommendedWeeks: recommendedWeeks
-                    ? Number(recommendedWeeks)
+                  // CP-SAT 스케줄 엔진 입력값(코스 단위, 둘 다 nullable) — 비우면 미전송
+                  // ⚠️ trim() 필수 — 공백만 입력된 경우 Number(" ")가 0으로 변환돼 @Min(1) 위반값이 나감
+                  recommendedWeeks: recommendedWeeks.trim()
+                    ? Number(recommendedWeeks.trim())
                     : undefined,
                   // 비우면 미전송 → BE가 기본값(120분) 적용
-                  dailyStudyLimitMinutes: dailyStudyLimit
-                    ? Number(dailyStudyLimit)
+                  dailyMaxMinutes: dailyStudyLimit.trim()
+                    ? Number(dailyStudyLimit.trim())
                     : undefined,
                   sections: sections.map((sec, sIdx) => ({
                     ...(mode === 'edit' && Number(sec.id)

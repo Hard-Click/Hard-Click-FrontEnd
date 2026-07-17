@@ -42,6 +42,8 @@ export default async function AdminCourseEditPage({ params }: Props) {
         targetAudience: course.targetAudience,
         techTags: course.techTags,
         level: course.level,
+        recommendedWeeks: course.recommendedWeeks ?? undefined,
+        dailyMaxMinutes: course.dailyMaxMinutes ?? undefined,
         // 수정 저장 시 기존 커리큘럼이 빈 배열로 덮이지 않도록 매핑 (CodeRabbit #775)
         curriculum: (course.curriculum ?? []).map(
           (section: CurriculumSection) => ({

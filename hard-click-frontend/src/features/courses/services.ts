@@ -62,6 +62,8 @@ export function toCourseDetail(data: CourseDetailApiResponse): CourseDetail {
     totalLessons: allLessons.length,
     totalDuration: formatTotalDuration(totalSeconds),
     notices: [], // 별도 API: 강의 공지 목록
+    recommendedWeeks: data.recommendedWeeks,
+    dailyMaxMinutes: data.dailyMaxMinutes,
     instructor: {
       instructorId: 0, // 상세 응답에 instructorId 없음(강사명만 제공)
       name: data.instructorName,
