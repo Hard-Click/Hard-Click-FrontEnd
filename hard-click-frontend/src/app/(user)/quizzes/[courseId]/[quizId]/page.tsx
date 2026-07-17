@@ -30,5 +30,11 @@ export default async function QuizTakePage({
 
   const courseTitle = courses.find((c) => c.courseId === courseId)?.title ?? '';
 
-  return <QuizTakeClient detail={detail} courseTitle={courseTitle} />;
+  // 응시 전용 배경 — 헤더(파란 바)를 숨겨 허전해진 상단을 은은한 브랜드 톤 그라데이션으로 보완.
+  //   QuizTakeClient 래퍼는 max-w 중앙 컬럼(투명)이라, 이 그라데이션이 전체 폭 뒤로 깔린다.
+  return (
+    <div className="min-h-[100dvh] bg-gradient-to-b from-[#EEF3FA] to-[#F8FAFC]">
+      <QuizTakeClient detail={detail} courseTitle={courseTitle} />
+    </div>
+  );
 }

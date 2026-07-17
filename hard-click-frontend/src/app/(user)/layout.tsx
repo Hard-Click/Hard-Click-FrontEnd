@@ -35,6 +35,14 @@ const TIMER_HIDDEN_PATTERNS: RegExp[] = [
   /^\/mypage\/wishlist(\/|$)/, // 찜 카드 하단 CTA(학습하기 등)를 타이머가 가림
 ];
 
+/** 글로벌 네비 헤더를 숨길 라우트 — 퀴즈 '응시' 화면.
+ *  응시 중 헤더 링크를 실수로 눌러 나가면 답이 전부 사라지므로(이탈 방지, useQuizLeaveGuard와 짝),
+ *  응시 페이지에선 헤더 자체를 감춘다. 해설(/review)은 다 끝난 뒤라 헤더 유지. */
+const HEADER_HIDDEN_PATTERNS: RegExp[] = [
+  /^\/quizzes\/similar(\/|$)/, // 유사퀴즈 응시·결과(자체 '캘린더로 가기' 버튼)
+  /^\/quizzes\/[^/]+\/[^/]+\/?$/, // 일반 퀴즈 응시만 (해설 /quizzes/{c}/{q}/review 제외)
+];
+
 export default function UserLayout({
   children,
 }: {
@@ -44,6 +52,8 @@ export default function UserLayout({
   const isAuthPage = pathname?.startsWith('/auth') ?? false;
   // floating 순공 타이머를 숨길 라우트인지 (위 TIMER_HIDDEN_PATTERNS)
   const hideTimer = TIMER_HIDDEN_PATTERNS.some((re) => re.test(pathname ?? ''));
+  // 퀴즈 응시 화면인지 (글로벌 헤더 숨김 — 실수 이탈 방지)
+  const hideHeader = HEADER_HIDDEN_PATTERNS.some((re) => re.test(pathname ?? ''));
 
   // 인증 상태는 서버(루트 layout의 getCurrentUser)가 쿠키로 계산해 Context로 내려줌
   const { isLoggedIn, role } = useAuth();
@@ -54,6 +64,7 @@ export default function UserLayout({
   return (
     <>
       {!isAuthPage &&
+        !hideHeader &&
         (role === 'INSTRUCTOR' ? <InstructorHeader /> : <UserHeader />)}
       {blocked ? <NotFoundView code="401" /> : children}
       {!hideTimer && isLoggedIn && <StudyTimerPanel />}
