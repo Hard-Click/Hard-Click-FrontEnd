@@ -175,8 +175,9 @@ export async function getChurnStudentDetailServer(
   const res = await serverApi.get<ChurnStudentDetailApi>(
     `/api/admin/churn/students/${enrollmentId}`,
   );
-  if (res.httpStatus === 404) return null; // CN001
   if (!res.success) {
+    // CN001(이탈 위험 산출 기록 없음)만 "없음"으로 흡수, 그 외 오류(다른 404 포함)는 오분류 방지를 위해 던진다.
+    if (res.errorCode === 'CN001') return null;
     throw new Error('학생 위험 상세를 불러오지 못했습니다.');
   }
   return toChurnStudentDetail(res.data!);

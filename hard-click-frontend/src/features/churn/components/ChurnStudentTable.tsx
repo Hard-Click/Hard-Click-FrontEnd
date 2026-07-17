@@ -1,5 +1,6 @@
 'use client';
 
+import { useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Pagination from '@/features/admin/components/Pagination';
@@ -42,13 +43,14 @@ export default function ChurnStudentTable({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   const pushQuery = (next: { level?: ChurnRiskLevel; page: number }) => {
     const params = new URLSearchParams(searchParams.toString());
     if (next.level) params.set('level', next.level);
     else params.delete('level');
     params.set('page', String(next.page));
-    router.push(`/admin/churn?${params.toString()}`);
+    startTransition(() => router.push(`/admin/churn?${params.toString()}`));
   };
 
   // 이 페이지에 내려온 항목만 위험도순 정렬(전체 데이터셋 정렬은 BE 응답 순서를 따름)
@@ -58,7 +60,9 @@ export default function ChurnStudentTable({
   );
 
   return (
-    <div className="mt-6 rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
+    <div
+      className={`mt-6 rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm transition-opacity ${isPending ? 'opacity-60' : ''}`}
+    >
       {/* 위험도 필터 탭 */}
       <div className="mb-4 flex gap-2">
         {LEVEL_TABS.map((tab) => {
@@ -67,8 +71,9 @@ export default function ChurnStudentTable({
             <button
               key={tab.label}
               type="button"
+              disabled={isPending}
               onClick={() => pushQuery({ level: tab.value, page: 1 })}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition disabled:cursor-wait ${
                 isActive
                   ? 'bg-[#2F5DAA] text-white'
                   : 'bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0]'

@@ -13,7 +13,7 @@ export default async function AdminChurnPage({
 }) {
   const { level: levelParam, page: pageParam } = await searchParams;
   const level = levelParam === 'HIGH' || levelParam === 'MEDIUM' ? (levelParam as ChurnRiskLevel) : undefined;
-  const page = Math.max(1, Number(pageParam) || 1);
+  const page = Math.max(1, Math.trunc(Number(pageParam)) || 1);
 
   const [{ stats, trend, reasons }, studentsPage] = await Promise.all([
     getChurnSummaryServer(),
