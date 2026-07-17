@@ -60,13 +60,14 @@ function toChurnStudent(api: ChurnStudentListItemApi): ChurnStudent {
   };
 }
 
-/** "yyyy-MM-dd" 최근 활동일 → "N일 전 (yyyy.mm.dd)" */
-function formatLastAccessLabel(dateStr: string): string {
+/** "yyyy-MM-dd" 최근 활동일 → "N일 전 (yyyy.mm.dd)"(당일이면 "오늘"). BE 계약 밖으로 null/빈 문자열이 와도 방어. */
+function formatLastAccessLabel(dateStr: string | null | undefined): string {
+  if (!dateStr) return '접속 기록 없음';
   const diffDays = Math.max(
     0,
     Math.round((Date.now() - new Date(dateStr).getTime()) / 86_400_000),
   );
-  return `${diffDays}일 전 (${dateStr.replaceAll('-', '.')})`;
+  return `${diffDays === 0 ? '오늘' : `${diffDays}일 전`} (${dateStr.replaceAll('-', '.')})`;
 }
 
 function toChurnStudentDetail(api: ChurnStudentDetailApi): ChurnStudentDetail {
@@ -76,7 +77,7 @@ function toChurnStudentDetail(api: ChurnStudentDetailApi): ChurnStudentDetail {
     email: api.email,
     riskLevel: api.level,
     riskScore: api.riskScore,
-    factors: api.contributions.map((c) => ({ label: c.label, delta: c.points })),
+    factors: (api.contributions ?? []).map((c) => ({ label: c.label, delta: c.points })),
     learning: {
       progressRate: api.progressRate,
       lastAccessLabel: formatLastAccessLabel(api.lastAccessDate),
