@@ -16,24 +16,29 @@ export interface EditTaskInput {
  * 기본은 보기 모드(취소/수정 버튼, 제목·시간 읽기 전용) — "수정" 클릭 시 편집 모드(취소/저장 버튼)로 전환되며
  * 그때부터 AddTaskModal과 동일한 제목 입력 + 시간 pill을 쓸 수 있다.
  * 시간 겹침 검증은 수정 대상 자기 자신을 제외한 나머지 오늘 할 일과만 비교한다(existingTasks가 그 목록).
- * ⚠️ BE 저장 API 없음(2026-07-15 기준) — "저장"은 오늘 할 일 목록에 로컬로만 반영된다(새로고침하면 사라짐).
  */
 export function EditTaskModal({
   task,
   existingTasks,
   onClose,
   onSave,
+  onDelete,
 }: {
   task: TodayTask;
   existingTasks: readonly TodayTask[];
   onClose: () => void;
-  onSave: (input: EditTaskInput) => void;
+  /** 서버 저장 성공 시 true를 반환해야 모달이 닫힌다(실패 시 열린 채로 유지). */
+  onSave: (input: EditTaskInput) => Promise<boolean>;
+  /** 서버 삭제 성공 시 true를 반환해야 모달이 닫힌다. */
+  onDelete: () => Promise<boolean>;
 }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [startTime, setStartTime] = useState(task.startTime);
   const [endTime, setEndTime] = useState(task.endTime);
   const [submitted, setSubmitted] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const sameTime = !!startTime && !!endTime && startTime === endTime;
   const timeOverlap =
@@ -55,15 +60,25 @@ export function EditTaskModal({
           : undefined
     : undefined;
 
-  const handlePrimary = () => {
+  const handlePrimary = async () => {
     if (!editing) {
       setEditing(true);
       return;
     }
     setSubmitted(true);
-    if (!isValid) return;
-    onSave({ title: title.trim(), startTime, endTime });
-    onClose();
+    if (!isValid || isSaving) return;
+    setIsSaving(true);
+    const saved = await onSave({ title: title.trim(), startTime, endTime });
+    setIsSaving(false);
+    if (saved) onClose();
+  };
+
+  const handleDelete = async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    const deleted = await onDelete();
+    setIsDeleting(false);
+    if (deleted) onClose();
   };
 
   return (
@@ -102,6 +117,16 @@ export function EditTaskModal({
         </div>
 
         <div className="mt-5 flex gap-2.5 border-t border-[#E2E8F0] pt-3.5">
+          {!editing && (
+            <button
+              type="button"
+              disabled={isDeleting}
+              onClick={handleDelete}
+              className="h-10 flex-1 rounded-[10px] border border-[#FCA5A5] bg-white text-sm font-medium text-[#DC2626] transition hover:bg-[#FEF2F2] disabled:cursor-wait disabled:opacity-50"
+            >
+              {isDeleting ? '삭제 중…' : '삭제'}
+            </button>
+          )}
           <button
             type="button"
             onClick={onClose}
@@ -111,12 +136,13 @@ export function EditTaskModal({
           </button>
           <button
             type="button"
+            disabled={isSaving}
             onClick={handlePrimary}
-            className={`h-10 flex-1 rounded-[10px] bg-[#2F5DAA] text-sm font-medium text-white transition hover:bg-[#274C8B] ${
+            className={`h-10 flex-1 rounded-[10px] bg-[#2F5DAA] text-sm font-medium text-white transition hover:bg-[#274C8B] disabled:cursor-wait ${
               editing && !isValid ? 'opacity-50' : ''
             }`}
           >
-            {editing ? '저장' : '수정'}
+            {isSaving ? '저장 중…' : editing ? '저장' : '수정'}
           </button>
         </div>
       </div>

@@ -3,6 +3,14 @@
 import { Fragment, useState } from 'react';
 import type { ScheduleBlock, TodayTask } from '../types';
 import { nextDateISO } from '../utils';
+import { toast } from '@/lib/toast';
+import {
+  completeLessonAction,
+  completeTodoAction,
+  createTodoAction,
+  updateTodoAction,
+  deleteTodoAction,
+} from '../actions';
 import { ScheduleCalendarCard } from './ScheduleCalendarCard';
 import { TodayTaskPanel } from './TodayTaskPanel';
 import { TodayTimeTable } from './TodayTimeTable';
@@ -22,9 +30,10 @@ interface ScheduleClientRootProps {
 
 /**
  * 캘린더 + 오늘 할 일 + 타임테이블 + AI 코치를 함께 관리하는 client 루트.
- * 할 일 추가/체크 상태가 오늘 할 일·타임테이블뿐 아니라 캘린더에도 반영돼야 해서
- * (자정 넘어가는 할 일은 캘린더에도 다음날까지 회색 막대로 표시) 여기서 한 번에 들고 있는다.
- * ⚠️ BE 저장 API 없음(2026-07-15 기준) — 추가/체크는 이 세션에서만 유지된다.
+ * 할 일 추가/체크/수정/삭제는 `../actions`의 Server Action으로 실서버에 반영하고, 성공 시에만 로컬 state를 갱신한다
+ * (실패하면 토스트만 띄우고 이전 상태 유지 — 낙관적 업데이트 아님).
+ * 완료 체크는 BE가 단방향(PLANNED→DONE)만 지원해 되돌릴 수 없다 — `TodayTaskChecklist`가 이미 완료된 항목은
+ * 체크박스를 비활성화해 애초에 다시 누르지 못하게 막는다.
  */
 export function ScheduleClientRoot({
   year,
@@ -37,14 +46,37 @@ export function ScheduleClientRoot({
   const [tasks, setTasks] = useState<readonly TodayTask[]>(initialTasks);
 
   const toggleTask = (id: string) => {
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+    const task = tasks.find((t) => t.id === id);
+    if (!task || task.done) return;
+    void (async () => {
+      const action = task.source === 'LESSON' ? completeLessonAction : completeTodoAction;
+      const result = await action(task.itemId);
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+      setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: true } : t)));
+    })();
   };
 
-  const addTask = (input: NewTaskInput) => {
+  const addTask = async (input: NewTaskInput): Promise<boolean> => {
+    const result = await createTodoAction({
+      title: input.title,
+      planDate: date,
+      startTime: input.startTime,
+      endTime: input.endTime,
+    });
+    if (!result.success || result.todoId == null) {
+      toast.error(result.message);
+      return false;
+    }
+    const todoId = result.todoId;
     setTasks((prev) => [
       ...prev,
       {
-        id: crypto.randomUUID(),
+        id: `TODO-${todoId}`,
+        itemId: todoId,
+        source: 'TODO',
         title: input.title,
         done: false,
         category: 'OTHER',
@@ -52,12 +84,40 @@ export function ScheduleClientRoot({
         endTime: input.endTime,
       },
     ]);
+    return true;
   };
 
-  const editTask = (id: string, input: EditTaskInput) => {
+  const editTask = async (id: string, input: EditTaskInput): Promise<boolean> => {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return false;
+    const result = await updateTodoAction(task.itemId, {
+      title: input.title,
+      planDate: date,
+      startTime: input.startTime,
+      endTime: input.endTime,
+    });
+    if (!result.success) {
+      toast.error(result.message);
+      return false;
+    }
     setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, title: input.title, startTime: input.startTime, endTime: input.endTime } : t)),
+      prev.map((t) =>
+        t.id === id ? { ...t, title: input.title, startTime: input.startTime, endTime: input.endTime } : t,
+      ),
     );
+    return true;
+  };
+
+  const deleteTask = async (id: string): Promise<boolean> => {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return false;
+    const result = await deleteTodoAction(task.itemId);
+    if (!result.success) {
+      toast.error(result.message);
+      return false;
+    }
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+    return true;
   };
 
   // 자정을 넘겨 다음날로 이어지는 할 일(끝 시간 <= 시작 시간)은 캘린더에도 오늘~다음날 막대로 보여준다.
@@ -72,7 +132,14 @@ export function ScheduleClientRoot({
       <div className="flex w-full flex-col gap-4 lg:w-[536px] lg:flex-none">
         <div className="flex min-h-0 flex-1 gap-4">
           <div className="w-full lg:w-[260px]">
-            <TodayTaskPanel date={date} tasks={tasks} onToggle={toggleTask} onAdd={addTask} onEdit={editTask} />
+            <TodayTaskPanel
+              date={date}
+              tasks={tasks}
+              onToggle={toggleTask}
+              onAdd={addTask}
+              onEdit={editTask}
+              onDelete={deleteTask}
+            />
           </div>
           <div className="w-full lg:w-[260px]">
             <TodayTimeTable tasks={tasks} />

@@ -10,9 +10,16 @@ export interface ScheduleCalendarDay {
   isToday: boolean;
 }
 
+/** BE 원본 구분 — LESSON(AI 슬롯, 수정/삭제 API 없음) vs TODO(학생 추가, CRUD 가능). */
+export type TodayTaskSource = 'LESSON' | 'TODO';
+
 /** "오늘 할 일" 패널 항목 하나. category가 'REVIEW'면 과목 무관 복습 항목, 'OTHER'면 과목 미지정(직접 추가) 항목. */
 export interface TodayTask {
+  /** 화면 리스트 key(`${source}-${itemId}` 조합) — itemId는 source 안에서만 유일해서 그대로 쓰면 충돌 가능. */
   id: string;
+  /** BE 원본 id. source와 짝지어야 완료체크/CRUD 엔드포인트를 올바르게 고를 수 있다. */
+  itemId: number;
+  source: TodayTaskSource;
   title: string;
   done: boolean;
   category: SubjectCategory;
