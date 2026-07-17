@@ -1348,12 +1348,13 @@ export default function CourseCreateForm({
                   // ⚠️ BE 필드명 미확정 (§0.5) — 관리자 강사 지정용
                   instructor: instructor || undefined,
                   // CP-SAT 스케줄 엔진 입력값(코스 단위, 둘 다 nullable) — 비우면 미전송
-                  recommendedWeeks: recommendedWeeks
-                    ? Number(recommendedWeeks)
+                  // ⚠️ trim() 필수 — 공백만 입력된 경우 Number(" ")가 0으로 변환돼 @Min(1) 위반값이 나감
+                  recommendedWeeks: recommendedWeeks.trim()
+                    ? Number(recommendedWeeks.trim())
                     : undefined,
                   // 비우면 미전송 → BE가 기본값(120분) 적용
-                  dailyMaxMinutes: dailyStudyLimit
-                    ? Number(dailyStudyLimit)
+                  dailyMaxMinutes: dailyStudyLimit.trim()
+                    ? Number(dailyStudyLimit.trim())
                     : undefined,
                   sections: sections.map((sec, sIdx) => ({
                     ...(mode === 'edit' && Number(sec.id)
