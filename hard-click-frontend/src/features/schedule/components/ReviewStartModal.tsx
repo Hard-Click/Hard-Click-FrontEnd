@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { toast } from '@/lib/toast';
 
 const RefreshIcon = (
@@ -13,14 +14,21 @@ const RefreshIcon = (
 
 /**
  * 오늘 할 일의 복습 항목(category REVIEW) 클릭 시 뜨는 시작 확인 모달 (#886).
- * "복습 시작"을 눌러도 실제 복습 퀴즈 화면이 아직 없어서(AI 개인화 스케줄러 신규 기능,
- * 백엔드 API 미확정) 준비 중 토스트만 띄우고 모달을 닫는다 — 없는 화면으로 이동하는 척 안 함(§0.5).
+ * "복습 시작" 클릭 시 courseId가 있으면 유사퀴즈(오답 기반, #888) `/quizzes/similar?courseId=`로 이동한다(#900).
+ * courseId가 없으면(mock 데이터 누락 등) 없는 화면으로 이동하는 척 하지 않고 준비 중 토스트로 대체(§0.5).
  * 오답/유사 문항 수 등 실데이터가 없어 안내 문구에 구체적 숫자는 넣지 않는다.
  */
-export function ReviewStartModal({ onClose }: { onClose: () => void }) {
+export function ReviewStartModal({ courseId, onClose }: { courseId?: number; onClose: () => void }) {
+  const router = useRouter();
+
   const handleStart = () => {
-    toast('복습 퀴즈는 아직 준비 중이에요.');
+    if (courseId == null) {
+      toast('복습 퀴즈는 아직 준비 중이에요.');
+      onClose();
+      return;
+    }
     onClose();
+    router.push(`/quizzes/similar?courseId=${courseId}`);
   };
 
   return (
