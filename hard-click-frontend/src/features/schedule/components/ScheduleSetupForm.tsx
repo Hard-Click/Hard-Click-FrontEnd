@@ -9,10 +9,34 @@ import {
   SOCIAL_SUBJECTS,
   type SelectedSubjects,
 } from '../subjectPools';
+import { subjectLabel } from '@/features/courses/subjects';
+import { saveProfileAction } from '@/features/onboarding/actions';
+import type { AdmissionStrategy, KoreanElective, MathElective, ProfileInput } from '@/features/onboarding/types';
+import { toast } from '@/lib/toast';
 
 type ExamStrategy = 'REGULAR' | 'EARLY' | 'BOTH';
 type ExploreTrack = 'SOCIAL' | 'SCIENCE' | 'MIXED';
 type StudyTendency = 'MORNING' | 'EVENING' | 'NONE';
+
+/** UI 입시전략("병행/미정" 포함 3지선다) → BE `AdmissionStrategy`(미정만 있음). */
+function toAdmissionStrategy(strategy: ExamStrategy): AdmissionStrategy {
+  return strategy === 'BOTH' ? 'UNDECIDED' : strategy;
+}
+
+/** UI 국어 선택과목 값("KO_" 접두 subjectId)→ BE `KoreanElective`(접두 없음). */
+function toKoreanElective(value: string): KoreanElective | undefined {
+  if (value === 'KO_SPEECH_WRITING') return 'SPEECH_WRITING';
+  if (value === 'KO_LANGUAGE_MEDIA') return 'LANGUAGE_MEDIA';
+  return undefined;
+}
+
+/** UI 수학 선택과목 값("MATH_" 접두)→ BE `MathElective`(이름 불일치: PROB_STAT→STATISTICS). */
+function toMathElective(value: string): MathElective | undefined {
+  if (value === 'MATH_CALCULUS') return 'CALCULUS';
+  if (value === 'MATH_GEOMETRY') return 'GEOMETRY';
+  if (value === 'MATH_PROB_STAT') return 'STATISTICS';
+  return undefined;
+}
 
 const EXAM_STRATEGY_OPTIONS: { value: ExamStrategy; label: string }[] = [
   { value: 'REGULAR', label: '정시 위주' },
@@ -154,7 +178,8 @@ const REQUIRED_SELECT_MESSAGE = '과목을 선택해주세요';
 
 /**
  * 학습 스케줄 초기 설정 폼 (client 섬) — 구독 직후 1회 입력.
- * "다음" 클릭 시 불가능한 시간 체크(주간 시간 블록) 화면으로 이어진다(onNext, #855).
+ * `saveProfileAction`(`PUT /api/onboarding/profile`)으로 저장 성공 시에만 "다음" 클릭이 불가능한 시간 체크
+ * (주간 시간 블록) 화면으로 이어진다(onNext, #855). 실패하면 토스트만 띄우고 이 화면에 머문다.
  * 여기서 고른 과목(국어·수학·탐구1/2·제2외국어)은 모의고사 성적 화면(#857)의 기본값으로 이어받는다.
  */
 export function ScheduleSetupForm({ onNext }: { onNext: (selected: SelectedSubjects) => void }) {
@@ -173,6 +198,7 @@ export function ScheduleSetupForm({ onNext }: { onNext: (selected: SelectedSubje
   const [submitted, setSubmitted] = useState(false);
   // 빨간 테두리 대상 필드 — 제출 시점에만 고정(다른 칸 채운다고 옮겨다니지 않음). 그 필드가 채워지면 그냥 사라짐.
   const [topErrorField, setTopErrorField] = useState<FieldKey | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const targetSchoolRef = useRef<HTMLInputElement>(null);
   const targetMajorRef = useRef<HTMLInputElement>(null);
@@ -219,7 +245,7 @@ export function ScheduleSetupForm({ onNext }: { onNext: (selected: SelectedSubje
   // 제출 시점에 고정된 필드라도 그 사이 값이 채워졌으면 더 이상 테두리 표시 안 함(사라지기만, 다른 칸으로 안 옮겨감).
   const highlightField = topErrorField && errors[topErrorField] ? topErrorField : null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
     const nextErrors = validate();
@@ -229,7 +255,30 @@ export function ScheduleSetupForm({ onNext }: { onNext: (selected: SelectedSubje
       fieldRefs[firstInvalid].current?.focus();
       return;
     }
-    onNext({ korean, math, explore1, explore2, hasSecondLanguage, secondLanguage });
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const input: ProfileInput = {
+        targetUniversity: targetSchool.trim(),
+        targetMajor: targetMajor.trim(),
+        admissionStrategy: toAdmissionStrategy(examStrategy),
+        koreanElective: toKoreanElective(korean),
+        mathElective: toMathElective(math),
+        explorationTrack: exploreTrack,
+        explorationSubject1: subjectLabel(explore1),
+        explorationSubject2: subjectLabel(explore2),
+        secondLanguage: hasSecondLanguage,
+        studyPreference: studyTendency,
+      };
+      const result = await saveProfileAction(input);
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+      onNext({ korean, math, explore1, explore2, hasSecondLanguage, secondLanguage });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -385,9 +434,10 @@ export function ScheduleSetupForm({ onNext }: { onNext: (selected: SelectedSubje
       <div className="mt-10 flex justify-end border-t border-[#E2E8F0] pt-6">
         <button
           type="submit"
-          className="flex h-12 items-center justify-center rounded-xl bg-[#2F5DAA] px-6 text-sm font-semibold text-white transition hover:bg-[#274C8B]"
+          disabled={isSaving}
+          className="flex h-12 items-center justify-center rounded-xl bg-[#2F5DAA] px-6 text-sm font-semibold text-white transition hover:bg-[#274C8B] disabled:cursor-wait disabled:opacity-50"
         >
-          다음
+          {isSaving ? '저장 중…' : '다음'}
         </button>
       </div>
     </form>

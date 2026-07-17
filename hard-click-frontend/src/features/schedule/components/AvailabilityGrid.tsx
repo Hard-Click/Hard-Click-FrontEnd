@@ -1,10 +1,16 @@
 'use client';
 
 import { Fragment, useState } from 'react';
+import { saveAvailabilityAction } from '@/features/onboarding/actions';
+import type { AvailabilityInput } from '@/features/onboarding/types';
+import { toast } from '@/lib/toast';
 
 const DAYS = ['월', '화', '수', '목', '금', '토', '일'] as const;
 /** 00시~23시, 1시간 단위 24행 — 각 행은 다시 위/아래 반칸(30분 단위)으로 나뉜다. */
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
+
+/** BE `dayOfWeek`(0=일~6=토) — 화면은 월~일 순서로 그려져 이 매핑으로 변환한다. */
+const DAY_TO_DOW: Record<string, number> = { 일: 0, 월: 1, 화: 2, 수: 3, 목: 4, 금: 5, 토: 6 };
 
 function hourLabel(hour: number): string {
   return `${String(hour).padStart(2, '0')}시`;
@@ -18,6 +24,24 @@ function cellKey(day: string, hour: number, half: 0 | 1): string {
   return `${day}-${hour}-${half}`;
 }
 
+/** 체크된 칸만 요일별로 묶어 BE 페이로드로 변환. `slot = 시*2 + (분>=30?1:0)`(0~47). */
+function toAvailabilityInput(blocked: ReadonlySet<string>): AvailabilityInput {
+  const slotsByDay = new Map<string, number[]>();
+  for (const key of blocked) {
+    const [day, hourStr, halfStr] = key.split('-');
+    const slot = Number(hourStr) * 2 + Number(halfStr);
+    const list = slotsByDay.get(day);
+    if (list) list.push(slot);
+    else slotsByDay.set(day, [slot]);
+  }
+  return {
+    unavailable: Array.from(slotsByDay.entries()).map(([day, slots]) => ({
+      dayOfWeek: DAY_TO_DOW[day],
+      slots: slots.sort((a, b) => a - b),
+    })),
+  };
+}
+
 /**
  * 불가능한 시간 체크 — 요일×시간대 그리드 (client 섬, #855).
  * 전체를 하나의 CSS grid로 그린다(행마다 별도 flex를 쓰면 컬럼 폭이 미세하게 어긋나 보임 — 반드시 단일 grid 유지).
@@ -28,12 +52,16 @@ function cellKey(day: string, hour: number, half: 0 | 1): string {
  * 기본은 전부 "가능"이고, 클릭/탭 또는 드래그로 지나간 칸이 "불가능"으로 토글된다.
  * 드래그 시작 칸의 반대 상태로 드래그 중 지나간 모든 칸을 맞춘다(칸마다 개별 토글 아님).
  * 마우스·터치는 Pointer Events로 통합 처리하고, 키보드는 Enter/Space로 단일 칸 토글한다.
- * "다음" 클릭 시 최근 모의고사 성적 입력 화면으로 이어진다(onNext, #857).
+ * `saveAvailabilityAction`(`PUT /api/onboarding/availability`) 저장 성공 시에만 "다음" 클릭이 최근 모의고사
+ * 성적 입력 화면으로 이어진다(onNext, #857). 실패하면 토스트만 띄우고 이 화면에 머문다.
  */
 export function AvailabilityGrid({ onNext }: { onNext: () => void }) {
   const [blocked, setBlocked] = useState<Set<string>>(new Set());
   // 드래그 중 여부와, 드래그가 지나가는 칸에 적용할 값(시작 칸의 반대 상태) — 이벤트 핸들러에서만 바뀐다.
   const [drag, setDrag] = useState<{ active: boolean; value: boolean }>({ active: false, value: false });
+  const [isSaving, setIsSaving] = useState(false);
+  // OB003(7일 전부 종일 불가) — 서버에 보내기 전에 화면에서 먼저 막는다.
+  const [allBlockedError, setAllBlockedError] = useState(false);
 
   const applyToCell = (key: string, value: boolean) => {
     setBlocked((prev) => {
@@ -77,9 +105,24 @@ export function AvailabilityGrid({ onNext }: { onNext: () => void }) {
     applyToCell(key, !blocked.has(key));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onNext();
+    const allDaysFullyBlocked = DAYS.every((day) =>
+      HOURS.every((hour) => ([0, 1] as const).every((half) => blocked.has(cellKey(day, hour, half)))),
+    );
+    setAllBlockedError(allDaysFullyBlocked);
+    if (allDaysFullyBlocked || isSaving) return;
+    setIsSaving(true);
+    try {
+      const result = await saveAvailabilityAction(toAvailabilityInput(blocked));
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+      onNext();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -170,11 +213,15 @@ export function AvailabilityGrid({ onNext }: { onNext: () => void }) {
       </div>
 
       <div className="mt-8 border-t border-[#E2E8F0] pt-6">
+        <p className={`mb-4 h-5 text-sm font-medium text-[#DC2626] ${allBlockedError ? '' : 'invisible'}`}>
+          7일 전부 종일 불가능으로 설정할 수는 없어요.
+        </p>
         <button
           type="submit"
-          className="flex h-12 w-full items-center justify-center rounded-xl bg-[#2F5DAA] text-sm font-semibold text-white shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] transition hover:bg-[#274C8B]"
+          disabled={isSaving}
+          className="flex h-12 w-full items-center justify-center rounded-xl bg-[#2F5DAA] text-sm font-semibold text-white shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] transition hover:bg-[#274C8B] disabled:cursor-wait disabled:opacity-50"
         >
-          다음
+          {isSaving ? '저장 중…' : '다음'}
         </button>
       </div>
     </form>

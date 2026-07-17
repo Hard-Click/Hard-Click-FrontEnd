@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getSubscriptionServer } from '@/features/subscriptions/server';
+import { getOnboardingMeServer } from '@/features/onboarding/server';
 import {
   getAiCoachCommentServer,
   getScheduleBlocksServer,
@@ -12,6 +13,12 @@ export default async function SchedulePage() {
   const subscription = await getSubscriptionServer();
   if (!subscription.subscribed) {
     redirect('/subscriptions');
+  }
+
+  // 온보딩(목표설정/불가능한 시간/모의고사 성적) 미완료 시 설정 화면으로 유도
+  const onboarding = await getOnboardingMeServer();
+  if (!onboarding.onboarded) {
+    redirect('/schedule/setup');
   }
 
   const today = new Date();

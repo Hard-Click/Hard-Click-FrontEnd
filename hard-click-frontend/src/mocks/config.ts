@@ -57,6 +57,7 @@ const MOCK_OVERRIDE: Record<string, boolean> = {
   notifications: false, // 헤더 종 알림 — GET /api/notifications(목록,data={content,hasNext})·/unread-count(미읽음수)·PATCH /api/notifications/{id}/read(읽음). 루트 layout에서 서버조회→NotificationProvider(AuthProvider 패턴 미러). 라이브 검증(2026-06-25). SSE 실시간(/api/notifications/stream→BE /subscribe)도 라이브(NotificationProvider SSE_ENABLED=true·EventSource 구독). 읽음=Provider 낙관적 갱신.
   learning: false, // 영상 재생/진도(/api/learning/*) — 라이브 전환(2026-06-27). BE가 영상 시드+lesson↔video 매핑 제공: courses/{id}/progress가 lessons[videoId] 줌, videos/{id}/play가 실 S3 streamingUrl(presigned) 줌. shape 라이브 검증 완료(play·progress·position·course progress 전부 FE 타입 일치). ⚠️ 영상 데이터는 일부만 연결(videoId 1=200, 나머지 404 L005=BE가 더 업로드해야) → 미연결은 VideoErrorState로 처리.
   chat: false, // 채팅 — GET /api/chat/rooms/{me,/{id},/{id}/messages} + STOMP(/ws-chat). 라이브 검증 완료(2026-07-10 세션: REST 200·socket-ticket 201·송수신 라운드트립, 로컬 http 기준). ⚠️ 실시간은 prod가 BE를 wss로 노출해야 동작(평문 ws://면 https에서 혼합콘텐츠 차단 → useChatSocket 가드가 비활성). REST는 BFF라 prod도 정상.
+  onboarding: true, // /api/onboarding/{me,profile,availability,exam-scores} — 코드는 실 연동 완성(#917), 라이브 E2E 미검증이라 잠정 mock 유지. 검증 후 false로 전환.
   // ⚠️ 잔디 lessons/yearly/monthly는 콜드(첫호출) 200 후 연속 500 출렁(BE 작업중). members/me/profile-image=항상 500. subscriptions/me=500.
   // 공지·커뮤니티·인증은 팀이 별도 플래그(USE_MOCK_NOTICES/COMMUNITY/AUTH)로 관리 → 여기서 관여하지 않음.
 };

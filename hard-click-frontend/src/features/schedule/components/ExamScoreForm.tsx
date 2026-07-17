@@ -8,6 +8,9 @@ import {
   MATH_ELECTIVES,
   type SelectedSubjects,
 } from '../subjectPools';
+import { saveExamScoresAction } from '@/features/onboarding/actions';
+import type { ExamScoreInput } from '@/features/onboarding/types';
+import { toast } from '@/lib/toast';
 
 interface SubjectOption {
   value: string;
@@ -106,7 +109,8 @@ function ScoreRow({
  * 최근 모의고사 성적 입력 (client 섬, #855 후속 화면).
  * 수능 응시영역 순서대로 과목 선택 + 원점수 입력.
  * 응시과목 기본값은 이전 단계(스케줄 설정 폼)에서 고른 과목을 그대로 이어받되, 드롭다운으로 바꿀 수 있다.
- * ⚠️ BE 저장 API 없음(2026-07-14 기준) — 제출 시 서버 저장 없이 캘린더로 이동만 한다.
+ * `saveExamScoresAction`(`PUT /api/onboarding/exam-scores`) 저장 성공 시에만 onSubmit(캘린더 이동)이 호출된다.
+ * 원점수만 전송하고 등급 변환은 BE가 한다. 제2외국어는 BE 스펙에 없어 입력받아도 전송하지 않는다.
  */
 export function ExamScoreForm({
   initialSubjects,
@@ -128,6 +132,7 @@ export function ExamScoreForm({
   const [secondLanguage, setSecondLanguage] = useState(initialSubjects.secondLanguage);
   const [secondLanguageScore, setSecondLanguageScore] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const explore1Options = EXPLORE_SUBJECTS.filter((s) => s.value !== explore2);
   const explore2Options = EXPLORE_SUBJECTS.filter((s) => s.value !== explore1);
@@ -144,11 +149,31 @@ export function ExamScoreForm({
   const hasEmptyScore = requiredScores.some((s) => !s.trim());
   const showError = submitted && hasEmptyScore;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
-    if (requiredScores.some((s) => !s.trim())) return;
-    onSubmit();
+    if (requiredScores.some((s) => !s.trim()) || isSaving) return;
+    setIsSaving(true);
+    try {
+      const input: ExamScoreInput = {
+        scores: [
+          { subjectArea: 'KOREAN', subjectName: korean, rawScore: Number(koreanScore) },
+          { subjectArea: 'MATH', subjectName: math, rawScore: Number(mathScore) },
+          { subjectArea: 'ENGLISH', rawScore: Number(englishScore) },
+          { subjectArea: 'HISTORY', rawScore: Number(koreanHistoryScore) },
+          { subjectArea: 'EXPLORATION_1', subjectName: explore1, rawScore: Number(explore1Score) },
+          { subjectArea: 'EXPLORATION_2', subjectName: explore2, rawScore: Number(explore2Score) },
+        ],
+      };
+      const result = await saveExamScoresAction(input);
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+      onSubmit();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -226,9 +251,10 @@ export function ExamScoreForm({
         </p>
         <button
           type="submit"
-          className="flex h-12 w-full items-center justify-center rounded-xl bg-[#2F5DAA] text-sm font-semibold text-white shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] transition hover:bg-[#274C8B]"
+          disabled={isSaving}
+          className="flex h-12 w-full items-center justify-center rounded-xl bg-[#2F5DAA] text-sm font-semibold text-white shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] transition hover:bg-[#274C8B] disabled:cursor-wait disabled:opacity-50"
         >
-          저장하고 다음
+          {isSaving ? '저장 중…' : '저장하고 다음'}
         </button>
       </div>
     </form>
