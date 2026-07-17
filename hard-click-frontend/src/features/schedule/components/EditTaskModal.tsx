@@ -68,17 +68,23 @@ export function EditTaskModal({
     setSubmitted(true);
     if (!isValid || isSaving) return;
     setIsSaving(true);
-    const saved = await onSave({ title: title.trim(), startTime, endTime });
-    setIsSaving(false);
-    if (saved) onClose();
+    try {
+      const saved = await onSave({ title: title.trim(), startTime, endTime });
+      if (saved) onClose();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDelete = async () => {
     if (isDeleting) return;
     setIsDeleting(true);
-    const deleted = await onDelete();
-    setIsDeleting(false);
-    if (deleted) onClose();
+    try {
+      const deleted = await onDelete();
+      if (deleted) onClose();
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (

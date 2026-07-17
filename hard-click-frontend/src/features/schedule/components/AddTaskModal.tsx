@@ -144,9 +144,12 @@ export function AddTaskModal({
     setSubmitted(true);
     if (!isValid || isSaving) return;
     setIsSaving(true);
-    const saved = await onSave({ title: title.trim(), startTime, endTime });
-    setIsSaving(false);
-    if (saved) onClose();
+    try {
+      const saved = await onSave({ title: title.trim(), startTime, endTime });
+      if (saved) onClose();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (

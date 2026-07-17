@@ -34,6 +34,14 @@ function toActionResult(res: { success: boolean; errorCode?: string; message?: s
   return { success: false, message: (res.errorCode && ERROR_MESSAGES[res.errorCode]) || res.message || fallback };
 }
 
+/** Server Action은 클라에서 직접 호출 가능한 공개 엔드포인트라, BE에 보내기 전 형태를 사전 검증한다. */
+function validateTodoPayload(payload: TodoPayload): string | null {
+  if (!payload.title?.trim()) return '할 일을 입력해주세요.';
+  if (!payload.planDate?.trim()) return '날짜를 입력해주세요.';
+  if (!!payload.startTime !== !!payload.endTime) return ERROR_MESSAGES.SC003;
+  return null;
+}
+
 /** LESSON(AI 슬롯) 완료 처리. mock 단계는 실호출 없이 성공만 흉내낸다. */
 export async function completeLessonAction(itemId: number): Promise<ScheduleActionResult> {
   if (isMock('schedule')) return { success: true, message: '완료로 표시했어요.' };
@@ -50,6 +58,8 @@ export async function completeTodoAction(itemId: number): Promise<ScheduleAction
 
 /** 할 일 추가. mock 단계는 실호출 없이 임의 id로 성공만 흉내낸다. */
 export async function createTodoAction(payload: TodoPayload): Promise<TodoActionResult> {
+  const validationError = validateTodoPayload(payload);
+  if (validationError) return { success: false, message: validationError };
   if (isMock('schedule')) {
     return { success: true, message: '할 일을 추가했어요.', todoId: Date.now() };
   }
@@ -60,6 +70,8 @@ export async function createTodoAction(payload: TodoPayload): Promise<TodoAction
 
 /** 할 일 수정. mock 단계는 실호출 없이 성공만 흉내낸다. */
 export async function updateTodoAction(itemId: number, payload: TodoPayload): Promise<ScheduleActionResult> {
+  const validationError = validateTodoPayload(payload);
+  if (validationError) return { success: false, message: validationError };
   if (isMock('schedule')) return { success: true, message: '할 일을 수정했어요.' };
   const res = await serverApi.put(`/api/schedule/todos/${itemId}`, payload);
   return toActionResult(res, '할 일을 수정했어요.');

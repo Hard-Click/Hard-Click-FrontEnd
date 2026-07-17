@@ -49,75 +49,94 @@ export function ScheduleClientRoot({
     const task = tasks.find((t) => t.id === id);
     if (!task || task.done) return;
     void (async () => {
-      const action = task.source === 'LESSON' ? completeLessonAction : completeTodoAction;
-      const result = await action(task.itemId);
-      if (!result.success) {
-        toast.error(result.message);
-        return;
+      try {
+        const action = task.source === 'LESSON' ? completeLessonAction : completeTodoAction;
+        const result = await action(task.itemId);
+        if (!result.success) {
+          toast.error(result.message);
+          return;
+        }
+        setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: true } : t)));
+      } catch {
+        toast.error('완료 처리에 실패했어요. 다시 시도해주세요.');
       }
-      setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: true } : t)));
     })();
   };
 
   const addTask = async (input: NewTaskInput): Promise<boolean> => {
-    const result = await createTodoAction({
-      title: input.title,
-      planDate: date,
-      startTime: input.startTime,
-      endTime: input.endTime,
-    });
-    if (!result.success || result.todoId == null) {
-      toast.error(result.message);
-      return false;
-    }
-    const todoId = result.todoId;
-    setTasks((prev) => [
-      ...prev,
-      {
-        id: `TODO-${todoId}`,
-        itemId: todoId,
-        source: 'TODO',
+    try {
+      const result = await createTodoAction({
         title: input.title,
-        done: false,
-        category: 'OTHER',
+        planDate: date,
         startTime: input.startTime,
         endTime: input.endTime,
-      },
-    ]);
-    return true;
+      });
+      if (!result.success || result.todoId == null) {
+        toast.error(result.message);
+        return false;
+      }
+      const todoId = result.todoId;
+      setTasks((prev) => [
+        ...prev,
+        {
+          id: `TODO-${todoId}`,
+          itemId: todoId,
+          source: 'TODO',
+          title: input.title,
+          done: false,
+          category: 'OTHER',
+          startTime: input.startTime,
+          endTime: input.endTime,
+        },
+      ]);
+      return true;
+    } catch {
+      toast.error('할 일 추가에 실패했어요. 다시 시도해주세요.');
+      return false;
+    }
   };
 
   const editTask = async (id: string, input: EditTaskInput): Promise<boolean> => {
     const task = tasks.find((t) => t.id === id);
     if (!task) return false;
-    const result = await updateTodoAction(task.itemId, {
-      title: input.title,
-      planDate: date,
-      startTime: input.startTime,
-      endTime: input.endTime,
-    });
-    if (!result.success) {
-      toast.error(result.message);
+    try {
+      const result = await updateTodoAction(task.itemId, {
+        title: input.title,
+        planDate: date,
+        startTime: input.startTime,
+        endTime: input.endTime,
+      });
+      if (!result.success) {
+        toast.error(result.message);
+        return false;
+      }
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === id ? { ...t, title: input.title, startTime: input.startTime, endTime: input.endTime } : t,
+        ),
+      );
+      return true;
+    } catch {
+      toast.error('할 일 수정에 실패했어요. 다시 시도해주세요.');
       return false;
     }
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === id ? { ...t, title: input.title, startTime: input.startTime, endTime: input.endTime } : t,
-      ),
-    );
-    return true;
   };
 
   const deleteTask = async (id: string): Promise<boolean> => {
     const task = tasks.find((t) => t.id === id);
     if (!task) return false;
-    const result = await deleteTodoAction(task.itemId);
-    if (!result.success) {
-      toast.error(result.message);
+    try {
+      const result = await deleteTodoAction(task.itemId);
+      if (!result.success) {
+        toast.error(result.message);
+        return false;
+      }
+      setTasks((prev) => prev.filter((t) => t.id !== id));
+      return true;
+    } catch {
+      toast.error('할 일 삭제에 실패했어요. 다시 시도해주세요.');
       return false;
     }
-    setTasks((prev) => prev.filter((t) => t.id !== id));
-    return true;
   };
 
   // 자정을 넘겨 다음날로 이어지는 할 일(끝 시간 <= 시작 시간)은 캘린더에도 오늘~다음날 막대로 보여준다.
