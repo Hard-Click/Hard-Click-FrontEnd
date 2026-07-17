@@ -41,6 +41,18 @@ function withSuccess<T>(body: Omit<ApiResponse<T>, 'success'>): ApiResponse<T> {
   return { ...body, success: body.httpStatus < 400 };
 }
 
+/**
+ * 204 No Content 등 바디 없는 성공 응답 대응 — axios가 파싱 못 해 `data`가 빈 문자열/undefined로 온다.
+ * 그 경우 봉투 자체가 없으니 `httpStatus`를 axios가 실제로 받은 응답 상태 코드로 채워준다.
+ * (없으면 body.httpStatus가 undefined가 되어 `success`가 항상 false로 오판정됨)
+ */
+function normalizeBody<T>(data: unknown, fallbackStatus: number): Omit<ApiResponse<T>, 'success'> {
+  if (data && typeof data === 'object') {
+    return data as Omit<ApiResponse<T>, 'success'>;
+  }
+  return { httpStatus: fallbackStatus, message: '', data: undefined as T };
+}
+
 function toErrorResponse<T>(error: unknown): ApiResponse<T> {
   if (axios.isAxiosError(error) && error.response) {
     const body = error.response.data as {
@@ -110,7 +122,7 @@ async function request<T>(
       // ⭐ multipart(FormData)면 Content-Type을 지정하지 않는다 → boundary 자동 설정
       headers,
     });
-    return withSuccess(response.data);
+    return withSuccess(normalizeBody<T>(response.data, response.status));
   } catch (error) {
     // Access Token 만료(401) → refresh로 재발급 후 1회 재시도 (refresh/login 자체는 제외)
     const isAuthEndpoint =
@@ -131,7 +143,7 @@ async function request<T>(
             data,
             headers: { ...headers, Authorization: `Bearer ${newToken}` },
           });
-          return withSuccess(retry.data);
+          return withSuccess(normalizeBody<T>(retry.data, retry.status));
         } catch (retryError) {
           return toErrorResponse<T>(retryError);
         }

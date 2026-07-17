@@ -2,12 +2,12 @@ import type { ChurnRiskLevel, ChurnStudentDetail } from '../types';
 
 const RISK_LABEL: Record<ChurnRiskLevel, string> = {
   HIGH: '고위험',
-  MID: '중위험',
+  MEDIUM: '중위험',
 };
 
 const RISK_STYLE: Record<ChurnRiskLevel, string> = {
   HIGH: 'bg-[#FEE2E2] text-[#DC2626]',
-  MID: 'bg-[#FEF3C7] text-[#D97706]',
+  MEDIUM: 'bg-[#FEF3C7] text-[#D97706]',
 };
 
 // 점수 구간별 색: 35 미만 검정 / 35~70 노랑 / 70 이상 빨강
@@ -42,7 +42,6 @@ export default function ChurnDetailHeaderCard({
               {RISK_LABEL[student.riskLevel]}
             </span>
           </div>
-          <p className="mt-1 text-sm text-[#64748B]">ID : {student.username}</p>
           <p className="mt-1 text-sm text-[#64748B]">Email : {student.email}</p>
         </div>
       </div>

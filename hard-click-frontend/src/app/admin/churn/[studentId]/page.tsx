@@ -14,10 +14,11 @@ interface Props {
 
 export default async function AdminChurnStudentDetailPage({ params }: Props) {
   const { studentId } = await params;
-  const id = Number(studentId);
-  if (Number.isNaN(id)) notFound();
+  // studentId는 URL 세그먼트명일 뿐 실제 값은 enrollmentId(BE 상세 API 식별자).
+  const enrollmentId = Number(studentId);
+  if (Number.isNaN(enrollmentId)) notFound();
 
-  const student = await getChurnStudentDetailServer(id);
+  const student = await getChurnStudentDetailServer(enrollmentId);
   if (!student) notFound();
 
   return (
@@ -43,7 +44,7 @@ export default async function AdminChurnStudentDetailPage({ params }: Props) {
         </div>
 
         {/* 액션 */}
-        <ChurnDetailActions studentName={student.name} />
+        <ChurnDetailActions enrollmentId={student.enrollmentId} studentName={student.name} />
       </div>
     </div>
   );

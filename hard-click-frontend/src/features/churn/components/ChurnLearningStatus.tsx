@@ -1,6 +1,14 @@
 import type { ChurnLearningStatus as Status } from '../types';
 
-/** 학습 현황 카드 (Server Component). */
+/** 누적 순공시간(분) → "N시간 M분"(1시간 미만은 "M분") */
+function formatStudyMinutes(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m}분`;
+  return m === 0 ? `${h}시간` : `${h}시간 ${m}분`;
+}
+
+/** 학습 현황 카드 (Server Component). progressRate/recentQuizAvg는 BE 미집계 시 null → "집계 전" 표시. */
 export default function ChurnLearningStatus({ status }: { status: Status }) {
   return (
     <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
@@ -10,10 +18,7 @@ export default function ChurnLearningStatus({ status }: { status: Status }) {
         <div className="flex items-center justify-between">
           <dt className="text-[#64748B]">진도율</dt>
           <dd className="font-semibold text-[#1E293B]">
-            {status.progressRate}%{' '}
-            <span className="font-normal text-[#94A3B8]">
-              (목표 {status.targetRate}%)
-            </span>
+            {status.progressRate === null ? '집계 전' : `${status.progressRate}%`}
           </dd>
         </div>
 
@@ -27,26 +32,14 @@ export default function ChurnLearningStatus({ status }: { status: Status }) {
         <div className="flex items-center justify-between">
           <dt className="text-[#64748B]">최근 퀴즈 평균</dt>
           <dd className="font-semibold text-[#1E293B]">
-            {status.recentQuizAvg}점{' '}
-            {status.recentQuizDelta !== 0 && (
-              <span
-                className={
-                  status.recentQuizDelta < 0
-                    ? 'text-[#DC2626]'
-                    : 'text-[#16A34A]'
-                }
-              >
-                {status.recentQuizDelta < 0 ? '↓' : '↑'}
-                {Math.abs(status.recentQuizDelta)}
-              </span>
-            )}
+            {status.recentQuizAvg === null ? '집계 전' : `${status.recentQuizAvg}점`}
           </dd>
         </div>
 
         <div className="flex items-center justify-between">
           <dt className="text-[#64748B]">누적 순공시간</dt>
           <dd className="font-semibold text-[#1E293B]">
-            {status.totalStudyHours}시간
+            {formatStudyMinutes(status.totalStudyMinutes)}
           </dd>
         </div>
       </dl>
