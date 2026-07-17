@@ -234,4 +234,6 @@ export const mockCourseDetailResponse: CourseDetailApiResponse = {
     '안녕하세요, 김강사입니다. 문학·비문학·화법과작문 전 영역을 체계적으로 다루며, 학생 한 명 한 명의 사고 과정을 바꾸는 수업을 지향합니다.',
   instructorCareer:
     '前 대형학원 국어 대표강사\n서울대학교 국어교육과 졸업\n수능 국어 교재 10종 집필',
+  recommendedWeeks: 8,
+  dailyMaxMinutes: 90,
 };

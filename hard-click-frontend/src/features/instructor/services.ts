@@ -93,9 +93,9 @@ export async function createCourse(payload: {
   level?: string;
   // ⚠️ BE 필드명 미확정 (§0.5) — 관리자 강사 지정용
   instructor?: string;
-  // ⚠️ BE 필드명·지원 미확정 (§0.5) — AI 스케줄러 계약 확인 후 조정
+  // CP-SAT 스케줄 엔진 입력값(코스 단위, 둘 다 nullable — FRONTEND_API.md 3번 섹션)
   recommendedWeeks?: number;
-  dailyStudyLimitMinutes?: number;
+  dailyMaxMinutes?: number;
   sections: Array<{
     title: string;
     orderIndex: number;

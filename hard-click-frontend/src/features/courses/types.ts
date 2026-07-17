@@ -104,6 +104,10 @@ export interface CourseDetail {
   curriculum: CurriculumSection[];
   reviews: Review[];
   ratingDistribution: { stars: number; count: number }[];
+  /** 권장 완강 기간(주). BE nullable — 미설정 시 null. */
+  recommendedWeeks: number | null;
+  /** 코스별 강도 상한(하루 최대 학습 분). BE nullable — 미설정 시 null(서버 기본 120분 적용). */
+  dailyMaxMinutes: number | null;
 }
 
 /* ───── 백엔드 응답 (실제 Hard-Click-BackEnd 코드 DTO 기준) ───── */
@@ -188,5 +192,9 @@ export interface CourseDetailApiResponse {
   instructorOneLineIntro: string | null; // 강사 한줄소개 (현재 BE 전부 null — 시드 대기)
   instructorIntroduction: string | null; // 강사 자기소개
   instructorCareer: string | null; // 강사 경력 (BE는 단일 string)
+  /** 권장 완강 기간(주). @Min(1), nullable. */
+  recommendedWeeks: number | null;
+  /** 코스별 강도 상한(하루 최대 학습 분). @Min(1), nullable(미전송 시 서버 기본 120). */
+  dailyMaxMinutes: number | null;
 }
 
