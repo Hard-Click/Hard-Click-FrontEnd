@@ -9,10 +9,11 @@ import { ReviewStartModal } from './ReviewStartModal';
 interface TodayTaskChecklistProps {
   tasks: readonly TodayTask[];
   onToggle: (id: string) => void;
-  onEdit: (id: string, input: EditTaskInput) => void;
+  onEdit: (id: string, input: EditTaskInput) => Promise<boolean>;
+  onDelete: (id: string) => Promise<boolean>;
 }
 
-export function TodayTaskChecklist({ tasks, onToggle, onEdit }: TodayTaskChecklistProps) {
+export function TodayTaskChecklist({ tasks, onToggle, onEdit, onDelete }: TodayTaskChecklistProps) {
   const [editingTask, setEditingTask] = useState<TodayTask | null>(null);
   const [reviewTask, setReviewTask] = useState<TodayTask | null>(null);
   const doneCount = tasks.filter((task) => task.done).length;
@@ -22,11 +23,12 @@ export function TodayTaskChecklist({ tasks, onToggle, onEdit }: TodayTaskCheckli
     <div className="flex h-full flex-col">
       <ul className="flex flex-1 flex-col gap-2">
         {tasks.map((task) => {
-          // 수정 모달은 직접 추가한 할 일(OTHER 카테고리)만 — 원래 스케줄에 있던 과목별 항목은 수정 대상 아님.
-          const editable = task.category === 'OTHER';
           // 복습 항목(REVIEW 카테고리)은 수정이 아니라 복습 시작 확인 모달을 띄운다.
-          // 복습 퀴즈를 실제로 풀기 전까지는 체크박스로 완료 체크를 할 수 없다(아래 checkbox disabled 처리).
           const isReview = task.category === 'REVIEW';
+          // 수정 모달은 학생이 직접 추가한 TODO만 — LESSON(AI 슬롯)은 BE에 수정/삭제 API 자체가 없다.
+          const editable = task.source === 'TODO' && !isReview;
+          // 완료 체크는 BE가 단방향(PLANNED→DONE)만 지원 — 되돌리는 API가 없어 이미 완료면 체크박스 비활성화.
+          const toggleLocked = isReview || task.done;
           const handleClick = editable
             ? () => setEditingTask(task)
             : isReview
@@ -40,18 +42,24 @@ export function TodayTaskChecklist({ tasks, onToggle, onEdit }: TodayTaskCheckli
             >
               <button
                 type="button"
-                disabled={isReview}
+                disabled={toggleLocked}
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggle(task.id);
                 }}
                 aria-pressed={task.done}
-                aria-label={isReview ? '복습 퀴즈를 풀어야 완료 체크할 수 있어요' : task.done ? '완료 취소' : '완료로 표시'}
+                aria-label={
+                  isReview
+                    ? '복습 퀴즈를 풀어야 완료 체크할 수 있어요'
+                    : task.done
+                      ? '완료됨(취소 불가)'
+                      : '완료로 표시'
+                }
                 className={`${
                   task.done
                     ? 'flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#2F5DAA] text-white'
                     : 'h-5 w-5 shrink-0 rounded-md border-2 border-[#CBD5E1]'
-                } ${isReview ? 'cursor-not-allowed opacity-50' : ''}`}
+                } ${toggleLocked ? 'cursor-not-allowed opacity-50' : ''}`}
               >
                 {task.done && (
                   <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" aria-hidden>
@@ -104,6 +112,7 @@ export function TodayTaskChecklist({ tasks, onToggle, onEdit }: TodayTaskCheckli
           existingTasks={tasks.filter((t) => t.id !== editingTask.id)}
           onClose={() => setEditingTask(null)}
           onSave={(input) => onEdit(editingTask.id, input)}
+          onDelete={() => onDelete(editingTask.id)}
         />
       )}
       {reviewTask && <ReviewStartModal courseId={reviewTask.courseId} onClose={() => setReviewTask(null)} />}

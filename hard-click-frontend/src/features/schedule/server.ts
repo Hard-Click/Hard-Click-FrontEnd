@@ -46,9 +46,19 @@ function toCategory(subject?: string | null): SubjectCategory {
   return subjectCategory(subject) ?? LABEL_TO_CATEGORY[subject] ?? 'OTHER';
 }
 
+/** source 미제공(구 PR#3 응답)이면 slotId만 있는 LESSON으로 간주. */
+function toSource(it: ApiScheduleItem): 'LESSON' | 'TODO' {
+  return it.source ?? (it.slotId != null ? 'LESSON' : 'TODO');
+}
+
+/** BE 원본 id. 구 응답(slotId만 있는 경우) 대비 폴백 포함. */
+function toItemId(it: ApiScheduleItem): number {
+  return it.itemId ?? it.slotId ?? 0;
+}
+
+/** 화면 리스트 key — itemId는 source 안에서만 유일해서 source까지 합쳐야 전체에서 유일. */
 function itemKey(it: ApiScheduleItem): string {
-  const id = it.itemId ?? it.slotId;
-  return String(id ?? `${it.planDate}-${it.title ?? it.lessonTitle ?? ''}`);
+  return `${toSource(it)}-${toItemId(it)}`;
 }
 
 /**
@@ -66,6 +76,8 @@ export async function getTodayTasksServer(today: Date = new Date()): Promise<Tod
   }
   const tasks: TodayTask[] = (res.data?.items ?? []).map((it) => ({
     id: itemKey(it),
+    itemId: toItemId(it),
+    source: toSource(it),
     title: it.title ?? it.lessonTitle ?? it.courseTitle ?? '학습',
     done: it.status === 'DONE',
     category: toCategory(it.subject),
@@ -77,14 +89,19 @@ export async function getTodayTasksServer(today: Date = new Date()): Promise<Tod
 
 /**
  * 캘린더에 그릴 학습 구간 조회 (Server Component 전용).
- * live: `GET /api/schedule/me` → 활성 스케줄 슬롯을 날짜별 단일-일 블록으로 변환.
+ * live: `GET /api/schedule/me?from=&to=` → 활성 스케줄 슬롯을 날짜별 단일-일 블록으로 변환.
  * mock: 고정 데이터.
+ * @param month 조회할 달의 아무 날짜(기본 오늘) — 그 달의 1일~말일을 from/to로 보낸다.
  */
-export async function getScheduleBlocksServer(): Promise<ScheduleBlock[]> {
+export async function getScheduleBlocksServer(month: Date = new Date()): Promise<ScheduleBlock[]> {
   if (isMock('schedule')) {
     return [...mockScheduleBlocks];
   }
-  const res = await serverApi.get<ApiScheduleItem[]>('/api/schedule/me');
+  const from = new Date(month.getFullYear(), month.getMonth(), 1);
+  const to = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+  const res = await serverApi.get<ApiScheduleItem[]>(
+    `/api/schedule/me?from=${toISODate(from)}&to=${toISODate(to)}`,
+  );
   if (!res.success) {
     throw new Error(`학습 스케줄 조회 실패 (${res.httpStatus}): ${res.message}`);
   }

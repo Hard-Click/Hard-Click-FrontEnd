@@ -10,7 +10,7 @@ export function AddTaskButton({
   onAdd,
 }: {
   tasks: readonly TodayTask[];
-  onAdd: (task: NewTaskInput) => void;
+  onAdd: (task: NewTaskInput) => Promise<boolean>;
 }) {
   const [open, setOpen] = useState(false);
 

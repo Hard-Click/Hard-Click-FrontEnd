@@ -8,11 +8,12 @@ interface TodayTaskPanelProps {
   date: string;
   tasks: readonly TodayTask[];
   onToggle: (id: string) => void;
-  onAdd: (task: NewTaskInput) => void;
-  onEdit: (id: string, input: EditTaskInput) => void;
+  onAdd: (task: NewTaskInput) => Promise<boolean>;
+  onEdit: (id: string, input: EditTaskInput) => Promise<boolean>;
+  onDelete: (id: string) => Promise<boolean>;
 }
 
-export function TodayTaskPanel({ date, tasks, onToggle, onAdd, onEdit }: TodayTaskPanelProps) {
+export function TodayTaskPanel({ date, tasks, onToggle, onAdd, onEdit, onDelete }: TodayTaskPanelProps) {
   const [, month, day] = date.split('-');
 
   return (
@@ -25,7 +26,7 @@ export function TodayTaskPanel({ date, tasks, onToggle, onAdd, onEdit }: TodayTa
       </div>
 
       <div className="mt-4 flex flex-1 flex-col">
-        <TodayTaskChecklist tasks={tasks} onToggle={onToggle} onEdit={onEdit} />
+        <TodayTaskChecklist tasks={tasks} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} />
       </div>
     </div>
   );

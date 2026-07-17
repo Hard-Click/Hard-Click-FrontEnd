@@ -111,12 +111,14 @@ export function AddTaskModal({
 }: {
   existingTasks: readonly TodayTask[];
   onClose: () => void;
-  onSave: (task: NewTaskInput) => void;
+  /** 서버 저장 성공 시 true를 반환해야 모달이 닫힌다(실패 시 열린 채로 유지 — 에러 토스트는 호출부 책임). */
+  onSave: (task: NewTaskInput) => Promise<boolean>;
 }) {
   const [title, setTitle] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const sameTime = !!startTime && !!endTime && startTime === endTime;
   const timeOverlap =
@@ -138,11 +140,16 @@ export function AddTaskModal({
           : undefined
     : undefined;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSubmitted(true);
-    if (!isValid) return;
-    onSave({ title: title.trim(), startTime, endTime });
-    onClose();
+    if (!isValid || isSaving) return;
+    setIsSaving(true);
+    try {
+      const saved = await onSave({ title: title.trim(), startTime, endTime });
+      if (saved) onClose();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -175,12 +182,13 @@ export function AddTaskModal({
           </button>
           <button
             type="button"
+            disabled={isSaving}
             onClick={handleSave}
-            className={`h-10 flex-1 rounded-[10px] bg-[#2F5DAA] text-sm font-medium text-white transition hover:bg-[#274C8B] ${
+            className={`h-10 flex-1 rounded-[10px] bg-[#2F5DAA] text-sm font-medium text-white transition hover:bg-[#274C8B] disabled:cursor-wait ${
               isValid ? '' : 'opacity-50'
             }`}
           >
-            저장
+            {isSaving ? '저장 중…' : '저장'}
           </button>
         </div>
       </div>

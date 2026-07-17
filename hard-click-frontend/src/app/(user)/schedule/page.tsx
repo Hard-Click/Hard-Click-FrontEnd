@@ -17,7 +17,7 @@ export default async function SchedulePage() {
   const today = new Date();
   const [todayTasks, scheduleBlocks, aiCoachComment] = await Promise.all([
     getTodayTasksServer(today),
-    getScheduleBlocksServer(),
+    getScheduleBlocksServer(today),
     getAiCoachCommentServer(),
   ]);
 
