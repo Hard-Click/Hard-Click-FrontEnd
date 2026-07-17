@@ -120,6 +120,8 @@ export function AvailabilityGrid({ onNext }: { onNext: () => void }) {
         return;
       }
       onNext();
+    } catch {
+      toast.error('저장에 실패했어요. 다시 시도해주세요.');
     } finally {
       setIsSaving(false);
     }

@@ -276,6 +276,8 @@ export function ScheduleSetupForm({ onNext }: { onNext: (selected: SelectedSubje
         return;
       }
       onNext({ korean, math, explore1, explore2, hasSecondLanguage, secondLanguage });
+    } catch {
+      toast.error('저장에 실패했어요. 다시 시도해주세요.');
     } finally {
       setIsSaving(false);
     }
