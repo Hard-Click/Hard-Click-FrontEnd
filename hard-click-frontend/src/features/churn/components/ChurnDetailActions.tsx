@@ -18,17 +18,25 @@ export default function ChurnDetailActions({
 
   const handleNudge = () => {
     startNudge(async () => {
-      const result = await nudgeStudentAction(enrollmentId);
-      if (result.success) toast.success(`${studentName}님에게 ${result.message}`);
-      else toast.error(result.message);
+      try {
+        const result = await nudgeStudentAction(enrollmentId);
+        if (result.success) toast.success(`${studentName}님에게 ${result.message}`);
+        else toast.error(result.message);
+      } catch {
+        toast.error('독려 알림 발송 중 오류가 발생했습니다.');
+      }
     });
   };
 
   const handleReflow = () => {
     startReflow(async () => {
-      const result = await reflowStudentAction(enrollmentId);
-      if (result.success) toast.success(`${studentName}님에게 ${result.message}`);
-      else toast.error(result.message);
+      try {
+        const result = await reflowStudentAction(enrollmentId);
+        if (result.success) toast.success(`${studentName}님에게 ${result.message}`);
+        else toast.error(result.message);
+      } catch {
+        toast.error('스케줄 재조정 권유 중 오류가 발생했습니다.');
+      }
     });
   };
 

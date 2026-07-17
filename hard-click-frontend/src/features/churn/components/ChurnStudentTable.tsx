@@ -71,6 +71,7 @@ export default function ChurnStudentTable({
             <button
               key={tab.label}
               type="button"
+              aria-pressed={isActive}
               disabled={isPending}
               onClick={() => pushQuery({ level: tab.value, page: 1 })}
               className={`rounded-full px-4 py-1.5 text-sm font-medium transition disabled:cursor-wait ${
