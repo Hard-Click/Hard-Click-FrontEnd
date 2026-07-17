@@ -128,13 +128,21 @@ export default function StudyPostCard({
       );
     }
     if (full) {
+      // ⚠️ 정원이 찼어도 **이미 참여 중이면 입장**할 수 있어야 한다(내가 만든 스터디도 모집이 차면 여기 걸림).
+      //   목록이 isMine/isJoined를 안 줘서(BE StudyListResponse.StudyItem에 필드 없음) 참여 여부를 알 수 없으므로
+      //   클릭을 막지 않고 **액션이 판별**하게 한다. BE join()은 SG005(이미 참여)를 SG006(정원 참)보다
+      //   먼저 검사하므로(StudyCommandService.join) — 참여자: SG005 → 채팅방 입장 /
+      //   비참여자: SG006 "정원이 가득 차 참여할 수 없습니다" 정직 안내(§0.1④).
+      //   (BE가 목록에 isMine/isJoined를 주면 위 분기가 정확한 라벨을 그려 이 우회는 불필요해짐)
       return (
         <button
           type="button"
-          disabled
-          className={`${widthClass} rounded-2xl bg-[#E2E8F0] py-3 text-sm font-semibold text-[#9CA3AF]`}
+          disabled={pending}
+          onClick={() => goChat(joinStudyChatAction)}
+          title="이미 참여 중이면 채팅방으로 입장합니다"
+          className={`${widthClass} rounded-2xl bg-[#E2E8F0] py-3 text-sm font-semibold text-[#4B5563] transition hover:bg-[#CBD5E1] disabled:opacity-60`}
         >
-          정원 마감
+          {pending ? '여는 중…' : '정원 마감'}
         </button>
       );
     }
