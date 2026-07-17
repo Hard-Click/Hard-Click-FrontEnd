@@ -23,8 +23,6 @@ interface StudyPostCardProps {
   isJoined?: boolean;
   variant?: 'list' | 'grid';
   hrefPrefix?: string;
-  /** true면 소유자 수정/삭제 버튼 숨김 (관리자 조회용) */
-  readOnly?: boolean;
   /** 제공되면 수정 버튼 없이 삭제 버튼만 표시 (관리자 삭제용) */
   onDelete?: (id: number) => void;
   /** 제공되면 입장/참여/마감 대신 이 라벨로 고정 표시 (관리자 조회용) */
@@ -44,7 +42,6 @@ export default function StudyPostCard({
   isJoined = false,
   variant = 'grid',
   hrefPrefix = '/community',
-  readOnly = false,
   onDelete,
   actionLabel,
 }: StudyPostCardProps) {
@@ -83,18 +80,10 @@ export default function StudyPostCard({
         </button>
       );
     }
-    if (isMine && !readOnly) {
-      return (
-        <>
-          <Link href={`${hrefPrefix}/${id}/edit`} className="text-[#2F5DAA]">
-            <Image src="/icons/editIcon.svg" alt="edit" width={18} height={18} />
-          </Link>
-          <button type="button" className="text-[#EF4444]">
-            <Image src="/icons/trashIcon.svg" alt="delete" width={18} height={18} />
-          </button>
-        </>
-      );
-    }
+    // 스터디는 목록 카드에서 수정/삭제하지 않는다 — 수정은 PATCH /api/study/{id}(별도),
+    //   삭제는 채팅방 ⋮ '채팅방 삭제'(방장 혼자일 때). 게시글용 edit 라우트(/community/{id}/edit
+    //   → GET /api/posts/{id}=404)나 핸들러 없는 삭제 버튼을 스터디 카드에 그리지 않는다.
+    //   (isMine이 목록에 배선되며 이 게시글용 브랜치가 처음 노출됐던 것 — 제거. 관리자 onDelete는 유지)
     return null;
   };
 
