@@ -14,7 +14,7 @@ interface TodayTaskChecklistProps {
 
 export function TodayTaskChecklist({ tasks, onToggle, onEdit }: TodayTaskChecklistProps) {
   const [editingTask, setEditingTask] = useState<TodayTask | null>(null);
-  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewTask, setReviewTask] = useState<TodayTask | null>(null);
   const doneCount = tasks.filter((task) => task.done).length;
   const progressPercent = tasks.length === 0 ? 0 : Math.round((doneCount / tasks.length) * 100);
 
@@ -30,7 +30,7 @@ export function TodayTaskChecklist({ tasks, onToggle, onEdit }: TodayTaskCheckli
           const handleClick = editable
             ? () => setEditingTask(task)
             : isReview
-              ? () => setReviewModalOpen(true)
+              ? () => setReviewTask(task)
               : undefined;
           return (
           <li key={task.id}>
@@ -106,7 +106,7 @@ export function TodayTaskChecklist({ tasks, onToggle, onEdit }: TodayTaskCheckli
           onSave={(input) => onEdit(editingTask.id, input)}
         />
       )}
-      {reviewModalOpen && <ReviewStartModal onClose={() => setReviewModalOpen(false)} />}
+      {reviewTask && <ReviewStartModal courseId={reviewTask.courseId} onClose={() => setReviewTask(null)} />}
     </div>
   );
 }

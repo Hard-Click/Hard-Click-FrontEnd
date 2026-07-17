@@ -19,6 +19,8 @@ export interface TodayTask {
   /** "HH:mm" 24시간제. 오늘 타임테이블 색상 구간도 이 시간대로 그린다. */
   startTime: string;
   endTime: string;
+  /** category가 'REVIEW'일 때만 의미 있음 — 어느 강의의 오답 기반 복습인지(유사퀴즈 `/quizzes/similar?courseId=` 진입용). */
+  courseId?: number;
 }
 
 export interface TodayTasksSummary {
