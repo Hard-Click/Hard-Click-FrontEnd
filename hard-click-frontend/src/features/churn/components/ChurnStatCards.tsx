@@ -21,7 +21,7 @@ export default function ChurnStatCards({ stats }: { stats: ChurnStats }) {
       />
       <AdminStatCard
         label="중위험 학생"
-        value={stats.midRiskCount}
+        value={stats.mediumRiskCount}
         icon="/icons/warningIcon.svg"
         valueColor="text-[#D97706]"
         iconBg="bg-[#FFF7ED]"

@@ -1,211 +1,147 @@
-import type {
-  ChurnDashboard,
-  ChurnStudent,
-  ChurnStudentDetail,
-} from '@/features/churn/types';
+import type { ChurnRiskLevel } from '@/features/churn/types';
 
 /**
- * 이탈 관리 대시보드 mock.
- * ⚠️ 백엔드 이탈 관리 API 미구현 → mock. 연동 시 server.ts에서 실 API로 교체.
+ * 이탈 관리 대시보드 mock — API 응답 shape 그대로(FRONTEND_API.md 1번 섹션 기준).
+ * ⚠️ `churn` 도메인은 mocks/config.ts MOCK_OVERRIDE에 등록 전(BE 라이브 E2E 검증 전)이라
+ *   전역 USE_MOCK을 따른다. 연동 시 server.ts의 isMock('churn') 분기가 이 mock 대신 실 호출한다.
  */
-export const mockChurnDashboard: ChurnDashboard = {
-  stats: {
-    highRiskCount: 18,
-    midRiskCount: 34,
-    newThisWeekCount: 7,
-    avgRiskScore: 42,
-  },
-  trend: [
-    { label: '7주 전', count: 9 },
-    { label: '6주 전', count: 10 },
-    { label: '5주 전', count: 8 },
-    { label: '4주 전', count: 12 },
-    { label: '3주 전', count: 11 },
-    { label: '2주 전', count: 13 },
-    { label: '1주 전', count: 14 },
-    { label: '이번주', count: 16 },
-  ],
-  reasons: [
-    { label: '진도 밀림', percent: 41 },
-    { label: '장기 미접속', percent: 33 },
-    { label: '퀴즈 저조', percent: 18 },
-    { label: '기타', percent: 8 },
-  ],
-  students: [
-    {
-      id: 1,
-      name: '김민수',
-      username: 'stud1024',
-      email: 'stud1024@flown.dev',
-      riskLevel: 'HIGH',
-      reason: '2주 밀림 · 5일 미접속',
-      riskScore: 81,
-      lastActiveAt: '2026-07-02',
-    },
-    {
-      id: 2,
-      name: '이서연',
-      username: 'stud1031',
-      email: 'stud1031@flown.dev',
-      riskLevel: 'HIGH',
-      reason: '퀴즈 연속 저조 · 1주 밀림',
-      riskScore: 76,
-      lastActiveAt: '2026-07-05',
-    },
-    {
-      id: 3,
-      name: '박지훈',
-      username: 'stud1042',
-      email: 'stud1042@flown.dev',
-      riskLevel: 'MID',
-      reason: '3일 미접속',
-      riskScore: 54,
-      lastActiveAt: '2026-07-04',
-    },
-    {
-      id: 4,
-      name: '최수아',
-      username: 'stud1055',
-      email: 'stud1055@flown.dev',
-      riskLevel: 'MID',
-      reason: '2일 미접속 · 진도 정체',
-      riskScore: 48,
-      lastActiveAt: '2026-07-06',
-    },
-    {
-      id: 5,
-      name: '정하늘',
-      username: 'stud1063',
-      email: 'stud1063@flown.dev',
-      riskLevel: 'HIGH',
-      reason: '3주 밀림 · 퀴즈 미응시',
-      riskScore: 88,
-      lastActiveAt: '2026-06-29',
-    },
-    {
-      id: 6,
-      name: '강도윤',
-      username: 'stud1077',
-      email: 'stud1077@flown.dev',
-      riskLevel: 'HIGH',
-      reason: '10일 미접속',
-      riskScore: 79,
-      lastActiveAt: '2026-06-30',
-    },
-    {
-      id: 7,
-      name: '윤지아',
-      username: 'stud1088',
-      email: 'stud1088@flown.dev',
-      riskLevel: 'MID',
-      reason: '진도 정체',
-      riskScore: 51,
-      lastActiveAt: '2026-07-03',
-    },
-    {
-      id: 8,
-      name: '임서준',
-      username: 'stud1094',
-      email: 'stud1094@flown.dev',
-      riskLevel: 'MID',
-      reason: '4일 미접속',
-      riskScore: 47,
-      lastActiveAt: '2026-07-05',
-    },
-    {
-      id: 9,
-      name: '한예린',
-      username: 'stud1101',
-      email: 'stud1101@flown.dev',
-      riskLevel: 'HIGH',
-      reason: '2주 밀림 · 퀴즈 저조',
-      riskScore: 73,
-      lastActiveAt: '2026-07-01',
-    },
-    {
-      id: 10,
-      name: '오태양',
-      username: 'stud1115',
-      email: 'stud1115@flown.dev',
-      riskLevel: 'MID',
-      reason: '3일 미접속 · 진도 정체',
-      riskScore: 45,
-      lastActiveAt: '2026-07-06',
-    },
-    {
-      id: 11,
-      name: '신유나',
-      username: 'stud1123',
-      email: 'stud1123@flown.dev',
-      riskLevel: 'MID',
-      reason: '2일 미접속',
-      riskScore: 42,
-      lastActiveAt: '2026-07-06',
-    },
-    {
-      id: 12,
-      name: '배준호',
-      username: 'stud1136',
-      email: 'stud1136@flown.dev',
-      riskLevel: 'HIGH',
-      reason: '1주 밀림 · 5일 미접속',
-      riskScore: 71,
-      lastActiveAt: '2026-07-02',
-    },
-    {
-      id: 13,
-      name: '문가은',
-      username: 'stud1147',
-      email: 'stud1147@flown.dev',
-      riskLevel: 'MID',
-      reason: '진도 정체',
-      riskScore: 46,
-      lastActiveAt: '2026-07-04',
-    },
-  ],
-};
 
-// ── 학생 위험 상세 (mock 빌더) ─────────────────────────────────────────────
-// BE 이탈 상세 API 미구현 → 목록 학생에서 결정적으로 상세를 합성한다.
-const REFERENCE_TODAY = new Date('2026-07-07');
-
-function daysAgo(dateStr: string): number {
-  const diff = REFERENCE_TODAY.getTime() - new Date(dateStr).getTime();
-  return Math.max(0, Math.round(diff / 86_400_000));
+/** GET /api/admin/churn/summary */
+export interface ChurnSummaryApi {
+  highRiskCount: number;
+  mediumRiskCount: number;
+  newThisWeekCount: number;
+  avgRiskScore: number;
 }
 
-/** 위험 점수를 요인별로 분해(합 = riskScore). id1(81)=35/28/18로 목업과 일치. */
-function buildFactors(score: number): ChurnStudentDetail['factors'] {
+export const mockChurnSummaryApi: ChurnSummaryApi = {
+  highRiskCount: 18,
+  mediumRiskCount: 34,
+  newThisWeekCount: 7,
+  avgRiskScore: 42,
+};
+
+/** GET /api/admin/churn/trend?weeks=8 항목 하나 */
+export interface ChurnTrendApiItem {
+  weekStart: string; // yyyy-MM-dd
+  highRiskCount: number;
+}
+
+export const mockChurnTrendApi: ChurnTrendApiItem[] = [
+  { weekStart: '2026-05-18', highRiskCount: 9 },
+  { weekStart: '2026-05-25', highRiskCount: 10 },
+  { weekStart: '2026-06-01', highRiskCount: 8 },
+  { weekStart: '2026-06-08', highRiskCount: 12 },
+  { weekStart: '2026-06-15', highRiskCount: 11 },
+  { weekStart: '2026-06-22', highRiskCount: 13 },
+  { weekStart: '2026-06-29', highRiskCount: 14 },
+  { weekStart: '2026-07-06', highRiskCount: 16 },
+];
+
+/** GET /api/admin/churn/reasons 항목 하나 */
+export interface ChurnReasonApi {
+  reasonCode: string;
+  reasonLabel: string;
+  count: number;
+  ratioPercent: number;
+}
+
+export const mockChurnReasonsApi: ChurnReasonApi[] = [
+  { reasonCode: 'streak', reasonLabel: '진도 밀림', count: 41, ratioPercent: 41 },
+  { reasonCode: 'recency', reasonLabel: '장기 미접속', count: 33, ratioPercent: 33 },
+  { reasonCode: 'quiz', reasonLabel: '퀴즈 저조', count: 18, ratioPercent: 18 },
+  { reasonCode: 'etc', reasonLabel: '기타', count: 8, ratioPercent: 8 },
+];
+
+/** GET /api/admin/churn/students 목록 항목 하나 */
+export interface ChurnStudentListItemApi {
+  enrollmentId: number;
+  memberId: number;
+  memberName: string;
+  level: ChurnRiskLevel;
+  riskScore: number;
+  reasonCode: string;
+  reasonLabel: string;
+  lastActivityDate: string;
+  computedAt: string;
+}
+
+export interface ChurnStudentListApiResponse {
+  content: ChurnStudentListItemApi[];
+  page: number;
+  size: number;
+  totalElements: number;
+}
+
+/** 전체 위험 학생(페이지네이션 전) — server.ts의 mock 분기가 level/page/size로 잘라 쓴다. */
+export const mockChurnStudentsApi: ChurnStudentListItemApi[] = [
+  { enrollmentId: 1024, memberId: 512, memberName: '김민수', level: 'HIGH', riskScore: 81, reasonCode: 'streak', reasonLabel: '2주 밀림 · 5일 미접속', lastActivityDate: '2026-07-02', computedAt: '2026-07-07T09:00:00' },
+  { enrollmentId: 1031, memberId: 519, memberName: '이서연', level: 'HIGH', riskScore: 76, reasonCode: 'quiz', reasonLabel: '퀴즈 연속 저조 · 1주 밀림', lastActivityDate: '2026-07-05', computedAt: '2026-07-07T09:00:00' },
+  { enrollmentId: 1042, memberId: 526, memberName: '박지훈', level: 'MEDIUM', riskScore: 54, reasonCode: 'recency', reasonLabel: '3일 미접속', lastActivityDate: '2026-07-04', computedAt: '2026-07-07T09:00:00' },
+  { enrollmentId: 1055, memberId: 533, memberName: '최수아', level: 'MEDIUM', riskScore: 48, reasonCode: 'streak', reasonLabel: '2일 미접속 · 진도 정체', lastActivityDate: '2026-07-06', computedAt: '2026-07-07T09:00:00' },
+  { enrollmentId: 1063, memberId: 540, memberName: '정하늘', level: 'HIGH', riskScore: 88, reasonCode: 'quiz', reasonLabel: '3주 밀림 · 퀴즈 미응시', lastActivityDate: '2026-06-29', computedAt: '2026-07-02T09:00:00' },
+  { enrollmentId: 1077, memberId: 547, memberName: '강도윤', level: 'HIGH', riskScore: 79, reasonCode: 'recency', reasonLabel: '10일 미접속', lastActivityDate: '2026-06-30', computedAt: '2026-07-07T09:00:00' },
+  { enrollmentId: 1088, memberId: 554, memberName: '윤지아', level: 'MEDIUM', riskScore: 51, reasonCode: 'streak', reasonLabel: '진도 정체', lastActivityDate: '2026-07-03', computedAt: '2026-07-07T09:00:00' },
+  { enrollmentId: 1094, memberId: 561, memberName: '임서준', level: 'MEDIUM', riskScore: 47, reasonCode: 'recency', reasonLabel: '4일 미접속', lastActivityDate: '2026-07-05', computedAt: '2026-07-07T09:00:00' },
+  { enrollmentId: 1101, memberId: 568, memberName: '한예린', level: 'HIGH', riskScore: 73, reasonCode: 'quiz', reasonLabel: '2주 밀림 · 퀴즈 저조', lastActivityDate: '2026-07-01', computedAt: '2026-07-07T09:00:00' },
+  { enrollmentId: 1115, memberId: 575, memberName: '오태양', level: 'MEDIUM', riskScore: 45, reasonCode: 'streak', reasonLabel: '3일 미접속 · 진도 정체', lastActivityDate: '2026-07-06', computedAt: '2026-07-07T09:00:00' },
+  { enrollmentId: 1123, memberId: 582, memberName: '신유나', level: 'MEDIUM', riskScore: 42, reasonCode: 'recency', reasonLabel: '2일 미접속', lastActivityDate: '2026-07-06', computedAt: '2026-07-07T09:00:00' },
+  { enrollmentId: 1136, memberId: 589, memberName: '배준호', level: 'HIGH', riskScore: 71, reasonCode: 'recency', reasonLabel: '1주 밀림 · 5일 미접속', lastActivityDate: '2026-07-02', computedAt: '2026-07-07T09:00:00' },
+  { enrollmentId: 1147, memberId: 596, memberName: '문가은', level: 'MEDIUM', riskScore: 46, reasonCode: 'streak', reasonLabel: '진도 정체', lastActivityDate: '2026-07-04', computedAt: '2026-07-07T09:00:00' },
+];
+
+/** GET /api/admin/churn/students/{enrollmentId} — 위험 점수 기여 요인 하나 */
+export interface ChurnContributionApi {
+  code: string;
+  label: string;
+  points: number;
+}
+
+/** GET /api/admin/churn/students/{enrollmentId} */
+export interface ChurnStudentDetailApi {
+  enrollmentId: number;
+  memberId: number;
+  memberName: string;
+  email: string;
+  level: ChurnRiskLevel;
+  riskScore: number;
+  computedAt: string;
+  contributions: ChurnContributionApi[]; // 내림차순
+  progressRate: number | null;
+  lastAccessDate: string;
+  recentQuizAvg: number | null;
+  totalStudyMinutes: number;
+}
+
+/** 위험 점수를 기여 요인 3개로 분해(합 = riskScore). */
+function buildContributions(score: number): ChurnContributionApi[] {
   const a = Math.round(score * 0.43);
   const b = Math.round(score * 0.35);
   return [
-    { label: '진도 밀림', delta: a },
-    { label: '장기 미접속', delta: b },
-    { label: '퀴즈 점수 하락', delta: score - a - b },
+    { code: 'streak', label: '진도 밀림', points: a },
+    { code: 'recency', label: '장기 미접속', points: b },
+    { code: 'quiz', label: '퀴즈 점수 하락', points: score - a - b },
   ];
 }
 
-function buildLearning(s: ChurnStudent): ChurnStudentDetail['learning'] {
-  const dot = s.lastActiveAt.replace(/-/g, '.');
-  return {
-    progressRate: Math.max(5, 84 - Math.round(s.riskScore * 0.52)),
-    targetRate: 68,
-    lastAccessLabel: `${daysAgo(s.lastActiveAt)}일 전 (${dot})`,
-    recentQuizAvg: Math.max(30, 95 - Math.round(s.riskScore * 0.53)),
-    recentQuizDelta: -Math.round(s.riskScore * 0.17),
-    totalStudyHours: Math.max(2, 46 - Math.round(s.riskScore * 0.35)),
-  };
-}
-
-/** 학생 id로 위험 상세 조회 (없으면 null). */
-export function getMockChurnStudentDetail(
-  id: number,
-): ChurnStudentDetail | null {
-  const s = mockChurnDashboard.students.find((st) => st.id === id);
+/** enrollmentId로 위험 상세 조회(없으면 null) — 목록 mock에서 결정적으로 합성. */
+export function getMockChurnStudentDetailApi(
+  enrollmentId: number,
+): ChurnStudentDetailApi | null {
+  const s = mockChurnStudentsApi.find((st) => st.enrollmentId === enrollmentId);
   if (!s) return null;
   return {
-    ...s,
-    factors: buildFactors(s.riskScore),
-    learning: buildLearning(s),
+    enrollmentId: s.enrollmentId,
+    memberId: s.memberId,
+    memberName: s.memberName,
+    email: `stud${s.enrollmentId}@flown.dev`,
+    level: s.level,
+    riskScore: s.riskScore,
+    computedAt: s.computedAt,
+    contributions: buildContributions(s.riskScore),
+    progressRate: Math.max(5, 84 - Math.round(s.riskScore * 0.52)),
+    lastAccessDate: s.lastActivityDate,
+    recentQuizAvg: Math.max(30, 95 - Math.round(s.riskScore * 0.53)),
+    totalStudyMinutes: Math.max(120, (46 - Math.round(s.riskScore * 0.35)) * 60),
   };
 }
