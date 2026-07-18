@@ -86,8 +86,8 @@ export async function register(payload: RegisterRequest) {
 /**
  * 가입 전 프로필 이미지 업로드 (로그인 불필요) — BE b안(2026-07-18 계약).
  *   POST /api/auth/profile-image (multipart, field `profileImage`, jpg/png ≤5MB)
- *   → { key, previewUrl }. 응답 `key`를 signup의 profileImageUrl로, `previewUrl`을 폼 미리보기로 사용.
- *   (previewUrl 아니라 key를 signup에 넣어야 함 — 서버가 조회 시 key→URL 변환)
+ *   → { key, previewUrl }. 응답 `key`를 signup의 profileImageUrl로 넣는다(previewUrl 아님 — 서버가 조회 시 key→URL 변환).
+ *   미리보기는 폼에서 blob(URL.createObjectURL)으로 즉시 표시하므로 previewUrl은 현재 미사용(BE가 내려주는 폴백 필드).
  * ⚠️ BE PR 머지·배포 후 라이브 검증 필요 — 현재 계약 기준 구현(미배포 시 404).
  */
 export async function uploadProfileImage(file: File) {
