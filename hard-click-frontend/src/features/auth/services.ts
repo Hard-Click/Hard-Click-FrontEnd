@@ -84,6 +84,31 @@ export async function register(payload: RegisterRequest) {
 }
 
 /**
+ * 가입 전 프로필 이미지 업로드 (로그인 불필요) — BE b안(2026-07-18 계약).
+ *   POST /api/auth/profile-image (multipart, field `profileImage`, jpg/png ≤5MB)
+ *   → { key, previewUrl }. 응답 `key`를 signup의 profileImageUrl로, `previewUrl`을 폼 미리보기로 사용.
+ *   (previewUrl 아니라 key를 signup에 넣어야 함 — 서버가 조회 시 key→URL 변환)
+ * ⚠️ BE PR 머지·배포 후 라이브 검증 필요 — 현재 계약 기준 구현(미배포 시 404).
+ */
+export async function uploadProfileImage(file: File) {
+  if (USE_MOCK) {
+    return {
+      success: true,
+      httpStatus: 200,
+      data: { key: 'profiles/mock.png', previewUrl: URL.createObjectURL(file) },
+      message: '',
+    };
+  }
+  const form = new FormData();
+  form.append('profileImage', file);
+  // multipart는 Content-Type(boundary) 수동 지정 금지 — FormData 그대로 전달
+  return api.post<{ key: string; previewUrl: string }>(
+    '/api/auth/profile-image',
+    form,
+  );
+}
+
+/**
  * 로그인 (노션 API 명세 매칭)
  * 응답: { httpStatus, message, data: { accessToken, refreshToken, memberId, role } }
  */

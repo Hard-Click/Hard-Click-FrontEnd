@@ -8,6 +8,7 @@ import {
   checkEmailAction,
   checkUsernameAction,
   registerAction,
+  uploadProfileImageAction,
   sendEmailVerificationAction,
   verifyEmailCodeAction,
 } from '../actions';
@@ -40,6 +41,7 @@ const initialValues: RegisterFormValues = {
   phoneNumber: '',
   profileImage: null,
   profileImagePreview: '',
+  profileImageKey: '',
   agreeTerms: false,
   agreePrivacy: false,
   agreeMarketing: false,
@@ -301,7 +303,7 @@ export function useRegisterForm() {
     updateValue('phoneNumber', formatPhoneNumber(value));
   };
 
-  const handleImageUpload = (file: File | undefined) => {
+  const handleImageUpload = async (file: File | undefined) => {
     if (!file) return;
 
     if (!['image/jpeg', 'image/png'].includes(file.type)) {
@@ -314,8 +316,19 @@ export function useRegisterForm() {
       return;
     }
 
+    // 즉시 미리보기(blob) 후 BE에 업로드 — 응답 key를 가입 요청(profileImageUrl)에 사용(BE b안).
     updateValue('profileImage', file);
     updateValue('profileImagePreview', URL.createObjectURL(file));
+    const res = await uploadProfileImageAction(file);
+    if (res.success && res.data?.key) {
+      updateValue('profileImageKey', res.data.key);
+    } else {
+      // 업로드 실패 → key 없이 '사진 첨부됨'처럼 보이면 안 됨(§0.1) → 선택 해제 + 안내
+      updateValue('profileImage', null);
+      updateValue('profileImagePreview', '');
+      updateValue('profileImageKey', '');
+      showToast('이미지 업로드에 실패했습니다');
+    }
   };
 
   const handleSendEmailCode = async (isResend = false) => {
