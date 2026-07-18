@@ -94,8 +94,9 @@ function toStudyListItem(s: StudyItemApiResponse): PostListItem {
     subjectName: subjectLabel(s.subjectName) || s.subjectName || null,
     description: s.content ?? null,
     createdAt: s.createdAt,
-    isMine: null,
-    isJoined: null,
+    // BE 목록이 참여 여부 제공(2026-07-18) → 카드가 내 스터디/참여 중이면 '입장하기'로 렌더.
+    isMine: s.isMine ?? null,
+    isJoined: s.isJoined ?? null,
     isClosed: s.isClosed ?? null,
   };
 }

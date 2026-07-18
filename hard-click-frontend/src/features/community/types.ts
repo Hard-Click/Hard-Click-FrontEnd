@@ -168,6 +168,9 @@ export interface StudyItemApiResponse {
   currentCount: number;
   maxCount: number;
   isClosed: boolean;
+  // 목록에도 참여 여부 제공(BE 2026-07-18 추가) → 카드 라벨('입장하기' vs '참여하기') 정확화.
+  isMine: boolean;
+  isJoined: boolean;
   createdAt: string;
 }
 

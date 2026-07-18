@@ -60,14 +60,24 @@ export async function joinStudyChatAction(
     };
   }
 
-  // ── BE 연동 seam ── POST /api/study/{groupId}/join → data.chatRoomId
-  //   409(정원참)·400(이미참여) 등은 res.message로 그대로 안내.
+  // ── BE 연동 ── POST /api/study/{groupId}/join → data.chatRoomId
   const res = await serverApi.post<{
     groupId: number;
     chatRoomId: number;
     currentCount: number;
   }>(`/api/study/${groupId}/join`);
   if (!res.success || !res.data) {
+    // ⚠️ '이미 참여 중'(SG005/400)은 실패가 아니라 **입장**이 정답이다.
+    //   원인: BE 스터디 **목록**(StudyListResponse.StudyItem)이 isMine/isJoined를 주지 않아
+    //   FE가 참여 여부를 알 수 없고, 내가 만든/이미 참여한 스터디도 전부 '참여하기'로 렌더된다.
+    //   → 누르면 SG005가 떠서 채팅방에 못 들어가던 버그(BE 코드 검증 2026-07-17:
+    //      StudyDetailResponse엔 isMine/isJoined/chatRoomId가 있지만 목록엔 없음).
+    //   상세에 chatRoomId가 있으므로 여기서 입장으로 전환해 흐름을 살린다.
+    //   근본 해결 = BE가 **목록에도 isMine/isJoined 제공** → 그때 라벨도 '입장하기'로 정확해짐(FE 소량).
+    if (res.errorCode === 'SG005') {
+      return enterStudyChatAction(groupId);
+    }
+    // 그 외(정원 초과·없는 스터디 등)는 진짜 실패 → BE 메시지 그대로 안내.
     return { success: false, message: res.message || '참여에 실패했어요.' };
   }
   revalidatePath('/community'); // 참여 → 스터디 목록 인원수 갱신
