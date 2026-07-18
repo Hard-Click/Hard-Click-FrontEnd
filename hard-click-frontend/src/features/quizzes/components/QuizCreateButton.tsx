@@ -2,10 +2,16 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import QuizFormModal from './QuizFormModal';
+import dynamic from 'next/dynamic';
 
 import type { QuizFormPayload } from '../types';
 import type { QuizActionState } from '../actions';
+
+// 등록 폼 모달은 '퀴즈 등록' 클릭 전엔 필요 없음 → 코드 스플리팅(QuizListContent와 동일 청크 공유).
+// loading:()=>null — Suspense 경계를 로컬에 가둬 청크 로드 중 라우트 로딩 스켈레톤 번쩍임 방지.
+const QuizFormModal = dynamic(() => import('./QuizFormModal'), {
+  loading: () => null,
+});
 
 export default function QuizCreateButton({
   courses,

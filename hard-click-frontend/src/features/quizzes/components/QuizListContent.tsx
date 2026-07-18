@@ -2,16 +2,23 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { toast } from '@/lib/toast';
 import ConfirmModal from '@/components/ui/confirmModal';
 import SelectDropdown from '@/components/ui/SelectDropdown';
 import QuizListItem from './QuizListItem';
 import QuizEmptyState from './QuizEmptyState';
-import QuizFormModal from './QuizFormModal';
 import LoadingModal from '@/components/ui/loadingModal';
 import { deleteQuizAction, getInstructorQuizDetailAction } from '../actions';
 import type { Quiz, QuizFormPayload } from '../types';
 import type { QuizActionState } from '../actions';
+
+// 등록/수정 폼 모달(505줄+문항 필드)은 버튼 클릭 전엔 필요 없음 → 코드 스플리팅으로
+// 강사 퀴즈 목록 라우트 초기 청크에서 분리. 조건부 렌더라 지연 로드 안전.
+// loading:()=>null — Suspense 경계를 로컬에 가둬 청크 로드 중 라우트 로딩 스켈레톤 번쩍임 방지.
+const QuizFormModal = dynamic(() => import('./QuizFormModal'), {
+  loading: () => null,
+});
 
 /**
  * 강의별 퀴즈 목록 — 상호작용(주차 필터·삭제) 담당 client 컴포넌트.

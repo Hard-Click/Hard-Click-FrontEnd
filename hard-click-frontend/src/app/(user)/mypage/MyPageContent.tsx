@@ -4,11 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { toast } from '@/lib/toast';
 
-import ProfileEditModal from '@/features/users/components/ProfileEditModal';
-import GrassYearlyModal from '@/features/grass/components/GrassYearlyModal';
-import ReviewFormModal from '@/features/reviews/components/ReviewFormModal';
 import { createReview } from '@/features/reviews/services';
 import type { MyProfile, MyCourse, CompletedCourse } from '@/features/users/types';
 import type { StudyTimeGrassCell, LessonsGrassCell } from '@/features/grass/types';
@@ -16,6 +14,22 @@ import type { MyRankingSummary } from '@/features/rankings/types';
 import { SectionHeader } from '@/components/common/SectionHeader';
 import type { ChatRoomListItem } from '@/features/chat/types';
 import ChatRoomListCard from '@/features/chat/components/ChatRoomListCard';
+
+// 무거운 모달은 코드 스플리팅 — 열기 전(클릭 전)엔 청크 다운로드 안 함. 마이페이지는 로그인 후 랜딩이라
+// 초기 First Load JS를 줄여 TTI/INP 개선. 셋 다 상호작용 시에만 조건부 렌더되므로 지연 로드 안전.
+// loading:()=>null — Suspense 경계를 모달 로컬에 가둬 청크 로드 중 상위 라우트 로딩 스켈레톤이 번쩍이지 않게.
+const ProfileEditModal = dynamic(
+  () => import('@/features/users/components/ProfileEditModal'),
+  { loading: () => null },
+);
+const GrassYearlyModal = dynamic(
+  () => import('@/features/grass/components/GrassYearlyModal'),
+  { loading: () => null },
+);
+const ReviewFormModal = dynamic(
+  () => import('@/features/reviews/components/ReviewFormModal'),
+  { loading: () => null },
+);
 
 /** 마이페이지 개요에서 섹션당 최대 표시 개수(나머지는 "전체보기"). 시연 시 페이지가 길어지지 않게 고정. */
 const OVERVIEW_LIMIT = 3;
