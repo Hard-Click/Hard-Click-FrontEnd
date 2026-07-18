@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // 생성물 — 테스트 커버리지 리포트(jest가 생성, .gitignore에도 있음). 린트 대상 아님.
+    "coverage/**",
   ]),
   // toast는 전역 중복 제거 래퍼(@/lib/toast)를 통해서만 쓴다 — sonner의 `toast` 직접 import 금지
   // (재발 방지). `Toaster`는 sonner 직접 허용.
