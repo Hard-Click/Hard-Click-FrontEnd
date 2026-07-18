@@ -109,8 +109,9 @@ export async function confirmPaymentAction(
  * mock: 선택 항목이 모두 refundable이면 성공, 불가 항목 포함 시 blocked.
  * 연동(강의): POST /api/order/{orderId}/items/{courseId}/refund (per-item, Idempotency-Key 헤더).
  *   ⚠️ BE는 항목별(courseId 1개씩) 환불 모델 — courseIds 배열은 항목마다 반복 호출(부분환불=여러 번). (라이브 검증 2026-06-27)
- * 연동(구독, isSubscription): POST /api/order/{orderId}/refund (주문 단위 전액 환불, courseId 없음).
- *   구독 주문은 order_items가 없어 per-item이 불가 → BE가 별도 엔드포인트 제공(OrderController.refundSubscription, BE 코드 ba34f83 검증).
+ * 연동(구독, isSubscription): POST /api/order/{orderId}/refund (주문 단위 환불, courseId 없음).
+ *   환불액=min(현재가,결제액)=남은 기간 비례(일할, 신청일 기준). 구독은 order_items가 없어 per-item 불가
+ *   → BE 별도 엔드포인트(OrderController.refundSubscription).
  */
 export async function refundAction(
   orderId: number,

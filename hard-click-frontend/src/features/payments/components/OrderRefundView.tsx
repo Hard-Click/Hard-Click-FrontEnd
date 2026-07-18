@@ -254,8 +254,14 @@ export default function OrderRefundView({ order }: { order: OrderDetail }) {
               )}
             </ul>
             <p className="mt-4 text-sm font-bold text-[#2F5DAA]">
-              예상 환불 금액: {selectedTotal.toLocaleString()}원
+              예상 환불 금액{isSubscription ? ' (오늘 기준)' : ''}:{' '}
+              {selectedTotal.toLocaleString()}원
             </p>
+            {isSubscription && (
+              <p className="mt-1 text-xs text-[#94A3B8]">
+                구독은 남은 기간에 따라 일할 계산되어 매일 환불액이 달라져요.
+              </p>
+            )}
           </div>
           <div className="mt-4 flex justify-end">
             <button

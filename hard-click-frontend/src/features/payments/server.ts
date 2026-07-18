@@ -115,10 +115,10 @@ function toLiveOrderDetail(api: BeOrderDetail, orderId: number): OrderDetail {
     refundNote: '', // BE 미제공 → 숨김
     refunded: it.refunded,
   }));
-  // 구독 주문은 BE가 order_items를 영속화 안 함(빈 배열) → 표시용 구독 라인 1개 합성(금액=실 totalAmount).
-  //   설계상 구독도 주문상세에서 환불 → refundable=true. ⚠️ 단 현재 BE는 구독 환불 미지원
-  //   (구독 주문 item 없음 → per-item 환불 ORDER_ITEM_NOT_FOUND, 구독 환불 엔드포인트 부재) → 환불 시도 시 실패.
-  //   BE가 (1)구독 환불 엔드포인트 (2)order/{id} 구독 item 제공하면 합성 제거되고 실 item으로 정상 동작.
+  // 구독 주문상세: BE(GetOrderService)가 구독 item을 합성해 refundAmount=min(현재가,결제액)=실제 환불식으로
+  //   내려주므로(#581), 그 값을 그대로 매핑해 표시하면 실제 환불액과 일치한다(같은 날 기준). 구독 환불은
+  //   POST /api/order/{id}/refund(주문 단위)로 정상 동작.
+  //   아래 합성은 BE가 item을 안 주는 예외의 last-resort 폴백(금액=totalAmount 근사치, 통상 미실행).
   if (isSub && items.length === 0) {
     items.push({
       courseId: 0,
