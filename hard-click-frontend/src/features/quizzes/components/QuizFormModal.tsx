@@ -135,7 +135,7 @@ export default function QuizFormModal({
     [visibleCourses]
   );
   const metaReqRef = useRef(0);
-  const [isMetaPending, startMetaTransition] = useTransition();
+  const [, startMetaTransition] = useTransition();
   // 강의 선택 시 실제 섹션(주차)·이미 쓴 주차를 서버에서 로드. useEffect 반응형 페칭(렌더 워터폴) 대신
   // 이벤트 핸들러('연결 강의' onChange)에서 useTransition으로 호출(§4). transition엔 cleanup 취소가
   // 없어, 취소 안전성은 metaReqRef로 stale 응답 무시로 대체(빠른 강의 전환 시 옛 응답이 새 선택을 덮지 않게).
@@ -165,11 +165,10 @@ export default function QuizFormModal({
     if (presetCourseId) loadMeta(presetCourseId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // 로딩 = 선택 강의 기준 meta 페칭 중이거나 아직 안 옴 (isPending 통합).
+  // 로딩 = 선택 강의 기준 meta가 아직 안 옴 (파생). isPending은 안 씀 — 빠른 강의 전환으로 무효화된
+  //   stale transition이 pending이면 현재 선택 로드 후에도 주차 드롭다운을 계속 잠글 수 있어서.
   const metaLoading =
-    mode === 'create' &&
-    courseId > 0 &&
-    (isMetaPending || meta.courseId !== courseId);
+    mode === 'create' && courseId > 0 && meta.courseId !== courseId;
 
   // 등록: 강의 실제 섹션 주차 중 아직 퀴즈 없는 것 / 수정: 자기 주차 고정(변경 불가)
   const weekOptions =
