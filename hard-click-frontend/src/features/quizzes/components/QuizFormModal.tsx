@@ -161,10 +161,15 @@ export default function QuizFormModal({
   };
   // presetCourseId(개별 강의 페이지, 강의 고정)만 마운트 시 1회 로드 — 반응형 useEffect 페칭 제거.
   //   사용자가 강의를 고르는 경우는 '연결 강의' onChange에서 loadMeta가 처리한다.
+  //   언마운트 cleanup은 reqId를 올려 진행 중 로드를 무효화(모달 닫힌 뒤 stale 토스트·setMeta 방지).
+  /* eslint-disable react-hooks/exhaustive-deps -- 마운트 1회 로드 의도 + cleanup은 카운터 ref의 최신값을 써야 무효화가 맞음(DOM node ref 아님) */
   useEffect(() => {
     if (presetCourseId) loadMeta(presetCourseId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      metaReqRef.current += 1;
+    };
   }, []);
+  /* eslint-enable react-hooks/exhaustive-deps */
   // 로딩 = 선택 강의 기준 meta가 아직 안 옴 (파생). isPending은 안 씀 — 빠른 강의 전환으로 무효화된
   //   stale transition이 pending이면 현재 선택 로드 후에도 주차 드롭다운을 계속 잠글 수 있어서.
   const metaLoading =
