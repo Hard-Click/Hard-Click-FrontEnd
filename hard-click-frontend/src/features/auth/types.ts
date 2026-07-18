@@ -17,6 +17,8 @@ export interface RegisterFormValues {
   phoneNumber: string;
   profileImage: File | null;
   profileImagePreview: string;
+  /** 가입 전 업로드(POST /api/auth/profile-image) 응답 key — signup의 profileImageUrl로 전송 */
+  profileImageKey: string;
 
   agreeTerms: boolean;
   agreePrivacy: boolean;

@@ -3,6 +3,7 @@ import {
   checkUsername,
   login,
   register,
+  uploadProfileImage,
   sendEmailVerification,
   verifyEmailCode,
   sendPasswordResetEmail,
@@ -83,12 +84,18 @@ export async function registerAction(values: RegisterFormValues) {
     gender: values.gender,
     birthDate: values.birthDate,
     phoneNumber: values.phoneNumber.trim(),
-    profileImageUrl: null,
+    // 가입 전 업로드로 받은 key(uploadProfileImageAction). 사진 없으면 null → 사진 없이 가입.
+    profileImageUrl: values.profileImageKey || null,
     emailVerificationToken: values.emailVerificationToken,
     optionalTermsAgreed: values.agreeMarketing,
   };
 
   return register(payload);
+}
+
+/** 가입 전 프로필 이미지 업로드 (로그인 불필요) — 응답 key를 registerAction의 profileImageUrl로 사용. */
+export async function uploadProfileImageAction(file: File) {
+  return uploadProfileImage(file);
 }
 
 export async function loginAction(payload: LoginRequest) {

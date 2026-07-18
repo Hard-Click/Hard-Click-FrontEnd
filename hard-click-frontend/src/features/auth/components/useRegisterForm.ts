@@ -8,6 +8,7 @@ import {
   checkEmailAction,
   checkUsernameAction,
   registerAction,
+  uploadProfileImageAction,
   sendEmailVerificationAction,
   verifyEmailCodeAction,
 } from '../actions';
@@ -40,6 +41,7 @@ const initialValues: RegisterFormValues = {
   phoneNumber: '',
   profileImage: null,
   profileImagePreview: '',
+  profileImageKey: '',
   agreeTerms: false,
   agreePrivacy: false,
   agreeMarketing: false,
@@ -85,6 +87,9 @@ export function useRegisterForm() {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [emailSendCount, setEmailSendCount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  // 프로필 이미지 업로드 최신-우선: 교체 업로드 시 늦게 온 옛 응답이 최신 선택을 덮지 않게.
+  const uploadReqRef = useRef(0);
   const [remainingSeconds, setRemainingSeconds] = useState(
     EMAIL_CODE_TTL_SECONDS,
   );
@@ -301,7 +306,7 @@ export function useRegisterForm() {
     updateValue('phoneNumber', formatPhoneNumber(value));
   };
 
-  const handleImageUpload = (file: File | undefined) => {
+  const handleImageUpload = async (file: File | undefined) => {
     if (!file) return;
 
     if (!['image/jpeg', 'image/png'].includes(file.type)) {
@@ -314,8 +319,25 @@ export function useRegisterForm() {
       return;
     }
 
+    // 즉시 미리보기(blob) 후 BE에 업로드 — 응답 key를 가입 요청(profileImageUrl)에 사용(BE b안).
+    // 교체 업로드 최신-우선: 새 선택 시 옛 key를 즉시 무효화하고, 늦게 온 옛 응답은 reqId로 무시.
+    const reqId = ++uploadReqRef.current;
     updateValue('profileImage', file);
     updateValue('profileImagePreview', URL.createObjectURL(file));
+    updateValue('profileImageKey', ''); // 교체 중 옛 key가 signup에 전송되지 않게 즉시 비움
+    setIsUploadingImage(true);
+    const res = await uploadProfileImageAction(file);
+    if (uploadReqRef.current !== reqId) return; // 더 최신 업로드가 있음 → stale 응답 무시
+    setIsUploadingImage(false);
+    if (res.success && res.data?.key) {
+      updateValue('profileImageKey', res.data.key);
+    } else {
+      // 업로드 실패 → key 없이 '사진 첨부됨'처럼 보이면 안 됨(§0.1) → 선택 해제 + 안내
+      updateValue('profileImage', null);
+      updateValue('profileImagePreview', '');
+      updateValue('profileImageKey', '');
+      showToast('이미지 업로드에 실패했습니다');
+    }
   };
 
   const handleSendEmailCode = async (isResend = false) => {
@@ -546,6 +568,15 @@ export function useRegisterForm() {
   };
 
   const handleSubmit = async () => {
+    // 프로필 이미지 업로드가 아직 진행 중이면 제출 보류 — key가 없어 사진 없이 가입되는 것 방지(§0.1)
+    if (isUploadingImage) {
+      setFormMessage({
+        type: 'error',
+        text: '프로필 이미지 업로드 중입니다. 잠시 후 다시 시도해주세요.',
+      });
+      return;
+    }
+
     const error = validateStepThree(values, isEmailVerified);
 
     if (error) {
