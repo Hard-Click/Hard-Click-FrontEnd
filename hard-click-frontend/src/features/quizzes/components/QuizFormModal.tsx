@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { toast } from '@/lib/toast';
@@ -134,30 +134,44 @@ export default function QuizFormModal({
       })),
     [visibleCourses]
   );
-  // 강의 선택 시 실제 섹션(주차)·이미 쓴 주차 로드 (등록 모드). setState는 async 콜백에서만.
-  useEffect(() => {
-    if (mode !== 'create' || courseId <= 0) return;
-    let cancelled = false;
+  const metaReqRef = useRef(0);
+  const [, startMetaTransition] = useTransition();
+  // 강의 선택 시 실제 섹션(주차)·이미 쓴 주차를 서버에서 로드. useEffect 반응형 페칭(렌더 워터폴) 대신
+  // 이벤트 핸들러('연결 강의' onChange)에서 useTransition으로 호출(§4). transition엔 cleanup 취소가
+  // 없어, 취소 안전성은 metaReqRef로 stale 응답 무시로 대체(빠른 강의 전환 시 옛 응답이 새 선택을 덮지 않게).
+  const loadMeta = (cid: number) => {
+    if (mode !== 'create' || cid <= 0) return;
+    const reqId = ++metaReqRef.current;
     // 관리자(adminMeta)는 소유자무관 관리자 목록으로 takenWeeks 집계 —
     //   강사 엔드포인트(/api/instructor/quizzes)는 로그인 관리자 소유 퀴즈만 반환(0개)이라 1주1퀴즈 중복차단이 안 됨.
     const metaAction = adminMeta
       ? getAdminQuizFormMetaAction
       : getQuizFormMetaAction;
-    metaAction(courseId)
-      .then((m) => {
-        if (!cancelled) setMeta({ courseId, ...m });
-      })
-      .catch(() => {
+    startMetaTransition(async () => {
+      try {
+        const m = await metaAction(cid);
+        if (metaReqRef.current === reqId) setMeta({ courseId: cid, ...m });
+      } catch {
         // 실패를 빈 주차로 폴백하면 '등록 가능한 주차가 없습니다'로 오표시돼(§0.1),
         // 조용히 삼키지 않고 사용자에게 알린다. 주차 드롭다운은 로딩 상태로 남아 오등록을 막는다.
-        if (!cancelled)
+        if (metaReqRef.current === reqId)
           toast.error('주차 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
-      });
+      }
+    });
+  };
+  // presetCourseId(개별 강의 페이지, 강의 고정)만 마운트 시 1회 로드 — 반응형 useEffect 페칭 제거.
+  //   사용자가 강의를 고르는 경우는 '연결 강의' onChange에서 loadMeta가 처리한다.
+  //   언마운트 cleanup은 reqId를 올려 진행 중 로드를 무효화(모달 닫힌 뒤 stale 토스트·setMeta 방지).
+  /* eslint-disable react-hooks/exhaustive-deps -- 마운트 1회 로드 의도 + cleanup은 카운터 ref의 최신값을 써야 무효화가 맞음(DOM node ref 아님) */
+  useEffect(() => {
+    if (presetCourseId) loadMeta(presetCourseId);
     return () => {
-      cancelled = true;
+      metaReqRef.current += 1;
     };
-  }, [courseId, mode, adminMeta]);
-  // 로딩 = 선택 강의 기준 meta가 아직 안 옴 (파생, 동기 setState 없음).
+  }, []);
+  /* eslint-enable react-hooks/exhaustive-deps */
+  // 로딩 = 선택 강의 기준 meta가 아직 안 옴 (파생). isPending은 안 씀 — 빠른 강의 전환으로 무효화된
+  //   stale transition이 pending이면 현재 선택 로드 후에도 주차 드롭다운을 계속 잠글 수 있어서.
   const metaLoading =
     mode === 'create' && courseId > 0 && meta.courseId !== courseId;
 
@@ -384,6 +398,7 @@ export default function QuizFormModal({
                     setInstructor(v);
                     setCourseId(0);
                     setWeek(0);
+                    metaReqRef.current++; // 강의 리셋 — 진행 중 메타 로드 무효화
                   }}
                   disabled={mode === 'edit'}
                   fullWidth
@@ -399,8 +414,10 @@ export default function QuizFormModal({
                 value={courseId > 0 ? String(courseId) : ''}
                 options={courseOptions}
                 onChange={(v) => {
-                  setCourseId(Number(v));
+                  const cid = Number(v);
+                  setCourseId(cid);
                   setWeek(0); // 강의 바뀌면 주차 다시 선택
+                  loadMeta(cid); // 반응형 effect 대신 선택 시점에 메타 로드
                 }}
                 disabled={mode === 'edit' || presetCourseId !== undefined}
                 fullWidth
