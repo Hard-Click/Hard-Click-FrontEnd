@@ -338,7 +338,11 @@ export default function OrderRefundView({ order }: { order: OrderDetail }) {
               <ul className="mt-1.5 space-y-1 text-xs text-[#7F1D1D]">
                 <li>• 환불 요청 후 2-3 영업일 내에 처리됩니다</li>
                 <li>• 환불이 완료되면 강의 접근 권한이 제거됩니다</li>
-                <li>• 구독 상품은 남은 기간 비례 환불됩니다</li>
+                <li>
+                  {refundEstimated
+                    ? '• 구독 상품은 남은 기간 비례 환불되며, 실제 환불액은 표시 금액보다 적을 수 있습니다'
+                    : '• 구독 상품은 남은 기간 비례 환불됩니다'}
+                </li>
               </ul>
             </div>
 

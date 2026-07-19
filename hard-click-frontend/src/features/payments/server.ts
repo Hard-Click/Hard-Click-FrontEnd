@@ -117,9 +117,10 @@ function toLiveOrderDetail(api: BeOrderDetail, orderId: number): OrderDetail {
     refunded: it.refunded,
   }));
   // 구독 주문상세: BE(GetOrderService)가 구독 item을 합성해 refundAmount=min(현재가,결제액)=실제 환불식으로
-  //   내려주므로(#581), 그 값을 그대로 매핑해 표시하면 실제 환불액과 일치한다(같은 날 기준). 구독 환불은
-  //   POST /api/order/{id}/refund(주문 단위)로 정상 동작.
-  //   아래 합성은 BE가 item을 안 주는 예외의 last-resort 폴백(금액=totalAmount 근사치, 통상 미실행).
+  //   내려준다는 전제(#581 코드 기준). ⚠️ 라이브 미검증(§0.1①) — 구독 환불가능 주문 시드로 refundAmount가
+  //   실제 비례값인지 1회 확인 필요(payments/CLAUDE.md §5도 '구독 실 환불 미테스트'로 기록).
+  //   전제가 맞으면 BE값 그대로 표시 = 실제 환불액과 일치(같은 날 기준). 구독 환불=POST /api/order/{id}/refund.
+  //   아래 합성은 BE가 item을 안 주는 예외의 last-resort 폴백(금액=totalAmount 근사치, refundAmountEstimated=true).
   if (isSub && items.length === 0) {
     items.push({
       courseId: 0,
