@@ -26,7 +26,6 @@ interface Notice {
   content: string;
   createdAt: string;
   isPinned: boolean;
-  isPublished: boolean;
 }
 
 export default function InstructorNoticeTable() {
@@ -77,7 +76,6 @@ export default function InstructorNoticeTable() {
           '/'
         ),
         isPinned: n.isPinned,
-        isPublished: true,
       }))
     );
   }, []);
@@ -183,18 +181,6 @@ export default function InstructorNoticeTable() {
     await reloadNotices(selectedCourseId);
   };
 
-  const handleTogglePublish = (id: number) => {
-    setNotices((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isPublished: !n.isPublished } : n))
-    );
-    const target = notices.find((n) => n.id === id);
-    toast.success(
-      target?.isPublished
-        ? '공지가 비공개되었습니다.'
-        : '공지가 게시되었습니다.'
-    );
-  };
-
   const handleDelete = async (id: number) => {
     // DELETE /api/notices/{noticeId}
     const res = await deleteNotice(id);
@@ -280,9 +266,6 @@ export default function InstructorNoticeTable() {
                 중요
               </th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-[#374151]">
-                상태
-              </th>
-              <th className="px-6 py-4 text-center text-sm font-semibold text-[#374151]">
                 관리
               </th>
             </tr>
@@ -291,7 +274,7 @@ export default function InstructorNoticeTable() {
             {filteredNotices.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={4}
                   className="py-16 text-center text-sm text-[#94A3B8]"
                 >
                   등록된 공지사항이 없습니다.
@@ -334,35 +317,8 @@ export default function InstructorNoticeTable() {
                       {notice.isPinned ? '중요' : '일반'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center">
-                    <span
-                      className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
-                        notice.isPublished
-                          ? 'bg-[#DCFCE7] text-[#16A34A]'
-                          : 'bg-[#FEF3C7] text-[#D97706]'
-                      }`}
-                    >
-                      {notice.isPublished ? '게시중' : '비공개'}
-                    </span>
-                  </td>
-
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => handleTogglePublish(notice.id)}
-                      >
-                        <Image
-                          src={
-                            notice.isPublished
-                              ? '/icons/openEye.svg'
-                              : '/icons/closeEye.svg'
-                          }
-                          alt={notice.isPublished ? '게시중' : '비공개'}
-                          width={18}
-                          height={18}
-                        />
-                      </button>
                       <button type="button" onClick={() => openEdit(notice)}>
                         <Image
                           src="/icons/editIcon.svg"

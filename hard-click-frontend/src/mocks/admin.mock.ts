@@ -50,7 +50,6 @@ export interface AdminNoticeRow {
   createdAt: string;
   content: string;
   isPinned: boolean;
-  isPublished: boolean;
   courseTitle?: string;
   courseSubject?: string;
   courseInstructor?: string;
@@ -65,7 +64,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
       '5월 15일 02:00~04:00 시스템 점검이 진행됩니다. 해당 시간 동안 서비스 이용이 제한됩니다.',
     createdAt: '2026.05.10',
     isPinned: true,
-    isPublished: true,
   },
   {
     id: 2,
@@ -75,7 +73,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
       '신규 강의 오픈 기념 할인 이벤트를 진행합니다. 자세한 내용은 이벤트 페이지를 확인해주세요.',
     createdAt: '2026.05.08',
     isPinned: true,
-    isPublished: true,
   },
   {
     id: 3,
@@ -85,7 +82,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
       '개인정보 처리방침이 일부 변경되었습니다. 변경 사항을 확인해주시기 바랍니다.',
     createdAt: '2026.05.05',
     isPinned: false,
-    isPublished: false,
   },
   {
     id: 4,
@@ -95,7 +91,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
       '5주차 과제를 업로드했습니다. 제출 기한은 다음 주 일요일까지입니다.',
     createdAt: '2026.05.11',
     isPinned: true,
-    isPublished: true,
     courseTitle: '수1 뿌시기',
     courseSubject: '수학Ⅰ',
     courseInstructor: '김강사',
@@ -107,7 +102,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: '이번 주 보강은 토요일 오후 2시에 진행됩니다. 참고 부탁드립니다.',
     createdAt: '2026.05.09',
     isPinned: false,
-    isPublished: true,
     courseTitle: '국어 머시기',
     courseSubject: '독서',
     courseInstructor: '안강사',
@@ -119,7 +113,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: '강의 자료를 업로드했습니다. 학습 자료실에서 다운로드 가능합니다.',
     createdAt: '2026.05.07',
     isPinned: false,
-    isPublished: false,
     courseTitle: '미적분 머시기',
     courseSubject: '미적분',
     courseInstructor: '김강사',
@@ -131,7 +124,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: '결제 시스템 점검으로 일시적으로 결제가 제한될 수 있습니다.',
     createdAt: '2026.05.04',
     isPinned: false,
-    isPublished: true,
   },
   {
     id: 8,
@@ -140,7 +132,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: '학습 통계 기능이 추가되었습니다. 마이페이지에서 확인하세요.',
     createdAt: '2026.05.03',
     isPinned: true,
-    isPublished: true,
   },
   {
     id: 9,
@@ -149,7 +140,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: '비밀번호는 8자 이상, 특수문자를 포함해야 합니다.',
     createdAt: '2026.05.02',
     isPinned: false,
-    isPublished: true,
   },
   {
     id: 10,
@@ -158,7 +148,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: 'FLOWN 모바일 앱이 출시되었습니다. 지금 다운로드하세요.',
     createdAt: '2026.05.01',
     isPinned: true,
-    isPublished: true,
   },
   {
     id: 11,
@@ -167,7 +156,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: '건전한 커뮤니티 문화를 위한 이용 수칙을 안내드립니다.',
     createdAt: '2026.04.29',
     isPinned: false,
-    isPublished: true,
   },
   {
     id: 12,
@@ -176,7 +164,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: '수강 7일 이내 환불 정책이 일부 변경되었습니다.',
     createdAt: '2026.04.27',
     isPinned: false,
-    isPublished: false,
   },
   {
     id: 13,
@@ -185,7 +172,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: '설 연휴 기간 고객센터 운영 일정을 안내드립니다.',
     createdAt: '2026.04.25',
     isPinned: false,
-    isPublished: true,
   },
   {
     id: 14,
@@ -194,7 +180,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: '신규 가입 쿠폰 이벤트가 곧 종료됩니다.',
     createdAt: '2026.04.23',
     isPinned: false,
-    isPublished: true,
   },
   {
     id: 15,
@@ -203,7 +188,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: '서비스 이용 약관이 개정되어 안내드립니다.',
     createdAt: '2026.04.20',
     isPinned: true,
-    isPublished: true,
   },
   {
     id: 16,
@@ -212,7 +196,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: '6주차 과제를 업로드했습니다. 기한을 확인해주세요.',
     createdAt: '2026.05.06',
     isPinned: false,
-    isPublished: true,
     courseTitle: '수1 뿌시기',
     courseSubject: '수학Ⅰ',
     courseInstructor: '김강사',
@@ -224,7 +207,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: '이번 주 모의고사 일정을 공지합니다.',
     createdAt: '2026.05.05',
     isPinned: true,
-    isPublished: true,
     courseTitle: '국어 머시기',
     courseSubject: '독서',
     courseInstructor: '안강사',
@@ -236,7 +218,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: '자주 묻는 질문에 대한 답변을 정리했습니다.',
     createdAt: '2026.05.04',
     isPinned: false,
-    isPublished: true,
     courseTitle: '미적분 머시기',
     courseSubject: '미적분',
     courseInstructor: '김강사',
@@ -248,7 +229,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: '보충 학습 자료를 추가했습니다.',
     createdAt: '2026.05.03',
     isPinned: false,
-    isPublished: false,
     courseTitle: '사회문화 머시기',
     courseSubject: '사회·문화',
     courseInstructor: '박강사',
@@ -260,7 +240,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: '중간 점검 테스트가 진행됩니다.',
     createdAt: '2026.05.01',
     isPinned: false,
-    isPublished: true,
     courseTitle: '수1 뿌시기',
     courseSubject: '수학Ⅰ',
     courseInstructor: '김강사',
@@ -272,7 +251,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: '첨삭 일정을 공지합니다.',
     createdAt: '2026.04.28',
     isPinned: false,
-    isPublished: true,
     courseTitle: '국어 머시기',
     courseSubject: '독서',
     courseInstructor: '안강사',
@@ -284,7 +262,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: '보강 일정을 안내드립니다.',
     createdAt: '2026.04.26',
     isPinned: true,
-    isPublished: true,
     courseTitle: '미적분 머시기',
     courseSubject: '미적분',
     courseInstructor: '김강사',
@@ -296,7 +273,6 @@ export const mockAdminNotices: AdminNoticeRow[] = [
     content: '과제 제출 마감이 임박했습니다.',
     createdAt: '2026.04.24',
     isPinned: false,
-    isPublished: true,
     courseTitle: '사회문화 머시기',
     courseSubject: '사회·문화',
     courseInstructor: '박강사',
