@@ -63,6 +63,8 @@ export interface OrderDetailItem {
   refundable: boolean;
   /** 이 항목 환불 예상액(원) — 단건 전액 / 구독 비례 */
   refundAmount: number;
+  /** refundAmount가 실제 환불식(비례)이 아니라 폴백 추정(구독 전액)인지 — true면 '오늘 기준 일할' 단정 금지(§0.1②) */
+  refundAmountEstimated?: boolean;
   /** 환불 안내 — 예: "진도율 4% · 결제 5일 경과" / "남은 157일 비례 환불" */
   refundNote: string;
   /** 이미 환불된 항목 여부(부분환불 표시용) — BE 제공, mock은 미설정 */

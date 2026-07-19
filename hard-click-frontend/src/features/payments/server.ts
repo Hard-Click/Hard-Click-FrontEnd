@@ -9,6 +9,7 @@ import {
 } from '@/mocks/payments.mock';
 import type {
   OrderDetail,
+  OrderDetailItem,
   OrderStatus,
   PaymentType,
   PaymentHistory,
@@ -102,7 +103,7 @@ interface BeOrderDetail {
 /** 라이브 BE 주문 상세 → UI 계약. BE 미제공 필드는 폴백/숨김, orderId는 URL 파라미터로 보강. */
 function toLiveOrderDetail(api: BeOrderDetail, orderId: number): OrderDetail {
   const isSub = String(api.paymentType).toUpperCase() === 'SUBSCRIPTION';
-  const items = (api.items ?? []).map((it) => ({
+  const items: OrderDetailItem[] = (api.items ?? []).map((it) => ({
     courseId: it.courseId,
     title: it.title ?? `강의 #${it.courseId}`, // BE null 폴백
     instructor: '', // BE 미제공 → 컴포넌트가 빈 값이면 숨김
@@ -115,10 +116,11 @@ function toLiveOrderDetail(api: BeOrderDetail, orderId: number): OrderDetail {
     refundNote: '', // BE 미제공 → 숨김
     refunded: it.refunded,
   }));
-  // 구독 주문은 BE가 order_items를 영속화 안 함(빈 배열) → 표시용 구독 라인 1개 합성(금액=실 totalAmount).
-  //   설계상 구독도 주문상세에서 환불 → refundable=true. ⚠️ 단 현재 BE는 구독 환불 미지원
-  //   (구독 주문 item 없음 → per-item 환불 ORDER_ITEM_NOT_FOUND, 구독 환불 엔드포인트 부재) → 환불 시도 시 실패.
-  //   BE가 (1)구독 환불 엔드포인트 (2)order/{id} 구독 item 제공하면 합성 제거되고 실 item으로 정상 동작.
+  // 구독 주문상세: BE(GetOrderService)가 구독 item을 합성해 refundAmount=min(현재가,결제액)=실제 환불식으로
+  //   내려준다는 전제(#581 코드 기준). ⚠️ 라이브 미검증(§0.1①) — 구독 환불가능 주문 시드로 refundAmount가
+  //   실제 비례값인지 1회 확인 필요(payments/CLAUDE.md §5도 '구독 실 환불 미테스트'로 기록).
+  //   전제가 맞으면 BE값 그대로 표시 = 실제 환불액과 일치(같은 날 기준). 구독 환불=POST /api/order/{id}/refund.
+  //   아래 합성은 BE가 item을 안 주는 예외의 last-resort 폴백(금액=totalAmount 근사치, refundAmountEstimated=true).
   if (isSub && items.length === 0) {
     items.push({
       courseId: 0,
@@ -129,7 +131,8 @@ function toLiveOrderDetail(api: BeOrderDetail, orderId: number): OrderDetail {
       isSubscription: true,
       enrollStatus: '',
       refundable: true,
-      refundAmount: api.totalAmount,
+      refundAmount: api.totalAmount, // 폴백 = 결제 전액(비례 아님)
+      refundAmountEstimated: true, // 전액 추정 → OrderRefundView가 '오늘 기준 일할' 단정 안 함(§0.1②)
       refundNote: '',
       refunded: false,
     });
