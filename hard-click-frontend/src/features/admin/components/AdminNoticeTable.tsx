@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { toast } from '@/lib/toast';
 import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import type { AdminNoticeRow } from '@/mocks/admin.mock';
+import { deleteNoticeAction } from '@/features/notices/actions';
 import AdminNoticeFormModal from './AdminNoticeFormModal';
 
 export default function AdminNoticeTable({
@@ -22,6 +23,7 @@ export default function AdminNoticeTable({
   }, [notices]);
 
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [editingNotice, setEditingNotice] = useState<AdminNoticeRow | null>(
     null
   );
@@ -38,10 +40,23 @@ export default function AdminNoticeTable({
     );
   };
 
-  const handleDelete = (id: number) => {
-    setRows((prev) => prev.filter((n) => n.id !== id));
-    setDeletingId(null);
-    toast.success('공지사항이 삭제되었습니다.');
+  const handleDelete = async (id: number) => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    try {
+      const result = await deleteNoticeAction(id);
+      if (!result.success) {
+        toast.error(result.message || '공지 삭제에 실패했습니다.');
+        return;
+      }
+      setRows((prev) => prev.filter((n) => n.id !== id));
+      setDeletingId(null);
+      toast.success('공지사항이 삭제되었습니다.');
+    } catch {
+      toast.error('공지 삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
