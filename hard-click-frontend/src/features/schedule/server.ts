@@ -19,7 +19,7 @@ function toISODate(date: Date): string {
 interface ApiScheduleItem {
   slotId?: number;
   itemId?: number;
-  source?: 'LESSON' | 'TODO';
+  source?: 'LESSON' | 'TODO' | 'REVIEW';
   planDate: string;
   startTime?: string | null;
   endTime?: string | null;
@@ -27,6 +27,8 @@ interface ApiScheduleItem {
   title?: string | null;
   lessonTitle?: string | null;
   courseTitle?: string | null;
+  /** 오답 기반 복습(REVIEW) 항목의 강의 id — 유사퀴즈(/quizzes/similar?courseId=) 진입용. LESSON=강의 id, TODO=null. */
+  courseId?: number | null;
   plannedMinutes?: number;
   status?: string;
 }
@@ -46,8 +48,8 @@ function toCategory(subject?: string | null): SubjectCategory {
   return subjectCategory(subject) ?? LABEL_TO_CATEGORY[subject] ?? 'OTHER';
 }
 
-/** source 미제공(구 PR#3 응답)이면 slotId만 있는 LESSON으로 간주. */
-function toSource(it: ApiScheduleItem): 'LESSON' | 'TODO' {
+/** source 미제공(구 PR#3 응답)이면 slotId만 있는 LESSON으로 간주. REVIEW는 BE가 명시적으로 내려준다. */
+function toSource(it: ApiScheduleItem): 'LESSON' | 'TODO' | 'REVIEW' {
   return it.source ?? (it.slotId != null ? 'LESSON' : 'TODO');
 }
 
@@ -56,9 +58,15 @@ function toItemId(it: ApiScheduleItem): number {
   return it.itemId ?? it.slotId ?? 0;
 }
 
-/** 화면 리스트 key — itemId는 source 안에서만 유일해서 source까지 합쳐야 전체에서 유일. */
+/**
+ * 화면 리스트 key — itemId/slotId는 각 source 안에서만 유일해, 소스가 다르면 id 값이 겹칠 수 있어
+ * source로 네임스페이스한다. id가 없으면 planDate+제목 폴백.
+ * (클라 렌더 키/로컬 토글 전용 — BE로 돌아가지 않아 접두어를 붙여도 안전.)
+ */
 function itemKey(it: ApiScheduleItem): string {
-  return `${toSource(it)}-${toItemId(it)}`;
+  const id = it.itemId ?? it.slotId;
+  const base = id != null ? String(id) : `${it.planDate}-${it.title ?? it.lessonTitle ?? ''}`;
+  return `${toSource(it)}-${base}`;
 }
 
 /**
@@ -81,6 +89,8 @@ export async function getTodayTasksServer(today: Date = new Date()): Promise<Tod
     title: it.title ?? it.lessonTitle ?? it.courseTitle ?? '학습',
     done: it.status === 'DONE',
     category: toCategory(it.subject),
+    // REVIEW 항목이면 오답 기반 강의 id → TodayTaskChecklist가 ReviewStartModal(courseId)로 넘겨 유사퀴즈 진입.
+    courseId: it.courseId ?? undefined,
     startTime: it.startTime ?? '',
     endTime: it.endTime ?? '',
   }));
