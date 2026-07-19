@@ -10,7 +10,7 @@ import type { RankingBoard, RankingTabType, MyRankingSummary } from '../types';
 /**
  * 랭킹 상호작용 섬(client) — 지표 탭 전환만 client, 데이터는 server에서 props로 받음.
  * 기간(period)은 URL 구동(헤더의 RankingPeriodTabs) → 바뀌면 서버가 재조회해 board·myRanking 갱신.
- * 활성 탭에 맞춰 내 순위(포커스) + 포디움(top3) + 리스트(4위~)를 렌더.
+ * 활성 탭에 맞춰 내 순위(포커스) + 포디움(top3) + 리스트(포디움 있으면 4위~, 3명 미만이면 전원 1위~)를 렌더.
  */
 export default function RankingClient({
   board,
