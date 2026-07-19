@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { toast } from '@/lib/toast';
 import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 import type {
   AdminCourseManageRow,
@@ -22,8 +21,10 @@ const STATUS_STYLE: Record<Exclude<AdminCourseStatus, 'DELETED'>, string> = {
 
 interface Props {
   course: AdminCourseManageRow;
-  onStatusChange: (id: number, next: AdminCourseStatus) => void;
-  onDelete: (id: number) => void;
+  /** 성공 시 true를 반환해야 카드가 즉시 갱신된다(실패 시 토스트는 호출부 책임). */
+  onStatusChange: (id: number, next: AdminCourseStatus) => Promise<boolean>;
+  /** 성공 시 true를 반환해야 삭제 확인 모달이 닫힌다(실패 시 모달 유지 — 에러 토스트는 호출부 책임). */
+  onDelete: (id: number) => Promise<boolean>;
 }
 
 export default function AdminCourseCard({
@@ -32,22 +33,30 @@ export default function AdminCourseCard({
   onDelete,
 }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleToggle = () => {
+  const handleToggle = async () => {
+    if (isToggling) return;
     const next: AdminCourseStatus =
       course.status === 'PUBLISHED' ? 'HIDDEN' : 'PUBLISHED';
-    onStatusChange(course.id, next);
-    toast.success(
-      next === 'PUBLISHED'
-        ? '강의가 공개되었습니다.'
-        : '강의가 비공개되었습니다.'
-    );
+    setIsToggling(true);
+    try {
+      await onStatusChange(course.id, next);
+    } finally {
+      setIsToggling(false);
+    }
   };
 
-  const handleDelete = () => {
-    onDelete(course.id);
-    setConfirmDelete(false);
-    toast.success('강의가 삭제되었습니다.');
+  const handleDelete = async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    try {
+      const ok = await onDelete(course.id);
+      if (ok) setConfirmDelete(false);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -110,7 +119,8 @@ export default function AdminCourseCard({
             <button
               type="button"
               onClick={handleToggle}
-              className={`flex h-8 items-center gap-1 rounded-full border px-4 text-xs font-semibold transition ${
+              disabled={isToggling}
+              className={`flex h-8 items-center gap-1 rounded-full border px-4 text-xs font-semibold transition disabled:cursor-wait disabled:opacity-50 ${
                 course.status === 'PUBLISHED'
                   ? 'border-[#FCA5A5] text-[#EF4444] hover:bg-[#FEF2F2]'
                   : 'border-[#86EFAC] text-[#16A34A] hover:bg-[#F0FDF4]'

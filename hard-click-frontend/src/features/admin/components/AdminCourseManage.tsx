@@ -5,14 +5,13 @@ import AdminNoticeFilterBar from './AdminNoticeFilterBar';
 import AdminCourseCard from './AdminCourseCard';
 import Pagination from './Pagination';
 import SelectDropdown from '@/components/ui/SelectDropdown';
+import { deleteCourse, publishCourse } from '@/features/instructor/services';
+import { toast } from '@/lib/toast';
 import type {
   AdminCourseManageRow,
   AdminCourseStatus,
 } from '@/mocks/admin.mock';
-import {
-  mockAdminSubjectOptions,
-  mockAdminInstructorOptions,
-} from '@/mocks/admin.mock';
+import { mockAdminSubjectOptions } from '@/mocks/admin.mock';
 
 type FilterTab = 'ALL' | 'PUBLISHED' | 'HIDDEN';
 
@@ -33,7 +32,18 @@ export default function AdminCourseManage({ initialCourses }: Props) {
     useState<AdminCourseManageRow[]>(initialCourses);
   const [keyword, setKeyword] = useState('');
   const [tab, setTab] = useState<FilterTab>('ALL');
+  const [subject, setSubject] = useState('');
+  const [instructor, setInstructor] = useState('');
   const [page, setPage] = useState(1);
+
+  // 강사 옵션은 고정 mock 목록 대신 실제 목록에 등장하는 강사명으로 구성한다.
+  const instructorOptions = useMemo(() => {
+    const names = Array.from(new Set(courses.map((c) => c.instructor))).sort();
+    return [
+      { label: '전체', value: '' },
+      ...names.map((name) => ({ label: name, value: name })),
+    ];
+  }, [courses]);
 
   const filtered = useMemo(() => {
     return courses.filter((c) => {
@@ -41,17 +51,27 @@ export default function AdminCourseManage({ initialCourses }: Props) {
       const matchKeyword = keyword
         ? c.title.includes(keyword) || c.instructor.includes(keyword)
         : true;
-      return matchTab && matchKeyword;
+      const matchSubject = subject ? c.subject === subject : true;
+      const matchInstructor = instructor ? c.instructor === instructor : true;
+      return matchTab && matchKeyword && matchSubject && matchInstructor;
     });
-  }, [courses, keyword, tab]);
+  }, [courses, keyword, tab, subject, instructor]);
 
-  // 탭/검색 변경 시 1페이지로 리셋
+  // 탭/검색/필터 변경 시 1페이지로 리셋
   const handleKeywordChange = (next: string) => {
     setKeyword(next);
     setPage(1);
   };
   const handleTabChange = (next: FilterTab) => {
     setTab(next);
+    setPage(1);
+  };
+  const handleSubjectChange = (next: string) => {
+    setSubject(next);
+    setPage(1);
+  };
+  const handleInstructorChange = (next: string) => {
+    setInstructor(next);
     setPage(1);
   };
 
@@ -63,16 +83,42 @@ export default function AdminCourseManage({ initialCourses }: Props) {
   );
 
   const handleStatusChange = useCallback(
-    (id: number, next: AdminCourseStatus) => {
-      setCourses((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, status: next } : c))
-      );
+    async (id: number, next: AdminCourseStatus): Promise<boolean> => {
+      try {
+        const result = await publishCourse(id, next === 'PUBLISHED');
+        if (!result.success) {
+          toast.error('상태 변경에 실패했습니다.');
+          return false;
+        }
+        setCourses((prev) =>
+          prev.map((c) => (c.id === id ? { ...c, status: next } : c))
+        );
+        toast.success(
+          next === 'PUBLISHED' ? '강의가 공개되었습니다.' : '강의가 비공개되었습니다.'
+        );
+        return true;
+      } catch {
+        toast.error('상태 변경 중 오류가 발생했습니다.');
+        return false;
+      }
     },
     []
   );
 
-  const handleDelete = useCallback((id: number) => {
-    setCourses((prev) => prev.filter((c) => c.id !== id));
+  const handleDelete = useCallback(async (id: number): Promise<boolean> => {
+    try {
+      const result = await deleteCourse(id);
+      if (!result.success) {
+        toast.error('강의 삭제에 실패했습니다.');
+        return false;
+      }
+      setCourses((prev) => prev.filter((c) => c.id !== id));
+      toast.success('강의가 삭제되었습니다.');
+      return true;
+    } catch {
+      toast.error('강의 삭제 중 오류가 발생했습니다.');
+      return false;
+    }
   }, []);
 
   return (
@@ -87,15 +133,15 @@ export default function AdminCourseManage({ initialCourses }: Props) {
       >
         <SelectDropdown
           placeholder="과목"
-          value=""
+          value={subject}
           options={mockAdminSubjectOptions}
-          onChange={() => {}}
+          onChange={handleSubjectChange}
         />
         <SelectDropdown
           placeholder="강사"
-          value=""
-          options={mockAdminInstructorOptions}
-          onChange={() => {}}
+          value={instructor}
+          options={instructorOptions}
+          onChange={handleInstructorChange}
         />
       </AdminNoticeFilterBar>
 
