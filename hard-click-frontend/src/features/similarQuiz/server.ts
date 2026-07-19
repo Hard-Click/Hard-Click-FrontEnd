@@ -9,10 +9,11 @@ import type { SimilarQuizDetail } from './types';
  * 유사퀴즈 = **강의(course) 단위**: 그 강의의 오답 전체 기반. 주차와 무관 → 강의 하나에 유사퀴즈 하나.
  *
  * ⚠️ 상태(§0.1④): config MOCK_OVERRIDE.similarQuiz=false → **라이브**(mock 아님, 2026-07-16 전환).
- *   조회(POST /api/similar-quizzes)는 ALB 라이브 검증(200·courseId 요청·응답 shape 일치).
+ *   조회(POST /api/similar-quizzes) 라이브 검증 = **200 + courseId 요청 shape 일치**까지만 확인.
+ *   ⚠️ non-null 응답 shape(questions[].options 등)는 오답/유사문제가 있는 케이스를 아직 못 받아봐
+ *   **미대조**(data=null 정상 empty만 확인) → 아래 ApiSimilarQuiz는 BE 계약 기준 **가정 shape**(§0.1①).
  *   ⚠️ 제출/채점(submitSimilarQuizAction)은 BE **develop엔 있으나 prod(main) 미배포** → 배포 전엔 404
- *   (정직하게 '제출 실패' 토스트, 가짜 채점 안 함). 응답 shape은 BE 계약 기준(생성 검증, 제출 라이브
- *   미검증 §0.1①). BE develop→main 배포 시 완전 작동.
+ *   (정직하게 '제출 실패' 토스트, 가짜 채점 안 함). BE develop→main 배포 시 완전 작동.
  * ───────────────────────────────────────────────────────────────────────── */
 
 /** POST /api/similar-quizzes 응답 — 가정 shape(정답·해설 제외). */
