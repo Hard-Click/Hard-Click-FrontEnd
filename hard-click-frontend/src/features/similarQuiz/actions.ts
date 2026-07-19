@@ -33,8 +33,10 @@ interface ApiSimilarQuizResult {
  * answers = { [questionId]: 선택 보기 인덱스(0~3) }.
  * 격리막: 채점은 서버에서만. 제출 응답에 해설 전부 → 같은 화면에서 바로 해설 렌더(목록 이동 없음).
  *
- * ⚠️ BE 미개발(§0.1④): 현재 `isMock('similarQuiz')`=true라 항상 mock 채점.
- *   아래 라이브 분기는 슬랙 계약 기준 **가정 shape(미검증, §0.1①)**.
+ * ⚠️ 상태(§0.1④): config.similarQuiz=false → **라이브**(mock 아님) — 아래 라이브 분기가 실행됨.
+ *   제출 엔드포인트는 BE **develop엔 있으나 prod(main) 미배포** → 배포 전엔 404(정직하게 '제출 실패' 토스트,
+ *   가짜 점수/해설 안 만듦). 응답 shape은 BE 계약 기준(생성은 라이브 검증, 제출은 라이브 미검증 §0.1①).
+ *   BE develop→main 배포 시 작동. mock으로 되돌리면 가짜 채점을 진짜처럼 렌더(§0.1②)라 지양.
  */
 export async function submitSimilarQuizAction(
   similarQuizId: number,
