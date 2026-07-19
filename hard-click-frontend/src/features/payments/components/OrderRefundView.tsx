@@ -35,6 +35,11 @@ const cardClass =
  */
 export default function OrderRefundView({ order }: { order: OrderDetail }) {
   const isSubscription = order.paymentType === 'SUBSCRIPTION';
+  // 구독 환불액이 실제 비례식(BE 제공)인지, BE가 item 미제공 시의 폴백 전액 추정인지.
+  //   추정이면 '오늘 기준 일할' 단정 금지 — 전액을 일할 환불액처럼 오표시하지 않게(§0.1②).
+  const refundEstimated =
+    isSubscription &&
+    order.items.some((it) => it.isSubscription && it.refundAmountEstimated);
   const [refundedIds, setRefundedIds] = useState<number[]>([]);
   const [selected, setSelected] = useState<boolean[]>(() =>
     order.items.map(() => true),
@@ -254,12 +259,14 @@ export default function OrderRefundView({ order }: { order: OrderDetail }) {
               )}
             </ul>
             <p className="mt-4 text-sm font-bold text-[#2F5DAA]">
-              예상 환불 금액{isSubscription ? ' (오늘 기준)' : ''}:{' '}
+              예상 환불 금액{isSubscription && !refundEstimated ? ' (오늘 기준)' : ''}:{' '}
               {selectedTotal.toLocaleString()}원
             </p>
             {isSubscription && (
               <p className="mt-1 text-xs text-[#94A3B8]">
-                구독은 남은 기간에 따라 일할 계산되어 매일 환불액이 달라져요.
+                {refundEstimated
+                  ? '표시 금액은 결제 원금 기준이며, 실제 환불액은 남은 기간에 따라 이보다 적을 수 있어요.'
+                  : '구독은 남은 기간에 따라 일할 계산되어 매일 환불액이 달라져요.'}
               </p>
             )}
           </div>

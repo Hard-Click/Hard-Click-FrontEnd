@@ -129,7 +129,8 @@ function toLiveOrderDetail(api: BeOrderDetail, orderId: number): OrderDetail {
       isSubscription: true,
       enrollStatus: '',
       refundable: true,
-      refundAmount: api.totalAmount,
+      refundAmount: api.totalAmount, // 폴백 = 결제 전액(비례 아님)
+      refundAmountEstimated: true, // 전액 추정 → OrderRefundView가 '오늘 기준 일할' 단정 안 함(§0.1②)
       refundNote: '',
       refunded: false,
     });
