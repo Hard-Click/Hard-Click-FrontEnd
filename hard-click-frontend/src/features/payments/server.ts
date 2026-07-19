@@ -9,6 +9,7 @@ import {
 } from '@/mocks/payments.mock';
 import type {
   OrderDetail,
+  OrderDetailItem,
   OrderStatus,
   PaymentType,
   PaymentHistory,
@@ -102,7 +103,7 @@ interface BeOrderDetail {
 /** 라이브 BE 주문 상세 → UI 계약. BE 미제공 필드는 폴백/숨김, orderId는 URL 파라미터로 보강. */
 function toLiveOrderDetail(api: BeOrderDetail, orderId: number): OrderDetail {
   const isSub = String(api.paymentType).toUpperCase() === 'SUBSCRIPTION';
-  const items = (api.items ?? []).map((it) => ({
+  const items: OrderDetailItem[] = (api.items ?? []).map((it) => ({
     courseId: it.courseId,
     title: it.title ?? `강의 #${it.courseId}`, // BE null 폴백
     instructor: '', // BE 미제공 → 컴포넌트가 빈 값이면 숨김
