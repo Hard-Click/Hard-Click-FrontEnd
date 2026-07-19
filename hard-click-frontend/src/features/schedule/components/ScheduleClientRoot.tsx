@@ -142,9 +142,9 @@ export function ScheduleClientRoot({
   };
 
   // 자정을 넘겨 다음날로 이어지는 할 일(끝 시간 <= 시작 시간)은 캘린더에도 오늘~다음날 막대로 보여준다.
-  // 시간이 없는 항목(예: 시간 미지정 REVIEW)은 '' <= ''가 true라 유령 막대가 생기므로 양쪽 시간이 있을 때만.
+  // 시간이 없는 항목(예: 시간 미지정 REVIEW)은 '' < ''가 false로 걸러진다. 끝==시작(0분)은 자정 넘김이 아니므로 strict <.
   const overnightBlocks: ScheduleBlock[] = tasks
-    .filter((t) => t.startTime !== '' && t.endTime !== '' && t.endTime <= t.startTime)
+    .filter((t) => t.startTime !== '' && t.endTime !== '' && t.endTime < t.startTime)
     .map((t) => ({ id: `overnight-${t.id}`, category: t.category, startDate: date, endDate: nextDateISO(date) }));
   const mergedBlocks = [...scheduleBlocks, ...overnightBlocks];
 
