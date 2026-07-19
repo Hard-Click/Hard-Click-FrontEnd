@@ -21,8 +21,12 @@ export default function RankingClient({
 }) {
   const [activeTab, setActiveTab] = useState<RankingTabType>('studyTime');
   const users = board[activeTab];
+  // 3명 미만이면 시상대(RankingPodium)가 안 뜨므로(top3.length<3 → null) 전원을 리스트에 표시한다.
+  //   안 그러면 rest=slice(3)이 1~3위를 버려 보드가 통째로 빈다(전체 1~2명일 때 랭킹이 안 뜨던 버그).
+  //   user.rank는 데이터 필드라 리스트에 넘겨도 순위 번호(1위~)가 정확히 표시됨.
+  const hasPodium = users.length >= 3;
   const top3 = users.slice(0, 3);
-  const rest = users.slice(3);
+  const rest = hasPodium ? users.slice(3) : users;
 
   return (
     <>
@@ -39,7 +43,7 @@ export default function RankingClient({
         <RankingPodium top3={top3} />
       </div>
 
-      {/* 4위~10위 리스트 */}
+      {/* 리스트 — 포디움 있으면 4위~, 3명 미만이면 전원(1위~) */}
       <div className="mt-4">
         <RankingTable users={rest} />
       </div>
