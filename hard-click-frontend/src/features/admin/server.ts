@@ -132,7 +132,6 @@ function toAdminNoticeRow(
     createdAt: item.createdAt.split('T')[0] ?? item.createdAt,
     content: '',
     isPinned: item.isPinned,
-    isPublished: true,
     courseTitle: item.courseName ?? undefined,
     courseSubject: meta?.subject,
     courseInstructor: meta?.instructor,

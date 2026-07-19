@@ -18,7 +18,6 @@ function toAdminNoticeRow(item: NoticeApiItem): AdminNoticeRow {
     createdAt: item.createdAt.split('T')[0] ?? item.createdAt,
     content: '',
     isPinned: item.isPinned,
-    isPublished: true,
     courseTitle: item.courseName ?? undefined,
   };
 }
