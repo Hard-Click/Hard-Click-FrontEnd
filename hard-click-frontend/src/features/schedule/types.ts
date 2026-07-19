@@ -11,7 +11,7 @@ export interface ScheduleCalendarDay {
 }
 
 /** BE 원본 구분 — LESSON(AI 슬롯, 수정/삭제 API 없음) vs TODO(학생 추가, CRUD 가능). */
-export type TodayTaskSource = 'LESSON' | 'TODO';
+export type TodayTaskSource = 'LESSON' | 'TODO' | 'REVIEW';
 
 /** "오늘 할 일" 패널 항목 하나. category가 'REVIEW'면 과목 무관 복습 항목, 'OTHER'면 과목 미지정(직접 추가) 항목. */
 export interface TodayTask {
