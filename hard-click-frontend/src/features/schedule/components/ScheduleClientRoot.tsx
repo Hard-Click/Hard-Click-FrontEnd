@@ -48,6 +48,8 @@ export function ScheduleClientRoot({
   const toggleTask = (id: string) => {
     const task = tasks.find((t) => t.id === id);
     if (!task || task.done) return;
+    // REVIEW엔 완료 API가 없다 — 체크박스 잠금(TodayTaskChecklist)에 더해 쓰기 경로도 source로 방어.
+    if (task.source === 'REVIEW') return;
     void (async () => {
       try {
         const action = task.source === 'LESSON' ? completeLessonAction : completeTodoAction;
@@ -140,8 +142,9 @@ export function ScheduleClientRoot({
   };
 
   // 자정을 넘겨 다음날로 이어지는 할 일(끝 시간 <= 시작 시간)은 캘린더에도 오늘~다음날 막대로 보여준다.
+  // 시간이 없는 항목(예: 시간 미지정 REVIEW)은 '' <= ''가 true라 유령 막대가 생기므로 양쪽 시간이 있을 때만.
   const overnightBlocks: ScheduleBlock[] = tasks
-    .filter((t) => t.endTime <= t.startTime)
+    .filter((t) => t.startTime !== '' && t.endTime !== '' && t.endTime <= t.startTime)
     .map((t) => ({ id: `overnight-${t.id}`, category: t.category, startDate: date, endDate: nextDateISO(date) }));
   const mergedBlocks = [...scheduleBlocks, ...overnightBlocks];
 

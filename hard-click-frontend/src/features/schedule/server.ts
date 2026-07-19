@@ -59,8 +59,8 @@ function toItemId(it: ApiScheduleItem): number {
 }
 
 /**
- * 화면 리스트 key — itemId/slotId는 source 안에서만 유일. REVIEW는 itemId에 courseId가 실려와
- * 다른 소스의 슬롯 id와 값이 겹칠 수 있어 source로 네임스페이스한다. id가 없으면 planDate+제목 폴백.
+ * 화면 리스트 key — itemId/slotId는 각 source 안에서만 유일해, 소스가 다르면 id 값이 겹칠 수 있어
+ * source로 네임스페이스한다. id가 없으면 planDate+제목 폴백.
  * (클라 렌더 키/로컬 토글 전용 — BE로 돌아가지 않아 접두어를 붙여도 안전.)
  */
 function itemKey(it: ApiScheduleItem): string {

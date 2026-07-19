@@ -23,8 +23,9 @@ export function TodayTaskChecklist({ tasks, onToggle, onEdit, onDelete }: TodayT
     <div className="flex h-full flex-col">
       <ul className="flex flex-1 flex-col gap-2">
         {tasks.map((task) => {
-          // 복습 항목(REVIEW 카테고리)은 수정이 아니라 복습 시작 확인 모달을 띄운다.
-          const isReview = task.category === 'REVIEW';
+          // 복습 항목(source 'REVIEW' 또는 과목 '복습')은 수정이 아니라 복습 시작 확인 모달을 띄운다.
+          // BE가 둘 중 어느 신호로 주든 인식되게 OR — subject가 실과목이어도 source로 잡아 조용히 일반 할 일로 새지 않게.
+          const isReview = task.source === 'REVIEW' || task.category === 'REVIEW';
           // 수정 모달은 학생이 직접 추가한 TODO만 — LESSON(AI 슬롯)은 BE에 수정/삭제 API 자체가 없다.
           const editable = task.source === 'TODO' && !isReview;
           // 완료 체크는 BE가 단방향(PLANNED→DONE)만 지원 — 되돌리는 API가 없어 이미 완료면 체크박스 비활성화.
