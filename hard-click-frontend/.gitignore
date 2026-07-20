@@ -53,3 +53,7 @@ next-env.d.ts
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# 팀 규칙(CLAUDE.md §12): CLAUDE.md는 커밋하지 않는다(로컬 전용 AI 컨텍스트)
+CLAUDE.md
+**/CLAUDE.md
