@@ -10,7 +10,8 @@ function hourLabel(hour: number): string {
 }
 
 /**
- * 이 시간(정시~정시+1시간)에 걸쳐 있는 오늘 할 일의 과목(있으면). 10분 단위 시작/종료 시각 기준 겹침 판정.
+ * 이 시간(정시~정시+1시간)에 걸쳐 있는, **완료된** 오늘 할 일의 과목(있으면). 10분 단위 시작/종료 시각 기준 겹침 판정.
+ * 타임테이블은 "실제로 한 일" 기록이라 완료 전(계획만 된) 할 일은 칠하지 않는다 — 체크해야 그때 채워진다.
  * 이 표는 "오늘" 하루(00~23시)만 그리므로, 끝 시간이 시작 시간보다 같거나 빠르면(예: 21:00~01:00)
  * 자정을 넘겨 다음날 새벽까지 이어지는 일정으로 보고 표의 맨 아래(23시)까지만 칠한다.
  * 표 위쪽 0~1시 칸은 "오늘"의 지난 새벽 시간이라, 다음날 새벽을 그 칸에 겹쳐 칠하면 안 된다.
@@ -19,6 +20,7 @@ function categoryAtHour(hour: number, tasks: readonly TodayTask[]): SubjectCateg
   const hourStart = hour * 60;
   const hourEnd = hourStart + 60;
   const task = tasks.find((t) => {
+    if (!t.done) return false;
     const s = toMinutes(t.startTime);
     const e = toMinutes(t.endTime);
     if (e <= s) return s < hourEnd;
