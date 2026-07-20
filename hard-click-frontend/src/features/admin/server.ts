@@ -43,6 +43,8 @@ export interface DashboardStats {
   pendingReportCount: number;
   totalCourseCount: number;
   totalNoticeCount: number;
+  /** false면 조회 실패 — 진짜 0건과 구분하기 위한 플래그(§0.5 정직성). */
+  statsKnown: boolean;
 }
 
 export async function getDashboardData(): Promise<{
@@ -54,7 +56,13 @@ export async function getDashboardData(): Promise<{
 
   if (!res.success || !res.data) {
     return {
-      stats: { totalMemberCount: 0, pendingReportCount: 0, totalCourseCount: 0, totalNoticeCount: 0 },
+      stats: {
+        totalMemberCount: 0,
+        pendingReportCount: 0,
+        totalCourseCount: 0,
+        totalNoticeCount: 0,
+        statsKnown: false,
+      },
       recentReports: [],
       recentNotices: [],
     };
@@ -67,6 +75,7 @@ export async function getDashboardData(): Promise<{
     pendingReportCount: d.pendingReportCount,
     totalCourseCount: d.totalCourseCount,
     totalNoticeCount: d.totalNoticeCount,
+    statsKnown: true,
   };
 
   const recentReports: AdminRecentReport[] = d.recentReports.map((r) => ({
