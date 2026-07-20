@@ -322,21 +322,39 @@ export function useRegisterForm() {
     // 즉시 미리보기(blob) 후 BE에 업로드 — 응답 key를 가입 요청(profileImageUrl)에 사용(BE b안).
     // 교체 업로드 최신-우선: 새 선택 시 옛 key를 즉시 무효화하고, 늦게 온 옛 응답은 reqId로 무시.
     const reqId = ++uploadReqRef.current;
+    const prevPreview = values.profileImagePreview;
+    const nextPreview = URL.createObjectURL(file);
     updateValue('profileImage', file);
-    updateValue('profileImagePreview', URL.createObjectURL(file));
+    updateValue('profileImagePreview', nextPreview);
     updateValue('profileImageKey', ''); // 교체 중 옛 key가 signup에 전송되지 않게 즉시 비움
-    setIsUploadingImage(true);
-    const res = await uploadProfileImageAction(file);
-    if (uploadReqRef.current !== reqId) return; // 더 최신 업로드가 있음 → stale 응답 무시
-    setIsUploadingImage(false);
-    if (res.success && res.data?.key) {
-      updateValue('profileImageKey', res.data.key);
-    } else {
-      // 업로드 실패 → key 없이 '사진 첨부됨'처럼 보이면 안 됨(§0.1) → 선택 해제 + 안내
+    // 새 미리보기로 바꾼 뒤 옛 blob 해제 — 안 하면 사진을 교체할 때마다 blob이 쌓인다.
+    if (prevPreview) URL.revokeObjectURL(prevPreview);
+
+    // 업로드 실패 → key 없이 '사진 첨부됨'처럼 보이면 안 됨(§0.1) → 선택 해제 + 안내(방금 만든 blob도 해제).
+    const failUpload = () => {
+      URL.revokeObjectURL(nextPreview);
       updateValue('profileImage', null);
       updateValue('profileImagePreview', '');
       updateValue('profileImageKey', '');
       showToast('이미지 업로드에 실패했습니다');
+    };
+
+    setIsUploadingImage(true);
+    try {
+      const res = await uploadProfileImageAction(file);
+      if (uploadReqRef.current !== reqId) return; // 더 최신 업로드가 있음 → stale 응답 무시
+      if (res.success && res.data?.key) {
+        updateValue('profileImageKey', res.data.key);
+      } else {
+        failUpload();
+      }
+    } catch {
+      // lib/api는 4xx/5xx·네트워크 실패를 throw 없이 {success:false}로 돌려주므로 보통은 위 else로 간다.
+      // 여기는 그 밖의 예기치 못한 throw 대비 안전망 — 빠져나가도 finally가 업로드중 상태를 푼다.
+      if (uploadReqRef.current === reqId) failUpload();
+    } finally {
+      // 최신 요청만 로딩을 해제 — 늦게 온 stale 응답이 새 업로드의 로딩을 끄지 않도록.
+      if (uploadReqRef.current === reqId) setIsUploadingImage(false);
     }
   };
 
