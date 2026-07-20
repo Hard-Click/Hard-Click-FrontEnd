@@ -27,7 +27,12 @@ export default async function RankingPage({
     : 'monthly';
 
   const user = await getCurrentUser();
-  const myMemberId = user?.memberId ?? -1;
+  // 보드·내 랭킹 모두 인증이 필요한 엔드포인트(401)라, 비로그인이면 조회 자체가 실패해 throw된다.
+  // layout은 client라 이 Server Component가 먼저 실행돼, 그대로 두면 의도한 401 안내 대신 에러 화면이 뜬다.
+  // 여기서 일찍 반환하면 layout의 비로그인 분기(NotFoundView 401)가 정상적으로 보인다.
+  if (!user) return null;
+  // 로그인했는데 memberId가 없는 경우(-1)는 본인 행 강조만 안 될 뿐 조회는 정상.
+  const myMemberId = user.memberId ?? -1;
 
   const [board, myRanking] = await Promise.all([
     getRankingBoardServer(period, myMemberId),
