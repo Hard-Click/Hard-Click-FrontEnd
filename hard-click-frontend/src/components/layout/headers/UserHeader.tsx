@@ -85,7 +85,15 @@ export default function UserHeader() {
 
   const handleLogout = async () => {
     setIsDropdownOpen(false);
-    await logoutAction();
+    try {
+      const result = await logoutAction();
+      if (!result.success) {
+        toast.error('로그아웃 처리 중 문제가 발생했어요. 기기를 안전하게 쓰려면 다시 시도해주세요.');
+      }
+    } catch {
+      toast.error('로그아웃 처리 중 문제가 발생했어요. 기기를 안전하게 쓰려면 다시 시도해주세요.');
+    }
+    // 서버 무효화 성공 여부와 무관하게 이 브라우저의 세션 쿠키는 항상 지운다(로컬 기기는 즉시 정리).
     await clearSession();
     router.push('/courses');
     router.refresh();
