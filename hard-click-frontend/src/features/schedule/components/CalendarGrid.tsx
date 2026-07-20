@@ -4,6 +4,9 @@ import type { ScheduleBlock } from '../types';
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
+// 못 한 학습(지난 날짜인데 완료 안 됨, BE가 MISSED로 마킹). 과목색 대신 이 검정 계열로 칠한다.
+const MISSED_BAR_COLOR = '#1E293B';
+
 interface CalendarGridProps {
   year: number;
   /** 0-indexed (1월=0) */
@@ -53,7 +56,10 @@ export function CalendarGrid({ year, month, blocks = [] }: CalendarGridProps) {
                       className="mx-1 h-2 rounded-full"
                       style={{
                         gridColumn: `${segment.startCol} / span ${segment.span}`,
-                        backgroundColor: categoryColor(segment.block.category).light,
+                        backgroundColor:
+                          segment.block.status === 'MISSED'
+                            ? MISSED_BAR_COLOR
+                            : categoryColor(segment.block.category).light,
                       }}
                     />
                   </div>

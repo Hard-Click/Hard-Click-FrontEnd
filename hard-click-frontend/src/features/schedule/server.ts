@@ -2,7 +2,7 @@ import { serverApi } from '@/lib/api';
 import { isMock } from '@/mocks/config';
 import { subjectCategory, type SubjectCategory } from '@/features/courses/subjects';
 import { mockAiCoachComment, mockScheduleBlocks, mockTodayTasks } from '@/mocks/schedule.mock';
-import type { ScheduleBlock, TodayTask, TodayTasksSummary } from './types';
+import type { ScheduleBlock, ScheduleBlockStatus, TodayTask, TodayTasksSummary } from './types';
 
 function toISODate(date: Date): string {
   const yyyy = date.getFullYear();
@@ -51,6 +51,11 @@ function itemKey(it: ApiScheduleItem): string {
   return String(id ?? `${it.planDate}-${it.title ?? it.lessonTitle ?? ''}`);
 }
 
+// BE status 문자열을 캘린더 블록 상태로 정규화. 모르는 값/누락은 undefined(=과목색 그대로).
+function toBlockStatus(status?: string): ScheduleBlockStatus | undefined {
+  return status === 'PLANNED' || status === 'DONE' || status === 'MISSED' ? status : undefined;
+}
+
 /**
  * 오늘 할 일 조회 (Server Component 전용).
  * live(`isMock('schedule')===false`): `GET /api/schedule/me/today` → 완료수/전체수 포함 오늘 항목.
@@ -93,6 +98,7 @@ export async function getScheduleBlocksServer(): Promise<ScheduleBlock[]> {
     category: toCategory(it.subject),
     startDate: it.planDate,
     endDate: it.planDate, // BE 슬롯은 하루 단위 → 단일-일 블록
+    status: toBlockStatus(it.status), // MISSED면 캘린더에서 검정 막대로 표시
   }));
 }
 

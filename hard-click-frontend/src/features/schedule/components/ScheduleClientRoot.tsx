@@ -2,7 +2,7 @@
 
 import { Fragment, useState } from 'react';
 import type { ScheduleBlock, TodayTask } from '../types';
-import { nextDateISO } from '../utils';
+import { mergeScheduleBlocks, nextDateISO } from '../utils';
 import { ScheduleCalendarCard } from './ScheduleCalendarCard';
 import { TodayTaskPanel } from './TodayTaskPanel';
 import { TodayTimeTable } from './TodayTimeTable';
@@ -64,7 +64,8 @@ export function ScheduleClientRoot({
   const overnightBlocks: ScheduleBlock[] = tasks
     .filter((t) => t.endTime <= t.startTime)
     .map((t) => ({ id: `overnight-${t.id}`, category: t.category, startDate: date, endDate: nextDateISO(date) }));
-  const mergedBlocks = [...scheduleBlocks, ...overnightBlocks];
+  // 하루 단위 슬롯을 연속(같은 과목+같은 못함 여부) 구간으로 병합 — 날별로 쪼개진 막대를 한 막대로.
+  const mergedBlocks = mergeScheduleBlocks([...scheduleBlocks, ...overnightBlocks]);
 
   return (
     <Fragment>

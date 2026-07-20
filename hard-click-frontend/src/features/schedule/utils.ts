@@ -98,6 +98,42 @@ export function formatShortDateWithWeekday(date: Date): string {
 }
 
 /**
+ * 하루 단위 블록들을 "연속 날짜 + 같은 과목 + 같은 못함 여부"끼리 한 막대로 병합한다.
+ *
+ * <p>BE 슬롯은 하루 단위라 같은 과목이 며칠 이어져도 날별로 쪼개져 내려온다 → 캘린더에선
+ * 이어진 한 막대로 보이는 게 자연스럽다. 단 MISSED(검정)와 비MISSED(과목색)는 색이 달라
+ * 병합 경계로 삼는다 — 4일 연속 수학 중 하루만 못 했으면 [색][검정][색] 3개 막대가 된다.
+ */
+export function mergeScheduleBlocks(blocks: readonly ScheduleBlock[]): ScheduleBlock[] {
+  // 병합 그룹: 과목 + 못함 여부. 그룹 안에서 날짜순 정렬 후 연속 날짜를 이어붙인다.
+  const groups = new Map<string, ScheduleBlock[]>();
+  for (const block of blocks) {
+    const key = `${block.category}|${block.status === 'MISSED' ? 'missed' : 'active'}`;
+    const group = groups.get(key);
+    if (group) group.push(block);
+    else groups.set(key, [block]);
+  }
+
+  const merged: ScheduleBlock[] = [];
+  for (const group of groups.values()) {
+    const sorted = [...group].sort((a, b) => a.startDate.localeCompare(b.startDate));
+    let current: ScheduleBlock | null = null;
+    for (const block of sorted) {
+      // 이어짐 = 겹치거나(같은 날 중복 슬롯) 바로 다음 날. 그 외엔 새 막대 시작.
+      if (current && block.startDate <= nextDateISO(current.endDate)) {
+        if (block.endDate > current.endDate) current = { ...current, endDate: block.endDate };
+      } else {
+        if (current) merged.push(current);
+        current = { ...block };
+      }
+    }
+    if (current) merged.push(current);
+  }
+  // 주별 세그먼트 계산엔 순서가 무관하지만, 렌더 키 안정성을 위해 시작일순으로 고정.
+  return merged.sort((a, b) => a.startDate.localeCompare(b.startDate) || a.id.localeCompare(b.id));
+}
+
+/**
  * 이 주(week, 7칸)와 겹치는 학습 구간들을 그 주 안으로 clamp해서 grid-column 위치로 변환.
  * 구간이 주 경계를 넘어가면(예: 화~다음주 목) 이 주에 걸친 부분만큼만 잘라 반환 —
  * 다음 주 호출에서 나머지 부분이 별도 세그먼트로 다시 계산된다.
