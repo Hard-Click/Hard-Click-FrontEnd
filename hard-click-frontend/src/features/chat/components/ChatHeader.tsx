@@ -92,9 +92,11 @@ export default function ChatHeader({
               onClick={() => setMenuOpen(false)}
               className="fixed inset-0 z-10 cursor-default"
             />
+            {/* w-max=글자 폭에 맞춰 딱 붙는 메뉴. p-1(항목 여백)+항목 rounded-lg 라 hover 배경이
+                둥근 메뉴 안에 꽉 찬 알약으로 떨어진다(예전엔 py-1+각진 항목이라 가운데 띠처럼 떠 보였음). */}
             <div
               role="menu"
-              className="absolute right-0 top-full z-20 mt-2 w-40 overflow-hidden rounded-xl border border-[#E2E8F0] bg-white py-1 shadow-[0_8px_20px_rgba(0,0,0,0.1)]"
+              className="absolute right-0 top-full z-20 mt-2 w-max rounded-xl border border-[#E2E8F0] bg-white p-1 shadow-[0_8px_20px_rgba(0,0,0,0.1)]"
             >
               {isHost ? (
                 // 방장: 위임(방장 넘기기) 기능이 없어 나가기 불가 → 채팅방 삭제만.
@@ -105,7 +107,7 @@ export default function ChatHeader({
                     setMenuOpen(false);
                     onDissolveClick();
                   }}
-                  className="block w-full px-4 py-2 text-left text-sm font-semibold text-[#B91C1C] transition hover:bg-[#FEF2F2]"
+                  className="block w-full whitespace-nowrap rounded-lg px-4 py-2.5 text-center text-sm font-semibold text-[#B91C1C] transition hover:bg-[#FEF2F2] focus-visible:bg-[#FEF2F2] focus-visible:outline-none"
                 >
                   채팅방 삭제
                 </button>
@@ -117,7 +119,7 @@ export default function ChatHeader({
                     setMenuOpen(false);
                     onLeaveClick();
                   }}
-                  className="block w-full px-4 py-2 text-left text-sm font-medium text-[#334155] transition hover:bg-[#F8FAFC]"
+                  className="block w-full whitespace-nowrap rounded-lg px-4 py-2.5 text-center text-sm font-medium text-[#334155] transition hover:bg-[#F1F5F9] focus-visible:bg-[#F1F5F9] focus-visible:outline-none"
                 >
                   나가기
                 </button>
