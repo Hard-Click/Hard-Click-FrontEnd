@@ -55,7 +55,9 @@ export default async function LearningVideoPage({
       initialVideo={video}
       initialProgress={prog.progress}
       initialDetail={detail}
-      initialErrorStatus={null}
+      // 진도 조회가 실패(401/500)했는데 null을 넘기면 화면이 '불러오는 중'에 갇힌다 →
+      // 진도가 비었을 때만 실제 status를 올려 VideoStatusModal이 뜨게 한다(커리큘럼 페이지와 동일 규칙).
+      initialErrorStatus={prog.progress ? null : (prog.status ?? 500)}
     />
   );
 }

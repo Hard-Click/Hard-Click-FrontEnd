@@ -39,7 +39,7 @@ export default function StudyTimerPanel() {
   const [seconds, setSeconds] = useState(0);
   // 오늘 종료된 세션들의 누적초(=/stats/daily 오늘 총합, 마이페이지 '오늘 순공시간'과 동일 소스).
   // 화면의 '오늘 총 학습 시간'은 이 base + 현재 세션(seconds)로 파생한다(진행 중 세션은 daily에 아직 미반영).
-  const [dailyBaseSeconds, setDailyBaseSeconds] = useState(0);
+  const [dailyBaseSeconds, setDailyBaseSeconds] = useState<number | null>(0);
   const [resumeSession, setResumeSession] = useState<{
     sessionId: number;
     startedAt: string;
@@ -273,7 +273,8 @@ export default function StudyTimerPanel() {
       if (success) {
         // 종료한 세션 시간을 '오늘 총' base에 낙관적으로 누적(재조회 없이 start→end→start 정합 유지).
         // 다음 마운트 시 /stats/daily 재조회로 정확값으로 대체됨.
-        setDailyBaseSeconds((b) => b + secondsRef.current);
+        // base가 null(오늘 누적 조회 실패)이면 그대로 null 유지 — 세션분만 더해 '하루 총합'인 척하지 않는다.
+        setDailyBaseSeconds((b) => (b === null ? null : b + secondsRef.current));
         setIsRunning(false);
         setIsPaused(false);
         setShowOverlay(false);
@@ -345,7 +346,7 @@ export default function StudyTimerPanel() {
       {showOverlay && (
         <FocusModeOverlay
           seconds={seconds}
-          todaySeconds={dailyBaseSeconds + seconds}
+          todaySeconds={dailyBaseSeconds === null ? null : dailyBaseSeconds + seconds}
           isPaused={isPaused}
           onPause={handlePause}
           onResume={handleResumeTimer}

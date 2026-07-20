@@ -150,11 +150,13 @@ export async function fetchCurrentSessionAction() {
 //  ⚠️ daily_study_stats는 세션 종료 시점에 기록되므로(BE) 진행 중 세션은 아직 미포함 →
 //     패널이 여기 값(base) + 현재 세션 초를 더해 표시한다(이중 집계 없음).
 //  조회 실패/미집계면 0(가짜 값 금지, §0.1). getDailyStudyStats가 mock 분기를 내부 처리.
-export async function fetchTodayStudySecondsAction(): Promise<number> {
+// 조회 실패는 null — 0으로 내리면 '오늘 아직 공부 안 함'과 구분이 안 돼 장애가 정상처럼 보인다(§0.1④).
+// 진짜 0(오늘 기록 없음)은 0으로 그대로 내려간다.
+export async function fetchTodayStudySecondsAction(): Promise<number | null> {
   const now = new Date();
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const res = await getDailyStudyStats({ startDate: today, endDate: today });
-  if (!res.success || !res.data) return 0;
+  if (!res.success || !res.data) return null;
   return res.data.find((d) => d.date === today)?.studySeconds ?? 0;
 }
 

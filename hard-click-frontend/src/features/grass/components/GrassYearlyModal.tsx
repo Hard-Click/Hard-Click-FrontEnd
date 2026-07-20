@@ -62,7 +62,12 @@ function formatDate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export default function GrassYearlyModal({ type, year = 2026, onClose }: GrassYearlyModalProps) {
+// 기본값을 상수로 박으면 해가 바뀐 뒤 지난 해 잔디가 뜬다 → 호출 시점의 올해로.
+export default function GrassYearlyModal({
+  type,
+  year = new Date().getFullYear(),
+  onClose,
+}: GrassYearlyModalProps) {
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
   const [cells, setCells] = useState<CellData[]>([]);
   const [loaded, setLoaded] = useState(false);
