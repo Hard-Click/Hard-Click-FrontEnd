@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
-import { logout } from '@/features/auth/services';
+import { logoutAction } from '@/features/auth/logout.actions';
 import { clearSession } from '@/features/auth/session';
 import NotificationDropdown from '@/features/notifications/components/NotificationDropdown';
 
@@ -37,7 +37,7 @@ export default function AdminHeader() {
 
   const handleLogout = async () => {
     setIsDropdownOpen(false);
-    await logout();
+    await logoutAction();
     await clearSession();
     router.push('/courses');
   };

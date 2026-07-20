@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import { getMyProfile } from '@/features/users/services';
-import { logout } from '@/features/auth/services';
+import { logoutAction } from '@/features/auth/logout.actions';
 import { clearSession } from '@/features/auth/session';
 import { useAuth } from '@/features/auth/AuthProvider';
 import NotificationDropdown from '@/features/notifications/components/NotificationDropdown';
@@ -85,7 +85,7 @@ export default function UserHeader() {
 
   const handleLogout = async () => {
     setIsDropdownOpen(false);
-    await logout();
+    await logoutAction();
     await clearSession();
     router.push('/courses');
     router.refresh();
