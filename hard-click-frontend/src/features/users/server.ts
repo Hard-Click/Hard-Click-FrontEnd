@@ -37,29 +37,44 @@ export async function getMyProfileServer(): Promise<MyProfile | null> {
   };
 }
 
-/** 내 수강 강의 목록 — 서버 조회 (GET /api/members/me/courses) */
+/**
+ * 내 수강 강의 목록 — 서버 조회 (GET /api/members/me/courses).
+ * 조회 실패는 throw로 올려 error.tsx가 받는다 — 진짜 "수강 중인 강의 없음"과 조회 실패를 구분(§0.1④).
+ */
 export async function getMyCoursesServer(): Promise<MyCourse[]> {
   if (isMock('mypage')) return mockMyEnrolledCourses;
   const res = await serverApi.get<MyCourse[]>('/api/members/me/courses');
-  return res.success && res.data ? res.data : [];
+  if (!res.success || !res.data) {
+    throw new Error('수강 중인 강의 목록을 불러오지 못했습니다.');
+  }
+  return res.data;
 }
 
-/** 완료 강의 목록 — 서버 조회 (GET /api/members/me/courses/completed) */
+/**
+ * 완료 강의 목록 — 서버 조회 (GET /api/members/me/courses/completed).
+ * 조회 실패는 throw로 올려 error.tsx가 받는다(§0.1④).
+ */
 export async function getMyCompletedCoursesServer(): Promise<CompletedCourse[]> {
   if (isMock('mypage')) return mockMyCompletedCourses;
   const res = await serverApi.get<CompletedCourse[]>(
     '/api/members/me/courses/completed',
   );
-  return res.success && res.data ? res.data : [];
+  if (!res.success || !res.data) {
+    throw new Error('완료한 강의 목록을 불러오지 못했습니다.');
+  }
+  return res.data;
 }
 
-/** 사용자 관리 — 전체 회원 목록 서버 조회 (GET /api/admin/members, 관리자)
- * ⚠️ BE 기본 size=3이라 명시적으로 최대치(size=100) 요청. 100명 초과 시 서버 페이지네이션 연동 필요. */
+/**
+ * 사용자 관리 — 전체 회원 목록 서버 조회 (GET /api/admin/members, 관리자, 실연동).
+ * ⚠️ BE 기본 size=3이라 명시적으로 최대치(size=100) 요청. 100명 초과 시 서버 페이지네이션 연동 필요.
+ * 조회 실패 시(전역 mock이 아니면) throw로 올려 error.tsx가 받는다 — 진짜 "사용자 없음"과 구분(§0.1④).
+ */
 export async function getAdminUsersServer(): Promise<AdminUser[]> {
   const res = await serverApi.get<AdminUserListApiResponse>(
     '/api/admin/members?page=0&size=100',
   );
   if (res.success && res.data) return res.data.content.map(toAdminUser);
   if (USE_MOCK) return mockAdminUserList.content.map(toAdminUser);
-  return [];
+  throw new Error('사용자 목록을 불러오지 못했습니다.');
 }
