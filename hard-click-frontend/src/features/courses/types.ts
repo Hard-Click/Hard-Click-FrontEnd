@@ -192,7 +192,7 @@ export interface CourseDetailApiResponse {
   instructorOneLineIntro: string | null; // 강사 한줄소개 (현재 BE 전부 null — 시드 대기)
   instructorIntroduction: string | null; // 강사 자기소개
   instructorCareer: string | null; // 강사 경력 (BE는 단일 string)
-  /** 권장 완강 기간(주). ⚠️ BE 상세 응답(CourseDetailResponse)엔 미포함 — 생성/수정 요청에만 존재 → 조회 시 항상 undefined(BE 추가 대기). */
+  /** 권장 완강 기간(주). ⚠️ 생성 요청(CreateCourseRequest)에만 존재 — 수정 요청·상세 응답엔 없음 → 상세 조회 시 항상 undefined(BE가 CourseDetailResponse에 추가하면 값이 흐름). */
   recommendedWeeks?: number | null;
   /** 하루 학습 상한(분). ⚠️ 위와 동일 — BE 상세 응답 미제공 → 조회 시 항상 undefined. */
   dailyMaxMinutes?: number | null;
