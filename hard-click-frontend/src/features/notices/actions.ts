@@ -45,7 +45,10 @@ export async function createGlobalNoticeAction(
   };
 
   const res = await serverApi.post<{ noticeId: number }>('/api/notices', sanitized);
-  if (res.success) revalidatePath('/admin/notices');
+  if (res.success) {
+    revalidatePath('/admin/notices');
+    revalidatePath('/admin/dashboard');
+  }
   return res;
 }
 
@@ -68,7 +71,10 @@ export async function createCourseNoticeAction(
     `/api/courses/${courseId}/notices`,
     sanitized,
   );
-  if (res.success) revalidatePath(`/admin/courses/manage/${courseId}/notices`);
+  if (res.success) {
+    revalidatePath(`/admin/courses/manage/${courseId}/notices`);
+    revalidatePath('/admin/dashboard');
+  }
   return res;
 }
 
