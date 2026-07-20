@@ -41,7 +41,7 @@ export default function QuizWrongNoteCard({
               key={i}
               className={`flex items-center gap-3 rounded-2xl px-[18px] py-4 ${box}`}
             >
-              <span className="text-sm font-semibold text-[#9CA3AF]">{i + 1}.</span>
+              {/* 보기 앞 번호 미표기 — 보기가 숫자(1.34)일 때 번호와 혼동. 정답/내답은 우측 배지로 구분. */}
               <span className={`flex-1 text-base ${text}`}>{opt}</span>
               {isAnswer && (
                 <span className="shrink-0 rounded-2xl bg-[#16A34A] px-3 py-0.5 text-xs font-semibold text-white">

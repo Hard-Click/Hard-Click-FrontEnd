@@ -68,9 +68,8 @@ export default function QuizReviewCard({
               key={i}
               className={`flex items-center gap-1.5 rounded-2xl px-3 py-2 text-sm ${cls}`}
             >
-              <span className="flex-1">
-                {i + 1}. {opt}
-              </span>
+              {/* 보기 앞 번호 미표기 — 보기가 숫자(1.34)일 때 번호와 혼동. 정답/내답은 색상+아이콘으로 구분. */}
+              <span className="flex-1">{opt}</span>
               {isAnswer && MarkCorrect}
               {isMine && MarkWrong}
             </div>

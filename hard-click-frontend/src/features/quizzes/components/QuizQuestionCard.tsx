@@ -65,9 +65,8 @@ export default function QuizQuestionCard({
               >
                 {selected && CheckIcon}
               </span>
-              <span className="text-base font-semibold text-[#1F2937]">
-                {i + 1}. {opt}
-              </span>
+              {/* 보기 앞 번호 미표기 — 수학 등 보기 자체가 숫자(1.34)면 번호와 섞여 읽힌다. 선택 표시는 좌측 체크 원. */}
+              <span className="text-base font-semibold text-[#1F2937]">{opt}</span>
             </button>
           );
         })}
