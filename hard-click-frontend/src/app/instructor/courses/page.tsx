@@ -5,7 +5,7 @@ import InstructorCourseListControls from '@/features/instructor/components/Instr
 import { getCoursesServer, getSubjectsServer } from '@/features/courses/server';
 import { getInstructorCoursesServer } from '@/features/instructor/server';
 import { getMyProfileServer } from '@/features/users/server';
-import { getPinnedNoticesServer } from '@/features/notices/server';
+import { getRecentNoticesServer } from '@/features/notices/server';
 import type { CourseSortType, CourseListItem } from '@/features/courses/types';
 
 interface PageProps {
@@ -29,7 +29,7 @@ export default async function InstructorCoursesPage({ searchParams }: PageProps)
 
   const [subjects, notices, catalog] = await Promise.all([
     getSubjectsServer(),
-    getPinnedNoticesServer(),
+    getRecentNoticesServer(),
     getCoursesServer({ sort: 'latest' }),
   ]);
   // 강사 필터 옵션 = 실제 카탈로그(라이브)의 강사 이름 — 카드에 뜨는 이름과 일치시킴.

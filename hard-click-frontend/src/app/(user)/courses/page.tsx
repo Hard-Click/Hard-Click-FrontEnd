@@ -3,7 +3,7 @@ import CourseListControls from '@/features/courses/components/CourseListControls
 import CourseNoticeBanner from '@/features/courses/components/CourseNoticeBanner';
 import CoursesHero from '@/features/courses/components/CoursesHero';
 import { getCoursesServer, getSubjectsServer } from '@/features/courses/server';
-import { getPinnedNoticesServer } from '@/features/notices/server';
+import { getRecentNoticesServer } from '@/features/notices/server';
 import type { CourseSortType } from '@/features/courses/types';
 
 interface CoursesPageProps {
@@ -33,7 +33,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
       sort,
     }),
     getSubjectsServer(),
-    getPinnedNoticesServer(),
+    getRecentNoticesServer(),
   ]);
   // 강사 드롭다운 옵션 = (현재 과목·검색에 해당하는) 전체 강사. 강사 선택과 무관하게 고정.
   // (BE에 강사 목록 API 없음 → 조회된 강의들의 강사명에서 파생)
