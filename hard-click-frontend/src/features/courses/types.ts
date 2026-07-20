@@ -104,9 +104,9 @@ export interface CourseDetail {
   curriculum: CurriculumSection[];
   reviews: Review[];
   ratingDistribution: { stars: number; count: number }[];
-  /** 권장 완강 기간(주). BE nullable — 미설정 시 null. */
+  /** 권장 완강 기간(주). ⚠️ BE 상세 응답 미제공 → 조회 시 현재 항상 null(수정 프리필도 빈칸). BE가 CourseDetailResponse에 추가하면 값이 채워진다. */
   recommendedWeeks: number | null;
-  /** 코스별 강도 상한(하루 최대 학습 분). BE nullable — 미설정 시 null(서버 기본 120분 적용). */
+  /** 하루 학습 상한(분). ⚠️ 위와 동일 — BE 상세 응답 미제공 → 조회 시 항상 null. */
   dailyMaxMinutes: number | null;
 }
 
@@ -192,9 +192,9 @@ export interface CourseDetailApiResponse {
   instructorOneLineIntro: string | null; // 강사 한줄소개 (현재 BE 전부 null — 시드 대기)
   instructorIntroduction: string | null; // 강사 자기소개
   instructorCareer: string | null; // 강사 경력 (BE는 단일 string)
-  /** 권장 완강 기간(주). @Min(1), nullable. */
-  recommendedWeeks: number | null;
-  /** 코스별 강도 상한(하루 최대 학습 분). @Min(1), nullable(미전송 시 서버 기본 120). */
-  dailyMaxMinutes: number | null;
+  /** 권장 완강 기간(주). ⚠️ BE 상세 응답(CourseDetailResponse)엔 미포함 — 생성/수정 요청에만 존재 → 조회 시 항상 undefined(BE 추가 대기). */
+  recommendedWeeks?: number | null;
+  /** 하루 학습 상한(분). ⚠️ 위와 동일 — BE 상세 응답 미제공 → 조회 시 항상 undefined. */
+  dailyMaxMinutes?: number | null;
 }
 
