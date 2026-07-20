@@ -166,7 +166,12 @@ export function RegisterStep2({
                 type="file"
                 accept="image/jpeg,image/png"
                 hidden
-                onChange={(e) => handleImageUpload(e.target.files?.[0])}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  // 값을 비워야 같은 파일을 다시 골라도 change가 뜬다 — 업로드 실패·형식/용량 반려 후 재시도 가능.
+                  e.target.value = '';
+                  void handleImageUpload(file);
+                }}
               />
             </label>
 

@@ -349,7 +349,8 @@ export function useRegisterForm() {
         failUpload();
       }
     } catch {
-      // 예외(네트워크 등)로 빠져나가도 아래 finally가 업로드중 상태를 풀어 폼이 영구히 잠기지 않게 한다.
+      // lib/api는 4xx/5xx·네트워크 실패를 throw 없이 {success:false}로 돌려주므로 보통은 위 else로 간다.
+      // 여기는 그 밖의 예기치 못한 throw 대비 안전망 — 빠져나가도 finally가 업로드중 상태를 푼다.
       if (uploadReqRef.current === reqId) failUpload();
     } finally {
       // 최신 요청만 로딩을 해제 — 늦게 온 stale 응답이 새 업로드의 로딩을 끄지 않도록.
