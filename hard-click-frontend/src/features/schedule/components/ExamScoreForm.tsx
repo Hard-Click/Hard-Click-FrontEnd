@@ -59,17 +59,19 @@ function ScoreInput({
   value,
   onChange,
   error,
+  max,
 }: {
   value: string;
   onChange: (v: string) => void;
   error?: boolean;
+  max: number;
 }) {
   return (
     <input
       type="number"
       inputMode="numeric"
       min={0}
-      max={100}
+      max={max}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder="원점수"
@@ -86,19 +88,21 @@ function ScoreRow({
   score,
   onScoreChange,
   error,
+  max,
 }: {
   label: string;
   subject: React.ReactNode;
   score: string;
   onScoreChange: (v: string) => void;
   error?: boolean;
+  max: number;
 }) {
   return (
     <div className="grid grid-cols-[100px_1fr_140px] items-center gap-4">
       <span className="text-sm font-semibold text-[#1E293B]">{label}</span>
       <div>{subject}</div>
       <div className="flex items-center gap-2">
-        <ScoreInput value={score} onChange={onScoreChange} error={error} />
+        <ScoreInput value={score} onChange={onScoreChange} error={error} max={max} />
         <span className="text-sm text-[#64748B]">점</span>
       </div>
     </div>
@@ -137,6 +141,23 @@ export function ExamScoreForm({
   const explore1Options = EXPLORE_SUBJECTS.filter((s) => s.value !== explore2);
   const explore2Options = EXPLORE_SUBJECTS.filter((s) => s.value !== explore1);
 
+  // 수능 실제 만점: 국어·수학·영어=100점, 한국사·탐구(제2외국어 포함)=50점.
+  const koreanEmpty = !koreanScore.trim();
+  const mathEmpty = !mathScore.trim();
+  const englishEmpty = !englishScore.trim();
+  const koreanHistoryEmpty = !koreanHistoryScore.trim();
+  const explore1Empty = !explore1Score.trim();
+  const explore2Empty = !explore2Score.trim();
+  const secondLanguageEmpty = !secondLanguageScore.trim();
+
+  const koreanOverMax = !koreanEmpty && Number(koreanScore) > 100;
+  const mathOverMax = !mathEmpty && Number(mathScore) > 100;
+  const englishOverMax = !englishEmpty && Number(englishScore) > 100;
+  const koreanHistoryOverMax = !koreanHistoryEmpty && Number(koreanHistoryScore) > 50;
+  const explore1OverMax = !explore1Empty && Number(explore1Score) > 50;
+  const explore2OverMax = !explore2Empty && Number(explore2Score) > 50;
+  const secondLanguageOverMax = !secondLanguageEmpty && Number(secondLanguageScore) > 50;
+
   const requiredScores = [
     koreanScore,
     mathScore,
@@ -147,12 +168,36 @@ export function ExamScoreForm({
     ...(initialSubjects.hasSecondLanguage ? [secondLanguageScore] : []),
   ];
   const hasEmptyScore = requiredScores.some((s) => !s.trim());
-  const showError = submitted && hasEmptyScore;
+  const hasOverMaxScore =
+    koreanOverMax ||
+    mathOverMax ||
+    englishOverMax ||
+    koreanHistoryOverMax ||
+    explore1OverMax ||
+    explore2OverMax ||
+    (initialSubjects.hasSecondLanguage && secondLanguageOverMax);
+  const showError = submitted && (hasEmptyScore || hasOverMaxScore);
+  // 만점 초과는 구체적으로, 빈칸은 공통 문구로 안내(과목별 정확한 만점을 알려줘야 함).
+  const errorMessage = koreanOverMax
+    ? '국어는 100점 만점이에요.'
+    : mathOverMax
+      ? '수학은 100점 만점이에요.'
+      : englishOverMax
+        ? '영어는 100점 만점이에요.'
+        : koreanHistoryOverMax
+          ? '한국사는 50점 만점이에요.'
+          : explore1OverMax
+            ? '탐구1은 50점 만점이에요.'
+            : explore2OverMax
+              ? '탐구2는 50점 만점이에요.'
+              : initialSubjects.hasSecondLanguage && secondLanguageOverMax
+                ? '제2외국어/한문은 50점 만점이에요.'
+                : '모든 점수를 입력해주세요.';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
-    if (requiredScores.some((s) => !s.trim()) || isSaving) return;
+    if (hasEmptyScore || hasOverMaxScore || isSaving) return;
     setIsSaving(true);
     try {
       const input: ExamScoreInput = {
@@ -197,42 +242,48 @@ export function ExamScoreForm({
           subject={<SubjectSelect value={korean} onChange={setKorean} options={KOREAN_ELECTIVES} />}
           score={koreanScore}
           onScoreChange={setKoreanScore}
-          error={showError && !koreanScore.trim()}
+          error={showError && (koreanEmpty || koreanOverMax)}
+          max={100}
         />
         <ScoreRow
           label="수학"
           subject={<SubjectSelect value={math} onChange={setMath} options={MATH_ELECTIVES} />}
           score={mathScore}
           onScoreChange={setMathScore}
-          error={showError && !mathScore.trim()}
+          error={showError && (mathEmpty || mathOverMax)}
+          max={100}
         />
         <ScoreRow
           label="영어"
           subject={<span className="text-sm text-[#94A3B8]">-</span>}
           score={englishScore}
           onScoreChange={setEnglishScore}
-          error={showError && !englishScore.trim()}
+          error={showError && (englishEmpty || englishOverMax)}
+          max={100}
         />
         <ScoreRow
           label="한국사"
           subject={<span className="text-sm text-[#94A3B8]">-</span>}
           score={koreanHistoryScore}
           onScoreChange={setKoreanHistoryScore}
-          error={showError && !koreanHistoryScore.trim()}
+          error={showError && (koreanHistoryEmpty || koreanHistoryOverMax)}
+          max={50}
         />
         <ScoreRow
           label="탐구1"
           subject={<SubjectSelect value={explore1} onChange={setExplore1} options={explore1Options} />}
           score={explore1Score}
           onScoreChange={setExplore1Score}
-          error={showError && !explore1Score.trim()}
+          error={showError && (explore1Empty || explore1OverMax)}
+          max={50}
         />
         <ScoreRow
           label="탐구2"
           subject={<SubjectSelect value={explore2} onChange={setExplore2} options={explore2Options} />}
           score={explore2Score}
           onScoreChange={setExplore2Score}
-          error={showError && !explore2Score.trim()}
+          error={showError && (explore2Empty || explore2OverMax)}
+          max={50}
         />
         {initialSubjects.hasSecondLanguage && (
           <ScoreRow
@@ -240,16 +291,17 @@ export function ExamScoreForm({
             subject={
               <SubjectSelect value={secondLanguage} onChange={setSecondLanguage} options={FOREIGN_LANGUAGE_SUBJECTS} />
             }
-            error={showError && !secondLanguageScore.trim()}
+            error={showError && (secondLanguageEmpty || secondLanguageOverMax)}
             score={secondLanguageScore}
             onScoreChange={setSecondLanguageScore}
+            max={50}
           />
         )}
       </div>
 
       <div className="mt-8 border-t border-[#E2E8F0] pt-6">
         <p className={`mb-4 h-5 text-sm font-medium text-[#DC2626] ${showError ? '' : 'invisible'}`}>
-          모든 점수를 입력해주세요.
+          {errorMessage}
         </p>
         <button
           type="submit"
