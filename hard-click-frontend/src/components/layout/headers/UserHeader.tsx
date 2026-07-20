@@ -9,6 +9,7 @@ import { getMyProfile } from '@/features/users/services';
 import { logoutAction } from '@/features/auth/logout.actions';
 import { clearSession } from '@/features/auth/session';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { useMemberStatus } from '@/features/community/MemberStatusProvider';
 import NotificationDropdown from '@/features/notifications/components/NotificationDropdown';
 
 // match: href 외에 이 prefix들에서도 active 처리 (예: 공지는 강의 영역에서 진입)
@@ -40,6 +41,7 @@ export default function UserHeader() {
   const router = useRouter();
   // 인증 상태는 서버 쿠키 기반 Context에서 (localStorage 대체)
   const { isLoggedIn, isSubscribed } = useAuth();
+  const { isSuspended, suspendedMessage } = useMemberStatus();
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -119,6 +121,12 @@ export default function UserHeader() {
               if (!isLoggedIn && !PUBLIC_NAV_HREFS.has(item.href)) {
                 e.preventDefault();
                 toast.error('로그인이 필요합니다');
+                return;
+              }
+              // 이용제한 계정 → 커뮤니티 진입 자체를 막고 토스트만
+              if (item.href === '/community' && isSuspended) {
+                e.preventDefault();
+                toast.error(suspendedMessage ?? '커뮤니티 이용이 제한된 계정입니다.');
               }
             };
             return (
@@ -274,6 +282,9 @@ export default function UserHeader() {
                     if (!isLoggedIn && !PUBLIC_NAV_HREFS.has(item.href)) {
                       e.preventDefault();
                       toast.error('로그인이 필요합니다');
+                    } else if (item.href === '/community' && isSuspended) {
+                      e.preventDefault();
+                      toast.error(suspendedMessage ?? '커뮤니티 이용이 제한된 계정입니다.');
                     }
                     setMobileMenuOpen(false);
                   }}
