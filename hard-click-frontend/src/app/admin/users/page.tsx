@@ -3,7 +3,7 @@ import { getAdminUsersServer } from '@/features/users/server';
 import AdminUserManage from '@/features/admin/components/AdminUserManage';
 
 export default async function AdminUsersPage() {
-  // 서버에서 사용자 목록 확보 (현재 mock — 추후 GET /api/admin/members 연동)
+  // 서버에서 사용자 목록 확보 (GET /api/admin/members, 실연동)
   const users = await getAdminUsersServer();
 
   return (
