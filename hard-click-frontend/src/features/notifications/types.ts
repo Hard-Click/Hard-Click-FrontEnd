@@ -123,6 +123,16 @@ function toHref(type: NotificationType, referenceId: number): string {
 }
 
 /**
+ * BE가 준 redirectUrl 중 실제로 존재하지 않는 라우트로 확인된 값 → 실제 위치로 교정.
+ * `/mypage/schedule`: 이탈관리 "독려 알림"의 redirectUrl(라이브 검증 2026-07-20)인데 그런 라우트가
+ * 없음(잔디는 별도 페이지가 아니라 `/mypage` 메인 안에 섹션으로 렌더링됨) → 클릭 시 404.
+ * BE가 값을 고치기 전까지 FE에서 실제 목적지로 보정.
+ */
+const REDIRECT_URL_FIX: Record<string, string> = {
+  '/mypage/schedule': '/mypage',
+};
+
+/**
  * BE가 준 redirectUrl을 **동일 출처 절대경로**만 허용한다(외부/스킴/프로토콜상대 URL 차단).
  * 알림 클릭은 `<Link href>`로 이동하므로, 검증 안 된 BE 문자열이 오픈 리다이렉트가 되지 않게
  * 막고, 부적합하면 type 기반 안전 경로로 폴백한다(방어적 — push payload 미검증, BE M3 6/26 전).
@@ -134,7 +144,7 @@ function sanitizeHref(redirectUrl: string | undefined, fallback: string): string
     !redirectUrl.startsWith('//') && // 프로토콜 상대 URL(//host) 차단
     !redirectUrl.startsWith('/\\') // 백슬래시 트릭(/\host) 차단
   ) {
-    return redirectUrl;
+    return REDIRECT_URL_FIX[redirectUrl] ?? redirectUrl;
   }
   return fallback;
 }
