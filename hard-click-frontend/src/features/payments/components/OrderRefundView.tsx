@@ -303,8 +303,14 @@ export default function OrderRefundView({ order }: { order: OrderDetail }) {
                   className="flex items-center justify-between py-1 text-sm text-[#475569]"
                 >
                   <span className="min-w-0 truncate">{it.title}</span>
+                  {/* BE가 비례 환불액을 안 줘 결제 원금으로 합성한 값이면 확정 금액처럼 보이면 안 된다(§0.1②) */}
                   <span className="flex-shrink-0 font-medium text-[#2F5DAA]">
                     {it.refundAmount.toLocaleString()}원
+                    {it.refundAmountEstimated && (
+                      <span className="ml-1 text-xs font-normal text-[#94A3B8]">
+                        (예상)
+                      </span>
+                    )}
                   </span>
                 </div>
               ))}

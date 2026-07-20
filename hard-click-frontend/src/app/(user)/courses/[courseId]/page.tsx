@@ -24,9 +24,10 @@ export default async function CourseDetailPage({
     //   /subscriptions/me+/plan 2콜이 발생한다. 다만 course 결과를 알기 전이라 여기선 무조건 호출하며,
     //   병렬이라 추가 wall-clock은 max(0, T_sub−T_course). 가드를 넣으면 정작 유료·미수강(결제 직전)에서
     //   구독 조회가 직렬화돼 오히려 느려지므로 미적용 — 단건 구독 캐시/플래그 API가 생기면 그때 정리.
+    // statusKnown까지 같이 넘긴다 — 조회 실패를 '미구독'으로 확정하면 구독자가 재결제로 유도된다(§0.1④).
     getSubscriptionServer()
-      .then((s) => s.subscribed)
-      .catch(() => false),
+      .then((s) => ({ subscribed: s.subscribed, known: s.statusKnown }))
+      .catch(() => ({ subscribed: false, known: false })),
   ]);
 
   // 강의 상세 응답엔 notices가 없어 별도 조회분을 합쳐 전달 (없음/삭제/비공개 화면은 Content가 처리)
@@ -35,6 +36,10 @@ export default async function CourseDetailPage({
     : course;
 
   return (
-    <CourseDetailContent initialCourse={initialCourse} subscribed={subscribed} />
+    <CourseDetailContent
+      initialCourse={initialCourse}
+      subscribed={subscribed.subscribed}
+      subscriptionKnown={subscribed.known}
+    />
   );
 }

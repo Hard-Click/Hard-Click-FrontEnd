@@ -136,10 +136,13 @@ function SideNav({
 export default function CourseDetailContent({
   initialCourse,
   subscribed = false,
+  subscriptionKnown = true,
 }: {
   initialCourse: CourseDetail | null;
   /** 구독 중이면 유료 강의도 결제 없이 학습 가능(BE VideoAccessService: enrolled||subscribed) */
   subscribed?: boolean;
+  /** 구독 조회가 실제로 성공했는지. false=상태 불명 → 유료 강의를 결제로 보내지 않는다(재결제 방지). */
+  subscriptionKnown?: boolean;
 }) {
   const params = useParams();
   const router = useRouter();
@@ -245,6 +248,12 @@ export default function CourseDetailContent({
   // 구독 중: 유료여도 결제 없이 즉시 수강 등록(enrollment 생성) → 내 강의에 노출 + 학습 접근
   const handleEnrollClick = async () => {
     if (!requireLogin()) return;
+    // 구독 조회가 실패해 상태를 모르는데 유료 강의를 결제로 보내면, 이미 구독 중인 사람이 재결제하게 된다.
+    // 확정 전까지는 결제 흐름을 막고 재시도를 안내한다(§0.1④ — 불명을 '미구독'으로 단정하지 않음).
+    if (!course?.isFree && !subscribed && !subscriptionKnown) {
+      toast.error('구독 상태를 확인하지 못했어요. 잠시 후 다시 시도해주세요.');
+      return;
+    }
     if (course?.isFree || subscribed) {
       // 무료 강의 또는 구독 중 → 결제 없이 즉시 수강 등록(enrollment 레코드 생성)
       const result = await enrollCourse(courseId, 'FREE');

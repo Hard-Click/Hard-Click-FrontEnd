@@ -5,7 +5,8 @@ import Image from 'next/image';
 
 interface FocusModeOverlayProps {
   seconds: number;
-  todaySeconds: number;
+  /** null = 오늘 누적 조회 실패(0과 구분) */
+  todaySeconds: number | null;
   isPaused: boolean;
   onPause: () => void;
   onResume: () => void;
@@ -54,8 +55,13 @@ export default function FocusModeOverlay({
         {/* 오늘 총 학습 시간 */}
         <div className="flex flex-col items-center gap-1">
           <p className="text-xs text-gray-500">오늘 총 학습 시간</p>
+          {/* null=오늘 누적 조회 실패 — 0으로 보여주면 '오늘 공부 안 함'과 구분이 안 된다(§0.1④) */}
           <span className="font-mono text-2xl font-semibold text-white">
-            {formatTime(todaySeconds)}
+            {todaySeconds === null ? (
+              <span className="text-base text-gray-400">집계 불러오기 실패</span>
+            ) : (
+              formatTime(todaySeconds)
+            )}
           </span>
         </div>
 
