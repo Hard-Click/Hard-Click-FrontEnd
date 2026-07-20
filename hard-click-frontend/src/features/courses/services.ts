@@ -62,8 +62,9 @@ export function toCourseDetail(data: CourseDetailApiResponse): CourseDetail {
     totalLessons: allLessons.length,
     totalDuration: formatTotalDuration(totalSeconds),
     notices: [], // 별도 API: 강의 공지 목록
-    recommendedWeeks: data.recommendedWeeks,
-    dailyMaxMinutes: data.dailyMaxMinutes,
+    // ⚠️ 생성 요청에만 있는 필드 — 상세 응답·수정 요청 미제공 → 조회 시 항상 null. BE가 CourseDetailResponse에 추가하면 값이 흐른다.
+    recommendedWeeks: data.recommendedWeeks ?? null,
+    dailyMaxMinutes: data.dailyMaxMinutes ?? null,
     instructor: {
       instructorId: 0, // 상세 응답에 instructorId 없음(강사명만 제공)
       name: data.instructorName,
