@@ -125,11 +125,11 @@ function toHref(type: NotificationType, referenceId: number): string {
 /**
  * BE가 준 redirectUrl 중 실제로 존재하지 않는 라우트로 확인된 값 → 실제 위치로 교정.
  * `/mypage/schedule`: 이탈관리 "독려 알림"의 redirectUrl(라이브 검증 2026-07-20)인데 그런 라우트가
- * 없음(잔디는 별도 페이지가 아니라 `/mypage` 메인 안에 섹션으로 렌더링됨) → 클릭 시 404.
+ * 없음(스케줄/캘린더는 `/mypage` 하위가 아니라 최상위 `/schedule`) → 클릭 시 404.
  * BE가 값을 고치기 전까지 FE에서 실제 목적지로 보정.
  */
 const REDIRECT_URL_FIX: Record<string, string> = {
-  '/mypage/schedule': '/mypage',
+  '/mypage/schedule': '/schedule',
 };
 
 /**
