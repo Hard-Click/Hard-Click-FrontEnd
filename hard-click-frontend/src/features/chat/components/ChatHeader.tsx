@@ -107,7 +107,7 @@ export default function ChatHeader({
                     setMenuOpen(false);
                     onDissolveClick();
                   }}
-                  className="block w-full whitespace-nowrap rounded-lg px-4 py-2.5 text-center text-sm font-semibold text-[#B91C1C] transition hover:bg-[#FEF2F2] focus-visible:bg-[#FEF2F2] focus-visible:outline-none"
+                  className="block w-full whitespace-nowrap rounded-lg px-4 py-2.5 text-center text-sm font-semibold text-[#B91C1C] transition hover:bg-[#FEF2F2] focus-visible:bg-[#FEF2F2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B91C1C]"
                 >
                   채팅방 삭제
                 </button>
@@ -119,7 +119,7 @@ export default function ChatHeader({
                     setMenuOpen(false);
                     onLeaveClick();
                   }}
-                  className="block w-full whitespace-nowrap rounded-lg px-4 py-2.5 text-center text-sm font-medium text-[#334155] transition hover:bg-[#F1F5F9] focus-visible:bg-[#F1F5F9] focus-visible:outline-none"
+                  className="block w-full whitespace-nowrap rounded-lg px-4 py-2.5 text-center text-sm font-medium text-[#334155] transition hover:bg-[#F1F5F9] focus-visible:bg-[#F1F5F9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#334155]"
                 >
                   나가기
                 </button>
