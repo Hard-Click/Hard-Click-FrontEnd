@@ -91,9 +91,14 @@ export async function submitQuizAction(
       ) {
         return { success: false, message: '제출 데이터가 올바르지 않습니다.' };
       }
-      const t = timeSpentByQuestion[questionId];
+      // 맵 자체도 신뢰하지 않는다 — null/비객체가 오면 인덱싱에서 TypeError가 나 제출 전체가 실패하므로,
+      // '값이 없으면 0' 계약을 지키도록 맵 유무를 먼저 가른다(Server Action 경계, §5).
+      const t =
+        timeSpentByQuestion && typeof timeSpentByQuestion === 'object'
+          ? timeSpentByQuestion[questionId]
+          : undefined;
       const timeSpentSeconds =
-        Number.isFinite(t) && t >= 0 ? Math.round(t) : 0;
+        typeof t === 'number' && Number.isFinite(t) && t >= 0 ? Math.round(t) : 0;
       answerList.push({ questionId, selectedOptionId: opts[idx], timeSpentSeconds });
     }
 
