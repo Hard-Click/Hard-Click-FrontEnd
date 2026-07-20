@@ -15,20 +15,27 @@ function toNotice(item: NoticeApiItem): Notice {
     title: item.title,
     content: '',
     isPinned: item.isPinned,
+    isRead: item.isRead,
     createdAt: item.createdAt.split('T')[0] ?? item.createdAt,
   };
 }
 
-/** 상단 고정 전역 공지 — 서버에서 조회 (Server Component 전용) */
-export async function getPinnedNoticesServer(): Promise<Notice[]> {
+/** 상단 배너용 최신 전역 공지 — 서버에서 조회 (Server Component 전용). 중요 여부와 무관하게 최신순 상위 N개. */
+export async function getRecentNoticesServer(limit = 5): Promise<Notice[]> {
+  const sortByLatest = (content: NoticeApiItem[]) =>
+    [...content]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit)
+      .map(toNotice);
+
   if (USE_MOCK) {
-    return mockNoticesResponse.content.filter((n) => n.isPinned).map(toNotice);
+    return sortByLatest(mockNoticesResponse.content);
   }
   const res = await serverApi.get<NoticeApiResponse>(
     '/api/notices?type=GLOBAL&page=0&size=20',
   );
   if (!res.success || !res.data) return [];
-  return res.data.content.filter((n) => n.isPinned).map(toNotice);
+  return sortByLatest(res.data.content);
 }
 
 /** 전체 공지 목록(GLOBAL) — 서버에서 검색/페이징 조회 (Server Component 전용) */

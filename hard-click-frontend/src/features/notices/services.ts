@@ -15,6 +15,7 @@ function toNotice(item: NoticeApiItem): Notice {
     title: item.title,
     content: '', // 백엔드 미제공 — 상세 조회 시 받음
     isPinned: item.isPinned,
+    isRead: item.isRead,
     createdAt: item.createdAt.split('T')[0] ?? item.createdAt,
   };
 }

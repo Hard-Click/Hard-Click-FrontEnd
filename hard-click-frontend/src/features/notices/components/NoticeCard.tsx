@@ -19,7 +19,7 @@ export default function NoticeCard({
     >
       <div className="flex flex-row items-start gap-4">
         <div className="w-[10px] flex-shrink-0 pt-[7px]">
-          {notice.isPinned && (
+          {!notice.isRead && (
             <div className="w-[10px] h-[10px] rounded-full bg-[#EF4444]" />
           )}
         </div>

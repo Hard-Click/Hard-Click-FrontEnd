@@ -4,7 +4,7 @@ import CourseNoticeBanner from '@/features/courses/components/CourseNoticeBanner
 import CoursesHero from '@/features/courses/components/CoursesHero';
 import { getCoursesServer, getSubjectsServer } from '@/features/courses/server';
 import { getInstructors } from '@/features/courses/services';
-import { getPinnedNoticesServer } from '@/features/notices/server';
+import { getRecentNoticesServer } from '@/features/notices/server';
 import type { CourseSortType } from '@/features/courses/types';
 
 interface AdminCoursesPageProps {
@@ -33,7 +33,7 @@ export default async function AdminCoursesPage({
       sort,
     }),
     getSubjectsServer(),
-    getPinnedNoticesServer(),
+    getRecentNoticesServer(),
   ]);
   const instructors = getInstructors();
 

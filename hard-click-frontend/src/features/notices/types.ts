@@ -3,6 +3,7 @@ export interface Notice {
   title: string;
   content: string;
   isPinned: boolean;
+  isRead: boolean;
   createdAt: string;
 }
 
