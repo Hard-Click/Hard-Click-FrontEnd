@@ -8,6 +8,7 @@ import { toast } from '@/lib/toast';
 import { logoutAction } from '@/features/auth/logout.actions';
 import { clearSession } from '@/features/auth/session';
 import NotificationDropdown from '@/features/notifications/components/NotificationDropdown';
+import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 
 const NAV_ITEMS = [
   { label: '강의', href: '/admin/courses' },
@@ -24,6 +25,7 @@ export default function AdminHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,6 +40,7 @@ export default function AdminHeader() {
 
   const handleLogout = async () => {
     setIsDropdownOpen(false);
+    setIsLogoutConfirmOpen(false);
     try {
       const result = await logoutAction();
       if (!result.success) {
@@ -52,6 +55,7 @@ export default function AdminHeader() {
   };
 
   return (
+    <>
     <header className="sticky top-0 z-50 h-16 w-full flex-shrink-0 bg-[#2F5DAA] shadow-[0_2px_8px_rgba(0,0,0,0.15),0_1px_2px_rgba(0,0,0,0.08)]">
       <div className="mx-auto flex h-full w-full max-w-[1440px] items-center px-8">
         {/* 로고 */}
@@ -101,7 +105,10 @@ export default function AdminHeader() {
               <div className="absolute right-0 top-12 z-50 w-[160px] overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-lg">
                 <button
                   type="button"
-                  onClick={handleLogout}
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    setIsLogoutConfirmOpen(true);
+                  }}
                   className="block w-full px-5 py-4 text-center text-sm text-[#DC2626] transition-colors hover:bg-[#FEF2F2]"
                 >
                   로그아웃
@@ -112,5 +119,17 @@ export default function AdminHeader() {
         </div>
       </div>
     </header>
+
+    {isLogoutConfirmOpen && (
+      <DoubleBtnModal
+        title="로그아웃"
+        description="정말 로그아웃 하시겠습니까?"
+        leftText="취소"
+        rightText="로그아웃"
+        onLeftClick={() => setIsLogoutConfirmOpen(false)}
+        onRightClick={handleLogout}
+      />
+    )}
+    </>
   );
 }

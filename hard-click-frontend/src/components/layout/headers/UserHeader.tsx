@@ -11,6 +11,7 @@ import { clearSession } from '@/features/auth/session';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useMemberStatus } from '@/features/community/MemberStatusProvider';
 import NotificationDropdown from '@/features/notifications/components/NotificationDropdown';
+import DoubleBtnModal from '@/components/ui/doubleButtonModal';
 
 // match: href 외에 이 prefix들에서도 active 처리 (예: 공지는 강의 영역에서 진입)
 const NAV_ITEMS: { label: string; href: string; match?: string[] }[] = [
@@ -34,6 +35,7 @@ const DROPDOWN_ITEMS = [
 export default function UserHeader() {
   const pathname = usePathname();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [profileImageUrl, setProfileImageUrl] = useState('');
@@ -87,6 +89,7 @@ export default function UserHeader() {
 
   const handleLogout = async () => {
     setIsDropdownOpen(false);
+    setIsLogoutConfirmOpen(false);
     try {
       const result = await logoutAction();
       if (!result.success) {
@@ -102,6 +105,7 @@ export default function UserHeader() {
   };
 
   return (
+    <>
     <header className="sticky top-0 z-50 w-full h-16 bg-[#2F5DAA] shadow-[0_2px_8px_rgba(0,0,0,0.15),0_1px_2px_rgba(0,0,0,0.08)] flex-shrink-0">
       <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 h-full flex justify-between md:grid md:grid-cols-[1fr_auto_1fr] items-center">
         {/* 로고 */}
@@ -212,7 +216,10 @@ export default function UserHeader() {
                     <div className="h-px bg-[#E2E8F0]" />
                     <button
                       type="button"
-                      onClick={handleLogout}
+                      onClick={() => {
+                        setIsDropdownOpen(false);
+                        setIsLogoutConfirmOpen(true);
+                      }}
                       className="block w-full px-5 py-4 text-sm text-center text-[#DC2626] hover:bg-[#FEF2F2] transition-colors"
                     >
                       로그아웃
@@ -300,5 +307,17 @@ export default function UserHeader() {
         </div>
       )}
     </header>
+
+    {isLogoutConfirmOpen && (
+      <DoubleBtnModal
+        title="로그아웃"
+        description="정말 로그아웃 하시겠습니까?"
+        leftText="취소"
+        rightText="로그아웃"
+        onLeftClick={() => setIsLogoutConfirmOpen(false)}
+        onRightClick={handleLogout}
+      />
+    )}
+    </>
   );
 }
