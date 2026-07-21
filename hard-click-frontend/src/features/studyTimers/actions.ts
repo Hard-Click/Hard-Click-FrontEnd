@@ -86,11 +86,19 @@ const timerToastStyle = {
   duration: 2000,
 };
 
+export interface EndTimerResult {
+  success: boolean;
+  /** 서버가 확정한 이 세션의 최종 누적초. idempotent 종료(이미 끝난 세션) 등 확정값이 없으면 null —
+   *  호출부는 이 경우 클라 tick으로 폴백해도 되지만, 있으면 반드시 이 값을 우선한다(§0.1 — 클라 tick은
+   *  백그라운드 탭 등으로 서버 확정값과 어긋날 수 있다). */
+  accumulatedStudySeconds: number | null;
+}
+
 // 순공시간 세션 종료 — BE는 endedAt(타임스탬프)로 최종 누적시간을 확정한다.
-export async function endTimerAction(sessionId: number): Promise<boolean> {
+export async function endTimerAction(sessionId: number): Promise<EndTimerResult> {
   if (isMock('studyTimers')) {
     toast.success('순공시간이 저장되었습니다', timerToastStyle);
-    return true;
+    return { success: true, accumulatedStudySeconds: null };
   }
   let res = await endStudySession(sessionId, {
     endedAt: new Date().toISOString(),
@@ -116,7 +124,7 @@ export async function endTimerAction(sessionId: number): Promise<boolean> {
             resumeRes.message || '세션 재개에 실패했어요. 다시 시도해 주세요.',
             timerToastStyle,
           );
-          return false;
+          return { success: false, accumulatedStudySeconds: null };
         }
       }
       res = await endStudySession(sessionId, {
@@ -124,17 +132,18 @@ export async function endTimerAction(sessionId: number): Promise<boolean> {
       });
     } else if (cur.success) {
       // 조회 성공인데 그 세션이 활성 목록에 없음(null·다른 세션) = 확정 종료(이중 종료·이탈 자동종료) → idempotent 성공.
+      // 이 경로는 방금 그 종료의 확정 누적초를 알 수 없음 — 호출부가 클라 tick으로 폴백.
       toast.success('순공시간이 저장되었습니다', timerToastStyle);
-      return true;
+      return { success: true, accumulatedStudySeconds: null };
     }
     // cur.success===false(조회 실패) → 종료 여부 확정 불가 → 가짜 성공 금지, 아래로 떨어져 실패 처리.
   }
   if (!res.success) {
     toast.error(res.message || '순공시간 저장에 실패했습니다.', timerToastStyle);
-    return false;
+    return { success: false, accumulatedStudySeconds: null };
   }
   toast.success('순공시간이 저장되었습니다', timerToastStyle);
-  return true;
+  return { success: true, accumulatedStudySeconds: res.data.accumulatedStudySeconds };
 }
 
 // 현재 실행 중인 세션 조회
