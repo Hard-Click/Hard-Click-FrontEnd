@@ -75,4 +75,6 @@ export interface SidebarVideoItem {
   completed: boolean;
   lastPositionSeconds: number;
   isPreview: boolean;
+  /** CourseProgress.lessons에 존재하는 레슨인지 — false면 BE 정책상 진도율 집계 대상이 아님(예: OT). */
+  tracked: boolean;
 }

@@ -102,8 +102,10 @@ export default function LearningCurriculumContent({
 
   const sections = useMemo(() => groupBySection(lessons), [lessons]);
 
-  const totalCount = lessons.length;
-  const completedCount = lessons.filter((l) => l.completed).length;
+  // 진도율 미집계 레슨(예: OT)은 분모/분자에서 제외 — BE의 progress.totalLessonCount와 정합.
+  const trackedLessons = lessons.filter((l) => l.tracked);
+  const totalCount = trackedLessons.length;
+  const completedCount = trackedLessons.filter((l) => l.completed).length;
   const overallRate = progress
     ? Math.round(progress.progressRate)
     : totalCount > 0
@@ -231,10 +233,19 @@ export default function LearningCurriculumContent({
                                           미리보기
                                         </span>
                                       )}
-                                      {lesson.completed && (
-                                        <span className="flex-shrink-0 px-2 py-0.5 bg-[rgba(22,163,74,0.1)] text-[#16A34A] text-xs font-semibold rounded">
-                                          완료
+                                      {!lesson.tracked ? (
+                                        <span
+                                          title="이 강의는 진도율에 포함되지 않습니다"
+                                          className="flex-shrink-0 px-2 py-0.5 bg-[rgba(148,163,184,0.15)] text-[#64748B] text-xs font-semibold rounded"
+                                        >
+                                          진도 미반영
                                         </span>
+                                      ) : (
+                                        lesson.completed && (
+                                          <span className="flex-shrink-0 px-2 py-0.5 bg-[rgba(22,163,74,0.1)] text-[#16A34A] text-xs font-semibold rounded">
+                                            완료
+                                          </span>
+                                        )
                                       )}
                                       {inProgress && (
                                         <span className="flex-shrink-0 px-2 py-0.5 bg-[rgba(245,158,11,0.1)] text-[#F59E0B] text-xs font-semibold rounded">
