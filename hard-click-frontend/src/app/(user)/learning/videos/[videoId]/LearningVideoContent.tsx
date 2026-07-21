@@ -18,6 +18,7 @@ import {
   fetchCurrentSessionAction,
 } from '@/features/studyTimers/actions';
 import { markSessionLeaving } from '@/features/studyTimers/leaveSignal';
+import { revalidateMypageAction } from '@/features/studyTimers/revalidate.actions';
 import { isMock } from '@/mocks/config';
 import { mergeCurriculumProgress } from '@/features/learning/utils';
 import type {
@@ -237,7 +238,9 @@ export default function LearningVideoContent({
         pendingSessionEnd = setTimeout(() => {
           // 종료 완료(성공/실패) 시 이탈 신호 해제 — TTL은 hang 대비 failsafe. 실패면 신호 풀려 다음 진입 때
           // 미아 세션이 배너로 다시 보인다(숨긴 채 방치 방지).
-          void endTimerAction(sid).finally(() => markSessionLeaving(null));
+          void endTimerAction(sid)
+            .then(() => revalidateMypageAction())
+            .finally(() => markSessionLeaving(null));
           pendingSessionEnd = null;
         }, LESSON_SWITCH_GRACE_MS);
       }
@@ -316,6 +319,7 @@ export default function LearningVideoContent({
         setTimerSeconds(0);
         timerSecondsRef.current = 0;
         toast.success('타이머가 종료되었습니다.');
+        void revalidateMypageAction();
       }
     } finally {
       confirmInFlightRef.current = false;

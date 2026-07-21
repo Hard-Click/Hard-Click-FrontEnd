@@ -14,6 +14,7 @@ import {
   probeSessionAction,
   fetchTodayStudySecondsAction,
 } from '../actions';
+import { revalidateMypageAction } from '../revalidate.actions';
 import { isMock } from '@/mocks/config';
 import { isSessionLeaving } from '../leaveSignal';
 import FocusModeOverlay from './FocusModeOverlay';
@@ -284,6 +285,8 @@ export default function StudyTimerPanel() {
         setResumeSession(null);
         setSeconds(0);
         secondsRef.current = 0;
+        // 마이페이지 "오늘 순공시간"이 캐시된 화면 그대로 보이지 않도록 갱신 신호.
+        void revalidateMypageAction();
       } else if (isRunning && !isPaused) {
         // 종료 실패 → 세션은 서버에서 아직 RUNNING → 인터벌 재가동(패널이 멈춘 죽은 상태 방지, 재시도 가능)
         startTick();
