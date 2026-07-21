@@ -455,12 +455,12 @@ export default function MyPageContent({
                       <p className="text-sm text-[#4B5563]">새로운 강의를 둘러보고 학습을 시작해보세요.</p>
                     </div>
                   ) : (inProgress.slice(0, OVERVIEW_LIMIT).map((c) => (
-                    <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-4 flex flex-col sm:flex-row gap-3 sm:gap-5 sm:items-center">
+                    <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-3 flex flex-col sm:flex-row gap-3 sm:gap-5 sm:items-center">
                       <div className="w-24 h-20 sm:w-32 sm:h-20 bg-[#F8FAFC] rounded-2xl flex items-center justify-center flex-shrink-0">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src="/icons/courseThumbnailIcon.svg" width={48} height={48} alt="" />
                       </div>
-                      <div className="flex-1 flex flex-col gap-3">
+                      <div className="flex-1 flex flex-col gap-2">
                         {/* 제목 + 커리큘럼 페이지 이동(>) */}
                         <div className="flex items-center justify-between gap-3">
                           <p className="text-lg font-semibold leading-7 text-[#1F2937]">{c.courseTitle}</p>
@@ -474,7 +474,7 @@ export default function MyPageContent({
                             </svg>
                           </Link>
                         </div>
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-1.5">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-[#4B5563]">진도율</span>
                             <span className="text-base font-bold text-[#2F5DAA]">{Math.round(c.progressRate)}%</span>
@@ -488,7 +488,7 @@ export default function MyPageContent({
                           <Link
                             href={c.lastVideoId ? `/learning/videos/${c.lastVideoId}` : '#'}
                             aria-disabled={!c.lastVideoId}
-                            className={`w-[95px] h-10 rounded-[10px] flex items-center justify-center text-white text-base font-semibold transition-colors ${
+                            className={`w-20 h-8 rounded-[10px] flex items-center justify-center text-white text-sm font-semibold transition-colors ${
                               c.lastVideoId ? 'bg-[#2F5DAA] hover:bg-[#1D3E75]' : 'bg-[#9CA3AF] pointer-events-none'
                             }`}
                           >
