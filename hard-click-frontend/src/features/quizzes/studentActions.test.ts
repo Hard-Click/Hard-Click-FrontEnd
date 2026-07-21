@@ -37,7 +37,7 @@ function submittedAnswers() {
   return mockPost.mock.calls[0][1].answers as {
     questionId: number;
     selectedOptionId: number;
-    timeSpentSeconds: number;
+    timeSpentSeconds: number | null;
   }[];
 }
 
@@ -60,25 +60,34 @@ describe('submitQuizAction — timeSpentSeconds payload 배선', () => {
     });
   });
 
-  it('시간 맵이 비어 있으면(값 없음) 모든 답안 timeSpentSeconds=0 (BE optional·§0.1: 가짜값 아님)', async () => {
+  it('시간 맵이 비어 있으면(미측정) timeSpentSeconds=null — 0을 보내면 "0초에 풀었다"와 구분 불가(BE 요청)', async () => {
     await submitQuizAction(5, 7, { 1: 0, 2: 0 }, {});
-    expect(submittedAnswers().every((a) => a.timeSpentSeconds === 0)).toBe(true);
+    expect(submittedAnswers().every((a) => a.timeSpentSeconds === null)).toBe(
+      true,
+    );
   });
 
-  it('4번째 인자 미전달(구 호출부 호환)에도 동작 — timeSpentSeconds=0', async () => {
+  it('4번째 인자 미전달(구 호출부 호환)에도 동작 — timeSpentSeconds=null', async () => {
     await submitQuizAction(5, 7, { 1: 0, 2: 0 });
-    expect(submittedAnswers().every((a) => a.timeSpentSeconds === 0)).toBe(true);
+    expect(submittedAnswers().every((a) => a.timeSpentSeconds === null)).toBe(
+      true,
+    );
   });
 
-  it('Server Action 경계 방어: 음수→0, 소수→반올림, NaN→0 (§5)', async () => {
+  it('Server Action 경계 방어: 음수→null, 소수→반올림, NaN→null (§5)', async () => {
     await submitQuizAction(5, 7, { 1: 1, 2: 3 }, { 1: -5, 2: 70.6 });
     const a = submittedAnswers();
-    expect(a.find((x) => x.questionId === 1)?.timeSpentSeconds).toBe(0); // 음수 → 0
+    expect(a.find((x) => x.questionId === 1)?.timeSpentSeconds).toBeNull(); // 음수 → null(측정 실패)
     expect(a.find((x) => x.questionId === 2)?.timeSpentSeconds).toBe(71); // 소수 → 반올림
 
     mockPost.mockClear();
     await submitQuizAction(5, 7, { 1: 0 }, { 1: Number.NaN });
-    expect(submittedAnswers()[0].timeSpentSeconds).toBe(0); // NaN → 0
+    expect(submittedAnswers()[0].timeSpentSeconds).toBeNull(); // NaN → null
+  });
+
+  it('실측값이 0으로 반올림되면(찍고 바로 넘김) null이 아니라 진짜 0을 보낸다', async () => {
+    await submitQuizAction(5, 7, { 1: 0 }, { 1: 0.2 });
+    expect(submittedAnswers()[0].timeSpentSeconds).toBe(0);
   });
 
   it('상한을 프론트에서 걸지 않는다(서버 몫) — 큰 값도 그대로 반올림 전송', async () => {
