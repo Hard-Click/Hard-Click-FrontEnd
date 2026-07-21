@@ -455,8 +455,8 @@ export default function MyPageContent({
                       <p className="text-sm text-[#4B5563]">새로운 강의를 둘러보고 학습을 시작해보세요.</p>
                     </div>
                   ) : (inProgress.slice(0, OVERVIEW_LIMIT).map((c) => (
-                    <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-5 flex flex-col sm:flex-row gap-3 sm:gap-5 sm:items-center">
-                      <div className="w-24 h-20 sm:w-40 sm:h-24 bg-[#F8FAFC] rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-4 flex flex-col sm:flex-row gap-3 sm:gap-5 sm:items-center">
+                      <div className="w-24 h-20 sm:w-32 sm:h-20 bg-[#F8FAFC] rounded-2xl flex items-center justify-center flex-shrink-0">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src="/icons/courseThumbnailIcon.svg" width={48} height={48} alt="" />
                       </div>
@@ -515,10 +515,10 @@ export default function MyPageContent({
                       <p className="text-sm text-[#4B5563]">학습을 완료하고 리뷰를 작성해보세요.</p>
                     </div>
                   ) : (completed.slice(0, OVERVIEW_LIMIT).map((c) => (
-                    <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-5 flex flex-col sm:flex-row gap-3 sm:gap-5 sm:items-center">
+                    <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-4 flex flex-col sm:flex-row gap-3 sm:gap-5 sm:items-center">
                       <Link
                         href={`/courses/${c.courseId}`}
-                        className="w-24 h-20 sm:w-40 sm:h-24 bg-[#F8FAFC] rounded-2xl flex items-center justify-center flex-shrink-0 hover:bg-[#EEF2F7] transition-colors"
+                        className="w-24 h-20 sm:w-32 sm:h-20 bg-[#F8FAFC] rounded-2xl flex items-center justify-center flex-shrink-0 hover:bg-[#EEF2F7] transition-colors"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src="/icons/trophyIcon.svg" width={48} height={48} alt="" />
