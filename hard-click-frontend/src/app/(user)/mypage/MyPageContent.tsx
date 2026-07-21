@@ -515,7 +515,7 @@ export default function MyPageContent({
                       <p className="text-sm text-[#4B5563]">학습을 완료하고 리뷰를 작성해보세요.</p>
                     </div>
                   ) : (completed.slice(0, OVERVIEW_LIMIT).map((c) => (
-                    <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-4 flex flex-col sm:flex-row gap-3 sm:gap-5 sm:items-center">
+                    <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-3 flex flex-col sm:flex-row gap-3 sm:gap-5 sm:items-center">
                       <Link
                         href={`/courses/${c.courseId}`}
                         className="w-24 h-20 sm:w-32 sm:h-20 bg-[#F8FAFC] rounded-2xl flex items-center justify-center flex-shrink-0 hover:bg-[#EEF2F7] transition-colors"
@@ -523,10 +523,13 @@ export default function MyPageContent({
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src="/icons/trophyIcon.svg" width={48} height={48} alt="" />
                       </Link>
-                      <div className="flex-1 flex flex-col gap-3">
+                      <div className="flex-1 flex flex-col gap-2">
                         <div className="flex items-start justify-between gap-3">
                           <Link href={`/courses/${c.courseId}`} className="text-lg font-semibold leading-7 text-[#1F2937] hover:text-[#2F5DAA] transition-colors">{c.courseTitle}</Link>
-                          <span className="flex-shrink-0 px-4 py-2 bg-[rgba(22,163,74,0.1)] text-[#16A34A] text-sm font-semibold rounded-2xl">
+                          <span className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1 bg-[rgba(22,163,74,0.1)] text-[#16A34A] text-xs font-semibold rounded-full">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                              <path d="M20 6 9 17l-5-5" stroke="#16A34A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
                             수강 완료
                           </span>
                         </div>
@@ -538,7 +541,7 @@ export default function MyPageContent({
                           {reviewedIds.has(c.courseId) ? (
                             <Link
                               href={`/courses/${c.courseId}#reviews`}
-                              className="w-[115px] h-10 flex items-center justify-center bg-[#2F5DAA] rounded-[10px] text-base font-semibold text-white hover:bg-[#1D3E75] transition-colors"
+                              className="w-[100px] h-8 flex items-center justify-center bg-[#2F5DAA] rounded-[10px] text-sm font-semibold text-white hover:bg-[#1D3E75] transition-colors"
                             >
                               내 리뷰 확인
                             </Link>
@@ -546,7 +549,7 @@ export default function MyPageContent({
                             <button
                               type="button"
                               onClick={() => setReviewTargetId(c.courseId)}
-                              className="w-[115px] h-10 border border-[#E2E8F0] rounded-[10px] text-base font-semibold text-[#4B5563] hover:bg-[#F8FAFC] transition-colors"
+                              className="w-[100px] h-8 border border-[#E2E8F0] rounded-[10px] text-sm font-semibold text-[#4B5563] hover:bg-[#F8FAFC] transition-colors"
                             >
                               리뷰 작성하기
                             </button>
