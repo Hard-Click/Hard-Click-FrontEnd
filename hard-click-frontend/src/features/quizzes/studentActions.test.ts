@@ -90,8 +90,17 @@ describe('submitQuizAction — timeSpentSeconds payload 배선', () => {
     expect(submittedAnswers()[0].timeSpentSeconds).toBe(0);
   });
 
-  it('상한을 프론트에서 걸지 않는다(서버 몫) — 큰 값도 그대로 반올림 전송', async () => {
+  it('상한을 프론트에서 걸지 않는다(서버 몫) — 1시간 초과도 그대로 전송', async () => {
     await submitQuizAction(5, 7, { 1: 0 }, { 1: 99999 });
     expect(submittedAnswers()[0].timeSpentSeconds).toBe(99999);
+  });
+
+  it('BE DTO(32비트 Integer) 범위를 넘는 값은 null — 역직렬화 400으로 제출 전체가 실패하는 것 방지', async () => {
+    await submitQuizAction(5, 7, { 1: 0 }, { 1: 1e10 });
+    expect(submittedAnswers()[0].timeSpentSeconds).toBeNull();
+
+    mockPost.mockClear();
+    await submitQuizAction(5, 7, { 1: 0 }, { 1: 2147483647 }); // 경계값은 통과
+    expect(submittedAnswers()[0].timeSpentSeconds).toBe(2147483647);
   });
 });
