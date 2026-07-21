@@ -159,7 +159,7 @@ export default function CommunityListControls({
                   key={option}
                   type="button"
                   onClick={() => pushWith({ sort: option })}
-                  className={`h-10 whitespace-nowrap rounded-xl px-3 text-sm font-semibold transition ${
+                  className={`h-11 whitespace-nowrap rounded-xl px-3 text-sm font-semibold transition ${
                     isActive
                       ? 'bg-[#2F5DAA] text-white'
                       : 'bg-[#F8FAFC] text-[#4B5563]'
