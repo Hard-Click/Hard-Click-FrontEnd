@@ -64,12 +64,15 @@ export function useWatchTimeSaver({
       toast.success('90% 이상 수강되었습니다.');
     }
     if (!completedFiredRef.current && rate >= 90) {
+      // completeVideo 호출 전에 먼저 래치 — await 도중 다음 heartbeat이 겹쳐 들어와도
+      // 중복 호출되지 않게 막는다. 90% 미달로 실패(409/L004)하면 롤백해 다음 heartbeat에서
+      // 재시도 가능하게 한다(성공 시에만 래치하면 그 사이 겹친 두 번째 flush가 또 호출한다).
+      completedFiredRef.current = true;
       const completeRes = await completeVideo(videoId);
-      // 성공했을 때만 래치 — 아직 실제 서버 누적이 90% 문턱에 못 미쳐 실패(409/L004)했다면
-      // 다음 heartbeat에서 다시 시도할 수 있어야 한다(래치를 미리 걸면 영원히 재시도 못 함).
       if (completeRes.success) {
-        completedFiredRef.current = true;
         onCompleted?.();
+      } else {
+        completedFiredRef.current = false;
       }
     }
   };
