@@ -320,13 +320,13 @@ export default function MyPageContent({
                   <button
                     type="button"
                     onClick={() => setIsProfileEditOpen(true)}
-                    className="flex items-center gap-2 px-4 h-10 bg-[#2F5DAA] rounded-[10px] text-sm font-semibold text-white hover:bg-[#1D3E75] transition-colors"
+                    className="flex items-center gap-1.5 px-3 h-8 bg-[#2F5DAA] rounded-[10px] text-xs font-semibold text-white hover:bg-[#1D3E75] transition-colors"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src="/icons/editIcon.svg"
-                      width={16}
-                      height={16}
+                      width={14}
+                      height={14}
                       alt=""
                       style={{ filter: 'brightness(0) invert(1)' }}
                     />
