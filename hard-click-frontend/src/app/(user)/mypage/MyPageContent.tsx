@@ -313,14 +313,14 @@ export default function MyPageContent({
           <div className="flex flex-col gap-8">
             {/* ── 프로필 요약 + 랭킹 ── */}
             <SectionCard>
-              <div className="p-[33px] flex flex-col gap-8">
+              <div className="p-6 flex flex-col gap-6">
                 {/* 상단: 제목 + 수정 버튼 */}
                 <div className="flex items-start justify-between">
                   <h2 className="text-2xl font-bold text-[#1F2937] leading-8">프로필 요약</h2>
                   <button
                     type="button"
                     onClick={() => setIsProfileEditOpen(true)}
-                    className="flex items-center gap-2 px-4 h-12 bg-[#2F5DAA] rounded-[10px] text-base font-semibold text-white hover:bg-[#1D3E75] transition-colors"
+                    className="flex items-center gap-2 px-4 h-10 bg-[#2F5DAA] rounded-[10px] text-sm font-semibold text-white hover:bg-[#1D3E75] transition-colors"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -337,74 +337,74 @@ export default function MyPageContent({
                 {/* 사용자 정보 + 통계 카드 */}
                 <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-8">
                   {/* 좌측: 아바타 + 이름 + 이메일 */}
-                  <div className="flex flex-col items-center text-center gap-3 sm:flex-row sm:text-left sm:gap-6 w-full md:w-[400px] flex-shrink-0">
-                    <div className="relative w-28 h-28 rounded-full bg-[rgba(47,93,170,0.1)] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <div className="flex flex-col items-center text-center gap-3 sm:flex-row sm:text-left sm:gap-4 w-full md:w-[400px] flex-shrink-0">
+                    <div className="relative w-20 h-20 rounded-full bg-[rgba(47,93,170,0.1)] flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {profile?.profileImageUrl ? (
                         <Image
                           src={profile.profileImageUrl}
                           alt=""
                           fill
-                          sizes="112px"
+                          sizes="80px"
                           className="object-cover"
                         />
                       ) : (
                         /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src="/icons/profileAvatarIcon.svg" width={56} height={56} alt="" />
+                        <img src="/icons/profileAvatarIcon.svg" width={40} height={40} alt="" />
                       )}
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <p className="text-2xl font-bold text-[#1F2937] leading-8 mb-1">{profile?.name ?? ''}</p>
-                      <p className="text-base text-[#4B5563] break-all">{profile?.email ?? ''}</p>
+                      <p className="text-xl font-bold text-[#1F2937] leading-7 mb-1">{profile?.name ?? ''}</p>
+                      <p className="text-sm text-[#4B5563] break-all">{profile?.email ?? ''}</p>
                     </div>
                   </div>
 
                   {/* 우측: 통계 카드 2x2 그리드 */}
-                  <div className="flex-1 grid grid-cols-2 gap-4">
-                    <div className="bg-[#F8FAFC] rounded-[20px] p-5">
-                      <p className="text-sm text-[#4B5563] mb-2">수강 중인 강의</p>
-                      <p className="text-[30px] font-bold leading-9 text-[#2F5DAA]">
+                  <div className="flex-1 grid grid-cols-2 gap-3">
+                    <div className="bg-[#F8FAFC] rounded-[20px] p-4">
+                      <p className="text-sm text-[#4B5563] mb-1">수강 중인 강의</p>
+                      <p className="text-2xl font-bold leading-8 text-[#2F5DAA]">
                         {inProgress.length}개
                       </p>
                     </div>
-                    <div className="bg-[#F8FAFC] rounded-[20px] p-5">
-                      <p className="text-sm text-[#4B5563] mb-2">수강 완료</p>
-                      <p className="text-[30px] font-bold leading-9 text-[#16A34A]">
+                    <div className="bg-[#F8FAFC] rounded-[20px] p-4">
+                      <p className="text-sm text-[#4B5563] mb-1">수강 완료</p>
+                      <p className="text-2xl font-bold leading-8 text-[#16A34A]">
                         {completed.length}개
                       </p>
                     </div>
-                    <div className="bg-[#F8FAFC] rounded-[20px] p-5">
-                      <p className="text-sm text-[#4B5563] mb-2">오늘 순공시간</p>
-                      <p className="text-[30px] font-bold leading-9 text-[#F59E0B]">
+                    <div className="bg-[#F8FAFC] rounded-[20px] p-4">
+                      <p className="text-sm text-[#4B5563] mb-1">오늘 순공시간</p>
+                      <p className="text-2xl font-bold leading-8 text-[#F59E0B]">
                         {formatStudyTime(todayStudySeconds)}
                       </p>
                     </div>
-                    <div className="bg-[#F8FAFC] rounded-[20px] p-5">
-                      <p className="text-sm text-[#4B5563] mb-2">현재 연속 학습일</p>
-                      <p className="text-[30px] font-bold leading-9 text-[#EF4444]">{streakDays}일</p>
+                    <div className="bg-[#F8FAFC] rounded-[20px] p-4">
+                      <p className="text-sm text-[#4B5563] mb-1">현재 연속 학습일</p>
+                      <p className="text-2xl font-bold leading-8 text-[#EF4444]">{streakDays}일</p>
                     </div>
                   </div>
                 </div>
 
                 {/* 구분선 + 랭킹 */}
-                <div className="border-t border-[#E2E8F0] pt-8">
-                  <h3 className="text-xl font-semibold text-[#1F2937] mb-5">랭킹 요약</h3>
-                  <div className="grid grid-cols-3 gap-2 sm:gap-5">
+                <div className="border-t border-[#E2E8F0] pt-6">
+                  <h3 className="text-xl font-semibold text-[#1F2937] mb-4">랭킹 요약</h3>
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4">
                     {[
                       { label: '순공시간 순위', rank: ranking?.studyTimeRank.rank ?? 0, pct: ranking?.studyTimeRank.topPercent ?? 0 },
                       { label: '수강량 순위', rank: ranking?.lessonRank.rank ?? 0, pct: ranking?.lessonRank.topPercent ?? 0 },
                       { label: '채택 순위', rank: ranking?.acceptedCommentRank.rank ?? 0, pct: ranking?.acceptedCommentRank.topPercent ?? 0 },
                     ].map((r) => (
-                      <div key={r.label} className="bg-[rgba(47,93,170,0.05)] rounded-[20px] text-center pt-6 pb-6">
-                        <p className="text-sm font-medium text-[#4B5563] mb-2">{r.label}</p>
+                      <div key={r.label} className="bg-[rgba(47,93,170,0.05)] rounded-[20px] text-center pt-4 pb-4">
+                        <p className="text-sm font-medium text-[#4B5563] mb-1.5">{r.label}</p>
                         {r.rank > 0 ? (
                           <>
-                            <p className="text-3xl sm:text-4xl font-bold text-[#2F5DAA] leading-10 mb-2">{r.rank}위</p>
+                            <p className="text-2xl sm:text-3xl font-bold text-[#2F5DAA] leading-9 mb-1">{r.rank}위</p>
                             <p className="text-sm text-[#4B5563]">상위 {r.pct}%</p>
                           </>
                         ) : (
                           // BE가 아직 순위를 안 줌(rank=null) — "0위" 위조 대신 집계 전 안내 (CLAUDE.md §0.1 규칙②)
                           <>
-                            <p className="text-2xl font-bold text-[#9CA3AF] leading-10 mb-2 mt-1">집계 전</p>
+                            <p className="text-xl font-bold text-[#9CA3AF] leading-9 mb-1 mt-1">집계 전</p>
                             <p className="text-sm text-[#9CA3AF]">아직 순위가 없어요</p>
                           </>
                         )}
