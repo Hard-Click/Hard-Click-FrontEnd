@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import Tooltip from '@/components/ui/tooltip';
 import { mergeCurriculumProgress, formatDuration } from '@/features/learning/utils';
 import type { CourseDetail } from '@/features/courses/types';
 import type { CourseProgress, SidebarVideoItem } from '@/features/learning/types';
@@ -237,12 +238,11 @@ export default function LearningCurriculumContent({
                                         </span>
                                       )}
                                       {!lesson.tracked ? (
-                                        <span
-                                          title="이 강의는 진도율에 포함되지 않습니다"
-                                          className="flex-shrink-0 px-2 py-0.5 bg-[rgba(148,163,184,0.15)] text-[#64748B] text-xs font-semibold rounded"
-                                        >
-                                          진도 미반영
-                                        </span>
+                                        <Tooltip content="이 강의는 진도율에 포함되지 않습니다" className="flex-shrink-0">
+                                          <span className="px-2 py-0.5 bg-[rgba(148,163,184,0.15)] text-[#64748B] text-xs font-semibold rounded">
+                                            진도 미반영
+                                          </span>
+                                        </Tooltip>
                                       ) : (
                                         lesson.completed && (
                                           <span className="flex-shrink-0 px-2 py-0.5 bg-[rgba(22,163,74,0.1)] text-[#16A34A] text-xs font-semibold rounded">
