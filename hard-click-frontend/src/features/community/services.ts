@@ -58,7 +58,8 @@ function toPostListItem(p: PostItemApiResponse): PostListItem {
     authorName: p.authorName,
     viewCount: p.viewCount ?? 0,
     commentCount: p.commentCount ?? 0,
-    status: p.status ?? null,
+    // 목록 응답은 status가 아니라 isAccepted(boolean)로 내려온다 — status는 실제로 안 옴(라이브 확인).
+    status: p.status ?? (p.isAccepted != null ? (p.isAccepted ? 'ADOPTED' : 'PENDING') : null),
     currentCount: p.currentCount ?? null,
     maxCount: p.maxCount ?? null,
     subjectName: resolvedSubject,
