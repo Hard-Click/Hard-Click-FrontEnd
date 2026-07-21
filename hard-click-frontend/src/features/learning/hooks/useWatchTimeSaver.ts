@@ -35,6 +35,12 @@ export function useWatchTimeSaver({
 
   const flush = async (delta: number) => {
     if (delta < 1) return;
+    const res = await saveWatchTime(videoId, { watchTimeSeconds: delta });
+    // 서버 저장 실패 시 localStorage를 앞서 갱신하지 않는다 — 실패한 delta까지 반영되면
+    // 화면 진행률(로컬 기준)이 실제 백엔드 누적 watchTimeSeconds보다 앞서가 100%로 보여도
+    // 완료 검증(90% 기준)을 통과 못 하는 불일치가 생긴다.
+    if (!res.success) return;
+
     /* 클라이언트 측 누적 시청 시간(localStorage) — 백엔드 응답이 void이므로 progressRate는
      * (누적 watchTime / durationSeconds)으로 클라이언트에서 계산. lastPosition은 별도 키. */
     let totalWatchTime = delta;
@@ -44,8 +50,6 @@ export function useWatchTimeSaver({
       totalWatchTime = (Number.isFinite(stored) ? stored : 0) + delta;
       window.localStorage.setItem(key, String(totalWatchTime));
     }
-    const res = await saveWatchTime(videoId, { watchTimeSeconds: delta });
-    if (!res.success) return;
 
     /* 클라이언트 측 progressRate — 백엔드 응답에 progressRate 없어서 자체 계산 */
     const rate = durationSeconds > 0
@@ -60,9 +64,16 @@ export function useWatchTimeSaver({
       toast.success('90% 이상 수강되었습니다.');
     }
     if (!completedFiredRef.current && rate >= 90) {
+      // completeVideo 호출 전에 먼저 래치 — await 도중 다음 heartbeat이 겹쳐 들어와도
+      // 중복 호출되지 않게 막는다. 90% 미달로 실패(409/L004)하면 롤백해 다음 heartbeat에서
+      // 재시도 가능하게 한다(성공 시에만 래치하면 그 사이 겹친 두 번째 flush가 또 호출한다).
       completedFiredRef.current = true;
       const completeRes = await completeVideo(videoId);
-      if (completeRes.success) onCompleted?.();
+      if (completeRes.success) {
+        onCompleted?.();
+      } else {
+        completedFiredRef.current = false;
+      }
     }
   };
 
