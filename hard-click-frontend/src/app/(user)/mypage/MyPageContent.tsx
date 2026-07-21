@@ -53,8 +53,9 @@ function ViewAllLink({ href = '#' }: { href?: string }) {
 }
 
 /* 잔디 셀 표시용 — API 응답을 화면용으로 변환한 결과를 받음
- * level은 서버에서 0~5단계로 계산해 내려옴 (Math.min으로 4까지 클램프) */
-type HeatmapCell = { level: number; date: string; value: string };
+ * level은 서버에서 0~5단계로 계산해 내려옴 (Math.min으로 4까지 클램프)
+ * null은 1일 앞 요일 정렬용 빈 칸(실제 날짜 아님) — GrassYearlyModal과 동일 패턴. */
+type HeatmapCell = { level: number; date: string; value: string } | null;
 
 /** 잔디 셀 SVG 경로 (5단계: 0=Empty, 1~4=색상 강도) */
 function cellIconSrc(type: 'green' | 'orange', level: number) {
@@ -62,7 +63,11 @@ function cellIconSrc(type: 'green' | 'orange', level: number) {
   return type === 'green' ? `/icons/grassGreen${level}.svg` : `/icons/grassOrange${level}.svg`;
 }
 
-/** 한 달치 API 응답을 7×N 그리드 셀로 변환 (월~일 시작, 빈 셀은 level 0) */
+/**
+ * 한 달치 API 응답을 7×N 그리드 셀로 변환 (월~일 시작, 빈 셀은 level 0).
+ * 1일이 실제로 무슨 요일이든 첫 칸에 붙지 않도록, 1일 앞에 요일만큼 null(빈 칸)을 채운다
+ * (GrassYearlyModal의 firstDayOfWeek 패딩과 동일 로직 — 그쪽은 이미 정렬돼 있었음).
+ */
 function buildMonthHeatmap(
   type: 'green' | 'orange',
   year: number,
@@ -71,8 +76,10 @@ function buildMonthHeatmap(
 ): HeatmapCell[] {
   const lookup = new Map<string, StudyTimeGrassCell | LessonsGrassCell>();
   apiData.forEach((c) => lookup.set(c.date, c));
-  const cells: HeatmapCell[] = [];
   const daysInMonth = new Date(year, month, 0).getDate();
+  // getDay()는 일(0)~토(6) — 월요일 시작 인덱스로 변환
+  const firstDayOfWeek = (new Date(year, month - 1, 1).getDay() + 6) % 7;
+  const cells: HeatmapCell[] = Array.from({ length: firstDayOfWeek }, () => null);
   for (let i = 0; i < daysInMonth; i++) {
     const d = new Date(year, month - 1, i + 1);
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -142,33 +149,37 @@ function Heatmap({
           ))}
         </div>
 
-        {/* 셀 (hover 시 툴팁 + 회색 테두리) */}
+        {/* 셀 (hover 시 툴팁 + 회색 테두리) — null은 1일 앞 요일 정렬용 빈 칸(실제 날짜 아님) */}
         <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(7, 14px)' }}>
-          {cells.map((c, i) => (
-            <div
-              key={i}
-              className={`relative w-[14px] h-[14px] rounded cursor-pointer transition-shadow ${
-                hoveredIdx === i ? 'shadow-[0_0_0_2px_#1F2937CC] z-10' : ''
-              }`}
-              onMouseEnter={() => setHoveredIdx(i)}
-              onMouseLeave={() => setHoveredIdx(null)}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={cellIconSrc(type, c.level)}
-                width={14}
-                height={14}
-                alt=""
-                className="block w-full h-full"
-              />
-              {hoveredIdx === i && (
-                <div className="absolute bottom-[26px] left-1/2 -translate-x-1/2 z-20 bg-[#1F2937CC] text-white px-4 py-2.5 rounded-xl whitespace-nowrap text-center shadow-lg pointer-events-none">
-                  <div className="text-sm font-bold leading-tight">{c.date}</div>
-                  <div className="text-xs font-medium leading-tight mt-1">{valueLabel} : {c.value}</div>
-                </div>
-              )}
-            </div>
-          ))}
+          {cells.map((c, i) =>
+            c === null ? (
+              <div key={i} className="w-[14px] h-[14px]" />
+            ) : (
+              <div
+                key={i}
+                className={`relative w-[14px] h-[14px] rounded cursor-pointer transition-shadow ${
+                  hoveredIdx === i ? 'shadow-[0_0_0_2px_#1F2937CC] z-10' : ''
+                }`}
+                onMouseEnter={() => setHoveredIdx(i)}
+                onMouseLeave={() => setHoveredIdx(null)}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={cellIconSrc(type, c.level)}
+                  width={14}
+                  height={14}
+                  alt=""
+                  className="block w-full h-full"
+                />
+                {hoveredIdx === i && (
+                  <div className="absolute bottom-[26px] left-1/2 -translate-x-1/2 z-20 bg-[#1F2937CC] text-white px-4 py-2.5 rounded-xl whitespace-nowrap text-center shadow-lg pointer-events-none">
+                    <div className="text-sm font-bold leading-tight">{c.date}</div>
+                    <div className="text-xs font-medium leading-tight mt-1">{valueLabel} : {c.value}</div>
+                  </div>
+                )}
+              </div>
+            ),
+          )}
         </div>
 
         {/* 범례 */}
