@@ -179,9 +179,12 @@ export default function LearningCurriculumContent({
               ) : (
                 <div className="flex flex-col gap-6">
                   {sections.map((section) => {
-                    const secDone = section.lessons.filter((l) => l.completed).length;
-                    const secRate = section.lessons.length
-                      ? Math.round((secDone / section.lessons.length) * 100)
+                    // 진도율 미집계 레슨(예: OT)은 섹션 진도율에서도 제외 — 안 그러면 그 섹션은
+                    // 영원히 100%에 도달 못 함(전체 진도율과 동일 원칙, 위 totalCount 참고).
+                    const secTracked = section.lessons.filter((l) => l.tracked);
+                    const secDone = secTracked.filter((l) => l.completed).length;
+                    const secRate = secTracked.length
+                      ? Math.round((secDone / secTracked.length) * 100)
                       : 0;
                     return (
                       <div
@@ -191,7 +194,7 @@ export default function LearningCurriculumContent({
                         <div className="flex items-center justify-between mb-[13px]">
                           <h3 className="text-xl font-bold text-[#1F2937] tracking-[-0.45px]">{section.title}</h3>
                           <span className="text-sm font-semibold text-[#4B5563] tracking-[-0.15px]">
-                            {secDone} / {section.lessons.length}
+                            {secDone} / {secTracked.length}
                           </span>
                         </div>
                         <div className="w-full h-2 bg-[#E2E8F0] rounded-full overflow-hidden mb-6">
