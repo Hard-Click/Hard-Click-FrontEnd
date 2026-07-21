@@ -145,6 +145,8 @@ export interface PostItemApiResponse {
   currentCount?: number | null;
   maxCount?: number | null;
   status?: 'PENDING' | 'ADOPTED' | null;
+  /** 질문글 채택 여부 — 목록 응답은 status가 아니라 이 필드로 내려온다(라이브 확인). */
+  isAccepted?: boolean | null;
   isMine?: boolean | null;
   isJoined?: boolean | null;
   isClosed?: boolean | null;
