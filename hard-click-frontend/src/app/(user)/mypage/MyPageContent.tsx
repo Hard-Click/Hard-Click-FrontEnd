@@ -515,7 +515,7 @@ export default function MyPageContent({
                       <p className="text-sm text-[#4B5563]">학습을 완료하고 리뷰를 작성해보세요.</p>
                     </div>
                   ) : (completed.slice(0, OVERVIEW_LIMIT).map((c) => (
-                    <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-3 flex flex-col sm:flex-row gap-3 sm:gap-5 sm:items-center">
+                    <div key={c.courseId} className="border border-[#E2E8F0] rounded-[20px] p-4 flex flex-col sm:flex-row gap-3 sm:gap-5 sm:items-center">
                       <Link
                         href={`/courses/${c.courseId}`}
                         className="w-24 h-20 sm:w-32 sm:h-20 bg-[#F8FAFC] rounded-2xl flex items-center justify-center flex-shrink-0 hover:bg-[#EEF2F7] transition-colors"
@@ -523,7 +523,7 @@ export default function MyPageContent({
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src="/icons/trophyIcon.svg" width={48} height={48} alt="" />
                       </Link>
-                      <div className="flex-1 flex flex-col gap-2">
+                      <div className="flex-1 flex flex-col gap-3">
                         <div className="flex items-start justify-between gap-3">
                           <Link href={`/courses/${c.courseId}`} className="text-lg font-semibold leading-7 text-[#1F2937] hover:text-[#2F5DAA] transition-colors">{c.courseTitle}</Link>
                           <span className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1 bg-[rgba(22,163,74,0.1)] text-[#16A34A] text-xs font-semibold rounded-full">
