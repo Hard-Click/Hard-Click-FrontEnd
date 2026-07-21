@@ -46,8 +46,11 @@ function SectionCard({ children, className = '' }: { children: React.ReactNode; 
 
 function ViewAllLink({ href = '#' }: { href?: string }) {
   return (
-    <Link href={href} className="text-[#2F5DAA] text-base font-semibold flex items-center gap-1">
-      전체보기 →
+    <Link
+      href={href}
+      className="rounded-full border border-[#E2E8F0] px-4 py-1.5 text-sm font-medium text-[#4B5563] transition hover:bg-[#F8FAFC]"
+    >
+      전체보기
     </Link>
   );
 }
