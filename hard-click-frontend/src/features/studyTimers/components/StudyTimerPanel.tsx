@@ -269,12 +269,14 @@ export default function StudyTimerPanel() {
     transitioningRef.current = true;
     stopIntervals();
     try {
-      const success = await endTimerAction(sid);
+      const { success, accumulatedStudySeconds } = await endTimerAction(sid);
       if (success) {
-        // 종료한 세션 시간을 '오늘 총' base에 낙관적으로 누적(재조회 없이 start→end→start 정합 유지).
-        // 다음 마운트 시 /stats/daily 재조회로 정확값으로 대체됨.
+        // 종료한 세션 시간을 '오늘 총' base에 누적. 서버 확정 누적초(accumulatedStudySeconds)가 있으면
+        // 그걸 우선 쓰고, 없을 때만(idempotent 종료 등) 클라 tick(secondsRef)으로 폴백 — 클라 tick은
+        // 백그라운드 탭 등으로 서버 확정값과 어긋날 수 있다(§0.1, 이 폴백이 바로 그 드리프트의 원인이었음).
         // base가 null(오늘 누적 조회 실패)이면 그대로 null 유지 — 세션분만 더해 '하루 총합'인 척하지 않는다.
-        setDailyBaseSeconds((b) => (b === null ? null : b + secondsRef.current));
+        const sessionSeconds = accumulatedStudySeconds ?? secondsRef.current;
+        setDailyBaseSeconds((b) => (b === null ? null : b + sessionSeconds));
         setIsRunning(false);
         setIsPaused(false);
         setShowOverlay(false);

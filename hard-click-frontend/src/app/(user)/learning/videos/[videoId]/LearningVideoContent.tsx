@@ -300,7 +300,7 @@ export default function LearningVideoContent({
         setTimerConfirmMode(null);
         if (!timerSessionId) return;
         stopTimerTicks();
-        const ok = await endTimerAction(timerSessionId);
+        const { success: ok } = await endTimerAction(timerSessionId);
         if (!ok) {
           // 종료 실패 → 서버 세션이 아직 RUNNING이면 화면만 멈춘 죽은 상태 → 재조회 후 서버 누적초로 보정하고
           // tick·heartbeat 재가동(재시도 가능). 세션이 이미 없으면(끝남) 그대로 정리.
