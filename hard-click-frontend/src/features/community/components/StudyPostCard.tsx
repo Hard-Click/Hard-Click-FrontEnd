@@ -104,13 +104,13 @@ export default function StudyPostCard({
       );
     }
     if (isMine || isJoined) {
-      // 참여 중/내 스터디 → 채팅방 입장
+      // 참여 중/내 스터디 → 채팅방 입장. "참여하기"(신규 참여)와 구분되게 아웃라인 톤으로.
       return (
         <button
           type="button"
           disabled={pending}
           onClick={() => goChat(enterStudyChatAction)}
-          className={`${widthClass} rounded-2xl bg-[#2F5DAA] py-3 text-center text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60`}
+          className={`${widthClass} rounded-2xl border-2 border-[#2F5DAA] bg-white py-3 text-center text-sm font-semibold text-[#2F5DAA] transition hover:bg-[#EFF6FF] disabled:opacity-60`}
         >
           {pending ? '여는 중…' : '입장하기'}
         </button>
