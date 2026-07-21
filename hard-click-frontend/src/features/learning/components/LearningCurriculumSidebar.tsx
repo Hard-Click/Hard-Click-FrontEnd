@@ -125,10 +125,20 @@ export default function LearningCurriculumSidebar({
                               <span className={`text-sm font-medium ${timeColor}`}>
                                 {formatDuration(v.durationSeconds)}
                               </span>
-                              {v.completed && (
-                                <span className="px-2 py-0.5 rounded text-xs font-medium ml-auto" style={{ background: 'rgba(22,163,74,0.2)', color: '#16A34A' }}>
-                                  완료
+                              {!v.tracked ? (
+                                <span
+                                  title="이 강의는 진도율에 포함되지 않습니다"
+                                  className="px-2 py-0.5 rounded text-xs font-medium ml-auto"
+                                  style={{ background: 'rgba(148,163,184,0.2)', color: '#94A3B8' }}
+                                >
+                                  진도 미반영
                                 </span>
+                              ) : (
+                                v.completed && (
+                                  <span className="px-2 py-0.5 rounded text-xs font-medium ml-auto" style={{ background: 'rgba(22,163,74,0.2)', color: '#16A34A' }}>
+                                    완료
+                                  </span>
+                                )
                               )}
                             </div>
                             {isInProgress && (

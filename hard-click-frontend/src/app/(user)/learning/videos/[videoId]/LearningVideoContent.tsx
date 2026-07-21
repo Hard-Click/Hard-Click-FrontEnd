@@ -19,10 +19,10 @@ import {
 } from '@/features/studyTimers/actions';
 import { markSessionLeaving } from '@/features/studyTimers/leaveSignal';
 import { isMock } from '@/mocks/config';
+import { mergeCurriculumProgress } from '@/features/learning/utils';
 import type {
   VideoPlayInfo,
   CourseProgress,
-  SidebarVideoItem,
 } from '@/features/learning/types';
 import type { CourseDetail } from '@/features/courses/types';
 
@@ -43,39 +43,6 @@ function formatStudyTime(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-/** 백엔드 progress.lessons + 강의 상세 curriculum (title/section/duration/isPreview) 머지 */
-function mergeLessons(
-  detail: CourseDetail | null,
-  progress: CourseProgress | null,
-): SidebarVideoItem[] {
-  if (!detail) return [];
-  const progressMap = new Map<number, { completed: boolean; lastPositionSeconds: number }>();
-  progress?.lessons.forEach((l) =>
-    progressMap.set(l.videoId, {
-      completed: l.completed,
-      lastPositionSeconds: l.lastPositionSeconds,
-    }),
-  );
-  const result: SidebarVideoItem[] = [];
-  detail.curriculum.forEach((section) => {
-    section.lessons.forEach((lesson) => {
-      const vid = lesson.videoId ?? lesson.lessonId;
-      const lp = progressMap.get(vid);
-      const [m, s] = lesson.duration.split(':').map(Number);
-      result.push({
-        videoId: vid,
-        title: lesson.title,
-        sectionTitle: section.title,
-        durationSeconds: (m ?? 0) * 60 + (s ?? 0),
-        completed: lp?.completed ?? false,
-        lastPositionSeconds: lp?.lastPositionSeconds ?? 0,
-        isPreview: lesson.isPreview,
-      });
-    });
-  });
-  return result;
 }
 
 interface LearningVideoContentProps {
@@ -360,7 +327,7 @@ export default function LearningVideoContent({
   const displayProgress = progress ?? lastValidProgressCache;
   const displayDetail = detail ?? lastValidDetailCache;
   const sidebarVideos = useMemo(
-    () => mergeLessons(displayDetail, displayProgress),
+    () => mergeCurriculumProgress(displayDetail, displayProgress),
     [displayDetail, displayProgress],
   );
   const currentLessonTitle = useMemo(

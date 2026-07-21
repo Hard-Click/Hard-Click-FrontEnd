@@ -43,6 +43,8 @@ export function mergeCurriculumProgress(
         completed: lp?.completed ?? false,
         lastPositionSeconds: lp?.lastPositionSeconds ?? 0,
         isPreview: lesson.isPreview,
+        // BE 정책상 진도율 집계에서 빠지는 레슨(예: OT)은 progress.lessons 자체가 없음.
+        tracked: progressMap.has(vid),
       });
     });
   });

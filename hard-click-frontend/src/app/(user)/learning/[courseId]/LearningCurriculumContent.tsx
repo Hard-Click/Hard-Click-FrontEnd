@@ -102,8 +102,10 @@ export default function LearningCurriculumContent({
 
   const sections = useMemo(() => groupBySection(lessons), [lessons]);
 
-  const totalCount = lessons.length;
-  const completedCount = lessons.filter((l) => l.completed).length;
+  // 진도율 미집계 레슨(예: OT)은 분모/분자에서 제외 — BE의 progress.totalLessonCount와 정합.
+  const trackedLessons = lessons.filter((l) => l.tracked);
+  const totalCount = trackedLessons.length;
+  const completedCount = trackedLessons.filter((l) => l.completed).length;
   const overallRate = progress
     ? Math.round(progress.progressRate)
     : totalCount > 0
@@ -177,9 +179,12 @@ export default function LearningCurriculumContent({
               ) : (
                 <div className="flex flex-col gap-6">
                   {sections.map((section) => {
-                    const secDone = section.lessons.filter((l) => l.completed).length;
-                    const secRate = section.lessons.length
-                      ? Math.round((secDone / section.lessons.length) * 100)
+                    // 진도율 미집계 레슨(예: OT)은 섹션 진도율에서도 제외 — 안 그러면 그 섹션은
+                    // 영원히 100%에 도달 못 함(전체 진도율과 동일 원칙, 위 totalCount 참고).
+                    const secTracked = section.lessons.filter((l) => l.tracked);
+                    const secDone = secTracked.filter((l) => l.completed).length;
+                    const secRate = secTracked.length
+                      ? Math.round((secDone / secTracked.length) * 100)
                       : 0;
                     return (
                       <div
@@ -189,7 +194,7 @@ export default function LearningCurriculumContent({
                         <div className="flex items-center justify-between mb-[13px]">
                           <h3 className="text-xl font-bold text-[#1F2937] tracking-[-0.45px]">{section.title}</h3>
                           <span className="text-sm font-semibold text-[#4B5563] tracking-[-0.15px]">
-                            {secDone} / {section.lessons.length}
+                            {secDone} / {secTracked.length}
                           </span>
                         </div>
                         <div className="w-full h-2 bg-[#E2E8F0] rounded-full overflow-hidden mb-6">
@@ -231,10 +236,19 @@ export default function LearningCurriculumContent({
                                           미리보기
                                         </span>
                                       )}
-                                      {lesson.completed && (
-                                        <span className="flex-shrink-0 px-2 py-0.5 bg-[rgba(22,163,74,0.1)] text-[#16A34A] text-xs font-semibold rounded">
-                                          완료
+                                      {!lesson.tracked ? (
+                                        <span
+                                          title="이 강의는 진도율에 포함되지 않습니다"
+                                          className="flex-shrink-0 px-2 py-0.5 bg-[rgba(148,163,184,0.15)] text-[#64748B] text-xs font-semibold rounded"
+                                        >
+                                          진도 미반영
                                         </span>
+                                      ) : (
+                                        lesson.completed && (
+                                          <span className="flex-shrink-0 px-2 py-0.5 bg-[rgba(22,163,74,0.1)] text-[#16A34A] text-xs font-semibold rounded">
+                                            완료
+                                          </span>
+                                        )
                                       )}
                                       {inProgress && (
                                         <span className="flex-shrink-0 px-2 py-0.5 bg-[rgba(245,158,11,0.1)] text-[#F59E0B] text-xs font-semibold rounded">
