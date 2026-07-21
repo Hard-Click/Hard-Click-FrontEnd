@@ -95,6 +95,8 @@ function formatHeatmapValue(
   }
   const secs = (apiCell as StudyTimeGrassCell).studySeconds ?? 0;
   if (secs <= 0) return '0분';
+  // 60초 미만은 분 단위로 내림하면 "0분"이 되어 셀 색(level>0)과 모순되므로 초 단위로 표시.
+  if (secs < 60) return `${secs}초`;
   const hours = Math.floor(secs / 3600);
   const minutes = Math.floor((secs % 3600) / 60);
   return hours > 0 ? `${hours}시간 ${String(minutes).padStart(2, '0')}분` : `${minutes}분`;
