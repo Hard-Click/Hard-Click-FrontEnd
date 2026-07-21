@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import SelectDropdown from '@/components/ui/SelectDropdown';
 import { TAB_TO_BOARD_TYPE } from '../types';
 import type { SubjectItem } from '../types';
 
@@ -52,18 +53,16 @@ export default function CommunityListControls({
 
   const subjectFilterControls = (
     <>
-      <select
+      <SelectDropdown
+        placeholder="전체 과목"
         value={subject}
-        onChange={(e) => pushWith({ subject: e.target.value || undefined })}
-        className="h-11 rounded-xl border border-[#E2E8F0] bg-white px-3 text-sm text-[#4B5563] outline-none"
-      >
-        <option value="">전체 과목</option>
-        {subjects.map((s) => (
-          <option key={s.code} value={s.code}>
-            {s.name}
-          </option>
-        ))}
-      </select>
+        options={[
+          { label: '전체 과목', value: '' },
+          ...subjects.map((s) => ({ label: s.name, value: s.code })),
+        ]}
+        onChange={(value) => pushWith({ subject: value || undefined })}
+        buttonClassName="h-11 text-sm"
+      />
       <button
         type="button"
         onClick={() => {
