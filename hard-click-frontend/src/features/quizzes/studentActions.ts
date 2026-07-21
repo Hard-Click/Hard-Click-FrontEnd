@@ -6,6 +6,9 @@ import { isMock } from '@/mocks/config';
 import { mockQuizzes } from '@/mocks/quizzes.mock';
 import type { QuizSubmitResult } from './types';
 
+/** BE 요청 DTO의 timeSpentSeconds가 32비트 Integer — 이 범위를 넘으면 역직렬화 단계에서 400. */
+const INT32_MAX = 2147483647;
+
 export interface QuizSubmitState {
   success: boolean;
   message?: string;
@@ -16,7 +19,14 @@ export interface QuizSubmitState {
  * 퀴즈 제출 + 채점 (Server Action · BFF).
  * answers = { [questionId]: 선택한 보기 인덱스(0~3) }.
  * timeSpentByQuestion = { [questionId]: 문제별 머문 시간(초) } — AI 복습 추천용(BE 요청).
- *   BE가 필드 optional(없으면 NULL)로 받으므로 값이 없으면 0으로 전송한다. 상한 처리는 서버 몫.
+ *   ⚠️ 미측정은 0이 아니라 **null**로 보낸다(BE 요청 2026-07-21). 0을 보내면 "0초에 순식간에 풀었다"와
+ *   "시간을 못 쟀다"가 같은 값이 돼, 풀이시간 중앙값으로 '오래 걸림'을 판정하는 추천 로직이
+ *   0에 깔려 신호가 꺼진다. BE는 null을 '미측정'으로 처리한다(배포 순서 무관).
+ *   측정된 값이 0으로 반올림된 경우(찍고 바로 넘김)는 진짜 0이므로 그대로 0을 보낸다.
+ *   비즈니스 상한(1시간 초과 → null)은 서버 몫이라 걸지 않는다. 단, BE DTO가 32비트 Integer라
+ *   그 범위 밖 값만 null로 막는다(계약이 표현 못 하는 값 — 안 막으면 역직렬화 400).
+ *   BE 코드 검증(2026-07-21): main·develop 모두 QuizSubmissionAnswer.normalizeTimeSpent가
+ *   null·음수·3600초 초과를 null로 정규화한다.
  * 격리막: 채점은 서버에서만 → 클라이언트는 점수만 받는다.
  * 라이브: BE는 selectedOptionId를 요구 → 응시 상세(GET /api/quizzes/{id})를 재조회해
  *   answerIndex를 optionId로 변환 후 POST /api/quizzes/{id}/submissions.
@@ -74,11 +84,12 @@ export async function submitQuizAction(
     }
 
     // 2) answerIndex → selectedOptionId. 매핑 실패는 조용히 누락하지 않고 에러 반환(부분 제출 방지).
-    //    + timeSpentSeconds: 클라가 준 문제별 초. Server Action 경계라 음수·비정수·비유한 값은 0으로 방어(§5).
+    //    + timeSpentSeconds: 클라가 준 문제별 초. Server Action 경계라 음수·비정수·비유한 값은 null로 방어(§5).
+    //      방어 결과가 null인 것은 '측정 실패'라 미측정과 같은 의미 — 가짜 0을 만들지 않는다(§0.1②).
     const answerList: {
       questionId: number;
       selectedOptionId: number;
-      timeSpentSeconds: number;
+      timeSpentSeconds: number | null;
     }[] = [];
     for (const [qid, idx] of Object.entries(answers)) {
       const questionId = Number(qid);
@@ -92,13 +103,21 @@ export async function submitQuizAction(
         return { success: false, message: '제출 데이터가 올바르지 않습니다.' };
       }
       // 맵 자체도 신뢰하지 않는다 — null/비객체가 오면 인덱싱에서 TypeError가 나 제출 전체가 실패하므로,
-      // '값이 없으면 0' 계약을 지키도록 맵 유무를 먼저 가른다(Server Action 경계, §5).
+      // '값이 없으면 null(미측정)' 계약을 지키도록 맵 유무를 먼저 가른다(Server Action 경계, §5).
       const t =
         timeSpentByQuestion && typeof timeSpentByQuestion === 'object'
           ? timeSpentByQuestion[questionId]
           : undefined;
+      // 상한(1시간 초과)은 BE 몫이지만, BE DTO가 32비트 Integer라 그 범위를 넘는 값은
+      // BE 정규화에 닿기도 전에 역직렬화 400으로 터져 제출 전체가 실패한다. 계약이 표현할 수
+      // 없는 값은 미측정으로 처리한다(비즈니스 상한이 아니라 계약 범위 방어, §5).
       const timeSpentSeconds =
-        typeof t === 'number' && Number.isFinite(t) && t >= 0 ? Math.round(t) : 0;
+        typeof t === 'number' &&
+        Number.isFinite(t) &&
+        t >= 0 &&
+        t <= INT32_MAX
+          ? Math.round(t)
+          : null;
       answerList.push({ questionId, selectedOptionId: opts[idx], timeSpentSeconds });
     }
 
