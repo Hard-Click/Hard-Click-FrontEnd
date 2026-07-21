@@ -204,9 +204,10 @@ function formatDisplayDate(iso: string | null): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** 초 → "N시간 N분" / "N분" */
+/** 초 → "N시간 N분" / "N분" / 60초 미만은 "N초" */
 function formatStudyTime(seconds: number): string {
   if (!seconds || seconds <= 0) return '0분';
+  if (seconds < 60) return `${seconds}초`;
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   return h > 0 ? `${h}시간 ${m}분` : `${m}분`;
