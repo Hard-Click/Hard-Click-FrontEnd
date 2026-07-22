@@ -1,7 +1,7 @@
 # WORKFLOW — 협업 · Git · PR 규칙
 
 > 출처: 팀 노션 **`개발 규칙`** 문서 + 실제 레포 설정(`.github/`, GitHub 라벨). 코드로는 알 수 없는 **사람끼리의 약속**만 적는다.
-> 코드 스타일·아키텍처 규칙은 별도 문서(`CODE_CONVENTION` / `ARCHITECTURE`) 참고.
+> 코드 스타일·아키텍처 규칙은 별도 문서(`docs/CONVENTIONS.md` / `docs/ARCHITECTURE.md`) 참고.
 
 ---
 
@@ -186,7 +186,7 @@
 - **사람이 직접 작성한 것처럼** 올린다.
 
 **빌드/품질 게이트**
-- `USE_MOCK=true` 상태로 PR 올리기 ❌ (PR 전 `false` 원복 필수).
+- 라이브 도메인을 mock으로 되돌린 채 PR·배포 ❌. (커밋 기본값 `USE_MOCK=true`는 프리뷰용 — 라이브 검증된 도메인은 `MOCK_OVERRIDE`에서 `false`로 승격돼 있어야 하고, 배포 대상 도메인이 mock으로 새지 않는지 확인. `FORCE_ALL_MOCK`·`E2E_MOCK`는 켜지면 override보다 먼저 전체 강제 mock이라 배포 전 OFF. 스위치 구조: `docs/ARCHITECTURE.md` §2)
 - `NEXT_PUBLIC_` 로 시크릿 노출 ❌.
 - 없는 라벨(`fix`/`docs`/`style` 등)로 `gh --label` 시도 ❌ (§5).
 
@@ -194,5 +194,5 @@
 
 ## 9. 참고
 
-- 코드 아키텍처(Server-First · Server Action/BFF · httpOnly 쿠키 등) → `ARCHITECTURE` / `CODE_CONVENTION` 문서
-- API 연동 정직성 4대 금기 → `INTEGRATION` 문서 (코드 밖 팀 규칙)
+- 코드 아키텍처(Server-First · Server Action/BFF · httpOnly 쿠키 등) → `docs/ARCHITECTURE.md` / `docs/CONVENTIONS.md`
+- API 연동 정직성 4대 금기 → `CLAUDE.md` §0.1 (코드 밖 팀 규칙)
