@@ -3,6 +3,9 @@
 > 기존 단일 CLAUDE.md에서 이동. 항상-로드되는 CLAUDE.md를 짧게 유지하기 위해 상세 작업 이력은 여기로 분리.
 > 형식: **[무엇] — [위치 전→후] — [왜]**
 
+### docs (CLAUDE.md 문서 체인)
+- **#1023 리뷰 후속 정비** — `docs/{ARCHITECTURE,CONVENTIONS,WORKFLOW,DEPLOYMENT,WORK_LOG}.md` · `features/{auth,payments,learning}/CLAUDE.md` · `.gitignore` — 죽은 §참조(§4~15·`CODE_CONVENTION`·`INTEGRATION`) 실제 위치로 교정 / 봉투검증 `!data`를 엔드포인트별로 완화 / `USE_MOCK` 배포 게이트 현실화(전역 true+`MOCK_OVERRIDE`+강제 게이트) / 결제 정책 "강의·구독 둘 다 실토스" 정정 / 절대경로→상대경로 — #1023 CodeRabbit 21건 중 실제 문제 반영, 미관 nit은 비게이트라 보류. (PR #1033)
+
 ### auth (회원가입)
 - `RegisterForm` 2076→1575: 인라인 `DatePickerInput`·`RegisterStepIndicator`·`TermsModal` + 공유 타입/유틸(`registerForm.shared`) 분리 — 파일이 너무 길어 가독성↓ (PR #292)
 - `RegisterForm` 추가 분리 (이슈 #293, 안전모드 — 순수 move + 단계별 검증):

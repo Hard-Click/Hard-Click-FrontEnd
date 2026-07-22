@@ -186,7 +186,7 @@
 - **사람이 직접 작성한 것처럼** 올린다.
 
 **빌드/품질 게이트**
-- 라이브 도메인을 mock으로 되돌린 채 PR·배포 ❌. (커밋 기본값 `USE_MOCK=true`는 프리뷰용 — 라이브 검증된 도메인은 `MOCK_OVERRIDE`에서 `false`로 승격돼 있어야 하고, 배포 대상 도메인이 mock으로 새지 않는지 확인. 스위치 구조: `docs/ARCHITECTURE.md` §2)
+- 라이브 도메인을 mock으로 되돌린 채 PR·배포 ❌. (커밋 기본값 `USE_MOCK=true`는 프리뷰용 — 라이브 검증된 도메인은 `MOCK_OVERRIDE`에서 `false`로 승격돼 있어야 하고, 배포 대상 도메인이 mock으로 새지 않는지 확인. `FORCE_ALL_MOCK`·`E2E_MOCK`는 켜지면 override보다 먼저 전체 강제 mock이라 배포 전 OFF. 스위치 구조: `docs/ARCHITECTURE.md` §2)
 - `NEXT_PUBLIC_` 로 시크릿 노출 ❌.
 - 없는 라벨(`fix`/`docs`/`style` 등)로 `gh --label` 시도 ❌ (§5).
 
