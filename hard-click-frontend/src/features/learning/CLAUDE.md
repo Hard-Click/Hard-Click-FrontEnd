@@ -16,7 +16,7 @@ playUrl 이 .m3u8 아님        → video.src = playUrl (native mp4)
 .m3u8 && 그 외 브라우저      → hls.js 동적 import → new Hls({ startPosition })
 ```
 
-- **`hls.js`는 반드시 동적 `import('hls.js')`.** 정적 import 금지 — HLS가 아닌 mp4 재생에도 번들이 끌려오고 초기 로드가 무거워진다. (§13 코드 스플리팅 취지와 동일)
+- **`hls.js`는 반드시 동적 `import('hls.js')`.** 정적 import 금지 — HLS가 아닌 mp4 재생에도 번들이 끌려오고 초기 로드가 무거워진다. (코드 스플리팅 취지와 동일)
 - **Safari 분기를 지우지 말 것.** Safari는 native HLS를 지원하므로 hls.js를 태우면 오히려 이중 처리로 깨진다. `canPlayType('application/vnd.apple.mpegurl')` 체크가 그 가드다.
 - **이어보기 seek은 두 경로가 다르다.** hls.js는 `new Hls({ startPosition: resume })`로 **manifest 로드 단계에서** seek, native 경로는 `canplay` 이벤트에서 `video.currentTime = resume`로 보정. 그래서 `onCanPlay` 폴백이 **양쪽 모두**에 필요하다(hls.js도 canplay로 한 번 더 맞춤).
 - 언마운트/영상 교체 시 `hlsInstanceRef.current?.destroy()` **필수** — 안 하면 이전 fragment 로더가 살아남아 메모리·네트워크 누수.
@@ -69,8 +69,8 @@ playUrl 이 .m3u8 아님        → video.src = playUrl (native mp4)
 ---
 
 ### 관련 파일
-- `/Users/hyun/Hard-Click-FrontEnd/hard-click-frontend/src/features/learning/services.ts` · `server.ts` · `utils.ts`
-- `/Users/hyun/Hard-Click-FrontEnd/hard-click-frontend/src/features/learning/hooks/useWatchTimeSaver.ts`
-- `/Users/hyun/Hard-Click-FrontEnd/hard-click-frontend/src/features/learning/components/VideoPlayer.tsx` · `PreviewVideoModal.tsx` · `TimerInfoModal.tsx`
-- `/Users/hyun/Hard-Click-FrontEnd/hard-click-frontend/src/app/(user)/learning/videos/[videoId]/LearningVideoContent.tsx` (타이머 세션 오케스트레이션)
-- 순공 세션 액션: `/Users/hyun/Hard-Click-FrontEnd/hard-click-frontend/src/features/studyTimers/actions.ts`
+- `src/features/learning/services.ts` · `server.ts` · `utils.ts`
+- `src/features/learning/hooks/useWatchTimeSaver.ts`
+- `src/features/learning/components/VideoPlayer.tsx` · `PreviewVideoModal.tsx` · `TimerInfoModal.tsx`
+- `src/app/(user)/learning/videos/[videoId]/LearningVideoContent.tsx` (타이머 세션 오케스트레이션)
+- 순공 세션 액션: `src/features/studyTimers/actions.ts`

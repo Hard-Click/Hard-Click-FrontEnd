@@ -56,7 +56,7 @@ export interface ApiResponse<T = unknown> {
 > **코드로 모르는 사실(꼭 알아야 함):**
 > - `success`는 **백엔드가 안 준다.** 클라 래퍼가 `httpStatus < 400`로 만든 파생값이다. BE 계약서에서 찾지 말 것.
 > - `errorCode`/`details`는 **에러 응답에만** 있다 → 옵셔널. 성공 경로에서 참조하지 말 것.
-> - 봉투 검증은 `!success || !data`로 한다(랭킹·찜 등에서 확립된 패턴).
+> - 봉투 검증은 **`success` 공통 확인**이 기본이고, `data` 필수 여부는 **엔드포인트 타입 계약에 따른다.** 목록·상세처럼 성공 시 값이 반드시 있는 경우만 `!success || !data`로 막고(랭킹·찜 등에서 확립된 패턴), **빈 결과가 정상인 엔드포인트**(예: 유사퀴즈 오답 0건 → `data: null`, 204 No Content → `data` undefined)는 `!data`를 실패로 처리하지 않는다. (§0.1② — 정상 응답을 장애로 위장 금지)
 
 ### 1.5 동적 라우트 `params`/`searchParams` = Promise → `await` 필수
 

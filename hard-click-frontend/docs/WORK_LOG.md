@@ -1,9 +1,6 @@
 # 컴포넌트 작업 로그 (기능별)
 
-> 기존 CLAUDE.md §15에서 이동. 항상-로드되는 CLAUDE.md를 짧게 유지하기 위해 상세 작업 이력은 여기로 분리.
-> 형식: **[무엇] — [위치 전→후] — [왜]**
-
-
+> 기존 단일 CLAUDE.md에서 이동. 항상-로드되는 CLAUDE.md를 짧게 유지하기 위해 상세 작업 이력은 여기로 분리.
 > 형식: **[무엇] — [위치 전→후] — [왜]**
 
 ### auth (회원가입)
@@ -55,7 +52,7 @@
 - **TEMP 게이트**: 미리보기용으로 `layout.tsx` PUBLIC_ROUTE에 checkout·payment-result·mypage·subscriptions·quizzes 임시 오픈 → **커밋 전 전부 원복**(이 커밋엔 layout.tsx 미포함).
 
 ### orders / payments (결제 내역·주문 상세·환불) — 이슈 #384 / 브랜치 `feature/payment-history#384`
-- **결제 내역 목록** (`app/(user)/orders/page.tsx`, Server): 헤더 아바타 드롭다운 "결제 내역"(→`/orders`, `UserHeader` 수정). `getMyPaymentsServer`(GET /api/payment/me, 단수·MyPaymentHistoryResponse shape=amount/orderNo/displayName) → `PaymentHistoryCard`(Server·주문번호·상태뱃지·일시·금액·항목불릿, 클릭→`/orders/{orderId}`) / 빈 상태 emptyStateIcon. 격리막 `payments/{types,server}`(USE_MOCK+`toPaymentHistory`).
+- **결제 내역 목록** (`app/(user)/orders/page.tsx`, Server): 헤더 아바타 드롭다운 "결제 내역"(→`/orders`, `UserHeader` 수정). `getMyPaymentsServer`(당시 `GET /api/payment/me` 단수 기록 — **현재 경로는 복수 `/api/payments/me`**, 단수는 500) → `MyPaymentHistoryResponse` shape=amount/orderNo/displayName → `PaymentHistoryCard`(Server·주문번호·상태뱃지·일시·금액·항목불릿, 클릭→`/orders/{orderId}`) / 빈 상태 emptyStateIcon. 격리막 `payments/{types,server}`(USE_MOCK+`toPaymentHistory`).
 - **주문 상세** (`app/(user)/orders/[orderId]/page.tsx`, Server): 주문 정보(번호·상태뱃지·주문/결제일시[결제가 3분 뒤]·결제수단[신용카드/토스페이/카카오페이/계좌이체]) + `OrderRefundView`(client). ⚠️ BE 미구현(README: payment은 목록만) → **Figma 기준 가정 shape**, `getOrderDetailServer`+TODO `GET /api/order/{id}`.
 - **환불 (`OrderRefundView`, client) — 항목별(per-item) 모델**:
   - 주문 내역에 **항목별 체크박스**(미환불 항목), 사유 인라인 없음. 환불된 항목=**「환불 완료」뱃지+체크박스 제거**. 구독 항목 썸네일=**체크아웃과 동일 파란 sparkle 박스**(강의=회색 이미지 placeholder, 체크아웃과 동일).

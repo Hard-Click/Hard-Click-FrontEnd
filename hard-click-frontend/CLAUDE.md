@@ -54,11 +54,11 @@ npx jest         # 유닛 테스트
 
 | 문서 | 담긴 것 |
 |---|---|
-| `features/auth/CLAUDE.md` | 토큰은 httpOnly 쿠키에만(`localStorage` 금지) · 토큰 첨부는 서버가 · 401 재시도는 1회(single-flight) · `redirect()`는 try/catch **밖** |
-| `features/payments/CLAUDE.md` | 토스 SDK 키 배치 규칙 · 결제 흐름의 검증 주체 · `Idempotency-Key`를 매번 붙이는 이유 · 환불이 BE **항목별** 모델인 것 · 가짜 성공 금지 |
-| `features/learning/CLAUDE.md` | HLS 3분기 재생 · watch-time 누적(heartbeat + 내비 분기) · **"완료"는 서버 성공 시에만** · 순공 타이머 연동 |
+| `src/features/auth/CLAUDE.md` | 토큰은 httpOnly 쿠키에만(`localStorage` 금지) · 토큰 첨부는 서버가 · 401 재시도는 1회(single-flight) · `redirect()`는 try/catch **밖** |
+| `src/features/payments/CLAUDE.md` | 토스 SDK 키 배치 규칙 · 결제 흐름의 검증 주체 · `Idempotency-Key`를 매번 붙이는 이유 · 환불이 BE **항목별** 모델인 것 · 가짜 성공 금지 |
+| `src/features/learning/CLAUDE.md` | HLS 3분기 재생 · watch-time 누적(heartbeat + 내비 분기) · **"완료"는 서버 성공 시에만** · 순공 타이머 연동 |
 
-### ② 작업 종류에 따라 → `docs/*.md` (팀 규칙 5종)
+### ② 작업 종류에 따라 → `docs/*.md` (팀 규칙 5종 + 작업 로그)
 
 | 문서 | 언제 읽나 |
 |---|---|
@@ -67,12 +67,12 @@ npx jest         # 유닛 테스트
 | `docs/WORKFLOW.md` | 올릴 때 — 이슈 → 브랜치 → 커밋 → PR → 리뷰 1+ → 머지 · 라벨 · 이슈/PR 템플릿 · **절대 금지 목록** |
 | `docs/TESTING.md` | 테스트 쓸 때 — Jest/Playwright 두 계층 · **Playwright 스펙은 `e2e/`에만** · 정직성 회귀 테스트 |
 | `docs/DEPLOYMENT.md` | 배포·환경변수 — Vercel 기준 · `NEXT_PUBLIC_*`는 빌드에 박힌다 · 4.5MB 요청 제한 |
+| `docs/WORK_LOG.md` | **작업 후 필수 기록** — 무엇을 / 어디서 어디로 / 왜 (§3-3) |
 
 ### ③ 요청받았을 때만 → 이 체인 밖의 문서
 
 - `docs/BE_*.md` · `docs/be-ticket-*.md` — 백엔드 요청·버그 티켓 (1회성 기록)
 - `docs/발표_*.md` · `docs/시연_*.md` — 발표 자료 (표준 규칙 아님)
-- `docs/WORK_LOG.md` — 컴포넌트 작업 로그 (무엇을 / 어디서 어디로 / 왜)
 
 ---
 

@@ -56,8 +56,13 @@ next-env.d.ts
 
 # ── AI 컨텍스트 문서 (2026-07-21) ──────────────────────────────
 # CLAUDE.md 체인은 커밋한다 — 팀 규칙을 AI가 자동으로 읽게 하려면 저장소에 있어야 한다.
-#   커밋 대상: 루트 CLAUDE.md · src/features/{도메인}/CLAUDE.md
+# 단 아무 데나 생긴 CLAUDE.md가 딸려 들어오지 않게 **경로를 명시적으로 허용**한다.
 # .claude/ (개인 세션 설정)는 위에서 계속 제외한다.
+**/CLAUDE.md
+!/CLAUDE.md
+!/src/features/auth/CLAUDE.md
+!/src/features/learning/CLAUDE.md
+!/src/features/payments/CLAUDE.md
 
 # docs/ 는 기본 제외하고, 팀 규칙 문서만 허용한다.
 # (발표 자료·BE 요청 티켓·개인 초안 등 1회성 문서가 섞여 들어오는 것 방지)

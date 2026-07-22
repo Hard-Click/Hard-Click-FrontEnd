@@ -2,7 +2,7 @@
 
 > 이 폴더는 **인증(로그인/로그아웃/세션)** 을 담당한다. 파일 구조·타입·컴포넌트 분리 같은
 > **코드로 이미 뻔한 건 여기 안 적는다.** 여기 적는 건 오직 **코드만 봐서는 틀리기 쉬운 보안·위험 지점**이다.
-> (전역 인증 원칙은 루트 `CLAUDE.md §6`. 이 문서는 그걸 **실제 구현 기준으로 좁힌 주의사항**.)
+> (전역 인증 원칙은 루트 `CLAUDE.md §0`(원칙 3: httpOnly 쿠키). 이 문서는 그걸 **실제 구현 기준으로 좁힌 주의사항**.)
 
 ---
 
@@ -56,12 +56,12 @@
 ## 참고 (코드로 알 수 있어 짧게만)
 - **세션 쓰기 진입점은 3곳뿐**: `login.action.ts`(로그인), `session.ts`(`establishSession`/`clearSession`), 프록시의 재발급/정리. 쿠키를 **다른 곳에서 직접 `set`/`delete` 하지 마라** — 정책이 흩어진다.
 - **로그아웃**(`logout.actions.ts`): 백엔드 `POST /api/auth/logout`이 body에 `refreshToken`(@NotBlank)을 요구 → 서버에서 쿠키를 읽어 주입한다. 이후 `clearSession()`으로 쿠키 정리.
-- **MOCK 모드**(`USE_MOCK_AUTH`): 인증 도메인은 실서버 연동이 기본이나, BE 없이 데모/E2E가 필요할 때만 `login.action.ts`의 mock 분기가 고정 계정(test/admin1/instructor1)으로 결정적 로그인을 한다. **PR 전 mock 플래그 원복 필수**(루트 §0.1 §12).
+- **MOCK 모드**(`USE_MOCK_AUTH`): 인증 도메인은 실서버 연동이 기본이나, BE 없이 데모/E2E가 필요할 때만 `login.action.ts`의 mock 분기가 고정 계정(test/admin1/instructor1)으로 결정적 로그인을 한다. **PR 전 mock 플래그 원복 필수**(루트 §0.1 · `docs/WORKFLOW.md` §8).
 - 🙋요청: 백엔드 토큰 수명 실제값 — 현재 상수는 **Access 15분 / Refresh 14일**(`auth-cookies.ts`) 기준. 백엔드 정책이 다르면 이 상수를 맞춰야 한다(쿠키 maxAge가 여기서 결정됨).
 
 ---
 
-작성 완료. 파일: `/Users/hyun/Hard-Click-FrontEnd/hard-click-frontend/src/features/auth/CLAUDE.md`
+작성 완료. 파일: `src/features/auth/CLAUDE.md`
 
 코드 검증으로 원본 §6 대비 정정·구체화한 핵심:
 - **토큰 첨부 경로가 하나가 아니라 둘**임을 확인 — 서버 axios 인터셉터(`lib/api.ts` serverApi, RSC/Server Action용) **와** BFF 프록시(`app/api/[...path]/route.ts`, 클라 `api`용)로 호출자에 따라 갈린다. 표로 명시.
