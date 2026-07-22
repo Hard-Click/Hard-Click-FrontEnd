@@ -4,10 +4,8 @@ import { serverApi } from '@/lib/api';
 import { isMock } from '@/mocks/config';
 import { gradeSimilarQuizMock } from '@/mocks/similarQuiz.mock';
 import type { QuizReviewQuestion } from '@/features/quizzes/types';
+import { pickTimeSpentSeconds } from '@/features/quizzes/timeSpent';
 import type { SimilarQuizSubmitResult } from './types';
-
-/** BE 요청 DTO의 timeSpentSeconds가 32비트 Integer — 이 범위를 넘으면 역직렬화 단계에서 400. */
-const INT32_MAX = 2147483647;
 
 export interface SimilarQuizSubmitState {
   success: boolean;
@@ -76,20 +74,8 @@ export async function submitSimilarQuizAction(
     ) {
       return { success: false, message: '제출 데이터가 올바르지 않습니다.' };
     }
-    // 맵 자체도 신뢰하지 않는다 — null/비객체가 오면 인덱싱에서 TypeError가 나 제출 전체가 실패한다(§5).
-    const t =
-      timeSpentByQuestion && typeof timeSpentByQuestion === 'object'
-        ? timeSpentByQuestion[questionId]
-        : undefined;
-    // 상한(1시간 초과)은 BE 몫이지만, BE DTO가 32비트 Integer라 그 범위를 넘는 값은
-    // BE 정규화에 닿기도 전에 역직렬화 400으로 터져 제출 전체가 실패한다(정규 퀴즈와 동일).
-    const timeSpentSeconds =
-      typeof t === 'number' &&
-      Number.isFinite(t) &&
-      t >= 0 &&
-      t <= INT32_MAX
-        ? Math.round(t)
-        : null;
+    // 정규화(미측정→null · INT32 범위 방어)는 정규 퀴즈와 공용 유틸을 쓴다.
+    const timeSpentSeconds = pickTimeSpentSeconds(timeSpentByQuestion, questionId);
     answerList.push({ questionId, selectedIndex: idx, timeSpentSeconds });
   }
 
