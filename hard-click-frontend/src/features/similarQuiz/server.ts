@@ -12,8 +12,8 @@ import type { SimilarQuizDetail } from './types';
  *   조회(POST /api/similar-quizzes) 라이브 검증 = **200 + courseId 요청 shape 일치**까지만 확인.
  *   ⚠️ non-null 응답 shape(questions[].options 등)는 오답/유사문제가 있는 케이스를 아직 못 받아봐
  *   **미대조**(data=null 정상 empty만 확인) → 아래 ApiSimilarQuiz는 BE 계약 기준 **가정 shape**(§0.1①).
- *   ⚠️ 제출/채점(submitSimilarQuizAction)은 BE **develop엔 있으나 prod(main) 미배포** → 배포 전엔 404
- *   (정직하게 '제출 실패' 토스트, 가짜 채점 안 함). BE develop→main 배포 시 완전 작동.
+ *   제출/채점(submitSimilarQuizAction)의 상태는 **actions.ts 헤더에 단일 기록**한다(중복 서술 금지).
+ *   요약: BE origin/main에 제출 엔드포인트·풀이시간 저장까지 반영됨(2026-07-22 코드 검증).
  * ───────────────────────────────────────────────────────────────────────── */
 
 /** POST /api/similar-quizzes 응답 — 가정 shape(정답·해설 제외). */
