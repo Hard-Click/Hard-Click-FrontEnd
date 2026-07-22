@@ -82,7 +82,13 @@ export async function getTodayTasksServer(today: Date = new Date()): Promise<Tod
   if (!res.success) {
     throw new Error(`오늘 할 일 조회 실패 (${res.httpStatus}): ${res.message}`);
   }
-  const tasks: TodayTask[] = (res.data?.items ?? []).map((it) => ({
+  const tasks: TodayTask[] = (res.data?.items ?? []).map(toTodayTask);
+  return { date: toISODate(today), tasks };
+}
+
+/** `/me/today`와 `/me?from=&to=`가 같은 항목 필드를 내려줘(BE CalendarItemResponse) 매핑 규칙을 공유한다. */
+function toTodayTask(it: ApiScheduleItem): TodayTask {
+  return {
     id: itemKey(it),
     itemId: toItemId(it),
     source: toSource(it),
@@ -93,8 +99,28 @@ export async function getTodayTasksServer(today: Date = new Date()): Promise<Tod
     courseId: it.courseId ?? undefined,
     startTime: it.startTime ?? '',
     endTime: it.endTime ?? '',
-  }));
-  return { date: toISODate(today), tasks };
+  };
+}
+
+/**
+ * 특정 날짜의 할 일 조회 — 캘린더 날짜 클릭(날짜 전환)용.
+ * `/me/today`는 날짜 파라미터가 없어(BE ScheduleController가 서버 Clock으로 '오늘' 고정)
+ * 기간 조회 `GET /api/schedule/me?from=&to=`를 from=to=그날로 좁혀 쓴다.
+ * 이 엔드포인트의 CalendarItemResponse가 today 항목과 같은 필드(source/itemId/status/시각/과목/courseId)를
+ * 내려줌은 BE 코드로 확인(2026-07-22, ScheduleResponses.CalendarItemResponse) — 매핑도 today와 동일.
+ * @param dateISO 'YYYY-MM-DD' (호출부 검증 전제 — 형식 검증은 Server Action 경계에서)
+ */
+export async function getTasksForDateServer(dateISO: string): Promise<TodayTasksSummary> {
+  if (isMock('schedule')) {
+    return { date: dateISO, tasks: [...mockTodayTasks] };
+  }
+  const res = await serverApi.get<ApiScheduleItem[]>(
+    `/api/schedule/me?from=${dateISO}&to=${dateISO}`,
+  );
+  if (!res.success) {
+    throw new Error(`할 일 조회 실패 (${res.httpStatus}): ${res.message}`);
+  }
+  return { date: dateISO, tasks: (res.data ?? []).map(toTodayTask) };
 }
 
 /**

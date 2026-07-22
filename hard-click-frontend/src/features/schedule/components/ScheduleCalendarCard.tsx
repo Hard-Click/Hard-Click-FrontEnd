@@ -10,9 +10,19 @@ interface ScheduleCalendarCardProps {
   blocks?: readonly ScheduleBlock[];
   /** 그리드 배치용(예: row-span) — 루트 div에 그대로 병합된다. */
   className?: string;
+  /** 날짜 선택(CalendarGrid로 통과). 안 넘기면 보기 전용. */
+  selectedDate?: string;
+  onSelectDate?: (date: string) => void;
 }
 
-export function ScheduleCalendarCard({ year, month, blocks, className = '' }: ScheduleCalendarCardProps) {
+export function ScheduleCalendarCard({
+  year,
+  month,
+  blocks,
+  className = '',
+  selectedDate,
+  onSelectDate,
+}: ScheduleCalendarCardProps) {
   return (
     <div className={`flex h-full flex-col rounded-2xl border border-[#E2E8F0] bg-white p-6 ${className}`}>
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -20,7 +30,13 @@ export function ScheduleCalendarCard({ year, month, blocks, className = '' }: Sc
         <ScheduleLegend />
       </div>
       <div className="mt-4 min-h-0 flex-1">
-        <CalendarGrid year={year} month={month} blocks={blocks} />
+        <CalendarGrid
+          year={year}
+          month={month}
+          blocks={blocks}
+          selectedDate={selectedDate}
+          onSelectDate={onSelectDate}
+        />
       </div>
     </div>
   );

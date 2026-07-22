@@ -24,7 +24,7 @@ jest.mock('@/lib/api', () => ({
 }));
 
 import { serverApi } from '@/lib/api';
-import { getTodayTasksServer } from './server';
+import { getTodayTasksServer, getTasksForDateServer } from './server';
 
 const mockGet = serverApi.get as jest.Mock;
 
@@ -138,5 +138,52 @@ describe('getTodayTasksServer — 오늘 할 일 매핑(toSource/itemKey/courseI
         '오늘 할 일 조회 실패',
       );
     });
+  });
+});
+
+/** `/api/schedule/me?from=&to=` 응답(CalendarItemResponse 배열을 data에 직접) 배선 */
+function wireRange(items: unknown[]) {
+  mockGet.mockResolvedValue(ok(items));
+}
+
+describe('getTasksForDateServer — 특정 날짜 할 일 매핑(기간조회 /me?from=to=)', () => {
+  it('CalendarItemResponse 배열을 today와 동일 규칙(toTodayTask)으로 매핑하고 date는 인자 그대로 둔다', async () => {
+    wireRange([
+      {
+        itemId: 1, source: 'REVIEW', planDate: '2026-07-18',
+        subject: '복습', title: 'R', courseId: 42, status: 'PLANNED',
+      },
+      {
+        slotId: 9012, source: 'LESSON', planDate: '2026-07-18',
+        subject: '영어', title: '듣기', startTime: '07:00', endTime: '08:00', status: 'DONE',
+      },
+    ]);
+
+    const { date, tasks } = await getTasksForDateServer('2026-07-18');
+
+    // /me/today가 아니라 인자로 받은 그 날짜를 그대로 date로 둔다(서버 Clock '오늘' 아님)
+    expect(date).toBe('2026-07-18');
+    // REVIEW: source/category/courseId 배선 + itemKey 네임스페이스 (getTodayTasksServer와 동일 매퍼)
+    expect(tasks[0]).toMatchObject({
+      id: 'REVIEW-1', source: 'REVIEW', category: 'REVIEW', courseId: 42, done: false,
+    });
+    // LESSON: status DONE→done, 시각 보존
+    expect(tasks[1]).toMatchObject({
+      id: 'LESSON-9012', source: 'LESSON', done: true, startTime: '07:00', endTime: '08:00',
+    });
+  });
+
+  it('data가 없으면 빈 배열 — /me/today와 달리 items 래핑이 아니라 배열 직접이라 undefined→[]', async () => {
+    mockGet.mockResolvedValue(ok(null));
+
+    const { tasks } = await getTasksForDateServer('2026-07-18');
+
+    expect(tasks).toEqual([]);
+  });
+
+  it('success=false면 에러를 던진다(빈 목록으로 위장하지 않음, §0.1④)', async () => {
+    mockGet.mockResolvedValue(fail());
+
+    await expect(getTasksForDateServer('2026-07-18')).rejects.toThrow('할 일 조회 실패');
   });
 });
