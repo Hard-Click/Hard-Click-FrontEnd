@@ -58,6 +58,11 @@ const TYPING_TTL_MS = 3000;
 /** 연속 STOMP 실패 이 횟수 넘으면 자동 재연결 포기(1회용 티켓 무한 소모 방지). onConnect 성공 시 리셋. */
 const MAX_STOMP_RETRIES = 3;
 
+/** STOMP 하트비트 간격(ms). ALB idle timeout(기본 60초, 라이브 검증: /api/notifications/stream이 정확히
+ *  60초에 'other side closed'로 끊김)보다 충분히 짧게 잡아, 메시지 왕래가 없어도 이 프레임이 주기적으로
+ *  오가 소켓이 idle로 판정되지 않게 한다. */
+const HEARTBEAT_MS = 15000;
+
 /** WS 핸드셰이크 URL — http→ws / https→wss (docs §7: raw WebSocket, SockJS 아님). */
 const WS_URL = `${(process.env.NEXT_PUBLIC_API_BASE_URL ?? '').replace(/^http/, 'ws')}/ws-chat`;
 
@@ -237,6 +242,9 @@ export function useChatSocket({
     const client = new Client({
       brokerURL: WS_URL,
       reconnectDelay: 5000,
+      // ALB idle timeout(§ HEARTBEAT_MS 주석) 대비 — 무입력 채팅방도 이 프레임으로 소켓이 계속 살아있는다.
+      heartbeatIncoming: HEARTBEAT_MS,
+      heartbeatOutgoing: HEARTBEAT_MS,
       // 티켓은 30초·1회용(getAndDelete) → 매 (재)연결 직전 새로 발급. beforeConnect는 async 지원.
       beforeConnect: async () => {
         const t = await issueSocketTicketAction();
