@@ -4,10 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { serverApi } from '@/lib/api';
 import { isMock } from '@/mocks/config';
 import { mockQuizzes } from '@/mocks/quizzes.mock';
+import { pickTimeSpentSeconds } from './timeSpent';
 import type { QuizSubmitResult } from './types';
-
-/** BE 요청 DTO의 timeSpentSeconds가 32비트 Integer — 이 범위를 넘으면 역직렬화 단계에서 400. */
-const INT32_MAX = 2147483647;
 
 export interface QuizSubmitState {
   success: boolean;
@@ -102,22 +100,8 @@ export async function submitQuizAction(
       ) {
         return { success: false, message: '제출 데이터가 올바르지 않습니다.' };
       }
-      // 맵 자체도 신뢰하지 않는다 — null/비객체가 오면 인덱싱에서 TypeError가 나 제출 전체가 실패하므로,
-      // '값이 없으면 null(미측정)' 계약을 지키도록 맵 유무를 먼저 가른다(Server Action 경계, §5).
-      const t =
-        timeSpentByQuestion && typeof timeSpentByQuestion === 'object'
-          ? timeSpentByQuestion[questionId]
-          : undefined;
-      // 상한(1시간 초과)은 BE 몫이지만, BE DTO가 32비트 Integer라 그 범위를 넘는 값은
-      // BE 정규화에 닿기도 전에 역직렬화 400으로 터져 제출 전체가 실패한다. 계약이 표현할 수
-      // 없는 값은 미측정으로 처리한다(비즈니스 상한이 아니라 계약 범위 방어, §5).
-      const timeSpentSeconds =
-        typeof t === 'number' &&
-        Number.isFinite(t) &&
-        t >= 0 &&
-        t <= INT32_MAX
-          ? Math.round(t)
-          : null;
+      // 정규화(미측정→null · INT32 범위 방어)는 유사퀴즈와 공용 유틸을 쓴다.
+      const timeSpentSeconds = pickTimeSpentSeconds(timeSpentByQuestion, questionId);
       answerList.push({ questionId, selectedOptionId: opts[idx], timeSpentSeconds });
     }
 
