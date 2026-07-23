@@ -70,11 +70,14 @@ export async function getCommunityPosts(
   }
 
   // 스터디는 게시판(/api/boards)과 별도 리소스 → /api/study로 조회.
-  // ⚠️ 이 엔드포인트는 subject/page/size만 지원하고 keyword(검색)/sort(정렬)는 미지원.
-  // 따라서 스터디 탭에서는 검색어/정렬이 서버에 전달되지 않는다.
-  // (BE가 keyword/sort를 지원하면 여기서 전달하고, 계속 미지원이면 스터디 탭 UI에서
-  //  검색/정렬 컨트롤을 비활성화하는 후속 작업이 필요함)
+  // ⚠️ 이 엔드포인트는 subject/page/size만 지원하고 keyword(검색)/sort(정렬)는 미지원
+  // (Swagger `StudyListRequest` 스키마 라이브 확인 — page·size·subject 필드뿐, keyword 없음).
+  // 검색어가 있으면 질문게시판 과목 필터(#698)와 동일하게 전체 페이지를 받아 제목/내용으로
+  // 클라이언트에서 거른 뒤 재페이지네이션한다. sort(정렬)는 여전히 서버에 전달되지 않음(범위 밖).
   if (boardType === 'STUDY') {
+    if (keyword) {
+      return getFilteredStudyPosts(page, keyword, subjectCode);
+    }
     const studyParams = new URLSearchParams();
     studyParams.set('page', String(page));
     if (subjectCode) studyParams.set('subject', subjectCode);
@@ -170,5 +173,60 @@ async function getFilteredQuestionPosts(
       currentPage: safePage,
       totalCount: matched.length,
     }),
+  };
+}
+
+const STUDY_PAGE_SIZE = 10;
+
+/**
+ * 스터디모집 검색어 필터 (BE 미지원 워크어라운드, #698 질문게시판 패턴과 동일).
+ * 과목 필터는 서버에 그대로 위임하고, 그 결과 전체 페이지를 받아 제목/내용에 검색어가
+ * 포함된 것만 거른 뒤 프론트에서 재페이지네이션한다.
+ */
+async function getFilteredStudyPosts(
+  page: number,
+  keyword: string,
+  subjectCode: string | undefined
+): Promise<ApiResponse<PostListResponse>> {
+  const urlFor = (p: number): string => {
+    const sp = new URLSearchParams();
+    sp.set('page', String(p));
+    if (subjectCode) sp.set('subject', subjectCode);
+    return `/api/study?${sp.toString()}`;
+  };
+
+  const first = await serverApi.get<StudyListApiResponse>(urlFor(0));
+  if (!first.success || first.data == null) {
+    return mapOk(first, toStudyListResponse);
+  }
+
+  const totalPages = first.data.totalPages ?? 1;
+  const rest =
+    totalPages > 1
+      ? await Promise.all(
+          Array.from({ length: totalPages - 1 }, (_, i) =>
+            serverApi.get<StudyListApiResponse>(urlFor(i + 1))
+          )
+        )
+      : [];
+
+  const all = [first, ...rest].flatMap((r) => r.data?.content ?? []);
+  const lowerKeyword = keyword.toLowerCase();
+  const matched = all.filter(
+    (s) =>
+      s.title.toLowerCase().includes(lowerKeyword) ||
+      s.content?.toLowerCase().includes(lowerKeyword)
+  );
+
+  const newTotalPages = Math.max(1, Math.ceil(matched.length / STUDY_PAGE_SIZE));
+  const safePage = Math.min(Math.max(page, 0), newTotalPages - 1);
+  const paged = matched.slice(
+    safePage * STUDY_PAGE_SIZE,
+    (safePage + 1) * STUDY_PAGE_SIZE
+  );
+
+  return {
+    ...first,
+    data: toStudyListResponse({ content: paged, totalPages: newTotalPages }),
   };
 }
