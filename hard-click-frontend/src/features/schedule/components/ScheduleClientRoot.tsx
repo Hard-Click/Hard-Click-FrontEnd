@@ -10,6 +10,7 @@ import {
   createTodoAction,
   updateTodoAction,
   deleteTodoAction,
+  getTasksForDateAction,
 } from '../actions';
 import { ScheduleCalendarCard } from './ScheduleCalendarCard';
 import { TodayTaskPanel } from './TodayTaskPanel';
@@ -34,6 +35,9 @@ interface ScheduleClientRootProps {
  * (실패하면 토스트만 띄우고 이전 상태 유지 — 낙관적 업데이트 아님).
  * 완료 체크는 BE가 단방향(PLANNED→DONE)만 지원해 되돌릴 수 없다 — `TodayTaskChecklist`가 이미 완료된 항목은
  * 체크박스를 비활성화해 애초에 다시 누르지 못하게 막는다.
+ * 캘린더 날짜 클릭 → 그 날짜 항목을 재조회해 투두/타임테이블을 전환한다(초기값 = 오늘).
+ * 조회 실패 시 날짜를 바꾸지 않고 이전 화면 유지(빈 목록으로 위장하지 않음, §0.1④).
+ * 추가/수정의 planDate도 선택 날짜를 따른다 — 다른 날짜를 보며 추가하면 그 날짜의 할 일이 된다.
  */
 export function ScheduleClientRoot({
   year,
@@ -44,6 +48,28 @@ export function ScheduleClientRoot({
   aiCoachComment,
 }: ScheduleClientRootProps) {
   const [tasks, setTasks] = useState<readonly TodayTask[]>(initialTasks);
+  const [selectedDate, setSelectedDate] = useState(date);
+  const [dateLoading, setDateLoading] = useState(false);
+
+  const selectDate = (next: string) => {
+    if (next === selectedDate || dateLoading) return;
+    void (async () => {
+      setDateLoading(true);
+      try {
+        const result = await getTasksForDateAction(next);
+        if (!result.success || !result.tasks) {
+          toast.error(result.message);
+          return;
+        }
+        setSelectedDate(next);
+        setTasks(result.tasks);
+      } catch {
+        toast.error('해당 날짜 조회에 실패했어요. 다시 시도해주세요.');
+      } finally {
+        setDateLoading(false);
+      }
+    })();
+  };
 
   const toggleTask = (id: string) => {
     const task = tasks.find((t) => t.id === id);
@@ -69,7 +95,7 @@ export function ScheduleClientRoot({
     try {
       const result = await createTodoAction({
         title: input.title,
-        planDate: date,
+        planDate: selectedDate,
         startTime: input.startTime,
         endTime: input.endTime,
       });
@@ -104,7 +130,7 @@ export function ScheduleClientRoot({
     try {
       const result = await updateTodoAction(task.itemId, {
         title: input.title,
-        planDate: date,
+        planDate: selectedDate,
         startTime: input.startTime,
         endTime: input.endTime,
       });
@@ -141,21 +167,33 @@ export function ScheduleClientRoot({
     }
   };
 
-  // 자정을 넘겨 다음날로 이어지는 할 일(끝 시간 <= 시작 시간)은 캘린더에도 오늘~다음날 막대로 보여준다.
+  // 자정을 넘겨 다음날로 이어지는 할 일(끝 시간 <= 시작 시간)은 캘린더에도 선택 날짜~다음날 막대로 보여준다.
   // 시간이 없는 항목(예: 시간 미지정 REVIEW)은 '' < ''가 false로 걸러진다. 끝==시작(0분)은 자정 넘김이 아니므로 strict <.
   const overnightBlocks: ScheduleBlock[] = tasks
     .filter((t) => t.startTime !== '' && t.endTime !== '' && t.endTime < t.startTime)
-    .map((t) => ({ id: `overnight-${t.id}`, category: t.category, startDate: date, endDate: nextDateISO(date) }));
+    .map((t) => ({
+      id: `overnight-${t.id}`,
+      category: t.category,
+      startDate: selectedDate,
+      endDate: nextDateISO(selectedDate),
+    }));
   const mergedBlocks = [...scheduleBlocks, ...overnightBlocks];
 
   return (
     <Fragment>
-      <ScheduleCalendarCard year={year} month={month} blocks={mergedBlocks} className="lg:flex-1" />
+      <ScheduleCalendarCard
+        year={year}
+        month={month}
+        blocks={mergedBlocks}
+        className="lg:flex-1"
+        selectedDate={selectedDate}
+        onSelectDate={selectDate}
+      />
       <div className="flex w-full flex-col gap-4 lg:w-[536px] lg:flex-none">
         <div className="flex min-h-0 flex-1 gap-4">
           <div className="w-full lg:w-[260px]">
             <TodayTaskPanel
-              date={date}
+              date={selectedDate}
               tasks={tasks}
               onToggle={toggleTask}
               onAdd={addTask}

@@ -2,6 +2,8 @@
 
 import { serverApi } from '@/lib/api';
 import { isMock } from '@/mocks/config';
+import { getTasksForDateServer } from './server';
+import type { TodayTask } from './types';
 
 interface ScheduleActionResult {
   success: boolean;
@@ -75,6 +77,28 @@ export async function updateTodoAction(itemId: number, payload: TodoPayload): Pr
   if (isMock('schedule')) return { success: true, message: '할 일을 수정했어요.' };
   const res = await serverApi.put(`/api/schedule/todos/${itemId}`, payload);
   return toActionResult(res, '할 일을 수정했어요.');
+}
+
+interface TasksForDateResult extends ScheduleActionResult {
+  /** 조회 성공 시 그 날짜의 할 일 목록. */
+  tasks?: TodayTask[];
+}
+
+/**
+ * 특정 날짜의 할 일 조회 — 캘린더 날짜 클릭 시 투두/타임테이블 전환용.
+ * Server Action은 공개 엔드포인트라 날짜 형식을 사전 검증한다(§ validateTodoPayload와 같은 이유).
+ * 실패를 빈 목록으로 위장하지 않고 success:false로 돌려 호출부가 이전 날짜 화면을 유지하게 한다(§0.1④).
+ */
+export async function getTasksForDateAction(dateISO: string): Promise<TasksForDateResult> {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) {
+    return { success: false, message: '잘못된 날짜예요.' };
+  }
+  try {
+    const { tasks } = await getTasksForDateServer(dateISO);
+    return { success: true, message: '조회했어요.', tasks };
+  } catch {
+    return { success: false, message: '해당 날짜 조회에 실패했어요. 다시 시도해주세요.' };
+  }
 }
 
 /** 할 일 삭제. mock 단계는 실호출 없이 성공만 흉내낸다. */

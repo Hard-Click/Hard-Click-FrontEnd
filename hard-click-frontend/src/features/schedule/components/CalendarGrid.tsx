@@ -9,9 +9,13 @@ interface CalendarGridProps {
   /** 0-indexed (1월=0) */
   month: number;
   blocks?: readonly ScheduleBlock[];
+  /** 선택된 날짜(ISO). onSelectDate와 함께 줄 때만 의미 있음. */
+  selectedDate?: string;
+  /** 날짜 클릭 콜백(ISO). 없으면 기존처럼 보기 전용 — 함수 prop이라 서버 컴포넌트 사용처는 안 넘기면 된다. */
+  onSelectDate?: (date: string) => void;
 }
 
-export function CalendarGrid({ year, month, blocks = [] }: CalendarGridProps) {
+export function CalendarGrid({ year, month, blocks = [], selectedDate, onSelectDate }: CalendarGridProps) {
   const weeks = getMonthCalendarWeeks(year, month);
 
   return (
@@ -30,21 +34,37 @@ export function CalendarGrid({ year, month, blocks = [] }: CalendarGridProps) {
           return (
             <div key={week[0].date} className="flex-1">
               <div className="grid grid-cols-7">
-                {week.map((cell) => (
-                  <div key={cell.date} className="flex justify-center py-1">
-                    <span
-                      className={
-                        cell.isToday
-                          ? 'flex h-7 w-7 items-center justify-center rounded-full bg-[#1D4ED8] text-sm font-semibold text-white'
-                          : `flex h-7 w-7 items-center justify-center text-sm ${
-                              cell.inCurrentMonth ? 'text-[#1E293B]' : 'text-[#CBD5E1]'
-                            }`
-                      }
-                    >
-                      {cell.day}
-                    </span>
-                  </div>
-                ))}
+                {week.map((cell) => {
+                  const isSelected = cell.date === selectedDate;
+                  const dayClass = cell.isToday
+                    ? `flex h-7 w-7 items-center justify-center rounded-full bg-[#1D4ED8] text-sm font-semibold text-white${
+                        isSelected ? ' ring-2 ring-[#93C5FD]' : ''
+                      }`
+                    : isSelected
+                      ? 'flex h-7 w-7 items-center justify-center rounded-full bg-[#DBEAFE] text-sm font-semibold text-[#1D4ED8]'
+                      : `flex h-7 w-7 items-center justify-center rounded-full text-sm ${
+                          cell.inCurrentMonth ? 'text-[#1E293B]' : 'text-[#CBD5E1]'
+                        }`;
+                  return (
+                    <div key={cell.date} className="flex justify-center py-1">
+                      {onSelectDate && cell.inCurrentMonth ? (
+                        <button
+                          type="button"
+                          onClick={() => onSelectDate(cell.date)}
+                          aria-pressed={isSelected}
+                          aria-label={`${cell.date} 선택`}
+                          className={`${dayClass} transition ${
+                            !cell.isToday && !isSelected ? 'hover:bg-[#F1F5F9]' : ''
+                          }`}
+                        >
+                          {cell.day}
+                        </button>
+                      ) : (
+                        <span className={dayClass}>{cell.day}</span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               <div className="mt-1 flex flex-col gap-1">
                 {segments.map((segment) => (
