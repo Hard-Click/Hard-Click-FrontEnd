@@ -97,7 +97,7 @@ export function TodayTaskChecklist({ tasks, onToggle, onEdit, onDelete }: TodayT
 
       <div className="mt-5">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-[#64748B]">오늘 진행률</span>
+          <span className="text-[#64748B]">진행률</span>
           <span className="font-semibold text-[#1E293B]">
             {doneCount}/{tasks.length}
           </span>

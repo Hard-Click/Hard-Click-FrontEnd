@@ -98,11 +98,11 @@ export interface NewTaskInput {
 
 /**
  * 할 일 추가 모달 (client 섬, #876) — 제목 + 시작/끝 시간만 입력(과목 선택 없음).
- * "오늘 할 일" 패널 전용이라 날짜는 항상 오늘로 고정(별도 날짜 선택 UI 없음).
+ * 모달엔 날짜 선택 UI가 없고, 추가되는 항목의 날짜는 부모(ScheduleClientRoot)가 현재 선택된 날짜(selectedDate)로 지정한다.
  * 시간은 24시간제, 시/분(10분 단위)을 따로 고른다. 끝 시간이 시작 시간보다 같거나 빠르면
  * 다음날 새벽까지 이어지는 일정으로 본다(예: 22:40~02:00) — 그래서 시작보다 늦어야 한다는 검증은 없다.
  * 단, 시작=끝은 24시간짜리 일정으로 잘못 해석되므로 별도로 막는다.
- * ⚠️ BE 저장 API 없음(2026-07-15 기준) — "저장"은 오늘 할 일 목록에 로컬로만 반영된다(새로고침하면 사라짐).
+ * 저장은 부모의 createTodoAction → serverApi.post('/api/schedule/todos') 로 실서버에 반영된다(성공 시에만 목록 갱신, mock 모드는 성공만 흉내).
  */
 export function AddTaskModal({
   existingTasks,

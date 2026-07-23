@@ -47,7 +47,7 @@ export function CalendarGrid({ year, month, blocks = [], selectedDate, onSelectD
                         }`;
                   return (
                     <div key={cell.date} className="flex justify-center py-1">
-                      {onSelectDate ? (
+                      {onSelectDate && cell.inCurrentMonth ? (
                         <button
                           type="button"
                           onClick={() => onSelectDate(cell.date)}

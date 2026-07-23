@@ -112,6 +112,7 @@ function toTodayTask(it: ApiScheduleItem): TodayTask {
  */
 export async function getTasksForDateServer(dateISO: string): Promise<TodayTasksSummary> {
   if (isMock('schedule')) {
+    // mock: 날짜와 무관하게 고정 mockTodayTasks 반환(로컬 USE_MOCK 전용) — 날짜별 데이터가 아니라 헤더 날짜만 바뀐다.
     return { date: dateISO, tasks: [...mockTodayTasks] };
   }
   const res = await serverApi.get<ApiScheduleItem[]>(
