@@ -117,6 +117,11 @@
 - **코드리뷰(토끼) #1037**: 3건 반영 — ① 보존 이미지 재첨부 실패를 성공으로 위장하지 않기(위 항목) ② object URL 해제(위 항목) ③ 이 WORK_LOG 기록.
 - **PR #434 / 코드리뷰(토끼)**: 1건(Minor) 보류(사유 회신+resolve, 미해결 0) — `courses/actions.ts` 주석의 `'음란'`이 ReportModal/mock의 `'음란 행위'`와 불일치 지적 → 이 PR(커뮤니티 신고) 범위 밖 파일 주석이고 강의 리뷰 신고 stub용·런타임 값은 이미 일관 → BE 사유 명세 확정 시 전역 통일.
 
+### courses 강의 상세 권장 학습 정보 노출 — 이슈 #1044 / PR #1045 / 브랜치 `fix/course-recommendedInfo#1044`
+- **버그**: BE 상세 응답이 `recommendedWeeks`/`dailyMaxMinutes`를 주고(라이브 확인 2026-07-23: 109→12주/140분·110→12주/120분·111→10주/90분) FE 매퍼도 매핑하는데, 학생 강의 상세(`CourseDetailContent`)가 렌더하지 않아 미표시. 편집 폼(강사/관리자)에서만 사용 중이었음.
+- **수정**: 통계 행(수강생 수·총 강의시간·난이도)에 "권장 완강 N주"(calendarIcon)·"하루 최대 N분"(targetIcon) 칩 추가. 두 필드 nullable → **null이면 미표시**(§0.1② 가짜 기본값 렌더 금지). `courses/services.ts`의 "상세 응답 미제공 → 항상 null" 낡은 주석을 라이브 확인 결과로 갱신.
+- 출처: QA 라이브 E2E 점검(2026-07-23) FE-1 항목, BE#615 연관. tsc·build 통과.
+
 ### mypage 잔디 죽은 라우트 제거 — 이슈 #1046 / PR #1047 / 브랜치 `fix/mypage-grassDeadRoute#1046`
 - **버그**: `/mypage/grass` 진입 시 헤더만 있는 빈 화면(200). 페이지가 `return null` 스텁이고 앱 내 링크 0건(도달 불가한 죽은 라우트).
 - **수정**: `app/(user)/mypage/grass/` 폴더 삭제 → 404 정상화. 연간 잔디는 마이페이지 `GrassYearlyModal`(전체보기 모달)이 이미 제공하므로 기능 손실 없음. 추후 잔디 상세 페이지가 필요해지면 별도 이슈로 신규 구현.
