@@ -62,7 +62,7 @@ export function toCourseDetail(data: CourseDetailApiResponse): CourseDetail {
     totalLessons: allLessons.length,
     totalDuration: formatTotalDuration(totalSeconds),
     notices: [], // 별도 API: 강의 공지 목록
-    // ⚠️ 생성 요청에만 있는 필드 — 상세 응답·수정 요청 미제공 → 조회 시 항상 null. BE가 CourseDetailResponse에 추가하면 값이 흐른다.
+    // BE 상세 응답이 두 필드 제공 확인(2026-07-23 라이브: 109·110·111 모두 값 있음). 구 데이터는 null 가능 → null이면 UI 미표시(§0.1②).
     recommendedWeeks: data.recommendedWeeks ?? null,
     dailyMaxMinutes: data.dailyMaxMinutes ?? null,
     instructor: {
