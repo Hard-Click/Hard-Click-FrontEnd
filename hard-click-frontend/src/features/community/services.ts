@@ -281,13 +281,26 @@ export async function updateComment(
   if (keepImageUrl) {
     try {
       const res = await fetch(keepImageUrl);
-      if (res.ok) {
-        const blob = await res.blob();
-        const name = keepImageUrl.split('/').pop()?.split('?')[0] || 'image.jpg';
-        form.append('file', blob, name);
+      if (!res.ok) {
+        // 기존 이미지를 못 살리면 "이미지 없이 수정 성공"으로 조용히 넘어가지 않는다 — 보존 실패를
+        // 성공으로 위장하면 사용자가 눈치 못 채는 새 이미지가 사라진다(§0.1②).
+        return {
+          success: false,
+          httpStatus: 502,
+          message: '기존 이미지를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
+          data: { commentId },
+        };
       }
+      const blob = await res.blob();
+      const name = keepImageUrl.split('/').pop()?.split('?')[0] || 'image.jpg';
+      form.append('file', blob, name);
     } catch {
-      // 기존 이미지 재첨부 실패 — 텍스트 수정 자체는 막지 않고 이미지만 못 지킬 수 있음
+      return {
+        success: false,
+        httpStatus: 502,
+        message: '기존 이미지를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
+        data: { commentId },
+      };
     }
   }
   return api.patch<{ commentId: number }>(`/api/comments/${commentId}`, form);

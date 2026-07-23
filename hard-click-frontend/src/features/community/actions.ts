@@ -150,13 +150,16 @@ export async function updatePostAction(postId: number, formData: FormData) {
   for (const url of keepImageUrls) {
     try {
       const res = await fetch(url);
-      if (res.ok) {
-        const blob = await res.blob();
-        const name = url.split('/').pop()?.split('?')[0] || 'image.jpg';
-        backendForm.append('files', blob, name);
+      if (!res.ok) {
+        // 기존 이미지 하나를 못 살리면 "이미지 없이 수정 성공"으로 조용히 넘어가지 않는다 — 보존
+        // 실패를 성공으로 위장하면 사용자가 눈치 못 채는 새 그 이미지가 사라진다(§0.1②).
+        return { success: false, message: '기존 이미지를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.' };
       }
+      const blob = await res.blob();
+      const name = url.split('/').pop()?.split('?')[0] || 'image.jpg';
+      backendForm.append('files', blob, name);
     } catch {
-      // 기존 이미지 하나를 못 살렸다고 수정 전체를 실패시키지 않는다 — 나머지는 계속 진행
+      return { success: false, message: '기존 이미지를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.' };
     }
   }
   files.forEach((f) => backendForm.append('files', f as Blob));

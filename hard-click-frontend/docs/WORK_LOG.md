@@ -107,4 +107,12 @@
 - **격리막**: `reports/actions.ts` `submitReportAction`(입력 검증 targetId 정수·양수·사유 1+, USE_MOCK 접수, `POST /api/reports` TODO — 신고자=토큰), `reports/types.ts` `ReportTargetRef`/`SubmitReportInput`/`ReportActionResult`. 확인 단계는 ReportModal 내부(showConfirm) — 사유 폼↔확인 토글, 선택 보존.
 - **테스트 mock**: `community.mock` `mockPostDetailsById`(889/888/887 남의 글, 내용·작성자 일치) + services `getPostDetail`가 글별 반환(없으면 목록 항목 기준, isMine 없는 질문/자유=남의 글) → 게시글 신고 깃발 확인 가능(기존엔 항상 내 글이라 안 보였음).
 - ⚡ 댓글은 현재 모든 글 공통 mock(공유) → 글별 댓글은 BE 연동 시. 신고 깃발은 남의 글/댓글만(내 것=수정/삭제). 안현님 피드백: 확인 모달은 신고하기 누른 뒤(앞 아님)·제목 가운데. TEMP 게이트(layout.tsx /community)는 미리보기용 — 커밋 미포함.
+
+### community 이미지 보존 (게시글·댓글 수정 시 이미지 소실) — 이슈 #1036 / PR #1037 / 브랜치 `fix/commu-imageLossOnEdit#1036`
+- **버그**: 게시글 수정 폼이 기존 이미지 URL(문자열)과 새 파일(File)을 별도 배열(`previewImages`/`selectedFiles`)로 관리 → 제출 시 새 파일만 전송, 기존 이미지는 아예 전송 안 됨(PATCH가 파일 없으면 이미지 전부 삭제). 두 배열 인덱스가 어긋나 미리보기 삭제 시 엉뚱한 파일이 지워지는 별개 버그도 동반.
+- **수정**: `CommunityWriteForm.tsx`를 `ImageEntry`(existing/new) 단일 배열로 통합. 수정 제출 시 기존 이미지 URL을 `keepImageUrls`로 서버 액션에 전달 → `updatePostAction`(서버 환경, CORS 없음)이 그 URL을 다시 fetch해 새 파일과 함께 재첨부. 댓글/답글 수정(`UpdateCommentRequest`에 이미지 필드 자체가 없었음)도 `keepImageUrl` 방식으로 동일 처리.
+- **보존 재첨부 실패 처리**(코드리뷰 반영): 기존 이미지 하나라도 재fetch 실패하면 `updatePostAction`/`updateComment`가 그 자리에서 실패를 반환(§0.1② — 이미지 없이 조용히 성공 처리하지 않음). 이전엔 catch에서 무시하고 계속 진행해 "성공 토스트인데 이미지 소실"이 가능했음.
+- **object URL 정리**(코드리뷰 반영): `URL.createObjectURL`을 슬롯이 실제로 남을 때만 생성(꽉 찬 상태에서 여러 장 선택 시 못 쓰는 URL을 미리 만들지 않음), 이미지 삭제·탭 전환 초기화·언마운트(ref+cleanup) 시점에 `URL.revokeObjectURL` 호출 — 이전엔 어디서도 해제 안 해 반복 선택 시 브라우저 메모리 누적.
+- ⚠️ **백엔드 의존**: 라이브 검증 결과 `PATCH /api/posts/{postId}`가 문서 스펙(`files: array`, multipart)대로 보내도 이미지가 저장 안 되고 오히려 기존 것까지 지워지는 백엔드 버그를 확인(테스트 게시글로 재현). 이 PR의 프론트 수정은 구조적으로 맞지만 백엔드가 고쳐지기 전까진 실제 이미지 유지를 확인할 수 없음 — 백엔드팀 별도 제보.
+- **코드리뷰(토끼) #1037**: 3건 반영 — ① 보존 이미지 재첨부 실패를 성공으로 위장하지 않기(위 항목) ② object URL 해제(위 항목) ③ 이 WORK_LOG 기록.
 - **PR #434 / 코드리뷰(토끼)**: 1건(Minor) 보류(사유 회신+resolve, 미해결 0) — `courses/actions.ts` 주석의 `'음란'`이 ReportModal/mock의 `'음란 행위'`와 불일치 지적 → 이 PR(커뮤니티 신고) 범위 밖 파일 주석이고 강의 리뷰 신고 stub용·런타임 값은 이미 일관 → BE 사유 명세 확정 시 전역 통일.

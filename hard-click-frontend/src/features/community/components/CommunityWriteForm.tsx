@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { toast } from '@/lib/toast';
 import { useRouter } from 'next/navigation';
@@ -46,6 +46,19 @@ export default function CommunityWriteForm({
   const [images, setImages] = useState<ImageEntry[]>(
     initialFileUrls.map((url) => ({ kind: 'existing', url }))
   );
+  // 언마운트 시에만 그 시점의 object URL을 정리하기 위한 최신값 ref(images를 effect deps로 두면
+  // 상태 바뀔 때마다 정리돼 화면에 아직 보여주는 미리보기까지 revoke되어 버린다).
+  const imagesRef = useRef<ImageEntry[]>(images);
+  useEffect(() => {
+    imagesRef.current = images;
+  }, [images]);
+  useEffect(() => {
+    return () => {
+      imagesRef.current.forEach((img) => {
+        if (img.kind === 'new') URL.revokeObjectURL(img.previewUrl);
+      });
+    };
+  }, []);
 
   const [title, setTitle] = useState(initialTitle);
   const [titleError, setTitleError] = useState('');
@@ -100,6 +113,9 @@ export default function CommunityWriteForm({
     setRecruitError('');
     setDescriptionError('');
     setFocusedErrorField(null);
+    images.forEach((img) => {
+      if (img.kind === 'new') URL.revokeObjectURL(img.previewUrl);
+    });
     setImages([]);
   };
 
@@ -120,19 +136,17 @@ export default function CommunityWriteForm({
         return;
       }
     }
-    const newFiles = Array.from(files).slice(0, 2);
-    setImages((prev) =>
-      [
-        ...prev,
-        ...newFiles.map(
-          (f): ImageEntry => ({
-            kind: 'new',
-            file: f,
-            previewUrl: URL.createObjectURL(f),
-          })
-        ),
-      ].slice(0, 2)
-    );
+    // 남은 슬롯만큼만 object URL을 만든다 — 미리 다 만들고 slice로 버리면 버려진 URL이 영영
+    // revoke 안 돼 메모리에 쌓인다.
+    const room = Math.max(0, 2 - images.length);
+    const newEntries: ImageEntry[] = Array.from(files)
+      .slice(0, room)
+      .map((f) => ({
+        kind: 'new',
+        file: f,
+        previewUrl: URL.createObjectURL(f),
+      }));
+    setImages((prev) => [...prev, ...newEntries]);
     e.target.value = '';
   };
 
@@ -576,6 +590,10 @@ export default function CommunityWriteForm({
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
+                            const target = img;
+                            if (target.kind === 'new') {
+                              URL.revokeObjectURL(target.previewUrl);
+                            }
                             setImages((prev) =>
                               prev.filter((_, i) => i !== index)
                             );
