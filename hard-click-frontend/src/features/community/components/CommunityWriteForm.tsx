@@ -12,6 +12,12 @@ import type { SubjectItem } from '../types';
 
 const FILTERS = ['자유게시판', '질문게시판', '스터디모집'];
 
+/** 기존(서버) 이미지 vs 새로 선택한 파일을 한 배열로 관리 — 예전엔 previewImages(문자열)·selectedFiles(File)를
+ *  따로 관리해서, 앞쪽에 기존 이미지가 섞이면 두 배열의 인덱스가 어긋나 엉뚱한 이미지가 삭제됐다. */
+type ImageEntry =
+  | { kind: 'existing'; url: string }
+  | { kind: 'new'; file: File; previewUrl: string };
+
 interface CommunityWriteFormProps {
   mode?: 'create' | 'edit';
   initialCategory?: string;
@@ -37,8 +43,9 @@ export default function CommunityWriteForm({
 }: CommunityWriteFormProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(initialCategory);
-  const [previewImages, setPreviewImages] = useState<string[]>(initialFileUrls);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [images, setImages] = useState<ImageEntry[]>(
+    initialFileUrls.map((url) => ({ kind: 'existing', url }))
+  );
 
   const [title, setTitle] = useState(initialTitle);
   const [titleError, setTitleError] = useState('');
@@ -93,8 +100,7 @@ export default function CommunityWriteForm({
     setRecruitError('');
     setDescriptionError('');
     setFocusedErrorField(null);
-    setPreviewImages([]);
-    setSelectedFiles([]);
+    setImages([]);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,10 +121,18 @@ export default function CommunityWriteForm({
       }
     }
     const newFiles = Array.from(files).slice(0, 2);
-    setPreviewImages((prev) =>
-      [...prev, ...newFiles.map((f) => URL.createObjectURL(f))].slice(0, 2)
+    setImages((prev) =>
+      [
+        ...prev,
+        ...newFiles.map(
+          (f): ImageEntry => ({
+            kind: 'new',
+            file: f,
+            previewUrl: URL.createObjectURL(f),
+          })
+        ),
+      ].slice(0, 2)
     );
-    setSelectedFiles((prev) => [...prev, ...newFiles].slice(0, 2));
     e.target.value = '';
   };
 
@@ -179,13 +193,20 @@ export default function CommunityWriteForm({
         ? subject
         : undefined;
     if (mode === 'edit' && postId) {
+      const keepImageUrls = images
+        .filter((img): img is Extract<ImageEntry, { kind: 'existing' }> => img.kind === 'existing')
+        .map((img) => img.url);
+      const newFiles = images
+        .filter((img): img is Extract<ImageEntry, { kind: 'new' }> => img.kind === 'new')
+        .map((img) => img.file);
       const fd = new FormData();
       fd.append('data', JSON.stringify({
         title,
         content,
         ...(subjectName !== undefined ? { subject: subjectName } : {}),
+        keepImageUrls,
       }));
-      selectedFiles.forEach((f) => fd.append('files', f));
+      newFiles.forEach((f) => fd.append('files', f));
       const result = await updatePostAction(postId, fd);
       setIsSubmitting(false);
       if (!result.success) {
@@ -212,7 +233,9 @@ export default function CommunityWriteForm({
           content,
           ...(subjectName !== undefined ? { subject: subjectName } : {}),
         }));
-        selectedFiles.forEach((f) => fd.append('files', f));
+        images
+          .filter((img): img is Extract<ImageEntry, { kind: 'new' }> => img.kind === 'new')
+          .forEach((img) => fd.append('files', img.file));
       }
       const result = await createPostAction(fd);
       setIsSubmitting(false);
@@ -521,7 +544,7 @@ export default function CommunityWriteForm({
               </label>
               <div
                 onClick={() => {
-                  if (previewImages.length >= 2) {
+                  if (images.length >= 2) {
                     toast.error(COMMUNITY_ERRORS.P002);
                     return;
                   }
@@ -529,7 +552,7 @@ export default function CommunityWriteForm({
                 }}
                 className="flex h-[150px] cursor-pointer items-center justify-center rounded-2xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC]"
               >
-                {previewImages.length === 0 ? (
+                {images.length === 0 ? (
                   <>
                     <Image
                       src="/icons/Image.svg"
@@ -543,9 +566,9 @@ export default function CommunityWriteForm({
                   </>
                 ) : (
                   <div className="flex w-full items-center justify-center gap-4">
-                    {previewImages.map((image, index) => (
+                    {images.map((img, index) => (
                       <div
-                        key={index}
+                        key={img.kind === 'existing' ? img.url : img.previewUrl}
                         className="relative h-[110px] w-[110px] overflow-hidden rounded-xl border border-[#E2E8F0]"
                       >
                         <button
@@ -553,10 +576,7 @@ export default function CommunityWriteForm({
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            setPreviewImages((prev) =>
-                              prev.filter((_, i) => i !== index)
-                            );
-                            setSelectedFiles((prev) =>
+                            setImages((prev) =>
                               prev.filter((_, i) => i !== index)
                             );
                           }}
@@ -565,14 +585,14 @@ export default function CommunityWriteForm({
                           ✕
                         </button>
                         <Image
-                          src={image}
+                          src={img.kind === 'existing' ? img.url : img.previewUrl}
                           alt={`preview-${index}`}
                           fill
                           className="object-cover"
                         />
                       </div>
                     ))}
-                    {previewImages.length < 2 && (
+                    {images.length < 2 && (
                       <span className="text-xs text-[#94A3B8]">
                         이미지를 추가하려면 다시 클릭하세요
                       </span>

@@ -119,6 +119,10 @@ export interface CreateCommentRequest {
 
 export interface UpdateCommentRequest {
   content: string;
+  /** 수정 전 댓글이 갖고 있던 이미지 URL — 있으면 서버 액션이 이 URL을 다시 받아와 파일로 재첨부해
+   *  기존 이미지를 유지한다(FE 전용 필드, 백엔드로는 전달 안 됨). 댓글 수정 UI엔 이미지 교체 기능이
+   *  없으므로 텍스트만 바꿔도 기존 이미지가 사라지지 않게 하는 최소 보정. */
+  keepImageUrl?: string;
 }
 
 /* ───── 백엔드 응답 (실제 Hard-Click-BackEnd 코드 DTO) ─────

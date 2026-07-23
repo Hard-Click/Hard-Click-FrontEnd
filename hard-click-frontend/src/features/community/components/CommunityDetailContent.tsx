@@ -70,11 +70,17 @@ export default function CommunityDetailContent({
   const [isDeleting, setIsDeleting] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
+  const [editingCommentImageUrl, setEditingCommentImageUrl] = useState<
+    string | undefined
+  >(undefined);
   const [deletingCommentId, setDeletingCommentId] = useState<number | null>(
     null
   );
   const [editingReplyId, setEditingReplyId] = useState<number | null>(null);
   const [editingReplyText, setEditingReplyText] = useState('');
+  const [editingReplyImageUrl, setEditingReplyImageUrl] = useState<
+    string | undefined
+  >(undefined);
   const [deletingReplyInfo, setDeletingReplyInfo] = useState<{
     commentId: number;
     replyId: number;
@@ -204,15 +210,21 @@ export default function CommunityDetailContent({
     router.push('/community');
   };
 
-  const handleCommentEditStart = (commentId: number, content: string) => {
+  const handleCommentEditStart = (
+    commentId: number,
+    content: string,
+    imageUrl?: string | null
+  ) => {
     setEditingCommentId(commentId);
     setEditingCommentText(content);
+    setEditingCommentImageUrl(imageUrl ?? undefined);
   };
 
   const handleCommentEditSave = async (commentId: number) => {
     if (!editingCommentText.trim()) return;
     const result = await updateCommentAction(commentId, {
       content: editingCommentText,
+      keepImageUrl: editingCommentImageUrl,
     });
     if (!result.success) {
       toast.error(result.message || '댓글 수정에 실패했습니다.');
@@ -220,12 +232,14 @@ export default function CommunityDetailContent({
     }
     setEditingCommentId(null);
     setEditingCommentText('');
+    setEditingCommentImageUrl(undefined);
     if (await refreshComments()) toast.success('댓글이 수정되었습니다.');
   };
 
   const handleCommentEditCancel = () => {
     setEditingCommentId(null);
     setEditingCommentText('');
+    setEditingCommentImageUrl(undefined);
   };
 
   const handleCommentDelete = async (commentId: number) => {
@@ -238,15 +252,21 @@ export default function CommunityDetailContent({
     if (await refreshComments()) toast.success('댓글이 삭제되었습니다.');
   };
 
-  const handleReplyEditStart = (replyId: number, content: string) => {
+  const handleReplyEditStart = (
+    replyId: number,
+    content: string,
+    imageUrl?: string | null
+  ) => {
     setEditingReplyId(replyId);
     setEditingReplyText(content);
+    setEditingReplyImageUrl(imageUrl ?? undefined);
   };
 
   const handleReplyEditSave = async (replyId: number) => {
     if (!editingReplyText.trim()) return;
     const result = await updateCommentAction(replyId, {
       content: editingReplyText,
+      keepImageUrl: editingReplyImageUrl,
     });
     if (!result.success) {
       toast.error(result.message || '답글 수정에 실패했습니다.');
@@ -254,12 +274,14 @@ export default function CommunityDetailContent({
     }
     setEditingReplyId(null);
     setEditingReplyText('');
+    setEditingReplyImageUrl(undefined);
     if (await refreshComments()) toast.success('답글이 수정되었습니다.');
   };
 
   const handleReplyEditCancel = () => {
     setEditingReplyId(null);
     setEditingReplyText('');
+    setEditingReplyImageUrl(undefined);
   };
 
   const handleReplyDelete = async (replyId: number) => {
@@ -485,7 +507,8 @@ export default function CommunityDetailContent({
                           onClick={() =>
                             handleCommentEditStart(
                               comment.commentId,
-                              comment.content
+                              comment.content,
+                              comment.imageUrl
                             )
                           }
                         >
@@ -697,7 +720,8 @@ export default function CommunityDetailContent({
                                   onClick={() =>
                                     handleReplyEditStart(
                                       reply.commentId,
-                                      reply.content
+                                      reply.content,
+                                      reply.imageUrl
                                     )
                                   }
                                 >

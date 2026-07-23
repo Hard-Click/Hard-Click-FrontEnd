@@ -270,11 +270,26 @@ export async function updateComment(
   body: UpdateCommentRequest
 ) {
   if (USE_MOCK) return mockOk({ commentId });
+  const { keepImageUrl, ...rest } = body;
   const form = new FormData();
   form.append(
     'data',
-    new Blob([JSON.stringify(body)], { type: 'application/json' })
+    new Blob([JSON.stringify(rest)], { type: 'application/json' })
   );
+  // 댓글 수정 UI엔 이미지 교체 기능이 없다 — 기존 이미지가 있었다면 서버(server action)에서 그 URL을
+  // 다시 fetch해 file로 재첨부해야 텍스트만 고쳐도 이미지가 사라지지 않는다(§0.1④, 이전엔 사라지는 버그).
+  if (keepImageUrl) {
+    try {
+      const res = await fetch(keepImageUrl);
+      if (res.ok) {
+        const blob = await res.blob();
+        const name = keepImageUrl.split('/').pop()?.split('?')[0] || 'image.jpg';
+        form.append('file', blob, name);
+      }
+    } catch {
+      // 기존 이미지 재첨부 실패 — 텍스트 수정 자체는 막지 않고 이미지만 못 지킬 수 있음
+    }
+  }
   return api.patch<{ commentId: number }>(`/api/comments/${commentId}`, form);
 }
 
