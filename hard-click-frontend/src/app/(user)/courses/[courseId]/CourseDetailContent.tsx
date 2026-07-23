@@ -496,6 +496,35 @@ export default function CourseDetailContent({
                         {course.level}
                       </span>
                     </div>
+                    {/* 권장 완강 기간·하루 최대 학습시간 — nullable이라 값 있을 때만 노출(§0.1②) */}
+                    {course.recommendedWeeks !== null && (
+                      <div className="flex items-center gap-1.5">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src="/icons/calendarIcon.svg"
+                          width={16}
+                          height={16}
+                          alt=""
+                        />
+                        <span className="text-sm text-[#1A1F2E]">
+                          권장 완강 {course.recommendedWeeks}주
+                        </span>
+                      </div>
+                    )}
+                    {course.dailyMaxMinutes !== null && (
+                      <div className="flex items-center gap-1.5">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src="/icons/targetIcon.svg"
+                          width={16}
+                          height={16}
+                          alt=""
+                        />
+                        <span className="text-sm text-[#1A1F2E]">
+                          하루 최대 {course.dailyMaxMinutes}분
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* 가격 */}
