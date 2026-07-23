@@ -132,13 +132,36 @@ export async function updatePostAction(postId: number, formData: FormData) {
     return { success: false, message: '내용을 입력해주세요.' };
   }
 
+  // keepImageUrls는 FE 전용 필드(수정 폼이 유지하기로 한 기존 이미지 URL) — 백엔드로는 안 보내고
+  // 여기서 다시 fetch해 files에 재첨부한다. 안 그러면 PATCH가 신규 파일만 받아 기존 이미지가 전부
+  // 사라진다(§0.1④, 이전엔 실제로 사라지는 버그였음). 서버 액션(서버 환경)에서 fetch하므로 CORS 문제 없음.
+  const keepImageUrls = Array.isArray(body.keepImageUrls)
+    ? (body.keepImageUrls as unknown[]).filter((u): u is string => typeof u === 'string')
+    : [];
+  delete body.keepImageUrls;
+
   const files = formData.getAll('files').filter((f) => {
     const file = f as File;
     return file.size > 0 && ALLOWED_IMAGE_TYPES.includes(file.type) && file.size <= MAX_IMAGE_SIZE;
   });
 
   const backendForm = new FormData();
-  backendForm.append('data', new Blob([rawData], { type: 'application/json' }));
+  backendForm.append('data', new Blob([JSON.stringify(body)], { type: 'application/json' }));
+  for (const url of keepImageUrls) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) {
+        // 기존 이미지 하나를 못 살리면 "이미지 없이 수정 성공"으로 조용히 넘어가지 않는다 — 보존
+        // 실패를 성공으로 위장하면 사용자가 눈치 못 채는 새 그 이미지가 사라진다(§0.1②).
+        return { success: false, message: '기존 이미지를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.' };
+      }
+      const blob = await res.blob();
+      const name = url.split('/').pop()?.split('?')[0] || 'image.jpg';
+      backendForm.append('files', blob, name);
+    } catch {
+      return { success: false, message: '기존 이미지를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.' };
+    }
+  }
   files.forEach((f) => backendForm.append('files', f as Blob));
 
   try {
