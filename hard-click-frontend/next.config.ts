@@ -23,6 +23,11 @@ const nextConfig: NextConfig = {
         hostname: 'picsum.photos',
       },
       {
+        // mock 강의 썸네일 (unsplash) — 실데이터 연동 시 S3로 대체
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
         // BE 썸네일/프로필/커뮤니티 이미지 = 만료·쿼리 없는 public S3 URL (예: {버킷}.s3.ap-northeast-2.amazonaws.com).
         // (영상만 수강권 검증 위해 presigned 유지 — 쿼리스트링 있음. 와일드카드가 둘 다 커버.)
         protocol: 'https',
