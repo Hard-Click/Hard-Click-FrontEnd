@@ -242,6 +242,16 @@ export default function ProfileEditModal({
         });
         return;
       }
+      // 새 비밀번호가 기존과 동일 — 라이브 확인(2026-07-23): 400 AUTH_012. 토스트 대신
+      // "새 비밀번호" 필드 인라인 에러로 표시(그 자리에 뜨던 "사용 가능한 비밀번호입니다" 대체).
+      if (res.errorCode === 'AUTH_012' && step === 'password') {
+        setNewPwCheck({
+          type: 'error',
+          text: res.message || '새 비밀번호는 기존 비밀번호와 다르게 설정해야 합니다.',
+        });
+        newPwRef.current?.focus();
+        return;
+      }
       toast.error(res.message || '프로필 수정에 실패했습니다.');
       return;
     }
