@@ -157,6 +157,13 @@ export default function ProfileEditModal({
         type: 'error',
         text: '비밀번호는 8자 이상, 16자 이하, 영문과 숫자, 특수문자(@$!%#?&)를 포함해야 합니다',
       });
+    } else if (value === verifiedPassword) {
+      // Step 1 본인확인 때 입력받은 현재 비밀번호(verifiedPassword)가 이미 클라이언트에 있으므로
+      // 서버 왕복(400 AUTH_012) 없이 타이핑 즉시 동일 여부를 알려준다(제출 시 핸들러도 안전망으로 유지).
+      setNewPwCheck({
+        type: 'error',
+        text: '새 비밀번호는 기존 비밀번호와 다르게 설정해야 합니다.',
+      });
     } else {
       setNewPwCheck({ type: 'success', text: '사용 가능한 비밀번호입니다' });
     }
@@ -240,6 +247,16 @@ export default function ProfileEditModal({
           type: 'error',
           text: '비밀번호가 일치하지 않습니다',
         });
+        return;
+      }
+      // 새 비밀번호가 기존과 동일 — 라이브 확인(2026-07-23): 400 AUTH_012. 토스트 대신
+      // "새 비밀번호" 필드 인라인 에러로 표시(그 자리에 뜨던 "사용 가능한 비밀번호입니다" 대체).
+      if (res.errorCode === 'AUTH_012' && step === 'password') {
+        setNewPwCheck({
+          type: 'error',
+          text: res.message || '새 비밀번호는 기존 비밀번호와 다르게 설정해야 합니다.',
+        });
+        newPwRef.current?.focus();
         return;
       }
       toast.error(res.message || '프로필 수정에 실패했습니다.');
