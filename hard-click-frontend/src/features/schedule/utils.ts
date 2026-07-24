@@ -1,4 +1,4 @@
-import type { ScheduleBlock, ScheduleCalendarDay, WeekBarSegment } from './types';
+import type { ScheduleCalendarDay } from './types';
 
 function toISODate(year: number, month: number, day: number): string {
   const mm = String(month + 1).padStart(2, '0');
@@ -95,43 +95,4 @@ const WEEKDAY_SHORT_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 export function formatShortDateWithWeekday(date: Date): string {
   const weekday = WEEKDAY_SHORT_LABELS[date.getDay()];
   return `${date.getMonth() + 1}/${date.getDate()} (${weekday})`;
-}
-
-/**
- * 이 주(week, 7칸)와 겹치는 학습 구간들을 그 주 안으로 clamp해서 grid-column 위치로 변환.
- * 구간이 주 경계를 넘어가면(예: 화~다음주 목) 이 주에 걸친 부분만큼만 잘라 반환 —
- * 다음 주 호출에서 나머지 부분이 별도 세그먼트로 다시 계산된다.
- */
-export function getWeekBarSegments(
-  week: readonly ScheduleCalendarDay[],
-  blocks: readonly ScheduleBlock[],
-): WeekBarSegment[] {
-  const weekStart = week[0].date;
-  const weekEnd = week[week.length - 1].date;
-
-  const clamped = blocks
-    .filter((block) => block.endDate >= weekStart && block.startDate <= weekEnd)
-    .map((block) => {
-      const clampedStart = block.startDate < weekStart ? weekStart : block.startDate;
-      const clampedEnd = block.endDate > weekEnd ? weekEnd : block.endDate;
-      const startCol = week.findIndex((day) => day.date === clampedStart) + 1;
-      const endCol = week.findIndex((day) => day.date === clampedEnd) + 1;
-      return { block, startCol, span: endCol - startCol + 1 };
-    });
-
-  // 컬럼이 겹치지 않는 막대는 같은 행에 나란히 놓는다(그리디 인터벌 스케줄링) —
-  // 시작일이 하루씩 밀리는 막대들이 겹치지도 않는데 매번 새 행으로 내려가는 계단 현상을 막는다.
-  const sorted = [...clamped].sort((a, b) => a.startCol - b.startCol || b.span - a.span);
-  const rowLastCol: number[] = [];
-  return sorted.map((segment) => {
-    const endCol = segment.startCol + segment.span - 1;
-    let row = rowLastCol.findIndex((lastCol) => lastCol < segment.startCol);
-    if (row === -1) {
-      row = rowLastCol.length;
-      rowLastCol.push(endCol);
-    } else {
-      rowLastCol[row] = endCol;
-    }
-    return { ...segment, row };
-  });
 }
