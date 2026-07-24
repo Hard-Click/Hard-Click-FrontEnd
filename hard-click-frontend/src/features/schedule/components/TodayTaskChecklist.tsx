@@ -30,9 +30,10 @@ export function TodayTaskChecklist({ tasks, onToggle, onEdit, onDelete }: TodayT
           const editable = task.source === 'TODO' && !isReview;
           // 완료 체크는 BE가 단방향(PLANNED→DONE)만 지원 — 되돌리는 API가 없어 이미 완료면 체크박스 비활성화.
           const toggleLocked = isReview || task.done;
+          // 완료된 복습(done)은 재진입(재응시) 막는다 — 클릭 비활성. done은 BE가 제출 시 켜준다.
           const handleClick = editable
             ? () => setEditingTask(task)
-            : isReview
+            : isReview && !task.done
               ? () => setReviewTask(task)
               : undefined;
           return (
@@ -51,7 +52,9 @@ export function TodayTaskChecklist({ tasks, onToggle, onEdit, onDelete }: TodayT
                 aria-pressed={task.done}
                 aria-label={
                   isReview
-                    ? '복습 퀴즈를 풀어야 완료 체크할 수 있어요'
+                    ? task.done
+                      ? '복습 완료됨'
+                      : '복습 퀴즈를 풀어야 완료 체크할 수 있어요'
                     : task.done
                       ? '완료됨(취소 불가)'
                       : '완료로 표시'
