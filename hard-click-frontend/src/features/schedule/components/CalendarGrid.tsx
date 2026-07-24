@@ -41,8 +41,10 @@ export function CalendarGrid({ year, month, blocks = [], selectedDate, onSelectD
           );
 
           return (
-            <div key={week[0].date} className="flex-1">
-              <div className="grid grid-cols-7">
+            // 주 행은 고정 높이(flex-1 균등)로 두고, 막대가 많은 날은 내부 스크롤로 흡수한다.
+            // min-h-0 이 있어야 자식(막대 스택)이 넘칠 때 행이 늘어나지 않고 스크롤로 넘어간다.
+            <div key={week[0].date} className="flex min-h-0 flex-1 flex-col">
+              <div className="grid flex-none grid-cols-7">
                 {week.map((cell) => {
                   const isSelected = cell.date === selectedDate;
                   const dayClass = cell.isToday
@@ -57,16 +59,14 @@ export function CalendarGrid({ year, month, blocks = [], selectedDate, onSelectD
                   return (
                     <div key={cell.date}>
                       {onSelectDate && cell.inCurrentMonth ? (
-                        // 클릭 영역을 숫자 원이 아니라 칸 전체로 넓히고(A), 호버 시 칸 배경 하이라이트(B).
+                        // 클릭 영역을 숫자 원이 아니라 칸 전체로 넓힌다(A). 호버 배경은 두지 않는다(사용자 요청).
                         // 오늘/선택 표시는 안쪽 span(dayClass)의 원이 그대로 유지한다.
                         <button
                           type="button"
                           onClick={() => onSelectDate(cell.date)}
                           aria-pressed={isSelected}
                           aria-label={`${cell.date} 선택`}
-                          className={`flex w-full items-center justify-center rounded-lg py-1 transition ${
-                            !cell.isToday && !isSelected ? 'hover:bg-[#F1F5F9]' : ''
-                          }`}
+                          className="flex w-full items-center justify-center rounded-lg py-1 transition"
                         >
                           <span className={dayClass}>{cell.day}</span>
                         </button>
@@ -79,7 +79,7 @@ export function CalendarGrid({ year, month, blocks = [], selectedDate, onSelectD
                   );
                 })}
               </div>
-              <div className="mt-1 flex flex-col gap-1">
+              <div className="scroll-hidden mt-1 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
                 {rows.map((rowSegments, row) => (
                   <div key={row} className="grid grid-cols-7">
                     {rowSegments.map((segment) => (

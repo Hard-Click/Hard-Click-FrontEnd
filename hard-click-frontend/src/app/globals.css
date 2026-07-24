@@ -6,6 +6,16 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* 스크롤은 되지만 스크롤바를 화면에 그리지 않는다(폭 0이라 콘텐츠도 안 겹침).
+   할 일이 많아 넘칠 때: 오늘 할 일 리스트 / 달력 셀의 학습 막대 스택. */
+.scroll-hidden {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* 구 Edge/IE */
+}
+.scroll-hidden::-webkit-scrollbar {
+  display: none; /* Chrome·Safari */
+}
+
 /* toaster wrapper */
 [data-sonner-toaster] {
   position: fixed !important;

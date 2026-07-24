@@ -21,7 +21,7 @@ export function TodayTaskChecklist({ tasks, onToggle, onEdit, onDelete }: TodayT
 
   return (
     <div className="flex h-full flex-col">
-      <ul className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
+      <ul className="scroll-hidden flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
         {tasks.map((task) => {
           // 복습 항목(source 'REVIEW' 또는 과목 '복습')은 수정이 아니라 복습 시작 확인 모달을 띄운다.
           // BE가 둘 중 어느 신호로 주든 인식되게 OR — subject가 실과목이어도 source로 잡아 조용히 일반 할 일로 새지 않게.

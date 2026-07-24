@@ -40,11 +40,12 @@ export function ReviewStartModal({ courseId, onClose }: { courseId?: number; onC
         className="w-full max-w-[340px] rounded-[20px] bg-white p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E6F1FB] text-[#185FA5]">
+        {/* 아이콘 + 문구는 가운데 정렬(사용자 요청) — 아래 버튼 영역은 그대로. */}
+        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-[#E6F1FB] text-[#185FA5]">
           {RefreshIcon}
         </div>
-        <p id="review-start-modal-title" className="mt-3.5 text-[17px] font-medium text-[#1E293B]">복습을 시작할까요?</p>
-        <p className="mt-1.5 text-[13px] leading-relaxed text-[#64748B]">
+        <p id="review-start-modal-title" className="mt-3.5 text-center text-[17px] font-medium text-[#1E293B]">복습을 시작할까요?</p>
+        <p className="mt-1.5 text-center text-[13px] leading-relaxed text-[#64748B]">
           오답 문항과 유사 문제로 구성된 복습 퀴즈예요.
         </p>
 
