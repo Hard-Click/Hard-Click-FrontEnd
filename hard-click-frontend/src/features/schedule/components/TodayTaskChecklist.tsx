@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { categoryColor } from '@/features/courses/subjects';
+import { categoryColor, categoryLabel } from '@/features/courses/subjects';
 import type { TodayTask } from '../types';
 import { EditTaskModal, type EditTaskInput } from './EditTaskModal';
 import { ReviewStartModal } from './ReviewStartModal';
@@ -21,7 +21,7 @@ export function TodayTaskChecklist({ tasks, onToggle, onEdit, onDelete }: TodayT
 
   return (
     <div className="flex h-full flex-col">
-      <ul className="flex flex-1 flex-col gap-2">
+      <ul className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
         {tasks.map((task) => {
           // 복습 항목(source 'REVIEW' 또는 과목 '복습')은 수정이 아니라 복습 시작 확인 모달을 띄운다.
           // BE가 둘 중 어느 신호로 주든 인식되게 OR — subject가 실과목이어도 source로 잡아 조용히 일반 할 일로 새지 않게.
@@ -85,10 +85,11 @@ export function TodayTaskChecklist({ tasks, onToggle, onEdit, onDelete }: TodayT
                 </span>
               </span>
               <span
-                className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                className="shrink-0 rounded-md px-2 py-0.5 text-xs font-medium text-[#1E293B]"
                 style={{ backgroundColor: categoryColor(task.category).light }}
-                aria-hidden
-              />
+              >
+                {categoryLabel(task.category)}
+              </span>
             </div>
           </li>
           );

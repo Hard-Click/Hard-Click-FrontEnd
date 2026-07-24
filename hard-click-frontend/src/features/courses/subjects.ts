@@ -148,6 +148,11 @@ const CATEGORY_LABEL: Record<SubjectCategory, string> = {
   OTHER: '기타',
 };
 
+/** 대분류(SubjectCategory) → 한글 라벨. 색과 함께 표시해 색각 이상에서도 과목을 구분(§ CATEGORY_COLOR 주석). */
+export function categoryLabel(category: SubjectCategory): string {
+  return CATEGORY_LABEL[category];
+}
+
 export interface ScheduleLegendItem {
   category: SubjectCategory;
   label: string;
