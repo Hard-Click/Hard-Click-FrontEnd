@@ -51,4 +51,6 @@ export interface WeekBarSegment {
   startCol: number;
   /** 몇 칸을 차지하는지 */
   span: number;
+  /** 컬럼이 겹치지 않으면 같은 행을 재사용한 결과(0-indexed) — 겹칠 때만 새 행이 생긴다. */
+  row: number;
 }

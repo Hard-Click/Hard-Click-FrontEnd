@@ -93,17 +93,17 @@ describe('getWeekBarSegments', () => {
 
   it('주 안에 완전히 들어오는 구간은 그대로 컬럼 위치로 변환한다', () => {
     const segments = getWeekBarSegments(week, [block('a', '2026-07-06', '2026-07-08')]);
-    expect(segments).toEqual([{ block: expect.objectContaining({ id: 'a' }), startCol: 2, span: 3 }]);
+    expect(segments).toEqual([{ block: expect.objectContaining({ id: 'a' }), startCol: 2, span: 3, row: 0 }]);
   });
 
   it('주 시작 전부터 시작하는 구간은 이 주의 첫 칸부터로 clamp된다', () => {
     const segments = getWeekBarSegments(week, [block('b', '2026-07-03', '2026-07-07')]);
-    expect(segments).toEqual([{ block: expect.objectContaining({ id: 'b' }), startCol: 1, span: 3 }]);
+    expect(segments).toEqual([{ block: expect.objectContaining({ id: 'b' }), startCol: 1, span: 3, row: 0 }]);
   });
 
   it('주 끝 이후까지 이어지는 구간은 이 주의 마지막 칸까지로 clamp된다', () => {
     const segments = getWeekBarSegments(week, [block('c', '2026-07-09', '2026-07-15')]);
-    expect(segments).toEqual([{ block: expect.objectContaining({ id: 'c' }), startCol: 5, span: 3 }]);
+    expect(segments).toEqual([{ block: expect.objectContaining({ id: 'c' }), startCol: 5, span: 3, row: 0 }]);
   });
 
   it('이 주와 겹치지 않는 구간은 제외된다', () => {
@@ -112,12 +112,35 @@ describe('getWeekBarSegments', () => {
     expect(getWeekBarSegments(week, [before, after])).toEqual([]);
   });
 
-  it('겹치는 구간이 여러 개면 전부 반환한다(스택 렌더링용)', () => {
+  it('컬럼이 겹치지 않는 구간들은 같은 행을 재사용한다(계단 방지)', () => {
     const segments = getWeekBarSegments(week, [
       block('x', '2026-07-05', '2026-07-06'),
       block('y', '2026-07-07', '2026-07-11'),
     ]);
     expect(segments).toHaveLength(2);
     expect(segments.map((s) => s.block.id)).toEqual(['x', 'y']);
+    expect(segments.map((s) => s.row)).toEqual([0, 0]);
+  });
+
+  it('컬럼이 겹치는 구간은 다음 행으로 내려간다', () => {
+    const segments = getWeekBarSegments(week, [
+      block('x', '2026-07-05', '2026-07-08'),
+      block('y', '2026-07-07', '2026-07-11'),
+    ]);
+    const rowById = Object.fromEntries(segments.map((s) => [s.block.id, s.row]));
+    expect(rowById.x).toBe(0);
+    expect(rowById.y).toBe(1);
+  });
+
+  it('세 구간 중 두 개만 겹치면 나머지 하나는 첫 행을 재사용한다', () => {
+    const segments = getWeekBarSegments(week, [
+      block('a', '2026-07-05', '2026-07-06'),
+      block('b', '2026-07-06', '2026-07-08'),
+      block('c', '2026-07-09', '2026-07-11'),
+    ]);
+    const rowById = Object.fromEntries(segments.map((s) => [s.block.id, s.row]));
+    expect(rowById.a).toBe(0);
+    expect(rowById.b).toBe(1);
+    expect(rowById.c).toBe(0);
   });
 });

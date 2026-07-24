@@ -26,6 +26,10 @@ export function CalendarGrid({ year, month, blocks = [] }: CalendarGridProps) {
       <div className="flex min-h-0 flex-1 flex-col gap-1">
         {weeks.map((week) => {
           const segments = getWeekBarSegments(week, blocks);
+          const rowCount = segments.reduce((max, segment) => Math.max(max, segment.row + 1), 0);
+          const rows = Array.from({ length: rowCount }, (_, row) =>
+            segments.filter((segment) => segment.row === row),
+          );
 
           return (
             <div key={week[0].date} className="flex-1">
@@ -47,15 +51,18 @@ export function CalendarGrid({ year, month, blocks = [] }: CalendarGridProps) {
                 ))}
               </div>
               <div className="mt-1 flex flex-col gap-1">
-                {segments.map((segment) => (
-                  <div key={segment.block.id} className="grid grid-cols-7">
-                    <div
-                      className="mx-1 h-2 rounded-full"
-                      style={{
-                        gridColumn: `${segment.startCol} / span ${segment.span}`,
-                        backgroundColor: categoryColor(segment.block.category).light,
-                      }}
-                    />
+                {rows.map((rowSegments, row) => (
+                  <div key={row} className="grid grid-cols-7">
+                    {rowSegments.map((segment) => (
+                      <div
+                        key={segment.block.id}
+                        className="mx-1 h-2 rounded-full"
+                        style={{
+                          gridColumn: `${segment.startCol} / span ${segment.span}`,
+                          backgroundColor: categoryColor(segment.block.category).light,
+                        }}
+                      />
+                    ))}
                   </div>
                 ))}
               </div>

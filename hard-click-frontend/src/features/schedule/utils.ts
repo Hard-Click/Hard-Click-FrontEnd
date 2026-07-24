@@ -109,7 +109,7 @@ export function getWeekBarSegments(
   const weekStart = week[0].date;
   const weekEnd = week[week.length - 1].date;
 
-  return blocks
+  const clamped = blocks
     .filter((block) => block.endDate >= weekStart && block.startDate <= weekEnd)
     .map((block) => {
       const clampedStart = block.startDate < weekStart ? weekStart : block.startDate;
@@ -118,4 +118,20 @@ export function getWeekBarSegments(
       const endCol = week.findIndex((day) => day.date === clampedEnd) + 1;
       return { block, startCol, span: endCol - startCol + 1 };
     });
+
+  // 컬럼이 겹치지 않는 막대는 같은 행에 나란히 놓는다(그리디 인터벌 스케줄링) —
+  // 시작일이 하루씩 밀리는 막대들이 겹치지도 않는데 매번 새 행으로 내려가는 계단 현상을 막는다.
+  const sorted = [...clamped].sort((a, b) => a.startCol - b.startCol || b.span - a.span);
+  const rowLastCol: number[] = [];
+  return sorted.map((segment) => {
+    const endCol = segment.startCol + segment.span - 1;
+    let row = rowLastCol.findIndex((lastCol) => lastCol < segment.startCol);
+    if (row === -1) {
+      row = rowLastCol.length;
+      rowLastCol.push(endCol);
+    } else {
+      rowLastCol[row] = endCol;
+    }
+    return { ...segment, row };
+  });
 }
