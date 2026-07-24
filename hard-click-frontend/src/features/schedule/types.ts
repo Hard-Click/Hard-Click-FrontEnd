@@ -43,14 +43,3 @@ export interface ScheduleBlock {
   startDate: string;
   endDate: string;
 }
-
-/** 한 주(7칸) 그리드 위에 그릴 학습바 하나 — 겹치는 구간을 그 주 안으로 clamp한 결과. */
-export interface WeekBarSegment {
-  block: ScheduleBlock;
-  /** 1~7 (grid-column 시작, 1-indexed) */
-  startCol: number;
-  /** 몇 칸을 차지하는지 */
-  span: number;
-  /** 컬럼이 겹치지 않으면 같은 행을 재사용한 결과(0-indexed) — 겹칠 때만 새 행이 생긴다. */
-  row: number;
-}
