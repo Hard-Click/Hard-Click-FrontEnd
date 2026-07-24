@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { toast } from '@/lib/toast';
 import AdminPaymentFilterBar from './AdminPaymentFilterBar';
 import AdminPaymentTable from './AdminPaymentTable';
@@ -26,6 +26,10 @@ export default function AdminPaymentManage({
   const [keyword, setKeyword] = useState('');
   const [page, setPage] = useState(1);
   const [refundTarget, setRefundTarget] = useState<AdminPayment | null>(null);
+  const [refunding, setRefunding] = useState(false);
+  // 동기 가드 — setState는 리렌더 전이라 같은 틱의 2번째 클릭이 stale 값(false)을 봐 통과할 수 있다.
+  // ref는 즉시 반영돼 더블클릭의 두 번째 호출도 확실히 막는다.
+  const refundingRef = useRef(false);
 
   const filteredPayments = useMemo(() => {
     const q = keyword.trim().toLowerCase();
@@ -51,22 +55,28 @@ export default function AdminPaymentManage({
   };
 
   const handleConfirmRefund = async () => {
-    if (!refundTarget) return;
-    const result = await refundPaymentAction(refundTarget.paymentId);
-    if (!result.success) {
-      toast.error(result.message);
+    if (!refundTarget || refundingRef.current) return; // 중복 제출(더블클릭) 차단
+    refundingRef.current = true;
+    setRefunding(true);
+    try {
+      const result = await refundPaymentAction(refundTarget.paymentId);
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+      setPaymentList((prev) =>
+        prev.map((p) =>
+          p.paymentId === refundTarget.paymentId
+            ? { ...p, status: 'REFUNDED', refundable: false }
+            : p
+        )
+      );
+      toast.success(result.message);
+    } finally {
+      refundingRef.current = false;
+      setRefunding(false);
       setRefundTarget(null);
-      return;
     }
-    setPaymentList((prev) =>
-      prev.map((p) =>
-        p.paymentId === refundTarget.paymentId
-          ? { ...p, status: 'REFUNDED', refundable: false }
-          : p
-      )
-    );
-    toast.success(result.message);
-    setRefundTarget(null);
   };
 
   const totalPages = Math.max(
@@ -103,6 +113,7 @@ export default function AdminPaymentManage({
       {refundTarget && (
         <PaymentRefundModal
           payment={refundTarget}
+          pending={refunding}
           onCancel={() => setRefundTarget(null)}
           onConfirm={handleConfirmRefund}
         />
