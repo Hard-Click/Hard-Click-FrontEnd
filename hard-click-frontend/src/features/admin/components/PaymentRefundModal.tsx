@@ -4,6 +4,8 @@ import type { AdminPayment } from '@/features/payment/types';
 
 interface PaymentRefundModalProps {
   payment: AdminPayment;
+  /** 환불 요청 진행 중 — 버튼 비활성으로 중복 제출(더블클릭) 방지. */
+  pending?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }
@@ -11,6 +13,7 @@ interface PaymentRefundModalProps {
 /** 환불 확인 모달 — 주문번호·사용자·금액 표시 후 환불 처리. */
 export default function PaymentRefundModal({
   payment,
+  pending = false,
   onCancel,
   onConfirm,
 }: PaymentRefundModalProps) {
@@ -46,16 +49,18 @@ export default function PaymentRefundModal({
           <button
             type="button"
             onClick={onCancel}
-            className="h-10 flex-1 rounded-[12px] border border-[#E2E8F0] bg-white text-base font-semibold text-[#4B5563] transition-colors hover:bg-[#F8FAFC]"
+            disabled={pending}
+            className="h-10 flex-1 rounded-[12px] border border-[#E2E8F0] bg-white text-base font-semibold text-[#4B5563] transition-colors hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-60"
           >
             취소
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="h-10 flex-1 rounded-[12px] bg-[#DC2626] text-base font-semibold text-white transition-colors hover:bg-[#B91C1C]"
+            disabled={pending}
+            className="h-10 flex-1 rounded-[12px] bg-[#DC2626] text-base font-semibold text-white transition-colors hover:bg-[#B91C1C] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            환불
+            {pending ? '처리 중…' : '환불'}
           </button>
         </div>
       </div>
