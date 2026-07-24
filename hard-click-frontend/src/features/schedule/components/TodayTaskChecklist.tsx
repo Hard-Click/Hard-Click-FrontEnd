@@ -16,8 +16,14 @@ interface TodayTaskChecklistProps {
 export function TodayTaskChecklist({ tasks, onToggle, onEdit, onDelete }: TodayTaskChecklistProps) {
   const [editingTask, setEditingTask] = useState<TodayTask | null>(null);
   const [reviewTask, setReviewTask] = useState<TodayTask | null>(null);
-  const doneCount = tasks.filter((task) => task.done).length;
-  const progressPercent = tasks.length === 0 ? 0 : Math.round((doneCount / tasks.length) * 100);
+  // 복습(REVIEW)은 체크박스로 완료하는 항목이 아니라 유사퀴즈로 넘어가는 항목이라 진행률 분모에서 제외한다.
+  // 완료(제출)하면 BE가 due를 전진시켜 목록에서 빠진다(A안, BE #682·ScheduleService 동일 정책).
+  const countableTasks = tasks.filter(
+    (task) => task.source !== 'REVIEW' && task.category !== 'REVIEW',
+  );
+  const doneCount = countableTasks.filter((task) => task.done).length;
+  const progressPercent =
+    countableTasks.length === 0 ? 0 : Math.round((doneCount / countableTasks.length) * 100);
 
   return (
     <div className="flex h-full flex-col">
@@ -30,10 +36,11 @@ export function TodayTaskChecklist({ tasks, onToggle, onEdit, onDelete }: TodayT
           const editable = task.source === 'TODO' && !isReview;
           // 완료 체크는 BE가 단방향(PLANNED→DONE)만 지원 — 되돌리는 API가 없어 이미 완료면 체크박스 비활성화.
           const toggleLocked = isReview || task.done;
-          // 완료된 복습(done)은 재진입(재응시) 막는다 — 클릭 비활성. done은 BE가 제출 시 켜준다.
+          // 복습은 클릭 시 복습 시작 모달. 재진입(재응시) 차단은 BE가 완료 시 due를 전진시켜 목록에서
+          // 빼주므로 자동 처리된다(A안) — FE의 done 기반 가드는 불필요.
           const handleClick = editable
             ? () => setEditingTask(task)
-            : isReview && !task.done
+            : isReview
               ? () => setReviewTask(task)
               : undefined;
           return (
@@ -52,9 +59,7 @@ export function TodayTaskChecklist({ tasks, onToggle, onEdit, onDelete }: TodayT
                 aria-pressed={task.done}
                 aria-label={
                   isReview
-                    ? task.done
-                      ? '복습 완료됨'
-                      : '복습 퀴즈를 풀어야 완료 체크할 수 있어요'
+                    ? '복습 퀴즈를 풀어야 완료 체크할 수 있어요'
                     : task.done
                       ? '완료됨(취소 불가)'
                       : '완료로 표시'
@@ -103,7 +108,7 @@ export function TodayTaskChecklist({ tasks, onToggle, onEdit, onDelete }: TodayT
         <div className="flex items-center justify-between text-sm">
           <span className="text-[#64748B]">진행률</span>
           <span className="font-semibold text-[#1E293B]">
-            {doneCount}/{tasks.length}
+            {doneCount}/{countableTasks.length}
           </span>
         </div>
         <div className="mt-2 h-1.5 w-full rounded-full bg-[#E2E8F0]">

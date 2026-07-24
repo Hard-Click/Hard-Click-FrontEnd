@@ -97,8 +97,8 @@ export async function submitSimilarQuizAction(
     if (!result) {
       return { success: false, message: '유사 문제를 찾을 수 없습니다.' };
     }
-    // 제출 성공 = BE가 해당 복습(REVIEW)을 완료 처리 → 캘린더 복귀 시 done/진행률이 최신으로 보이게
-    // 스케줄 경로 캐시 무효화(best-effort). (BE가 done을 켜주기 전엔 무해한 no-op.)
+    // 제출 성공 = BE가 해당 복습(REVIEW)의 due를 전진시켜 완료 처리(A안, BE #682) → 캘린더 복귀 시
+    // 그 REVIEW 항목이 목록에서 빠져 보이게 스케줄 경로 캐시 무효화(best-effort).
     revalidateScheduleBestEffort();
     return { success: true, result };
   }
@@ -122,8 +122,8 @@ export async function submitSimilarQuizAction(
       explanation: q.explanation,
       correct: q.correct,
     }));
-    // 제출 성공 = BE가 해당 복습(REVIEW)을 완료 처리 → 캘린더 복귀 시 done/진행률이 최신으로 보이게
-    // 스케줄 경로 캐시 무효화(best-effort). (BE가 done을 켜주기 전엔 무해한 no-op.)
+    // 제출 성공 = BE가 해당 복습(REVIEW)의 due를 전진시켜 완료 처리(A안, BE #682) → 캘린더 복귀 시
+    // 그 REVIEW 항목이 목록에서 빠져 보이게 스케줄 경로 캐시 무효화(best-effort).
     revalidateScheduleBestEffort();
     return {
       success: true,

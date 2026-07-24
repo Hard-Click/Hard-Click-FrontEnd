@@ -105,7 +105,7 @@ describe('submitSimilarQuizAction — timeSpentSeconds payload 배선', () => {
     expect(mockPost).not.toHaveBeenCalled();
   });
 
-  it('제출 성공 시 /schedule 캐시를 무효화한다(복습 done/진행률 최신 반영)', async () => {
+  it('제출 성공 시 /schedule 캐시를 무효화한다(A안: 복습 완료 → 복귀 시 목록에서 제거 반영)', async () => {
     const res = await submitSimilarQuizAction(9, { 1: 2, 2: 0 });
     expect(res.success).toBe(true);
     expect(mockRevalidate).toHaveBeenCalledWith('/schedule');
