@@ -57,16 +57,14 @@ export function CalendarGrid({ year, month, blocks = [], selectedDate, onSelectD
                   return (
                     <div key={cell.date}>
                       {onSelectDate && cell.inCurrentMonth ? (
-                        // 클릭 영역을 숫자 원이 아니라 칸 전체로 넓히고(A), 호버 시 칸 배경 하이라이트(B).
+                        // 클릭 영역을 숫자 원이 아니라 칸 전체로 넓힌다(A). 호버 배경은 두지 않는다(사용자 요청).
                         // 오늘/선택 표시는 안쪽 span(dayClass)의 원이 그대로 유지한다.
                         <button
                           type="button"
                           onClick={() => onSelectDate(cell.date)}
                           aria-pressed={isSelected}
                           aria-label={`${cell.date} 선택`}
-                          className={`flex w-full items-center justify-center rounded-lg py-1 transition ${
-                            !cell.isToday && !isSelected ? 'hover:bg-[#F1F5F9]' : ''
-                          }`}
+                          className="flex w-full items-center justify-center rounded-lg py-1 transition"
                         >
                           <span className={dayClass}>{cell.day}</span>
                         </button>

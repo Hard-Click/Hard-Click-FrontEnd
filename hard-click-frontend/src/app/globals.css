@@ -6,6 +6,27 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* 얇고 은은한(브랜드 블루 저투명) 스크롤바 — 기본 회색 오버레이가 콘텐츠를 겹치는 것 방지.
+   gutter를 예약해 스크롤바가 카드 내용을 덮지 않게 한다. (예: 오늘 할 일 리스트) */
+.scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(47, 93, 170, 0.35) transparent;
+  scrollbar-gutter: stable;
+}
+.scroll-slim::-webkit-scrollbar {
+  width: 6px;
+}
+.scroll-slim::-webkit-scrollbar-thumb {
+  background: rgba(47, 93, 170, 0.35);
+  border-radius: 9999px;
+}
+.scroll-slim::-webkit-scrollbar-thumb:hover {
+  background: rgba(47, 93, 170, 0.55);
+}
+.scroll-slim::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 /* toaster wrapper */
 [data-sonner-toaster] {
   position: fixed !important;
