@@ -97,8 +97,9 @@ export async function submitSimilarQuizAction(
     if (!result) {
       return { success: false, message: '유사 문제를 찾을 수 없습니다.' };
     }
-    // 제출 성공 = BE가 해당 복습(REVIEW)을 완료 처리 → 캘린더 복귀 시 done/진행률이 최신으로 보이게
-    // 스케줄 경로 캐시 무효화(best-effort). (BE가 done을 켜주기 전엔 무해한 no-op.)
+    // ⚠️ mock 채점(gradeSimilarQuizMock)은 스케줄의 REVIEW due를 갱신하지 않으므로, mock에서는 복귀해도
+    // 그 복습이 목록에 그대로 남는다(mock 한계, §0.1④). 라이브 계약(BE가 due 전진 → 목록 제거)에 맞춰
+    // 캐시만 미리 무효화해 둔다(best-effort).
     revalidateScheduleBestEffort();
     return { success: true, result };
   }
@@ -122,8 +123,8 @@ export async function submitSimilarQuizAction(
       explanation: q.explanation,
       correct: q.correct,
     }));
-    // 제출 성공 = BE가 해당 복습(REVIEW)을 완료 처리 → 캘린더 복귀 시 done/진행률이 최신으로 보이게
-    // 스케줄 경로 캐시 무효화(best-effort). (BE가 done을 켜주기 전엔 무해한 no-op.)
+    // 제출 성공 = BE가 해당 복습(REVIEW)의 due를 전진시켜 완료 처리(A안, BE #682) → 캘린더 복귀 시
+    // 그 REVIEW 항목이 목록에서 빠져 보이게 스케줄 경로 캐시 무효화(best-effort).
     revalidateScheduleBestEffort();
     return {
       success: true,
