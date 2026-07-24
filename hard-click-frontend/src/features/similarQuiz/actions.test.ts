@@ -7,6 +7,8 @@ jest.mock('@/lib/api', () => ({
   serverApi: { post: jest.fn() },
 }));
 jest.mock('@/mocks/config', () => ({ isMock: () => false }));
+// revalidatePath는 next 요청 컨텍스트 밖이라 mock(제출 성공 시 /schedule 재검증 호출).
+jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }));
 
 import { serverApi } from '@/lib/api';
 import { submitSimilarQuizAction } from './actions';
