@@ -6,25 +6,14 @@ html {
   scrollbar-gutter: stable;
 }
 
-/* 얇고 은은한(브랜드 블루 저투명) 스크롤바 — 기본 회색 오버레이가 콘텐츠를 겹치는 것 방지.
-   gutter를 예약해 스크롤바가 카드 내용을 덮지 않게 한다. (예: 오늘 할 일 리스트) */
-.scroll-slim {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(47, 93, 170, 0.35) transparent;
-  scrollbar-gutter: stable;
+/* 스크롤은 되지만 스크롤바를 화면에 그리지 않는다(폭 0이라 콘텐츠도 안 겹침).
+   할 일이 많아 넘칠 때: 오늘 할 일 리스트 / 달력 셀의 학습 막대 스택. */
+.scroll-hidden {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* 구 Edge/IE */
 }
-.scroll-slim::-webkit-scrollbar {
-  width: 6px;
-}
-.scroll-slim::-webkit-scrollbar-thumb {
-  background: rgba(47, 93, 170, 0.35);
-  border-radius: 9999px;
-}
-.scroll-slim::-webkit-scrollbar-thumb:hover {
-  background: rgba(47, 93, 170, 0.55);
-}
-.scroll-slim::-webkit-scrollbar-track {
-  background: transparent;
+.scroll-hidden::-webkit-scrollbar {
+  display: none; /* Chrome·Safari */
 }
 
 /* toaster wrapper */

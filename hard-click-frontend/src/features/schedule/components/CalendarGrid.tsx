@@ -41,8 +41,10 @@ export function CalendarGrid({ year, month, blocks = [], selectedDate, onSelectD
           );
 
           return (
-            <div key={week[0].date} className="flex-1">
-              <div className="grid grid-cols-7">
+            // 주 행은 고정 높이(flex-1 균등)로 두고, 막대가 많은 날은 내부 스크롤로 흡수한다.
+            // min-h-0 이 있어야 자식(막대 스택)이 넘칠 때 행이 늘어나지 않고 스크롤로 넘어간다.
+            <div key={week[0].date} className="flex min-h-0 flex-1 flex-col">
+              <div className="grid flex-none grid-cols-7">
                 {week.map((cell) => {
                   const isSelected = cell.date === selectedDate;
                   const dayClass = cell.isToday
@@ -77,7 +79,7 @@ export function CalendarGrid({ year, month, blocks = [], selectedDate, onSelectD
                   );
                 })}
               </div>
-              <div className="mt-1 flex flex-col gap-1">
+              <div className="scroll-hidden mt-1 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
                 {rows.map((rowSegments, row) => (
                   <div key={row} className="grid grid-cols-7">
                     {rowSegments.map((segment) => (
