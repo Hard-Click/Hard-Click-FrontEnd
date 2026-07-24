@@ -11,9 +11,11 @@ jest.mock('@/mocks/config', () => ({ isMock: () => false }));
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }));
 
 import { serverApi } from '@/lib/api';
+import { revalidatePath } from 'next/cache';
 import { submitSimilarQuizAction } from './actions';
 
 const mockPost = serverApi.post as jest.Mock;
+const mockRevalidate = revalidatePath as jest.Mock;
 
 function okPost() {
   return {
@@ -40,6 +42,7 @@ function submittedAnswers() {
 beforeEach(() => {
   mockPost.mockReset();
   mockPost.mockResolvedValue(okPost());
+  mockRevalidate.mockReset();
 });
 
 describe('submitSimilarQuizAction — timeSpentSeconds payload 배선', () => {
@@ -100,5 +103,19 @@ describe('submitSimilarQuizAction — timeSpentSeconds payload 배선', () => {
     const res = await submitSimilarQuizAction(9, { 1: 9 }, { 1: 30 });
     expect(res.success).toBe(false);
     expect(mockPost).not.toHaveBeenCalled();
+  });
+
+  it('제출 성공 시 /schedule 캐시를 무효화한다(복습 done/진행률 최신 반영)', async () => {
+    const res = await submitSimilarQuizAction(9, { 1: 2, 2: 0 });
+    expect(res.success).toBe(true);
+    expect(mockRevalidate).toHaveBeenCalledWith('/schedule');
+  });
+
+  it('캐시 무효화가 던져도 제출 성공을 실패로 뒤집지 않는다(best-effort, §0.1④)', async () => {
+    mockRevalidate.mockImplementationOnce(() => {
+      throw new Error('revalidate boom');
+    });
+    const res = await submitSimilarQuizAction(9, { 1: 2, 2: 0 });
+    expect(res.success).toBe(true);
   });
 });

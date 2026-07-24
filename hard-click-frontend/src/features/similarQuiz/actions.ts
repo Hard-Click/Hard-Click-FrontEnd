@@ -14,6 +14,18 @@ export interface SimilarQuizSubmitState {
   result?: SimilarQuizSubmitResult;
 }
 
+/**
+ * 캐시 무효화는 best-effort — 제출은 이미 BE에 저장됐으므로, revalidate 실패가 제출 성공을
+ * 실패(success:false)로 뒤집어 재제출/중복을 유발하지 않게 예외를 삼킨다(§0.1④: 진짜 성공을 실패로 위장 안 함).
+ */
+function revalidateScheduleBestEffort() {
+  try {
+    revalidatePath('/schedule');
+  } catch {
+    // no-op — 캐시 갱신 실패는 제출 결과에 영향 주지 않는다.
+  }
+}
+
 /** POST /api/similar-quizzes/{id}/submit 응답 — 가정 shape(해설 포함). */
 interface ApiSimilarQuizResult {
   score: number;
@@ -86,8 +98,8 @@ export async function submitSimilarQuizAction(
       return { success: false, message: '유사 문제를 찾을 수 없습니다.' };
     }
     // 제출 성공 = BE가 해당 복습(REVIEW)을 완료 처리 → 캘린더 복귀 시 done/진행률이 최신으로 보이게
-    // 스케줄 경로 캐시 무효화. (BE가 done을 켜주기 전엔 무해한 no-op.)
-    revalidatePath('/schedule');
+    // 스케줄 경로 캐시 무효화(best-effort). (BE가 done을 켜주기 전엔 무해한 no-op.)
+    revalidateScheduleBestEffort();
     return { success: true, result };
   }
 
@@ -111,8 +123,8 @@ export async function submitSimilarQuizAction(
       correct: q.correct,
     }));
     // 제출 성공 = BE가 해당 복습(REVIEW)을 완료 처리 → 캘린더 복귀 시 done/진행률이 최신으로 보이게
-    // 스케줄 경로 캐시 무효화. (BE가 done을 켜주기 전엔 무해한 no-op.)
-    revalidatePath('/schedule');
+    // 스케줄 경로 캐시 무효화(best-effort). (BE가 done을 켜주기 전엔 무해한 no-op.)
+    revalidateScheduleBestEffort();
     return {
       success: true,
       result: {
